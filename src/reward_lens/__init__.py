@@ -1,0 +1,58 @@
+"""
+reward-lens: Mechanistic interpretability toolkit for reward models.
+
+The first comprehensive library for understanding what happens inside
+the models that define the RLHF training signal.
+
+Core modules:
+    - model: Reward model wrapper with activation hooks
+    - lens: Reward Lens — layer-by-layer preference formation
+    - attribution: Per-component reward decomposition
+    - patching: Activation patching for causal analysis
+    - hacking: Reward hacking vulnerability detection
+    - sae: Sparse autoencoder training and feature attribution
+    - diagnostic_data: Curated preference pairs for controlled experiments
+
+New modules (v1.0.0):
+    - distortion: Predictive reward hacking analysis (distortion index)
+    - divergence_patching: Divergence-aware activation patching
+    - cascade: Misalignment cascade detection
+    - conflict: Reward term conflict analysis
+    - concepts: Concept vector extraction and analysis
+"""
+
+from reward_lens.model import RewardModel
+from reward_lens.lens import RewardLens, reward_lens_plot
+from reward_lens.attribution import ComponentAttribution
+from reward_lens.patching import ActivationPatcher
+
+# New modules (v1.0.0)
+from reward_lens.distortion import DistortionAnalyzer, DistortionReport
+from reward_lens.divergence_patching import DivergenceAwarePatching, DivergenceAwarePatchingResult
+from reward_lens.cascade import MisalignmentCascadeDetector, CascadeReport
+from reward_lens.conflict import RewardConflictAnalyzer, ConflictReport, quick_conflict_check
+from reward_lens.concepts import ConceptExtractor, ConceptAlignmentReport, quick_concept_analysis
+
+__version__ = "1.0.0"
+
+__all__ = [
+    # Core (v1.0.0)
+    "RewardModel",
+    "RewardLens",
+    "reward_lens_plot",
+    "ComponentAttribution",
+    "ActivationPatcher",
+    # New modules (v1.0.0)
+    "DistortionAnalyzer",
+    "DistortionReport",
+    "DivergenceAwarePatching",
+    "DivergenceAwarePatchingResult",
+    "MisalignmentCascadeDetector",
+    "CascadeReport",
+    "RewardConflictAnalyzer",
+    "ConflictReport",
+    "quick_conflict_check",
+    "ConceptExtractor",
+    "ConceptAlignmentReport",
+    "quick_concept_analysis",
+]
