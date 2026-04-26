@@ -1,0 +1,51 @@
+name: Tests & Linting Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 isort
+      - name: Check code formatting with Black
+        run: black --check src/ tests/
+      - name: Sort imports with isort
+        run: isort --check-only --diff src/ tests/
+      - name: Lint with flake8
+        run: flake8 src/ tests/ --count --max-complexity=15 --max-line-length=88 --statistics
+
+  test:
+    needs: linting
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Run Pytest Core Hooks
+        run: pytest tests/test_core.py tests/test_analysis.py -v
+      - name: Run Pytest Extended Modules (Patching, SAE, VIZ)
+        run: pytest tests/test_patching.py tests/test_viz.py -v
