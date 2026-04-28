@@ -118,6 +118,43 @@ class ModelAdapter(ABC):
         """
         ...
 
+    # --- Optional capabilities ---------------------------------------------
+    # Adapters MAY override these to enable head-level analysis and batched
+    # reward extraction. The defaults are conservative and let the caller
+    # detect (via hasattr / try-fallback) whether the adapter supports the
+    # given operation.
+
+    def get_attn_o_proj(self, layer: nn.Module) -> Optional[nn.Module]:
+        """Return the attention output-projection (o_proj) module.
+
+        Hooking this module's *input* is the cleanest way to access per-head
+        attention outputs: the input has shape (B, T, n_heads * d_head),
+        which reshapes to (B, T, n_heads, d_head). Works uniformly for
+        standard MHA and grouped-query attention because the per-head reshape
+        happens before o_proj.
+
+        Returns None if the architecture doesn't expose o_proj cleanly
+        (e.g. fused QKVO modules); the caller falls back to sublayer-level
+        analysis in that case.
+        """
+        return None
+
+    def extract_reward_batch(self, output: Any, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Vectorised reward extraction for batched forward passes.
+
+        Default implementation tries `output.logits[:, 0]` and `output.score`.
+        Override for adapters whose output schema differs.
+
+        Returns:
+            1-D tensor of shape (B,) with one reward per batch row.
+        """
+        if hasattr(output, "logits"):
+            return output.logits[:, 0].detach().float()
+        if hasattr(output, "score"):
+            score = output.score.detach().float()
+            return score.squeeze(-1) if score.ndim > 1 else score
+        raise ValueError(f"{type(self).__name__}: cannot extract batched reward from output")
+
 
 class LlamaAdapter(ModelAdapter):
     """Adapter for Llama-based reward models (Skywork, FsfairX, etc.).
@@ -128,16 +165,56 @@ class LlamaAdapter(ModelAdapter):
     """
 
     def get_reward_head_params(self, model: nn.Module) -> tuple[torch.Tensor, float]:
-        score_module = model.score
+        # Bug fix (deep_analysisv1): models like QRM-Llama3.1-8B ship a
+        # ``regression_layer`` instead of ``score`` for their reward head.
+        # When we land in a Llama branch with no ``model.score`` attribute
+        # (e.g. because AutoModelForSequenceClassification fell back to a
+        # bare LlamaModel and the regression_layer was loaded onto the
+        # wrapping object), look for it before raising.
+        score_module = getattr(model, "score", None)
+        if score_module is None:
+            score_module = getattr(model, "regression_layer", None)
+        if score_module is None:
+            v_head = getattr(model, "v_head", None)
+            if v_head is not None and isinstance(v_head, nn.Linear):
+                score_module = v_head
+        if score_module is None:
+            raise AttributeError(
+                f"{type(model).__name__}: cannot find reward head — looked for "
+                f"'score', 'regression_layer', 'v_head' on the top-level module. "
+                f"This usually means AutoModelForSequenceClassification fell back "
+                f"to a bare backbone; check that any custom modeling code from "
+                f"the Hub imported successfully."
+            )
         weight = score_module.weight.data.squeeze().float()
-        bias = score_module.bias.data.item() if score_module.bias is not None else 0.0
-        return weight, bias
+        if weight.ndim > 1:
+            # Multi-objective head (e.g. QRM has 19 objectives) — collapse to
+            # the row-mean as the "aggregate" reward direction. Fine-grained
+            # per-objective analysis should use the architecture-specific
+            # adapter (e.g. ArmoRMAdapter) instead.
+            weight = weight.mean(dim=0).float()
+        bias_val = 0.0
+        if getattr(score_module, "bias", None) is not None:
+            b = score_module.bias.data.float()
+            bias_val = float(b.mean().item()) if b.numel() > 1 else float(b.item())
+        return weight, bias_val
 
     def get_layers(self, model: nn.Module) -> nn.ModuleList:
-        return model.model.layers
+        # Some custom-loaded models nest the layers as model.model.model.layers
+        if hasattr(model, "model") and hasattr(model.model, "layers"):
+            return model.model.layers
+        if hasattr(model, "model") and hasattr(model.model, "model") \
+                and hasattr(model.model.model, "layers"):
+            return model.model.model.layers
+        if hasattr(model, "layers"):
+            return model.layers
+        raise AttributeError(
+            f"{type(model).__name__}: cannot locate decoder layers — looked for "
+            f"model.model.layers, model.model.model.layers, model.layers."
+        )
 
     def n_layers(self, model: nn.Module) -> int:
-        return len(model.model.layers)
+        return len(self.get_layers(model))
 
     def n_heads(self, model: nn.Module) -> int:
         return model.config.num_attention_heads
@@ -169,9 +246,20 @@ class LlamaAdapter(ModelAdapter):
         return model.model.embed_tokens
 
     def extract_reward(self, output: Any, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
-        # AutoModelForSequenceClassification stores logits in output.logits
-        logits = output.logits  # (batch, num_labels)
-        return logits[0, 0]  # scalar
+        # AutoModelForSequenceClassification stores logits in output.logits.
+        # Shape is (batch, num_labels) for standard models, but some return
+        # (batch, seq, num_labels) — squeeze to a scalar in both cases.
+        logits = output.logits
+        return logits[0, 0].squeeze()
+
+    def get_attn_o_proj(self, layer: nn.Module) -> Optional[nn.Module]:
+        attn = getattr(layer, "self_attn", None)
+        if attn is None:
+            return None
+        # Llama (incl. GQA Llama-3.x) uses self_attn.o_proj as the output
+        # projection. Its input is the concatenated per-head attention
+        # outputs, shape (B, T, n_heads * d_head).
+        return getattr(attn, "o_proj", None)
 
 
 class MistralAdapter(LlamaAdapter):
@@ -235,6 +323,13 @@ class Gemma2Adapter(ModelAdapter):
     def extract_reward(self, output: Any, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
         logits = output.logits
         return logits[0, 0]
+
+    def get_attn_o_proj(self, layer: nn.Module) -> Optional[nn.Module]:
+        # Gemma2 self_attn also exposes o_proj.
+        attn = getattr(layer, "self_attn", None)
+        if attn is None:
+            return None
+        return getattr(attn, "o_proj", None)
 
 
 class ArmoRMAdapter(ModelAdapter):
@@ -343,6 +438,112 @@ class ArmoRMAdapter(ModelAdapter):
         if hasattr(output, "logits"):
             return output.logits[0, 0]
         raise ValueError("Cannot extract reward from ArmoRM output")
+
+    def get_attn_o_proj(self, layer: nn.Module) -> Optional[nn.Module]:
+        attn = getattr(layer, "self_attn", None)
+        if attn is None:
+            return None
+        return getattr(attn, "o_proj", None)
+
+    def extract_reward_batch(self, output: Any, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
+        if hasattr(output, "score"):
+            score = output.score.detach().float()
+            # ArmoRM .score may be (B, 1) or (B,)
+            return score.squeeze(-1) if score.ndim > 1 else score
+        if hasattr(output, "logits"):
+            return output.logits[:, 0].detach().float()
+        raise ValueError("Cannot extract batched ArmoRM reward")
+
+
+class InternLM2Adapter(ModelAdapter):
+    """Adapter for internlm/internlm2-*-reward.
+
+    The InternLM2 reward model ships a custom modeling class
+    (``InternLM2ForRewardModel``) loaded via ``trust_remote_code=True``.
+    Its config uses ``model_type='internlm2'`` which is not registered with
+    AutoModelForSequenceClassification, so the standard load path either
+    returns the bare ``InternLM2Model`` (no reward head) or — if the
+    custom modeling code imported successfully — an ``InternLM2ForRewardModel``
+    with a ``v_head`` (linear, d_model->1) on top of the backbone.
+
+    This adapter handles both layouts.
+    """
+
+    def get_reward_head_params(self, model: nn.Module) -> tuple[torch.Tensor, float]:
+        for name in ("v_head", "score", "reward_head", "regression_layer"):
+            head = getattr(model, name, None)
+            if isinstance(head, nn.Linear):
+                w = head.weight.data.squeeze().float()
+                if w.ndim > 1:
+                    w = w.mean(dim=0)
+                b = head.bias.data.float() if head.bias is not None else None
+                bias_val = float(b.mean().item()) if b is not None and b.numel() > 0 else 0.0
+                return w, bias_val
+        raise AttributeError(
+            f"{type(model).__name__}: no v_head/score/reward_head linear found. "
+            f"This usually means the custom InternLM2 modeling code failed to "
+            f"import (look for an upstream warning), causing transformers to "
+            f"fall back to AutoModel which loads only the backbone."
+        )
+
+    def get_layers(self, model: nn.Module) -> nn.ModuleList:
+        if hasattr(model, "model") and hasattr(model.model, "layers"):
+            return model.model.layers
+        if hasattr(model, "layers"):
+            return model.layers
+        raise AttributeError("InternLM2: cannot find layers")
+
+    def n_layers(self, model: nn.Module) -> int:
+        return len(self.get_layers(model))
+
+    def n_heads(self, model: nn.Module) -> int:
+        return model.config.num_attention_heads
+
+    def get_attn_module(self, layer: nn.Module) -> Optional[nn.Module]:
+        return getattr(layer, "attention", None) or getattr(layer, "self_attn", None)
+
+    def get_mlp_module(self, layer: nn.Module) -> Optional[nn.Module]:
+        return getattr(layer, "feed_forward", None) or getattr(layer, "mlp", None)
+
+    def extract_layer_output(self, output: Any) -> torch.Tensor:
+        if isinstance(output, tuple):
+            return output[0]
+        return output
+
+    def extract_attn_output(self, output: Any) -> torch.Tensor:
+        if isinstance(output, tuple):
+            return output[0]
+        return output
+
+    def extract_mlp_output(self, output: Any) -> torch.Tensor:
+        if isinstance(output, tuple):
+            return output[0]
+        return output
+
+    def get_embedding(self, model: nn.Module) -> nn.Module:
+        if hasattr(model, "model") and hasattr(model.model, "tok_embeddings"):
+            return model.model.tok_embeddings
+        if hasattr(model, "model") and hasattr(model.model, "embed_tokens"):
+            return model.model.embed_tokens
+        raise AttributeError("InternLM2: cannot find embedding")
+
+    def extract_reward(self, output: Any, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
+        # InternLM2ForRewardModel returns a CausalLMOutputWithPast where
+        # .logits has shape (B, T, 1) — the per-token reward. The standard
+        # convention is to take the last non-pad position.
+        if hasattr(output, "logits"):
+            logits = output.logits
+            if logits.ndim == 3:
+                attn_mask = inputs.get("attention_mask")
+                if attn_mask is not None:
+                    pos = attn_mask.sum(dim=1) - 1  # (B,)
+                    return logits[torch.arange(logits.shape[0], device=logits.device),
+                                  pos, 0].squeeze()
+                return logits[:, -1, 0].squeeze()
+            return logits[0, 0]
+        if hasattr(output, "score"):
+            return output.score.float().squeeze()
+        raise ValueError("InternLM2: cannot extract reward from output")
 
 
 class GenericAdapter(ModelAdapter):
@@ -479,6 +680,17 @@ class GenericAdapter(ModelAdapter):
             return output.score.float().squeeze()
         raise ValueError("Cannot extract reward from model output")
 
+    def get_attn_o_proj(self, layer: nn.Module) -> Optional[nn.Module]:
+        attn = self.get_attn_module(layer)
+        if attn is None:
+            return None
+        # Common output-projection names across HF families.
+        for name in ("o_proj", "out_proj", "dense", "wo", "c_proj"):
+            mod = getattr(attn, name, None)
+            if isinstance(mod, nn.Linear):
+                return mod
+        return None
+
 
 def get_adapter(model: nn.Module, model_name: str = "") -> ModelAdapter:
     """Auto-detect and return the appropriate adapter for a model.
@@ -502,6 +714,15 @@ def get_adapter(model: nn.Module, model_name: str = "") -> ModelAdapter:
     # ArmoRM detection (uses custom code)
     if "armorm" in model_name_lower or "armorm" in class_name:
         return ArmoRMAdapter()
+
+    # InternLM2 family — has its own decoder layer naming (`attention`/`feed_forward`).
+    if "internlm2" in class_name or "internlm" in model_name_lower or model_type == "internlm2":
+        return InternLM2Adapter()
+
+    # QRM-Llama family — Llama backbone with a multi-objective regression_layer
+    # that the standard LlamaAdapter handles via the regression_layer fallback.
+    if "qrm" in model_name_lower:
+        return LlamaAdapter()
 
     # Llama family
     if "llama" in class_name or model_type == "llama":
