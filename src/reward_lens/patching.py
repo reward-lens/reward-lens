@@ -208,9 +208,10 @@ class ActivationPatcher:
         prompt: str,
         preferred: str,
         dispreferred: str,
-        mode: Literal["noising", "denoising", "zero"] = "noising",
+        mode: Literal["noising", "denoising", "zero", "mean"] = "noising",
         max_length: int = 2048,
         show_progress: bool = True,
+        mean_corpus: Optional[list[tuple[str, str]]] = None,
     ) -> PatchingResult:
         """Patch every attention and MLP component and measure the effect.
 
@@ -222,12 +223,39 @@ class ActivationPatcher:
                 "noising": Replace preferred activations with dispreferred ones.
                 "denoising": Replace dispreferred activations with preferred ones.
                 "zero": Zero-ablate each component in the preferred completion.
+                "mean": Replace with corpus mean (see ``mean_corpus``).
             max_length: Maximum sequence length.
             show_progress: Show progress bar.
+            mean_corpus: Required when ``mode='mean'``. List of (prompt, response)
+                tuples whose component activations are averaged. Defaults to
+                the shipped diagnostic preference set if None.
 
         Returns:
             PatchingResult with effects for all components.
+
+        Note on mean vs zero ablation
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        Zero ablation assumes the null activation is zero. In practice,
+        post-layernorm activations (especially MLP outputs) have a non-trivial
+        DC offset: mean ablation removes the component's *contribution beyond
+        its unconditional expectation*, which is the right causal question when
+        the baseline is "typical input" rather than "no input". In the reward-
+        model setting, mean ablation is more conservative and tends to produce
+        smaller patch effects than zero ablation because it preserves the DC
+        shift. The two agree closely on residual-stream-centred architectures.
         """
+        if mode == "mean":
+            if mean_corpus is None:
+                from reward_lens.diagnostic_data_v2 import get_pairs_v2
+                pairs = get_pairs_v2()
+                mean_corpus = [(p.prompt, p.preferred) for p in pairs[:50]]
+            return self.patch_all_components_mean(
+                prompt, preferred, dispreferred,
+                corpus_pairs=mean_corpus,
+                max_length=max_length,
+                show_progress=show_progress,
+            )
+
         # First, get the caches for both completions
         reward_w, cache_w = self.model.forward_with_cache(
             prompt, preferred, cache_full_sequences=True, max_length=max_length
@@ -382,8 +410,9 @@ class ActivationPatcher:
         dispreferred: str,
         layer_idx: int,
         component_type: Literal["attn", "mlp"],
-        mode: Literal["noising", "denoising", "zero"] = "noising",
+        mode: Literal["noising", "denoising", "zero", "mean"] = "noising",
         max_length: int = 2048,
+        mean_corpus: Optional[list[tuple[str, str]]] = None,
     ) -> float:
         """Patch a single specific component and return the effect.
 
@@ -395,12 +424,26 @@ class ActivationPatcher:
             dispreferred: The dispreferred completion.
             layer_idx: Layer index.
             component_type: "attn" or "mlp".
-            mode: Patching mode.
+            mode: Patching mode ("noising", "denoising", "zero", or "mean").
             max_length: Maximum sequence length.
+            mean_corpus: Corpus for mean ablation; see ``patch_all_components``.
 
         Returns:
             The patch effect (scalar).
         """
+        if mode == "mean":
+            result = self.patch_all_components(
+                prompt, preferred, dispreferred, mode="mean",
+                max_length=max_length, show_progress=False,
+                mean_corpus=mean_corpus,
+            )
+            # Find the specific component in the result
+            target_name = f"{component_type}_L{layer_idx}"
+            for name, effect in zip(result.component_names, result.patch_effects):
+                if name == target_name:
+                    return float(effect)
+            raise ValueError(f"Component {target_name} not found in mean-patching result")
+
         reward_w, cache_w = self.model.forward_with_cache(
             prompt, preferred, cache_full_sequences=True, max_length=max_length
         )
@@ -441,4 +484,288 @@ class ActivationPatcher:
             original_reward_w=reward_w,
             original_reward_l=reward_l,
             original_diff=original_diff,
+        )
+
+    @torch.inference_mode()
+    def patch_all_heads(
+        self,
+        prompt: str,
+        preferred: str,
+        dispreferred: str,
+        mode: Literal["noising", "denoising"] = "noising",
+        max_length: int = 2048,
+        show_progress: bool = True,
+    ) -> "PatchingResult":
+        """Patch every attention head individually (head-level granularity).
+
+        Implementation: for each layer × head, install a forward-pre-hook on
+        o_proj that replaces the slice corresponding to head h with the
+        source-side per-head input (or zero), leaving every other head
+        untouched. This isolates the causal effect of one head at a time.
+        """
+        reward_w, _ = self.model.forward_with_cache(
+            prompt, preferred, cache_full_sequences=False, max_length=max_length
+        )
+        reward_l, _ = self.model.forward_with_cache(
+            prompt, dispreferred, cache_full_sequences=False, max_length=max_length
+        )
+        original_diff = reward_w - reward_l
+
+        # Capture per-head pre-o_proj inputs at full sequence length on both
+        # sides, for every layer.
+        n_layers = self.model.n_layers
+        n_heads = self.model.n_heads
+        layers = self.model.adapter.get_layers(self.model.model)
+
+        target_inputs = self.model.tokenize_conversation(
+            prompt, preferred if mode == "noising" else dispreferred,
+            max_length=max_length,
+        )
+        # Source-side: opposite completion.
+        source_text = dispreferred if mode == "noising" else preferred
+        source_per_head = self._capture_per_head_o_proj_inputs(
+            prompt, source_text, max_length=max_length,
+        )
+        target_per_head = self._capture_per_head_o_proj_inputs(
+            prompt, preferred if mode == "noising" else dispreferred,
+            max_length=max_length,
+        )
+        other_reward = reward_l if mode == "noising" else reward_w
+
+        component_names: list[str] = []
+        component_types: list[str] = []
+        layer_indices: list[int] = []
+        patch_effects: list[float] = []
+
+        from tqdm import tqdm as _tqdm
+        iterator = range(n_layers)
+        if show_progress:
+            iterator = _tqdm(iterator, desc=f"head-patching ({mode})")
+
+        for L in iterator:
+            o_proj = self.model.adapter.get_attn_o_proj(layers[L])
+            if o_proj is None:
+                continue
+            for h in range(n_heads):
+                effect = self._patch_one_head(
+                    o_proj=o_proj,
+                    target_inputs=target_inputs,
+                    head_idx=h,
+                    n_heads=n_heads,
+                    src_head=source_per_head[L][:, :, h, :],
+                    tgt_head=target_per_head[L][:, :, h, :],
+                    other_reward=other_reward,
+                    original_diff=original_diff,
+                    mode=mode,
+                )
+                component_names.append(f"head_L{L}_H{h}")
+                component_types.append("attn_head")
+                layer_indices.append(L)
+                patch_effects.append(effect)
+
+        return PatchingResult(
+            component_names=component_names,
+            component_types=component_types,
+            layer_indices=layer_indices,
+            patch_effects=np.array(patch_effects),
+            original_differential=original_diff,
+            patching_mode=f"head-{mode}",
+        )
+
+    def _capture_per_head_o_proj_inputs(
+        self, prompt: str, response: str, max_length: int,
+    ) -> dict[int, torch.Tensor]:
+        """For every layer with o_proj, capture (1, T, n_heads, d_head) at the
+        last forward pass (full sequence)."""
+        inputs = self.model.tokenize_conversation(prompt, response, max_length=max_length)
+        layers = self.model.adapter.get_layers(self.model.model)
+        n_heads = self.model.n_heads
+        captured: dict[int, torch.Tensor] = {}
+
+        handles = []
+        for L, layer in enumerate(layers):
+            o_proj = self.model.adapter.get_attn_o_proj(layer)
+            if o_proj is None:
+                continue
+
+            def make_hook(layer_idx):
+                def pre_hook(module, args):
+                    x = args[0] if isinstance(args, tuple) else args
+                    B, T, F = x.shape
+                    d_head = F // n_heads
+                    captured[layer_idx] = x.view(B, T, n_heads, d_head).detach().clone()
+                return pre_hook
+            handles.append(o_proj.register_forward_pre_hook(make_hook(L)))
+
+        try:
+            with torch.no_grad():
+                self.model.model(**inputs)
+        finally:
+            for h in handles:
+                h.remove()
+        return captured
+
+    def _patch_one_head(
+        self,
+        o_proj: nn.Module,
+        target_inputs: dict[str, torch.Tensor],
+        head_idx: int,
+        n_heads: int,
+        src_head: torch.Tensor,  # (1, T_src, d_head)
+        tgt_head: torch.Tensor,  # (1, T_tgt, d_head)
+        other_reward: float,
+        original_diff: float,
+        mode: str,
+    ) -> float:
+        """Run target forward with head_idx replaced by source head."""
+        T_target = target_inputs["input_ids"].shape[1]
+        # Sequence-align src to target (truncate or right-pad with zeros)
+        if src_head.shape[1] >= T_target:
+            src_aligned = src_head[:, :T_target, :]
+        else:
+            pad = torch.zeros(
+                src_head.shape[0], T_target - src_head.shape[1], src_head.shape[2],
+                dtype=src_head.dtype, device=src_head.device,
+            )
+            src_aligned = torch.cat([src_head, pad], dim=1)
+
+        delta_head = (src_aligned.to(self.model.device) - tgt_head[:, :T_target, :].to(self.model.device))
+
+        def pre_hook(module, args):
+            x = args[0] if isinstance(args, tuple) else args  # (B, T, n_heads * d_head)
+            B, T, F = x.shape
+            d_head = F // n_heads
+            x_view = x.view(B, T, n_heads, d_head).clone()
+            slot = x_view[:, :, head_idx, :]
+            x_view[:, :, head_idx, :] = slot + delta_head.to(slot.dtype)
+            x = x_view.view(B, T, F)
+            if isinstance(args, tuple):
+                return (x,) + args[1:]
+            return x
+
+        h = o_proj.register_forward_pre_hook(pre_hook)
+        try:
+            with torch.no_grad():
+                out = self.model.model(**target_inputs)
+            patched_reward = self.model.adapter.extract_reward(out, target_inputs).item()
+        finally:
+            h.remove()
+
+        if mode == "noising":
+            patched_diff = patched_reward - other_reward
+        else:
+            patched_diff = other_reward - patched_reward
+        return original_diff - patched_diff
+
+    @torch.inference_mode()
+    def patch_all_components_mean(
+        self,
+        prompt: str,
+        preferred: str,
+        dispreferred: str,
+        corpus_pairs: list[tuple[str, str]],
+        max_length: int = 2048,
+        show_progress: bool = True,
+    ) -> "PatchingResult":
+        """Mean-ablation patching.
+
+        Replaces each component's output with the mean of its activations
+        over a user-supplied corpus. Differs from zero ablation when the
+        component has a non-trivial DC offset (which is typical for MLPs
+        post-layernorm). When in doubt, prefer mean over zero.
+
+        Args:
+            corpus_pairs: list of (prompt, response) tuples whose activations
+                are averaged. Use a couple of dozen at minimum for stability.
+        """
+        # Compute mean activations across the corpus per component.
+        from collections import defaultdict
+        attn_means: dict[int, torch.Tensor] = {}
+        mlp_means: dict[int, torch.Tensor] = {}
+        attn_count: dict[int, int] = defaultdict(int)
+        mlp_count: dict[int, int] = defaultdict(int)
+
+        # Use single-pair forward_with_cache with full sequences and average
+        # over the *final* token only (the most relevant for reward).
+        for p, r in corpus_pairs:
+            _, cache = self.model.forward_with_cache(
+                p, r, cache_full_sequences=False, max_length=max_length,
+            )
+            for L, t in cache.attn_outputs.items():
+                if L not in attn_means:
+                    attn_means[L] = t.detach().float().clone()
+                else:
+                    attn_means[L] = attn_means[L] + t.detach().float()
+                attn_count[L] += 1
+            for L, t in cache.mlp_outputs.items():
+                if L not in mlp_means:
+                    mlp_means[L] = t.detach().float().clone()
+                else:
+                    mlp_means[L] = mlp_means[L] + t.detach().float()
+                mlp_count[L] += 1
+        for L in attn_means:
+            attn_means[L] = attn_means[L] / max(1, attn_count[L])
+        for L in mlp_means:
+            mlp_means[L] = mlp_means[L] / max(1, mlp_count[L])
+
+        # Now patch the preferred run, replacing each component's final-token
+        # output with the corpus mean. Effect = original_diff - patched_diff.
+        reward_w, _ = self.model.forward_with_cache(prompt, preferred, max_length=max_length)
+        reward_l, _ = self.model.forward_with_cache(prompt, dispreferred, max_length=max_length)
+        original_diff = reward_w - reward_l
+        target_inputs = self.model.tokenize_conversation(prompt, preferred, max_length=max_length)
+        layers = self.model.adapter.get_layers(self.model.model)
+
+        component_names = []
+        component_types = []
+        layer_indices = []
+        patch_effects = []
+        from tqdm import tqdm as _tqdm
+        iterator = range(len(layers))
+        if show_progress:
+            iterator = _tqdm(iterator, desc="mean-patching")
+
+        T_target = target_inputs["input_ids"].shape[1]
+        attn_mod_seq_pos = T_target - 1  # last token
+
+        for L in iterator:
+            for kind, mean_dict, get_mod in (
+                ("attn", attn_means, self.model.adapter.get_attn_module),
+                ("mlp",  mlp_means,  self.model.adapter.get_mlp_module),
+            ):
+                module = get_mod(layers[L])
+                if module is None or L not in mean_dict:
+                    continue
+                mean_vec = mean_dict[L].to(self.model.device)  # (1, d_model)
+
+                def hook_fn(module, input, output, kind=kind, mean_vec=mean_vec):
+                    hidden = self.model.adapter.extract_attn_output(output) if kind == "attn" \
+                        else self.model.adapter.extract_mlp_output(output)
+                    new_hidden = hidden.clone()
+                    new_hidden[:, attn_mod_seq_pos, :] = mean_vec.to(new_hidden.dtype)
+                    if isinstance(output, tuple):
+                        return (new_hidden,) + output[1:]
+                    return new_hidden
+
+                handle = module.register_forward_hook(hook_fn)
+                try:
+                    with torch.no_grad():
+                        out = self.model.model(**target_inputs)
+                    patched_reward = self.model.adapter.extract_reward(out, target_inputs).item()
+                finally:
+                    handle.remove()
+
+                patched_diff = patched_reward - reward_l
+                component_names.append(f"{kind}_L{L}")
+                component_types.append(kind)
+                layer_indices.append(L)
+                patch_effects.append(original_diff - patched_diff)
+
+        return PatchingResult(
+            component_names=component_names,
+            component_types=component_types,
+            layer_indices=layer_indices,
+            patch_effects=np.array(patch_effects),
+            original_differential=original_diff,
+            patching_mode="mean",
         )
