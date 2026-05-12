@@ -350,3 +350,66 @@ class ComponentAttribution:
             total_reward_preferred=reward_w,
             total_reward_dispreferred=reward_l,
         )
+
+    def attribute_heads(
+        self,
+        prompt: str,
+        preferred: str,
+        dispreferred: str,
+        max_length: int = 2048,
+    ) -> ComponentResult:
+        """Per-head attention attribution (head granularity).
+
+        Decomposes each layer's attention contribution into per-head terms by
+        capturing the input to o_proj and projecting each head's slice
+        through its own o_proj weight slice. Yields ``n_layers * n_heads``
+        head components plus the per-layer MLPs.
+        """
+        # Use the batched forward path with capture_heads=True for cheap
+        # head-resolution attribution.
+        cache_w = self.model.forward_with_cache_batch(
+            [(prompt, preferred)], batch_size=1, max_length=max_length,
+            capture_heads=True,
+        )
+        cache_l = self.model.forward_with_cache_batch(
+            [(prompt, dispreferred)], batch_size=1, max_length=max_length,
+            capture_heads=True,
+        )
+
+        names_w, layer_idxs, head_idxs, contribs_w = _batch_head_attribution(self.model, cache_w)
+        names_l, _, _, contribs_l = _batch_head_attribution(self.model, cache_l)
+
+        # Also include per-layer MLP contributions for completeness.
+        w_r = self.model.reward_direction
+        n_layers = self.model.n_layers
+        component_names = list(names_w)
+        component_types = ["attn_head"] * len(names_w)
+        layer_indices = list(layer_idxs)
+        contribs_w_full = list(contribs_w[0])
+        contribs_l_full = list(contribs_l[0])
+
+        for L in range(n_layers):
+            mlp_w = cache_w.mlp_outputs.get(L)
+            mlp_l = cache_l.mlp_outputs.get(L)
+            if mlp_w is None or mlp_l is None:
+                continue
+            cw = (mlp_w.float() @ w_r.to(mlp_w.device)).item()
+            cl = (mlp_l.float() @ w_r.to(mlp_l.device)).item()
+            component_names.append(f"mlp_L{L}")
+            component_types.append("mlp")
+            layer_indices.append(L)
+            contribs_w_full.append(cw)
+            contribs_l_full.append(cl)
+
+        contribs_w_arr = np.array(contribs_w_full)
+        contribs_l_arr = np.array(contribs_l_full)
+        return ComponentResult(
+            component_names=component_names,
+            component_types=component_types,
+            layer_indices=layer_indices,
+            contributions_preferred=contribs_w_arr,
+            contributions_dispreferred=contribs_l_arr,
+            differential_contributions=contribs_w_arr - contribs_l_arr,
+            total_reward_preferred=float(cache_w.rewards[0].item()),
+            total_reward_dispreferred=float(cache_l.rewards[0].item()),
+        )
