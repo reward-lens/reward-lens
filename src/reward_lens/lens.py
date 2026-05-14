@@ -21,7 +21,7 @@ For the formal definition, see Section 5 of the research document.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
@@ -50,11 +50,40 @@ class RewardLensResult:
     layers: np.ndarray
     reward_lens_preferred: np.ndarray
     reward_lens_dispreferred: np.ndarray
-    differential: np.ndarray
-    marginal_contributions: np.ndarray
     reward_preferred: float
     reward_dispreferred: float
-    crystallization_layer: int
+    differential: Optional[np.ndarray] = field(default=None)
+    marginal_contributions: Optional[np.ndarray] = field(default=None)
+    crystallization_layer: Optional[int] = field(default=None)
+
+    def __post_init__(self) -> None:
+        if self.differential is None:
+            self.differential = self.reward_lens_preferred - self.reward_lens_dispreferred
+        if self.marginal_contributions is None:
+            self.marginal_contributions = np.diff(self.differential)
+        if self.crystallization_layer is None:
+            # Fall back to the largest-magnitude finite differential when
+            # ``final`` is zero or non-finite — Gemma-2's logit-soft-cap
+            # can collapse the late-layer differential to numerical zero.
+            final_diff = self.differential[-1]
+            ref = final_diff
+            if not np.isfinite(ref) or abs(ref) < 1e-8:
+                finite = self.differential[np.isfinite(self.differential)]
+                if finite.size == 0:
+                    self.crystallization_layer = int(self.layers[-1])
+                    return
+                ref = float(finite[int(np.argmax(np.abs(finite)))])
+                if abs(ref) < 1e-8:
+                    self.crystallization_layer = int(self.layers[-1])
+                    return
+            threshold = 0.5 * ref
+            self.crystallization_layer = int(self.layers[-1])
+            for i, d in enumerate(self.differential):
+                if not np.isfinite(d):
+                    continue
+                if (ref >= 0 and d >= threshold) or (ref < 0 and d <= threshold):
+                    self.crystallization_layer = int(self.layers[i])
+                    break
 
     def plot(
         self,
@@ -200,17 +229,26 @@ class RewardLens:
         # Marginal contributions: delta^(l) = differential^(l) - differential^(l-1)
         marginal = np.diff(differential)
 
-        # Crystallization layer: first layer where differential reaches 50% of final
+        # Crystallization layer: first layer where differential reaches 50% of final.
+        # Defense-in-depth: fall back to max-|diff| when final is zero
+        # (Gemma-2 logit-soft-cap can collapse the late-layer differential).
         final_diff = differential[-1]
-        if abs(final_diff) > 1e-8:
-            threshold = 0.5 * final_diff
-            crystal_idx = 0
+        ref = final_diff
+        if not np.isfinite(ref) or abs(ref) < 1e-8:
+            finite = differential[np.isfinite(differential)]
+            if finite.size > 0:
+                cand = float(finite[int(np.argmax(np.abs(finite)))])
+                if abs(cand) >= 1e-8:
+                    ref = cand
+        if np.isfinite(ref) and abs(ref) > 1e-8:
+            threshold = 0.5 * ref
+            crystal_idx = layers[-1]
             for i, d in enumerate(differential):
-                if (final_diff > 0 and d >= threshold) or (final_diff < 0 and d <= threshold):
+                if not np.isfinite(d):
+                    continue
+                if (ref > 0 and d >= threshold) or (ref < 0 and d <= threshold):
                     crystal_idx = layers[i]
                     break
-            else:
-                crystal_idx = layers[-1]
         else:
             crystal_idx = layers[-1]
 
