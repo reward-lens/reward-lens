@@ -56,9 +56,11 @@ class DivergenceInfo:
 @dataclass
 class DivergenceAwarePatchingResult(PatchingResult):
     """Extended patching result with divergence analysis.
-    
+
+    Carries every field of :class:`PatchingResult` and adds the divergence
+    fields below.
+
     Attributes:
-        (inherited from PatchingResult)
         divergence_info: Per-component divergence analysis.
         has_pernicious_divergence: Whether any intervention has pernicious divergence.
         reliability_score: Overall reliability of causal claims (0-1).
@@ -343,10 +345,11 @@ class DivergenceAwarePatching(ActivationPatcher):
         prompt: str,
         preferred: str,
         dispreferred: str,
-        mode: Literal["noising", "denoising", "zero"] = "noising",
+        mode: Literal["noising", "denoising", "zero", "mean"] = "noising",
         divergence_threshold: float = 2.0,
         max_length: int = 2048,
         show_progress: bool = True,
+        mean_corpus: Optional[list[tuple[str, str]]] = None,
     ) -> DivergenceAwarePatchingResult:
         """Patch all components and check for divergent representations.
         
@@ -354,10 +357,11 @@ class DivergenceAwarePatching(ActivationPatcher):
             prompt: The user prompt.
             preferred: The preferred completion.
             dispreferred: The dispreferred completion.
-            mode: Patching mode.
+            mode: Patching mode ("noising", "denoising", "zero", or "mean").
             divergence_threshold: Mahalanobis distance threshold for flagging (in σ).
             max_length: Maximum sequence length.
             show_progress: Show progress bar.
+            mean_corpus: Corpus for mean ablation; see ActivationPatcher.patch_all_components.
             
         Returns:
             DivergenceAwarePatchingResult with standard patching plus divergence info.
@@ -365,7 +369,8 @@ class DivergenceAwarePatching(ActivationPatcher):
         # Run standard patching
         base_result = self.patch_all_components(
             prompt, preferred, dispreferred,
-            mode=mode, max_length=max_length, show_progress=show_progress
+            mode=mode, max_length=max_length, show_progress=show_progress,
+            mean_corpus=mean_corpus,
         )
         
         # Get caches for divergence analysis
