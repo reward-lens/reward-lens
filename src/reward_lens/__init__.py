@@ -21,10 +21,12 @@ New modules (v1.0.0):
     - concepts: Concept vector extraction and analysis
 """
 
-from reward_lens.model import RewardModel
+from reward_lens.model import RewardModel, ActivationCache, BatchedActivationCache
 from reward_lens.lens import RewardLens, reward_lens_plot
 from reward_lens.attribution import ComponentAttribution
 from reward_lens.patching import ActivationPatcher
+from reward_lens.path_patching import PathPatcher, PathPatchResult
+from reward_lens import statistics  # noqa: F401 — re-export module
 
 # New modules (v1.0.0)
 from reward_lens.distortion import DistortionAnalyzer, DistortionReport
@@ -38,10 +40,14 @@ __version__ = "1.0.0"
 __all__ = [
     # Core (v1.0.0)
     "RewardModel",
+    "ActivationCache",
+    "BatchedActivationCache",
     "RewardLens",
     "reward_lens_plot",
     "ComponentAttribution",
     "ActivationPatcher",
+    "PathPatcher",
+    "PathPatchResult",
     # New modules (v1.0.0)
     "DistortionAnalyzer",
     "DistortionReport",
