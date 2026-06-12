@@ -1,0 +1,191 @@
+# reward-lens documentation — Material for MkDocs configuration.
+#
+# This is the build-ready base. The content under content/ is authored per
+# AUTHORING_PROMPT.md. Preview locally with:  mkdocs serve -f docs/mkdocs.yml
+# (run from the repository root), or `cd docs && mkdocs serve`.
+
+site_name: reward-lens
+site_description: Mechanistic interpretability toolkit for reward models.
+site_url: https://suhailnadaf509.github.io/reward-lens/
+site_author: Mohammed Suhail B Nadaf
+copyright: Copyright &copy; 2026 Mohammed Suhail B Nadaf — MIT License
+
+repo_url: https://github.com/suhailnadaf509/reward-lens
+repo_name: suhailnadaf509/reward-lens
+edit_uri: edit/main/docs/content/
+
+# Keep the whole documentation project self-contained inside docs/.
+docs_dir: content
+site_dir: _site
+
+theme:
+  name: material
+  language: en
+  # logo and favicon are placeholders — drop real assets in and point here.
+  # logo: assets/images/logo.svg
+  # favicon: assets/images/favicon.png
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - navigation.tracking
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+markdown_extensions:
+  # Prose and structure
+  - abbr
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      title: On this page
+  # Admonitions, callouts, collapsible detail
+  - admonition
+  - pymdownx.details
+  - pymdownx.blocks.caption
+  # Code and content
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  # Math
+  - pymdownx.arithmatex:
+      generic: true
+
+plugins:
+  - search
+  # API reference is generated statically from the source tree (griffe reads
+  # src/ without importing torch, so this builds without a GPU or heavy deps).
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../src]
+          options:
+            docstring_style: google
+            docstring_section_style: table
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: true
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            members_order: source
+            filters: ["!^_"]
+            heading_level: 2
+  # Renders committed .ipynb notebooks as pages. execute:false — an 8B reward
+  # model cannot run in CI, so notebooks are executed once locally and committed.
+  - mkdocs-jupyter:
+      execute: false
+      include_source: true
+      ignore_h1_titles: true
+
+nav:
+  - Home: index.md
+  - Concepts:
+      - concepts/index.md
+      - The reward direction: concepts/reward-direction.md
+      - Preference geometry: concepts/preference-geometry.md
+      - Why reward is relative: concepts/reward-is-relative.md
+      - Crystallization depth: concepts/crystallization.md
+      - Observational vs causal: concepts/observational-vs-causal.md
+  - Getting started:
+      - getting-started/index.md
+  - Tutorials:
+      - tutorials/index.md
+      - Intro demo (notebook): tutorials/intro-demo.ipynb
+  - How-to guides:
+      - how-to/index.md
+      - Detect length bias: how-to/detect-length-bias.md
+      - Attribute a reward score: how-to/attribute-a-score.md
+      - Compare two reward models: how-to/compare-two-models.md
+      - Patch without running out of memory: how-to/patching-memory.md
+      - Train an SAE on reward activations: how-to/train-an-sae.md
+      - Write an adapter for your model: how-to/write-an-adapter.md
+  - Tools:
+      - tools/index.md
+      - Observational:
+          - Reward Lens: tools/reward-lens.md
+          - Component Attribution: tools/component-attribution.md
+          - SAE feature attribution: tools/sae-features.md
+          - Concept vectors: tools/concept-vectors.md
+      - Causal:
+          - Activation Patching: tools/activation-patching.md
+          - Path Patching: tools/path-patching.md
+          - Divergence-aware Patching: tools/divergence-patching.md
+      - Vulnerability:
+          - Hacking Detector: tools/hacking-detector.md
+          - Distortion Index: tools/distortion-index.md
+          - Misalignment Cascade: tools/misalignment-cascade.md
+          - Reward-Term Conflict: tools/reward-conflict.md
+  - Interpreting results honestly: caveats.md
+  - Background & theory:
+      - theory/index.md
+      - Bradley-Terry and the preference model: theory/bradley-terry.md
+      - Goodhart and overoptimization: theory/goodhart.md
+      - The lens lineage: theory/lens-lineage.md
+  - API reference:
+      - reference/index.md
+      - Core: reference/core.md
+      - Causal tools: reference/causal.md
+      - Representation tools: reference/representation.md
+      - Vulnerability tools: reference/vulnerability.md
+      - Data and adapters: reference/data-and-adapters.md
+  - Contributing:
+      - contributing/index.md

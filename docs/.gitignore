@@ -1,0 +1,14 @@
+# Built site
+_site/
+
+# TikZ / LaTeX build artifacts (the pipeline keeps only the final .svg)
+diagrams/**/*.aux
+diagrams/**/*.log
+diagrams/**/*.pdf
+diagrams/**/*.out
+diagrams/**/*.synctex.gz
+
+# Python
+__pycache__/
+*.pyc
+.venv/
