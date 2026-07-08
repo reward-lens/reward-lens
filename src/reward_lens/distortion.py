@@ -28,10 +28,9 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
-import torch
 
-from reward_lens.model import RewardModel
 from reward_lens.diagnostic_data import PreferencePair
+from reward_lens.model import RewardModel
 
 
 @dataclass
@@ -58,38 +57,38 @@ class DistortionReport:
 
     def print_summary(self) -> None:
         """Print a formatted distortion analysis summary."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Distortion Index Analysis — Predicted Hacking Vulnerabilities")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         print(f"\nOverall Predicted Hacking Severity: {self.predicted_hacking_severity:.2%}")
 
         print("\nPer-Dimension Analysis:")
         sorted_dims = sorted(
-            self.per_dimension_distortion.items(),
-            key=lambda x: x[1],
-            reverse=True
+            self.per_dimension_distortion.items(), key=lambda x: x[1], reverse=True
         )
         for dim, distortion in sorted_dims:
             coverage = self.effective_coverage.get(dim, 0.0)
-            risk = "🔴 HIGH RISK" if distortion > 0.7 else (
-                "🟡 MODERATE" if distortion > 0.4 else "🟢 LOW"
+            risk = (
+                "🔴 HIGH RISK"
+                if distortion > 0.7
+                else ("🟡 MODERATE" if distortion > 0.4 else "🟢 LOW")
             )
             print(f"  {dim}:")
             print(f"    Distortion Index: {distortion:.3f} ({risk})")
             print(f"    Effective Coverage: {coverage:.1%}")
 
         if self.under_covered_dimensions:
-            print(f"\n⚠️  Under-Covered Dimensions (likely to be hacked):")
+            print("\n⚠️  Under-Covered Dimensions (likely to be hacked):")
             for dim in self.under_covered_dimensions:
                 print(f"    - {dim}")
 
         if self.recommendations:
-            print(f"\n📋 Recommendations:")
+            print("\n📋 Recommendations:")
             for rec in self.recommendations:
                 print(f"    • {rec}")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
 
     def plot(
         self,
@@ -109,41 +108,44 @@ class DistortionReport:
         # Left: Distortion index bar chart
         dims = list(self.per_dimension_distortion.keys())
         distortions = [self.per_dimension_distortion[d] for d in dims]
-        colors = ['#F44336' if d > 0.7 else '#FF9800' if d > 0.4 else '#4CAF50'
-                  for d in distortions]
+        colors = [
+            "#F44336" if d > 0.7 else "#FF9800" if d > 0.4 else "#4CAF50" for d in distortions
+        ]
 
         y_pos = np.arange(len(dims))
         ax1.barh(y_pos, distortions, color=colors, alpha=0.8)
         ax1.set_yticks(y_pos)
         ax1.set_yticklabels(dims)
-        ax1.set_xlabel('Distortion Index')
-        ax1.set_title('Predicted Hacking Vulnerability by Dimension')
-        ax1.axvline(x=0.4, color='orange', linestyle='--', alpha=0.5, label='Moderate threshold')
-        ax1.axvline(x=0.7, color='red', linestyle='--', alpha=0.5, label='High threshold')
+        ax1.set_xlabel("Distortion Index")
+        ax1.set_title("Predicted Hacking Vulnerability by Dimension")
+        ax1.axvline(x=0.4, color="orange", linestyle="--", alpha=0.5, label="Moderate threshold")
+        ax1.axvline(x=0.7, color="red", linestyle="--", alpha=0.5, label="High threshold")
         ax1.legend(fontsize=8)
         ax1.set_xlim(0, 1)
 
         # Right: Coverage heatmap
         if self.coverage_matrix is not None and self.coverage_matrix.size > 0:
             import seaborn as sns
+
             sns.heatmap(
                 self.coverage_matrix.T,
                 ax=ax2,
-                cmap='YlGnBu',
-                xticklabels=[f'P{i}' for i in range(self.coverage_matrix.shape[0])],
+                cmap="YlGnBu",
+                xticklabels=[f"P{i}" for i in range(self.coverage_matrix.shape[0])],
                 yticklabels=dims,
-                cbar_kws={'label': 'Coverage Strength'},
+                cbar_kws={"label": "Coverage Strength"},
             )
-            ax2.set_xlabel('Evaluation Probes')
-            ax2.set_title('Coverage Matrix')
+            ax2.set_xlabel("Evaluation Probes")
+            ax2.set_title("Coverage Matrix")
         else:
-            ax2.text(0.5, 0.5, 'Coverage matrix\nnot available',
-                     ha='center', va='center', fontsize=12)
+            ax2.text(
+                0.5, 0.5, "Coverage matrix\nnot available", ha="center", va="center", fontsize=12
+            )
             ax2.set_axis_off()
 
         plt.tight_layout()
         if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            plt.savefig(save_path, dpi=150, bbox_inches="tight")
         plt.show()
         plt.close()
 
@@ -234,9 +236,7 @@ class DistortionAnalyzer:
                 predicted_hacking_severity=1.0,
                 coverage_matrix=np.zeros((0, n_dims)),
                 effective_coverage={d: 0.0 for d in quality_dimensions},
-                recommendations=[
-                    f"Add evaluation probes for ALL dimensions: {quality_dimensions}"
-                ],
+                recommendations=[f"Add evaluation probes for ALL dimensions: {quality_dimensions}"],
             )
 
         # Initialize coverage matrix
@@ -246,8 +246,7 @@ class DistortionAnalyzer:
         probe_scores = []
         for probe in all_probes:
             score_w, score_l = self.model.score_pair(
-                probe.prompt, probe.preferred, probe.dispreferred,
-                max_length=max_length
+                probe.prompt, probe.preferred, probe.dispreferred, max_length=max_length
             )
             delta = score_w - score_l
             probe_scores.append(delta)
@@ -269,9 +268,7 @@ class DistortionAnalyzer:
                 if dim in dim_to_idx:
                     # Coverage = normalized discrimination strength
                     # Probes that the model distinguishes well provide more coverage
-                    coverage_matrix[probe_idx, dim_to_idx[dim]] = max(
-                        0, norm_scores[probe_idx]
-                    )
+                    coverage_matrix[probe_idx, dim_to_idx[dim]] = max(0, norm_scores[probe_idx])
 
         # Compute effective coverage per dimension
         # Using sum with diminishing returns: C_eff = 1 - prod(1 - c_i)
@@ -289,16 +286,14 @@ class DistortionAnalyzer:
         max_coverage = max(effective_coverage.values()) if effective_coverage else 0
         if max_coverage > 0:
             per_dimension_distortion = {
-                dim: 1.0 - (cov / max_coverage)
-                for dim, cov in effective_coverage.items()
+                dim: 1.0 - (cov / max_coverage) for dim, cov in effective_coverage.items()
             }
         else:
             per_dimension_distortion = {d: 1.0 for d in quality_dimensions}
 
         # Identify under-covered dimensions
         under_covered = [
-            dim for dim, dist in per_dimension_distortion.items()
-            if dist > distortion_threshold
+            dim for dim, dist in per_dimension_distortion.items() if dist > distortion_threshold
         ]
 
         # Compute overall severity
@@ -307,13 +302,9 @@ class DistortionAnalyzer:
         # Generate recommendations
         recommendations = []
         for dim in under_covered:
-            n_probes_dim = sum(
-                1 for mapping in probe_dim_mappings if dim in mapping
-            )
+            n_probes_dim = sum(1 for mapping in probe_dim_mappings if dim in mapping)
             if n_probes_dim == 0:
-                recommendations.append(
-                    f"Add evaluation probes for '{dim}' (currently 0 probes)"
-                )
+                recommendations.append(f"Add evaluation probes for '{dim}' (currently 0 probes)")
             else:
                 recommendations.append(
                     f"Add more diverse probes for '{dim}' "
@@ -373,10 +364,7 @@ class DistortionAnalyzer:
         }
 
         # Recalculate under-covered
-        under_covered = [
-            dim for dim, dist in amplified_distortion.items()
-            if dist > 0.5
-        ]
+        under_covered = [dim for dim, dist in amplified_distortion.items() if dist > 0.5]
 
         amplified_severity = np.mean(list(amplified_distortion.values()))
 
@@ -386,7 +374,7 @@ class DistortionAnalyzer:
                 0,
                 f"⚠️ Agentic amplification with {tool_count} tools "
                 f"increases distortion ~{amplification:.1f}x. "
-                f"Consider tool-specific evaluation probes."
+                f"Consider tool-specific evaluation probes.",
             )
 
         return DistortionReport(

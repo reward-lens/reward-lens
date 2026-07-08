@@ -1,18 +1,18 @@
 """Tests for reward_lens.path_patching — head-level 2-hop path patching."""
 
 import pytest
-import numpy as np
 import torch
 import torch.nn as nn
 
 from reward_lens.model import RewardModel
 from reward_lens.model_adapters import LlamaAdapter
 
-
 # ── Mock model with o_proj support ──────────────────────────────────────
+
 
 class MockAttn(nn.Module):
     """Attention module that has an o_proj, matching Llama arch."""
+
     def __init__(self, d_model=64, n_heads=4):
         super().__init__()
         self.q_proj = nn.Linear(d_model, d_model, bias=False)
@@ -82,6 +82,7 @@ def make_mock_with_oproj(n_layers=4, d_model=64, n_heads=4):
     mock.eval()
 
     from unittest.mock import MagicMock
+
     tokenizer = MagicMock()
     tokenizer.chat_template = None
     tokenizer.pad_token = "<pad>"
@@ -103,6 +104,7 @@ def make_mock_with_oproj(n_layers=4, d_model=64, n_heads=4):
 
 # ── Tests ───────────────────────────────────────────────────────────────
 
+
 class TestPathPatcher:
     """Tests for PathPatcher."""
 
@@ -112,7 +114,9 @@ class TestPathPatcher:
         rm = make_mock_with_oproj(n_layers=4)
         patcher = PathPatcher(rm)
         result = patcher.patch(
-            "hello", "good response", "bad response",
+            "hello",
+            "good response",
+            "bad response",
             sender=("head", 0, 0),
             receiver=("mlp", 2, None),
             mode="noising",
@@ -128,7 +132,9 @@ class TestPathPatcher:
         rm = make_mock_with_oproj(n_layers=4)
         patcher = PathPatcher(rm)
         result = patcher.patch(
-            "hello", "good", "bad",
+            "hello",
+            "good",
+            "bad",
             sender=("head", 0, 0),
             receiver=("mlp", 2, None),
             mode="denoising",
@@ -142,7 +148,9 @@ class TestPathPatcher:
         patcher = PathPatcher(rm)
         with pytest.raises(ValueError, match="receiver layer.*must be > sender"):
             patcher.patch(
-                "hello", "good", "bad",
+                "hello",
+                "good",
+                "bad",
                 sender=("head", 2, 0),
                 receiver=("mlp", 1, None),
                 mode="noising",
@@ -155,7 +163,9 @@ class TestPathPatcher:
         patcher = PathPatcher(rm)
         with pytest.raises(NotImplementedError):
             patcher.patch(
-                "hello", "good", "bad",
+                "hello",
+                "good",
+                "bad",
                 sender=("mlp", 0, None),
                 receiver=("mlp", 2, None),
             )
@@ -167,7 +177,9 @@ class TestPathPatcher:
         patcher = PathPatcher(rm)
         with pytest.raises(ValueError, match="sender head index is required"):
             patcher.patch(
-                "hello", "good", "bad",
+                "hello",
+                "good",
+                "bad",
                 sender=("head", 0, None),
                 receiver=("mlp", 2, None),
             )
@@ -195,7 +207,9 @@ class TestPathPatcher:
         patcher = PathPatcher(rm)
         with pytest.raises(ValueError, match="unknown mode"):
             patcher.patch(
-                "hello", "good", "bad",
+                "hello",
+                "good",
+                "bad",
                 sender=("head", 0, 0),
                 receiver=("mlp", 2, None),
                 mode="invalid_mode",

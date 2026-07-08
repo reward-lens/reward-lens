@@ -30,10 +30,8 @@ import json
 import math
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Optional
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -42,10 +40,10 @@ from tqdm import tqdm
 
 from reward_lens.model import RewardModel
 
-
 # ===========================================================================
 # TopK Sparse Autoencoder
 # ===========================================================================
+
 
 class TopKSAE(nn.Module):
     """TopK Sparse Autoencoder.
@@ -150,7 +148,7 @@ class TopKSAE(nn.Module):
         """
         w_r = reward_direction.to(self.W_dec.device).float()
         # W_dec is (n_features, d_model), so W_dec @ w_r gives (n_features,)
-        return (self.W_dec.float() @ w_r)
+        return self.W_dec.float() @ w_r
 
     def decompose_reward(
         self, x: torch.Tensor, reward_direction: torch.Tensor
@@ -204,9 +202,7 @@ class TopKSAE(nn.Module):
         with open(os.path.join(path, "sae_config.json"), "r") as f:
             config = json.load(f)
         sae = cls(**config)
-        sae.load_state_dict(
-            torch.load(os.path.join(path, "sae_weights.pt"), map_location=device)
-        )
+        sae.load_state_dict(torch.load(os.path.join(path, "sae_weights.pt"), map_location=device))
         sae.to(device)
         return sae
 
@@ -214,6 +210,7 @@ class TopKSAE(nn.Module):
 # ===========================================================================
 # Activation Collector
 # ===========================================================================
+
 
 class ActivationCollector:
     """Collect activations from a reward model for SAE training.
@@ -253,14 +250,10 @@ class ActivationCollector:
         activations = []
         iterator = zip(prompts, responses)
         if show_progress:
-            iterator = tqdm(
-                list(iterator), desc=f"Collecting activations (layer {layer})"
-            )
+            iterator = tqdm(list(iterator), desc=f"Collecting activations (layer {layer})")
 
         for prompt, response in iterator:
-            _, cache = self.model.forward_with_cache(
-                prompt, response, max_length=max_length
-            )
+            _, cache = self.model.forward_with_cache(prompt, response, max_length=max_length)
             h = cache.residual_streams.get(layer)
             if h is not None:
                 activations.append(h.cpu().float())
@@ -298,14 +291,14 @@ class ActivationCollector:
         prompts = [d[prompt_key] for d in dataset]
         responses = [d[response_key] for d in dataset]
         return self.collect(
-            prompts, responses, layer,
-            max_length=max_length, show_progress=show_progress
+            prompts, responses, layer, max_length=max_length, show_progress=show_progress
         )
 
 
 # ===========================================================================
 # SAE Trainer
 # ===========================================================================
+
 
 class SAETrainer:
     """Train a TopK SAE on collected activations.
@@ -354,9 +347,7 @@ class SAETrainer:
             The trained TopKSAE.
         """
         dataset = TensorDataset(activations.float())
-        loader = DataLoader(
-            dataset, batch_size=self.batch_size, shuffle=True, drop_last=True
-        )
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         optimizer = torch.optim.Adam(self.sae.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -370,7 +361,7 @@ class SAETrainer:
             n_batches = 0
             iterator = loader
             if show_progress:
-                iterator = tqdm(loader, desc=f"Epoch {epoch+1}/{n_epochs}")
+                iterator = tqdm(loader, desc=f"Epoch {epoch + 1}/{n_epochs}")
 
             for (batch,) in iterator:
                 batch = batch.to(self.device)
@@ -399,7 +390,7 @@ class SAETrainer:
                     iterator.set_postfix(loss=f"{loss.item():.6f}")
 
             avg_loss = epoch_loss / n_batches
-            print(f"  Epoch {epoch+1}/{n_epochs}: avg_loss = {avg_loss:.6f}")
+            print(f"  Epoch {epoch + 1}/{n_epochs}: avg_loss = {avg_loss:.6f}")
 
         self.sae.eval()
         return self.sae
@@ -408,6 +399,7 @@ class SAETrainer:
 # ===========================================================================
 # Feature Analyzer
 # ===========================================================================
+
 
 @dataclass
 class FeatureInfo:
@@ -490,14 +482,16 @@ class FeatureAnalyzer:
             # Top activating examples
             top_vals, top_idxs = torch.topk(feat_acts, min(top_k_examples, len(feat_acts)))
 
-            features_info.append(FeatureInfo(
-                feature_idx=feat_idx,
-                reward_alignment=alignment,
-                mean_activation=mean_act,
-                activation_frequency=freq,
-                top_activating_indices=top_idxs.tolist(),
-                top_activating_values=top_vals.tolist(),
-            ))
+            features_info.append(
+                FeatureInfo(
+                    feature_idx=feat_idx,
+                    reward_alignment=alignment,
+                    mean_activation=mean_act,
+                    activation_frequency=freq,
+                    top_activating_indices=top_idxs.tolist(),
+                    top_activating_values=top_vals.tolist(),
+                )
+            )
 
         # Sort by |reward_alignment|
         features_info.sort(key=lambda f: abs(f.reward_alignment), reverse=True)
@@ -514,10 +508,7 @@ class FeatureAnalyzer:
         """
         alignments = self._alignments.cpu()
         top_vals, top_idxs = torch.topk(alignments.abs(), min(k, len(alignments)))
-        return [
-            (top_idxs[i].item(), alignments[top_idxs[i]].item())
-            for i in range(len(top_idxs))
-        ]
+        return [(top_idxs[i].item(), alignments[top_idxs[i]].item()) for i in range(len(top_idxs))]
 
     def bottom_reward_features(self, k: int = 20) -> list[tuple[int, float]]:
         """Return the k features most anti-aligned with reward (push reward down).
@@ -575,10 +566,7 @@ class FeatureAnalyzer:
 
         # Sort by absolute value
         sorted_order = torch.argsort(nonzero_values.abs(), descending=True)
-        result = [
-            (nonzero_indices[i].item(), nonzero_values[i].item())
-            for i in sorted_order
-        ]
+        result = [(nonzero_indices[i].item(), nonzero_values[i].item()) for i in sorted_order]
 
         return result, total[0].item()
 

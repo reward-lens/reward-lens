@@ -35,7 +35,7 @@ from typing import Optional
 import numpy as np
 import torch
 
-from reward_lens.model import ActivationCache, RewardModel
+from reward_lens.model import ActivationCache, BatchedActivationCache, RewardModel
 
 
 @dataclass
@@ -139,9 +139,7 @@ class ComponentResult:
         ax.set_yticklabels(names, fontsize=9)
         ax.axvline(x=0, color="gray", linestyle="--", alpha=0.5)
         ax.set_xlabel("Reward Contribution")
-        ax.set_title(
-            title or f"Top {k} Component Contributions ({by.capitalize()})"
-        )
+        ax.set_title(title or f"Top {k} Component Contributions ({by.capitalize()})")
         ax.grid(True, alpha=0.3, axis="x")
 
         plt.tight_layout()
@@ -173,9 +171,7 @@ class ComponentResult:
         attn_values = np.zeros(max_layer)
         mlp_values = np.zeros(max_layer)
 
-        for i, (layer_idx, ctype) in enumerate(
-            zip(self.layer_indices, self.component_types)
-        ):
+        for i, (layer_idx, ctype) in enumerate(zip(self.layer_indices, self.component_types)):
             if ctype == "attn" and layer_idx >= 0:
                 attn_values[layer_idx] = self.differential_contributions[i]
             elif ctype == "mlp" and layer_idx >= 0:
@@ -249,9 +245,7 @@ class ComponentAttribution:
             ComponentResult with all attribution data.
         """
         # Run forward passes with caching
-        reward_w, cache_w = self.model.forward_with_cache(
-            prompt, preferred, max_length=max_length
-        )
+        reward_w, cache_w = self.model.forward_with_cache(prompt, preferred, max_length=max_length)
         reward_l, cache_l = self.model.forward_with_cache(
             prompt, dispreferred, max_length=max_length
         )
@@ -274,9 +268,7 @@ class ComponentAttribution:
         Returns:
             ComponentResult (differential fields will be zeros).
         """
-        reward, cache = self.model.forward_with_cache(
-            prompt, response, max_length=max_length
-        )
+        reward, cache = self.model.forward_with_cache(prompt, response, max_length=max_length)
 
         # Create a "dummy" cache with zeros for the contrastive side
         return self._attribute_from_caches(cache, cache, reward, reward, single=True)
@@ -318,7 +310,11 @@ class ComponentAttribution:
             attn_l = cache_l.attn_outputs.get(layer_idx)
             if attn_w is not None:
                 c_w = (attn_w.float() @ w_r.to(attn_w.device)).item()
-                c_l = (attn_l.float() @ w_r.to(attn_l.device)).item() if attn_l is not None and not single else c_w
+                c_l = (
+                    (attn_l.float() @ w_r.to(attn_l.device)).item()
+                    if attn_l is not None and not single
+                    else c_w
+                )
                 component_names.append(f"attn_L{layer_idx}")
                 component_types.append("attn")
                 layer_indices.append(layer_idx)
@@ -330,7 +326,11 @@ class ComponentAttribution:
             mlp_l = cache_l.mlp_outputs.get(layer_idx)
             if mlp_w is not None:
                 c_w = (mlp_w.float() @ w_r.to(mlp_w.device)).item()
-                c_l = (mlp_l.float() @ w_r.to(mlp_l.device)).item() if mlp_l is not None and not single else c_w
+                c_l = (
+                    (mlp_l.float() @ w_r.to(mlp_l.device)).item()
+                    if mlp_l is not None and not single
+                    else c_w
+                )
                 component_names.append(f"mlp_L{layer_idx}")
                 component_types.append("mlp")
                 layer_indices.append(layer_idx)
@@ -368,11 +368,15 @@ class ComponentAttribution:
         # Use the batched forward path with capture_heads=True for cheap
         # head-resolution attribution.
         cache_w = self.model.forward_with_cache_batch(
-            [(prompt, preferred)], batch_size=1, max_length=max_length,
+            [(prompt, preferred)],
+            batch_size=1,
+            max_length=max_length,
             capture_heads=True,
         )
         cache_l = self.model.forward_with_cache_batch(
-            [(prompt, dispreferred)], batch_size=1, max_length=max_length,
+            [(prompt, dispreferred)],
+            batch_size=1,
+            max_length=max_length,
             capture_heads=True,
         )
 
@@ -413,3 +417,84 @@ class ComponentAttribution:
             total_reward_preferred=float(cache_w.rewards[0].item()),
             total_reward_dispreferred=float(cache_l.rewards[0].item()),
         )
+
+
+def _batch_head_attribution(
+    model: RewardModel,
+    cache: BatchedActivationCache,
+) -> tuple[list[str], list[int], list[int], np.ndarray]:
+    """Decompose per-head attention contributions to the reward, batched.
+
+    An attention layer's contribution to the residual stream is
+    ``o_proj(concat_h head_h)``, and because ``o_proj`` is linear this is the
+    sum of per-head terms ``head_h @ W_o[:, h*d_head:(h+1)*d_head].T``. Each
+    such term is a vector in the residual stream, so its signed contribution to
+    the scalar reward is its projection onto the reward direction ``w_r``.
+
+    This helper computes that projection for every captured head and every pair
+    in the batch. It mirrors the o_proj weight-slicing convention used by
+    :mod:`reward_lens.path_patching`, so head-level attribution and head-level
+    patching decompose attention the same way.
+
+    Args:
+        model: The wrapped reward model. Supplies the reward direction, the head
+            count, and the per-layer ``o_proj`` modules (via its adapter).
+        cache: A batched cache populated with ``capture_heads=True``. Each
+            ``cache.attn_head_outputs[layer]`` tensor has shape
+            ``(batch, n_heads, d_head)`` — the per-head inputs to ``o_proj`` at
+            the final token.
+
+    Returns:
+        A tuple ``(names, layer_indices, head_indices, contributions)``:
+
+        - ``names``: ``"head_L{layer}_H{head}"`` for each component.
+        - ``layer_indices`` / ``head_indices``: parallel lists of ints.
+        - ``contributions``: ``(batch, n_components)`` array of signed per-head
+          reward contributions.
+
+        Components are ordered by ascending ``(layer, head)``. Layers whose
+        adapter does not expose an ``o_proj`` are skipped, so an adapter without
+        head access simply yields no head components (never an error).
+    """
+    layers = model.adapter.get_layers(model.model)
+    n_heads = model.n_heads
+    w_r = model.reward_direction.float()  # (d_model,)
+
+    names: list[str] = []
+    layer_indices: list[int] = []
+    head_indices: list[int] = []
+    # One (batch, n_heads) block per layer; concatenated along the head axis.
+    per_layer_contribs: list[np.ndarray] = []
+
+    for layer_idx in sorted(cache.attn_head_outputs.keys()):
+        o_proj = model.adapter.get_attn_o_proj(layers[layer_idx])
+        if o_proj is None:
+            continue
+        head_out = cache.attn_head_outputs[layer_idx]  # (batch, n_heads, d_head)
+        # Detach the projection weight: attribution is pure inference, and the
+        # o_proj weight is a live Parameter (requires grad) whereas the cached
+        # head outputs are already detached.
+        weight = o_proj.weight.detach()  # (d_model, n_heads * d_head)
+        d_head = weight.shape[1] // n_heads
+        w_r_dev = w_r.to(weight.device)
+
+        # contrib[b, h] = (head_out[b, h] @ W_h.T) @ w_r
+        #              = head_out[b, h] . (W_h.T @ w_r)
+        # Precompute each head's reward projector once: (n_heads, d_head).
+        weight_heads = weight.float().reshape(weight.shape[0], n_heads, d_head)
+        projector = torch.einsum("d,dhk->hk", w_r_dev, weight_heads)
+        head_out = head_out.float().to(weight.device)
+        contrib = torch.einsum("bhk,hk->bh", head_out, projector)  # (batch, n_heads)
+        per_layer_contribs.append(contrib.cpu().numpy())
+
+        for head_idx in range(n_heads):
+            names.append(f"head_L{layer_idx}_H{head_idx}")
+            layer_indices.append(layer_idx)
+            head_indices.append(head_idx)
+
+    if per_layer_contribs:
+        contributions = np.concatenate(per_layer_contribs, axis=1)
+    else:
+        contributions = np.zeros((cache.batch_size, 0))
+
+    return names, layer_indices, head_indices, contributions

@@ -24,7 +24,7 @@ Supported families:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import torch
 import torch.nn as nn
@@ -203,8 +203,11 @@ class LlamaAdapter(ModelAdapter):
         # Some custom-loaded models nest the layers as model.model.model.layers
         if hasattr(model, "model") and hasattr(model.model, "layers"):
             return model.model.layers
-        if hasattr(model, "model") and hasattr(model.model, "model") \
-                and hasattr(model.model.model, "layers"):
+        if (
+            hasattr(model, "model")
+            and hasattr(model.model, "model")
+            and hasattr(model.model.model, "layers")
+        ):
             return model.model.model.layers
         if hasattr(model, "layers"):
             return model.layers
@@ -267,6 +270,7 @@ class MistralAdapter(LlamaAdapter):
 
     Architecturally identical to Llama for our purposes.
     """
+
     pass
 
 
@@ -537,8 +541,9 @@ class InternLM2Adapter(ModelAdapter):
                 attn_mask = inputs.get("attention_mask")
                 if attn_mask is not None:
                     pos = attn_mask.sum(dim=1) - 1  # (B,)
-                    return logits[torch.arange(logits.shape[0], device=logits.device),
-                                  pos, 0].squeeze()
+                    return logits[
+                        torch.arange(logits.shape[0], device=logits.device), pos, 0
+                    ].squeeze()
                 return logits[:, -1, 0].squeeze()
             return logits[0, 0]
         if hasattr(output, "score"):

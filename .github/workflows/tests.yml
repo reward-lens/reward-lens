@@ -1,13 +1,19 @@
-name: Tests & Linting Pipeline
+name: Tests & Lint
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+# One in-flight run per ref; a newer push cancels the older run.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  linting:
+  lint:
+    name: Lint & format (ruff)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,20 +21,25 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
+          cache: "pip"
+      # Ruff is the single source of truth for BOTH linting and formatting; its
+      # configuration lives in pyproject.toml under [tool.ruff]. This replaces
+      # the old black + flake8 + isort trio, which enforced a different line
+      # length (88) than the project config (100) and fought each other —
+      # producing hundreds of spurious errors. The version is pinned so the
+      # formatter's output is reproducible (a newer ruff can reformat code).
+      - name: Install ruff
         run: |
           python -m pip install --upgrade pip
-          pip install black flake8 isort
-      - name: Check code formatting with Black
-        run: black --check src/ tests/
-      - name: Sort imports with isort
-        run: isort --check-only --diff src/ tests/
-      - name: Lint with flake8
-        run: flake8 src/ tests/ --count --max-complexity=15 --max-line-length=88 --statistics
+          pip install ruff==0.15.20
+      - name: Lint (ruff check)
+        run: ruff check --output-format=github src/ tests/
+      - name: Format check (ruff format)
+        run: ruff format --check src/ tests/
 
   test:
-    needs: linting
+    name: Tests (Python ${{ matrix.python-version }})
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -40,12 +51,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-      - name: Install dependencies
+          cache: "pip"
+      - name: Install package with dev extras
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Run Pytest Core Hooks
-        run: pytest tests/test_core.py tests/test_analysis.py -v
-      - name: Run Pytest Extended Modules (Patching, SAE, VIZ)
-        run: pytest tests/test_patching.py tests/test_viz.py -v
+      - name: Run test suite
+        run: pytest tests/ -v

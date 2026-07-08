@@ -16,17 +16,19 @@ def setup_style():
     """Apply reward-lens plot style settings."""
     import matplotlib.pyplot as plt
 
-    plt.rcParams.update({
-        "figure.facecolor": "white",
-        "axes.facecolor": "white",
-        "axes.grid": True,
-        "grid.alpha": 0.3,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "font.size": 11,
-        "axes.titlesize": 13,
-        "axes.labelsize": 11,
-    })
+    plt.rcParams.update(
+        {
+            "figure.facecolor": "white",
+            "axes.facecolor": "white",
+            "axes.grid": True,
+            "grid.alpha": 0.3,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "font.size": 11,
+            "axes.titlesize": 13,
+            "axes.labelsize": 11,
+        }
+    )
 
 
 def reward_lens_dashboard(
@@ -48,7 +50,6 @@ def reward_lens_dashboard(
         title: Custom title.
     """
     import matplotlib.pyplot as plt
-    import seaborn as sns
 
     setup_style()
 
@@ -65,24 +66,31 @@ def reward_lens_dashboard(
     ax.plot(
         lens_result.layers,
         lens_result.reward_lens_preferred,
-        "b-o", markersize=3, linewidth=1.5,
+        "b-o",
+        markersize=3,
+        linewidth=1.5,
         label=f"Preferred ({lens_result.reward_preferred:.3f})",
     )
     ax.plot(
         lens_result.layers,
         lens_result.reward_lens_dispreferred,
-        "r-o", markersize=3, linewidth=1.5,
+        "r-o",
+        markersize=3,
+        linewidth=1.5,
         label=f"Dispreferred ({lens_result.reward_dispreferred:.3f})",
     )
     ax.fill_between(
         lens_result.layers,
         lens_result.reward_lens_preferred,
         lens_result.reward_lens_dispreferred,
-        alpha=0.1, color="purple",
+        alpha=0.1,
+        color="purple",
     )
     ax.axvline(
         x=lens_result.crystallization_layer,
-        color="green", linestyle=":", alpha=0.7,
+        color="green",
+        linestyle=":",
+        alpha=0.7,
         label=f"Crystallization: L{lens_result.crystallization_layer}",
     )
     ax.set_xlabel("Layer")
@@ -97,7 +105,9 @@ def reward_lens_dashboard(
         max_layer = max(attrib_result.layer_indices) + 1
         attn_vals = np.zeros(max_layer)
         mlp_vals = np.zeros(max_layer)
-        for i, (li, ct) in enumerate(zip(attrib_result.layer_indices, attrib_result.component_types)):
+        for i, (li, ct) in enumerate(
+            zip(attrib_result.layer_indices, attrib_result.component_types)
+        ):
             if ct == "attn" and li >= 0:
                 attn_vals[li] = attrib_result.differential_contributions[i]
             elif ct == "mlp" and li >= 0:
@@ -105,8 +115,8 @@ def reward_lens_dashboard(
 
         x = np.arange(max_layer)
         width = 0.35
-        ax.bar(x - width/2, attn_vals, width, label="Attention", color="#2196F3", alpha=0.7)
-        ax.bar(x + width/2, mlp_vals, width, label="MLP", color="#FF9800", alpha=0.7)
+        ax.bar(x - width / 2, attn_vals, width, label="Attention", color="#2196F3", alpha=0.7)
+        ax.bar(x + width / 2, mlp_vals, width, label="MLP", color="#FF9800", alpha=0.7)
         ax.axhline(y=0, color="gray", linestyle="--", alpha=0.5)
         ax.set_xlabel("Layer")
         ax.set_ylabel("Differential Contribution")
@@ -121,7 +131,9 @@ def reward_lens_dashboard(
         attn_effects = np.zeros(max_layer)
         mlp_effects = np.zeros(max_layer)
         normalized = patching_result.normalized_effects()
-        for i, (li, ct) in enumerate(zip(patching_result.layer_indices, patching_result.component_types)):
+        for i, (li, ct) in enumerate(
+            zip(patching_result.layer_indices, patching_result.component_types)
+        ):
             if ct == "attn" and li >= 0:
                 attn_effects[li] = normalized[i]
             elif ct == "mlp" and li >= 0:
@@ -129,8 +141,8 @@ def reward_lens_dashboard(
 
         x = np.arange(max_layer)
         width = 0.35
-        ax.bar(x - width/2, attn_effects, width, label="Attention", color="#4CAF50", alpha=0.7)
-        ax.bar(x + width/2, mlp_effects, width, label="MLP", color="#E91E63", alpha=0.7)
+        ax.bar(x - width / 2, attn_effects, width, label="Attention", color="#4CAF50", alpha=0.7)
+        ax.bar(x + width / 2, mlp_effects, width, label="MLP", color="#E91E63", alpha=0.7)
         ax.axhline(y=0, color="gray", linestyle="--", alpha=0.5)
         ax.set_xlabel("Layer")
         ax.set_ylabel("Normalized Patch Effect")

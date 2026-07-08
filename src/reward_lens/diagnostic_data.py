@@ -271,9 +271,7 @@ def get_diagnostic_pairs(
     pairs = []
     for dim in dimensions:
         if dim not in ALL_DIMENSIONS:
-            raise ValueError(
-                f"Unknown dimension: {dim}. Available: {list(ALL_DIMENSIONS.keys())}"
-            )
+            raise ValueError(f"Unknown dimension: {dim}. Available: {list(ALL_DIMENSIONS.keys())}")
         pairs.extend(ALL_DIMENSIONS[dim])
 
     return pairs
@@ -291,16 +289,20 @@ def get_all_prompts_and_responses() -> list[dict]:
     data = []
     for dim_name, pairs in ALL_DIMENSIONS.items():
         for pair in pairs:
-            data.append({
-                "prompt": pair.prompt,
-                "response": pair.preferred,
-                "label": "preferred",
-                "dimension": dim_name,
-            })
-            data.append({
-                "prompt": pair.prompt,
-                "response": pair.dispreferred,
-                "label": "dispreferred",
-                "dimension": dim_name,
-            })
+            data.append(
+                {
+                    "prompt": pair.prompt,
+                    "response": pair.preferred,
+                    "label": "preferred",
+                    "dimension": dim_name,
+                }
+            )
+            data.append(
+                {
+                    "prompt": pair.prompt,
+                    "response": pair.dispreferred,
+                    "label": "dispreferred",
+                    "dimension": dim_name,
+                }
+            )
     return data

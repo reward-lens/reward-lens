@@ -1,23 +1,28 @@
 """Tests for reward_lens.diagnostic_data_v2 — the expanded diagnostic set."""
 
-import pytest
-
 from reward_lens.diagnostic_data_v2 import (
     ALL_DIMENSIONS_V2,
     PreferencePair,
-    get_pairs_v2,
     get_pairs_by_dim_v2,
+    get_pairs_v2,
 )
 
 
 class TestDiagnosticDataV2:
-
     def test_all_dimensions_present(self):
         """12 dimensions as documented in the module docstring."""
         expected = {
-            "helpfulness", "safety", "verbosity", "sycophancy",
-            "formatting", "confidence", "correctness", "refusal_quality",
-            "factuality", "instruction_following", "code_correctness",
+            "helpfulness",
+            "safety",
+            "verbosity",
+            "sycophancy",
+            "formatting",
+            "confidence",
+            "correctness",
+            "refusal_quality",
+            "factuality",
+            "instruction_following",
+            "code_correctness",
             "math_correctness",
         }
         assert set(ALL_DIMENSIONS_V2.keys()) == expected
@@ -45,9 +50,7 @@ class TestDiagnosticDataV2:
         """Prompt §4.6: ≥30 pairs per dimension."""
         pairs_by_dim = get_pairs_by_dim_v2(n_per_dim=30)
         for dim, pairs in pairs_by_dim.items():
-            assert len(pairs) >= 30, (
-                f"dimension '{dim}' has only {len(pairs)} pairs (need ≥30)"
-            )
+            assert len(pairs) >= 30, f"dimension '{dim}' has only {len(pairs)} pairs (need ≥30)"
 
     def test_filter_by_dimension(self):
         pairs = get_pairs_v2(dimensions=["safety", "helpfulness"])
@@ -66,10 +69,9 @@ class TestDiagnosticDataV2:
     def test_seed_pairs_are_human_written(self):
         """§4.6: ≥5 human-reviewed seed pairs per dimension."""
         from reward_lens.diagnostic_data_v2 import _SEEDS
+
         for dim, seeds in _SEEDS.items():
-            assert len(seeds) >= 5, (
-                f"dimension '{dim}' has only {len(seeds)} seed pairs (need ≥5)"
-            )
+            assert len(seeds) >= 5, f"dimension '{dim}' has only {len(seeds)} seed pairs (need ≥5)"
 
     def test_preferred_differs_from_dispreferred(self):
         """Each pair should have distinct preferred and dispreferred."""

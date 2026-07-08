@@ -25,9 +25,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
-import torch
 
-from reward_lens.model import ActivationCache, RewardModel
+from reward_lens.model import RewardModel
 
 
 @dataclass
@@ -193,9 +192,7 @@ class RewardLens:
             RewardLensResult with all analysis data.
         """
         # Forward pass with caching for both completions
-        reward_w, cache_w = self.model.forward_with_cache(
-            prompt, preferred, max_length=max_length
-        )
+        reward_w, cache_w = self.model.forward_with_cache(prompt, preferred, max_length=max_length)
         reward_l, cache_l = self.model.forward_with_cache(
             prompt, dispreferred, max_length=max_length
         )
@@ -274,9 +271,7 @@ class RewardLens:
         Returns:
             Tuple of (layers, reward_lens_values).
         """
-        reward, cache = self.model.forward_with_cache(
-            prompt, response, max_length=max_length
-        )
+        reward, cache = self.model.forward_with_cache(prompt, response, max_length=max_length)
 
         n_layers = self.model.n_layers
         layers = list(range(-1, n_layers))

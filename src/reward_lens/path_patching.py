@@ -28,12 +28,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-import numpy as np
 import torch
-import torch.nn as nn
 
 from reward_lens.model import RewardModel
-
 
 ComponentSpec = tuple[str, int, Optional[int]]
 # (kind, layer_idx, head_idx_or_None) — kind in {"head", "mlp", "attn"}.
@@ -111,23 +108,21 @@ class PathPatcher:
         original_diff = reward_w - reward_l
 
         if mode == "noising":
-            target_prompt, target_response = preferred, dispreferred  # source = dispreferred
-            target_inputs = self.model.tokenize_conversation(prompt, preferred, max_length=max_length)
-            source_cache = cache_l
-            target_cache = cache_w
+            # Source side = dispreferred; target side = preferred.
+            target_inputs = self.model.tokenize_conversation(
+                prompt, preferred, max_length=max_length
+            )
             other_reward = reward_l
         else:  # denoising
-            target_inputs = self.model.tokenize_conversation(prompt, dispreferred, max_length=max_length)
-            source_cache = cache_w
-            target_cache = cache_l
+            target_inputs = self.model.tokenize_conversation(
+                prompt, dispreferred, max_length=max_length
+            )
             other_reward = reward_w
 
         # Compute the per-token sender residual contribution from each side.
         sender_kind, sender_layer, sender_head = sender
         if sender_kind != "head":
-            raise NotImplementedError(
-                "PathPatcher only supports head-level senders for now"
-            )
+            raise NotImplementedError("PathPatcher only supports head-level senders for now")
         if sender_head is None:
             raise ValueError("sender head index is required for head-level patching")
 
@@ -141,12 +136,18 @@ class PathPatcher:
         # Re-run forwards with a head-capturing hook to grab them at full
         # sequence length.
         src_head_in, src_head_out = self._capture_head_io(
-            prompt, _other(prompt, preferred, dispreferred, mode),
-            sender_layer, sender_head, max_length,
+            prompt,
+            _other(prompt, preferred, dispreferred, mode),
+            sender_layer,
+            sender_head,
+            max_length,
         )
         tgt_head_in, tgt_head_out = self._capture_head_io(
-            prompt, preferred if mode == "noising" else dispreferred,
-            sender_layer, sender_head, max_length,
+            prompt,
+            preferred if mode == "noising" else dispreferred,
+            sender_layer,
+            sender_head,
+            max_length,
         )
 
         # Compute the residual contribution diff: how the residual stream
@@ -156,7 +157,7 @@ class PathPatcher:
         W = o_proj.weight  # (d_model, n_heads * d_head)
         n_heads = self.model.n_heads
         d_head = W.shape[1] // n_heads
-        W_h = W[:, sender_head * d_head:(sender_head + 1) * d_head]  # (d_model, d_head)
+        W_h = W[:, sender_head * d_head : (sender_head + 1) * d_head]  # (d_model, d_head)
         # Residual contributions: (1, T, d_model) each.
         src_contrib = src_head_out.float() @ W_h.float().T
         tgt_contrib = tgt_head_out.float() @ W_h.float().T
@@ -202,8 +203,11 @@ class PathPatcher:
             delta = delta[:, :T_target, :]
         else:
             pad = torch.zeros(
-                delta.shape[0], T_target - delta.shape[1], delta.shape[2],
-                dtype=delta.dtype, device=delta.device,
+                delta.shape[0],
+                T_target - delta.shape[1],
+                delta.shape[2],
+                dtype=delta.dtype,
+                device=delta.device,
             )
             delta = torch.cat([delta, pad], dim=1)
 
@@ -245,7 +249,11 @@ class PathPatcher:
         )
 
     def _capture_head_io(
-        self, prompt: str, response: str, layer_idx: int, head_idx: int,
+        self,
+        prompt: str,
+        response: str,
+        layer_idx: int,
+        head_idx: int,
         max_length: int,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Capture (input, output) of o_proj at layer_idx and project to head_idx slice.
@@ -279,5 +287,7 @@ class PathPatcher:
             h.remove()
         head = captured["head"]
         return head, head
+
+
 def _other(prompt, preferred, dispreferred, mode):
     return dispreferred if mode == "noising" else preferred

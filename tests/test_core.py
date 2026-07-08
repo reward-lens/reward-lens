@@ -6,14 +6,13 @@ import torch.nn as nn
 
 from reward_lens.model_adapters import (
     LlamaAdapter,
-    GenericAdapter,
-    ModelAdapter,
     get_adapter,
 )
 
 
 class MockConfig:
     """Minimal mock config."""
+
     num_attention_heads = 4
     model_type = "llama"
     hidden_size = 64
@@ -21,6 +20,7 @@ class MockConfig:
 
 class MockLayer(nn.Module):
     """Minimal mock transformer layer."""
+
     def __init__(self, d_model=64):
         super().__init__()
         self.self_attn = nn.Linear(d_model, d_model)
@@ -32,6 +32,7 @@ class MockLayer(nn.Module):
 
 class MockBackbone(nn.Module):
     """Minimal mock backbone."""
+
     def __init__(self, n_layers=4, d_model=64):
         super().__init__()
         self.embed_tokens = nn.Embedding(100, d_model)
@@ -40,6 +41,7 @@ class MockBackbone(nn.Module):
 
 class MockRewardModel(nn.Module):
     """Minimal mock reward model mimicking Llama architecture."""
+
     def __init__(self, n_layers=4, d_model=64):
         super().__init__()
         self.model = MockBackbone(n_layers, d_model)
@@ -196,6 +198,7 @@ class TestDiagnosticData:
 
     def test_get_all_pairs(self):
         from reward_lens.diagnostic_data import get_diagnostic_pairs
+
         pairs = get_diagnostic_pairs()
         assert len(pairs) > 0
         for pair in pairs:
@@ -206,12 +209,14 @@ class TestDiagnosticData:
 
     def test_get_specific_dimension(self):
         from reward_lens.diagnostic_data import get_diagnostic_pairs
+
         safety_pairs = get_diagnostic_pairs(["safety"])
         assert all(p.dimension == "safety" for p in safety_pairs)
         assert len(safety_pairs) > 0
 
     def test_get_all_prompts_and_responses(self):
         from reward_lens.diagnostic_data import get_all_prompts_and_responses
+
         data = get_all_prompts_and_responses()
         assert len(data) > 0
         for d in data:
@@ -222,6 +227,7 @@ class TestDiagnosticData:
 
     def test_unknown_dimension_raises(self):
         from reward_lens.diagnostic_data import get_diagnostic_pairs
+
         with pytest.raises(ValueError, match="Unknown dimension"):
             get_diagnostic_pairs(["nonexistent_dimension"])
 
@@ -231,6 +237,7 @@ class TestHackingDetector:
 
     def test_all_tests_have_required_keys(self):
         from reward_lens.hacking import ALL_TESTS
+
         for dim_name, tests in ALL_TESTS.items():
             for test in tests:
                 assert "prompt" in test, f"Missing 'prompt' in {dim_name}"
@@ -238,8 +245,9 @@ class TestHackingDetector:
                 assert "biased" in test, f"Missing 'biased' in {dim_name}"
 
     def test_bias_result_verdict(self):
-        from reward_lens.hacking import BiasTestResult
         import numpy as np
+
+        from reward_lens.hacking import BiasTestResult
 
         result = BiasTestResult(
             dimension="test",
@@ -253,8 +261,9 @@ class TestHackingDetector:
         assert "SIGNIFICANT" in result.verdict
 
     def test_hacking_report(self):
-        from reward_lens.hacking import HackingReport, BiasTestResult
         import numpy as np
+
+        from reward_lens.hacking import BiasTestResult, HackingReport
 
         report = HackingReport(model_name="test-model")
         report.results["length"] = BiasTestResult(

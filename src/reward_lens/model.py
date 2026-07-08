@@ -27,13 +27,13 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import torch
 import torch.nn as nn
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from reward_lens.model_adapters import get_adapter, ModelAdapter
+from reward_lens.model_adapters import ModelAdapter, get_adapter
 
 
 def setup_torch_perf(
@@ -64,6 +64,7 @@ def setup_torch_perf(
         Dict describing what was actually enabled, for logging.
     """
     import torch
+
     state: dict = {}
     try:
         torch.set_float32_matmul_precision(matmul_precision)
@@ -90,7 +91,9 @@ def setup_torch_perf(
         if hasattr(torch.backends.cuda, "sdp_kernel"):
             # legacy 2.0 API
             torch.backends.cuda.sdp_kernel(
-                enable_flash=True, enable_mem_efficient=True, enable_math=False,
+                enable_flash=True,
+                enable_mem_efficient=True,
+                enable_math=False,
             )
             state["sdp_legacy"] = True
         elif hasattr(torch.nn.attention, "sdpa_kernel"):
@@ -126,13 +129,14 @@ def auto_batch_size(
     default for the preflight runs).
     """
     import torch
+
     if not torch.cuda.is_available():
         return 32
     free, _total = torch.cuda.mem_get_info()
-    free_gb = free / (1024 ** 3)
+    free_gb = free / (1024**3)
     available = max(0.5, free_gb - weight_gb - headroom_gb)
     bytes_per_pair = fudge * 6 * seq_len * d_model * bytes_per_activation
-    raw = int((available * (1024 ** 3)) // bytes_per_pair)
+    raw = int((available * (1024**3)) // bytes_per_pair)
     # Snap to multiple of 16 for tensor-core friendliness; clamp to [16, 512].
     snapped = max(16, min(512, (raw // 16) * 16))
     return snapped
@@ -210,15 +214,15 @@ def _register_internlm2_for_seq_classification() -> None:
         pass
     try:
         if "internlm2" not in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING_NAMES:
-            MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING_NAMES["internlm2"] = (
-                "InternLM2ForRewardModel"
-            )
+            MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING_NAMES["internlm2"] = "InternLM2ForRewardModel"
     except Exception:
         pass
 
 
 def _attach_missing_reward_head(
-    model: nn.Module, model_name_or_path: str, target_dtype: torch.dtype,
+    model: nn.Module,
+    model_name_or_path: str,
+    target_dtype: torch.dtype,
 ) -> None:
     """Attach a reward head to a backbone-only loaded model.
 
@@ -242,9 +246,10 @@ def _attach_missing_reward_head(
         return
 
     try:
+        from pathlib import Path as _Path
+
         from huggingface_hub import snapshot_download
         from safetensors import safe_open  # type: ignore
-        from pathlib import Path as _Path
 
         local_dir = snapshot_download(
             repo_id=model_name_or_path,
@@ -409,7 +414,7 @@ class BatchedActivationCache:
         for layer, t in self.attn_head_outputs.items():
             out.attn_head_outputs[layer] = t[i]
         if self.final_token_positions is not None:
-            out.final_token_positions = self.final_token_positions[i:i + 1]
+            out.final_token_positions = self.final_token_positions[i : i + 1]
         return out
 
     @property
@@ -537,6 +542,7 @@ class RewardModel:
             # genuinely fails (e.g. model has no classification head at all).
             # Log the original error so it is not silently swallowed.
             import warnings
+
             warnings.warn(
                 f"AutoModelForSequenceClassification.from_pretrained failed for "
                 f"'{model_name_or_path}' with: {type(e).__name__}: {e}\n"
@@ -544,6 +550,7 @@ class RewardModel:
                 stacklevel=2,
             )
             from transformers import AutoModel
+
             model = AutoModel.from_pretrained(
                 model_name_or_path,
                 device_map=str(device) if device.type == "cuda" else device.type,
@@ -567,6 +574,7 @@ class RewardModel:
             _coerce_reward_head_dtype(model, torch_dtype)
         except Exception as e:
             import warnings
+
             warnings.warn(
                 f"reward-head dtype coercion to {torch_dtype} failed: "
                 f"{type(e).__name__}: {e}. Forward may hit a dtype mismatch.",
@@ -760,7 +768,9 @@ class RewardModel:
             Tuple of (reward_score, activation_cache).
         """
         inputs = self.tokenize_conversation(prompt, response, max_length=max_length)
-        return self._forward_with_cache_from_inputs(inputs, cache_full_sequences=cache_full_sequences)
+        return self._forward_with_cache_from_inputs(
+            inputs, cache_full_sequences=cache_full_sequences
+        )
 
     def forward_with_cache_from_inputs(
         self,
@@ -776,7 +786,9 @@ class RewardModel:
         Returns:
             Tuple of (reward_score, activation_cache).
         """
-        return self._forward_with_cache_from_inputs(inputs, cache_full_sequences=cache_full_sequences)
+        return self._forward_with_cache_from_inputs(
+            inputs, cache_full_sequences=cache_full_sequences
+        )
 
     def _forward_with_cache_from_inputs(
         self,
@@ -798,6 +810,7 @@ class RewardModel:
 
         def make_layer_hook(layer_idx: int):
             """Create a hook that captures the residual stream after a layer."""
+
             def hook_fn(module, input, output):
                 # Different model architectures return different output formats.
                 # We use the adapter to extract the hidden state.
@@ -815,10 +828,12 @@ class RewardModel:
                 cache.residual_streams[layer_idx] = final_hidden.detach()
                 if cache_full_sequences:
                     cache.raw_residual_streams[layer_idx] = hidden_state.detach()
+
             return hook_fn
 
         def make_attn_hook(layer_idx: int):
             """Create a hook that captures attention sublayer output."""
+
             def hook_fn(module, input, output):
                 hidden_state = self.adapter.extract_attn_output(output)
                 batch_size = hidden_state.shape[0]
@@ -832,10 +847,12 @@ class RewardModel:
                 cache.attn_outputs[layer_idx] = final_hidden.detach()
                 if cache_full_sequences:
                     cache.raw_attn_outputs[layer_idx] = hidden_state.detach()
+
             return hook_fn
 
         def make_mlp_hook(layer_idx: int):
             """Create a hook that captures MLP sublayer output."""
+
             def hook_fn(module, input, output):
                 hidden_state = self.adapter.extract_mlp_output(output)
                 batch_size = hidden_state.shape[0]
@@ -849,6 +866,7 @@ class RewardModel:
                 cache.mlp_outputs[layer_idx] = final_hidden.detach()
                 if cache_full_sequences:
                     cache.raw_mlp_outputs[layer_idx] = hidden_state.detach()
+
             return hook_fn
 
         # Register hooks on every layer
@@ -864,6 +882,7 @@ class RewardModel:
 
         # Also capture the embedding output (layer 0 residual stream input)
         embed_module = self.adapter.get_embedding(self.model)
+
         def embed_hook(module, input, output):
             if isinstance(output, tuple):
                 hidden_state = output[0]
@@ -1004,6 +1023,7 @@ class RewardModel:
         if progress:
             try:
                 from tqdm.auto import tqdm
+
                 iterator = tqdm(chunks, desc="forward_with_cache_batch")
             except ImportError:
                 pass
@@ -1013,7 +1033,7 @@ class RewardModel:
         positions_chunks: list[torch.Tensor] = []
 
         for start in iterator:
-            chunk = pairs[start:start + batch_size]
+            chunk = pairs[start : start + batch_size]
             inputs = self.tokenize_conversation_batch(chunk, max_length=max_length)
             try:
                 chunk_cache, chunk_rewards = self._forward_with_cache_batch_from_inputs(
@@ -1026,6 +1046,7 @@ class RewardModel:
                 # Halve the chunk and retry; downstream tensors still get
                 # concatenated to the same total size.
                 import torch as _t
+
                 if _t.cuda.is_available():
                     _t.cuda.empty_cache()
                 if len(chunk) <= 1:
@@ -1037,7 +1058,9 @@ class RewardModel:
                 )
                 if _t.cuda.is_available():
                     _t.cuda.empty_cache()
-                second_inputs = self.tokenize_conversation_batch(chunk[half:], max_length=max_length)
+                second_inputs = self.tokenize_conversation_batch(
+                    chunk[half:], max_length=max_length
+                )
                 second_cache, second_rewards = self._forward_with_cache_batch_from_inputs(
                     second_inputs, capture_heads=capture_heads
                 )
@@ -1054,8 +1077,10 @@ class RewardModel:
                             dst[layer] = torch.cat([dst[layer], t], dim=0)
                         else:
                             dst[layer] = t
-                if (chunk_cache.final_token_positions is not None
-                        and second_cache.final_token_positions is not None):
+                if (
+                    chunk_cache.final_token_positions is not None
+                    and second_cache.final_token_positions is not None
+                ):
                     chunk_cache.final_token_positions = torch.cat(
                         [chunk_cache.final_token_positions, second_cache.final_token_positions],
                         dim=0,
@@ -1087,8 +1112,12 @@ class RewardModel:
             for new_idx, old_idx in enumerate(permutation):
                 inv[old_idx] = new_idx
             inv_t = torch.tensor(inv, dtype=torch.long)
-            for d in (out.residual_streams, out.attn_outputs, out.mlp_outputs,
-                      out.attn_head_outputs):
+            for d in (
+                out.residual_streams,
+                out.attn_outputs,
+                out.mlp_outputs,
+                out.attn_head_outputs,
+            ):
                 for k in list(d.keys()):
                     d[k] = d[k][inv_t]
             if out.rewards is not None:
@@ -1127,18 +1156,21 @@ class RewardModel:
             def hook_fn(module, input, output):
                 hidden_state = self.adapter.extract_layer_output(output)
                 cache.residual_streams[layer_idx] = gather_final(hidden_state).detach()
+
             return hook_fn
 
         def make_attn_hook(layer_idx: int):
             def hook_fn(module, input, output):
                 hidden_state = self.adapter.extract_attn_output(output)
                 cache.attn_outputs[layer_idx] = gather_final(hidden_state).detach()
+
             return hook_fn
 
         def make_mlp_hook(layer_idx: int):
             def hook_fn(module, input, output):
                 hidden_state = self.adapter.extract_mlp_output(output)
                 cache.mlp_outputs[layer_idx] = gather_final(hidden_state).detach()
+
             return hook_fn
 
         def make_head_hook(layer_idx: int, n_heads: int):
@@ -1154,6 +1186,7 @@ class RewardModel:
                 gathered = reshaped[batch_idx, final_pos]
                 cache.attn_head_outputs[layer_idx] = gathered.detach()
                 return None  # don't modify input
+
             return hook_fn
 
         layers = self.adapter.get_layers(self.model)
@@ -1175,17 +1208,21 @@ class RewardModel:
 
         # Embedding (-1) — captured for parity with the single-pair path.
         embed_module = self.adapter.get_embedding(self.model)
+
         def embed_hook(module, input, output):
             hidden_state = output[0] if isinstance(output, tuple) else output
             cache.residual_streams[-1] = gather_final(hidden_state).detach()
+
         hooks.append(embed_module.register_forward_hook(embed_hook))
 
         try:
             with torch.no_grad():
                 output = self.model(**inputs)
-            rewards = self.adapter.extract_reward_batch(output, inputs) \
-                if hasattr(self.adapter, "extract_reward_batch") \
+            rewards = (
+                self.adapter.extract_reward_batch(output, inputs)
+                if hasattr(self.adapter, "extract_reward_batch")
                 else self._extract_reward_batch_fallback(output)
+            )
         finally:
             for h in hooks:
                 h.remove()

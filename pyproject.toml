@@ -69,6 +69,16 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
+# `ruff format` owns code layout, including wrapping long lines. With the
+# formatter as the source of truth for line length, E501 would only fire on
+# things the formatter deliberately leaves alone — long string literals, URLs,
+# and comments — so enforcing it on top of the formatter is pure noise.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test modules deliberately import fixtures/symbols for their side effects and
+# re-exercise imports inside test bodies; don't flag those as unused.
+"tests/*" = ["F811"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

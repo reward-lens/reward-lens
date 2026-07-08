@@ -10,19 +10,18 @@ import pytest
 
 from reward_lens.statistics import (
     BootstrapResult,
+    bh_fdr,
     bootstrap_ci,
     bootstrap_cohens_d,
-    bh_fdr,
     cohens_d,
     paired_permutation_test,
     spearman_with_ci,
 )
 
-
 # ── cohens_d ────────────────────────────────────────────────────────────
 
-class TestCohensD:
 
+class TestCohensD:
     def test_one_sample_basic(self):
         d = cohens_d([1.0, 2.0, 3.0, 4.0, 5.0])
         # mean=3, std≈1.58, d≈1.897
@@ -63,8 +62,8 @@ class TestCohensD:
 
 # ── bootstrap_ci ────────────────────────────────────────────────────────
 
-class TestBootstrapCI:
 
+class TestBootstrapCI:
     def test_basic_mean(self):
         result = bootstrap_ci([1, 2, 3, 4, 5], seed=42)
         assert isinstance(result, BootstrapResult)
@@ -100,8 +99,8 @@ class TestBootstrapCI:
 
 # ── bootstrap_cohens_d ──────────────────────────────────────────────────
 
-class TestBootstrapCohensD:
 
+class TestBootstrapCohensD:
     def test_one_sample(self):
         result = bootstrap_cohens_d([1, 2, 3, 4, 5], seed=42, n_resamples=2000)
         assert math.isfinite(result.point)
@@ -120,8 +119,8 @@ class TestBootstrapCohensD:
 
 # ── paired_permutation_test ─────────────────────────────────────────────
 
-class TestPairedPermutationTest:
 
+class TestPairedPermutationTest:
     def test_identical_returns_one(self):
         a = [1, 2, 3, 4, 5]
         p = paired_permutation_test(a, a, seed=42)
@@ -152,8 +151,8 @@ class TestPairedPermutationTest:
 
 # ── bh_fdr ──────────────────────────────────────────────────────────────
 
-class TestBHFDR:
 
+class TestBHFDR:
     def test_all_significant(self):
         p = [0.001, 0.002, 0.003]
         rejected, q = bh_fdr(p, alpha=0.05)
@@ -189,8 +188,8 @@ class TestBHFDR:
 
 # ── spearman_with_ci ────────────────────────────────────────────────────
 
-class TestSpearmanWithCI:
 
+class TestSpearmanWithCI:
     def test_perfect_positive(self):
         x = [1, 2, 3, 4, 5]
         y = [10, 20, 30, 40, 50]

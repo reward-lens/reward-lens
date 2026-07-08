@@ -20,8 +20,8 @@ from typing import Optional
 
 import numpy as np
 
-from reward_lens.lens import RewardLens, RewardLensResult
 from reward_lens.attribution import ComponentAttribution, ComponentResult
+from reward_lens.lens import RewardLens, RewardLensResult
 from reward_lens.model import RewardModel
 
 
@@ -45,9 +45,9 @@ class ComparisonResult:
 
     def print_summary(self) -> None:
         """Print a formatted comparison summary."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Cross-Model Preference Comparison")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         print("\nCrystallization Layers (fraction of depth):")
         for name, frac in self.crystallization_layers.items():
@@ -57,7 +57,7 @@ class ComparisonResult:
         for (m1, m2), corr in self.formation_correlations.items():
             print(f"  {m1} vs {m2}: {corr:.3f}")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
 
     def plot(
         self,
@@ -89,9 +89,13 @@ class ComparisonResult:
                 norm_diff = diff
 
             ax.plot(
-                norm_layers, norm_diff,
-                color=colors[idx], linewidth=2, label=name,
-                marker='o', markersize=2,
+                norm_layers,
+                norm_diff,
+                color=colors[idx],
+                linewidth=2,
+                label=name,
+                marker="o",
+                markersize=2,
             )
 
         ax.axhline(y=0.5, color="gray", linestyle=":", alpha=0.5, label="50% threshold")
@@ -162,9 +166,7 @@ class ModelComparator:
         for i in range(len(model_names)):
             for j in range(i + 1, len(model_names)):
                 m1, m2 = model_names[i], model_names[j]
-                corr = self._formation_correlation(
-                    lens_results[m1], lens_results[m2]
-                )
+                corr = self._formation_correlation(lens_results[m1], lens_results[m2])
                 correlations[(m1, m2)] = corr
 
         return ComparisonResult(
@@ -175,14 +177,13 @@ class ModelComparator:
             formation_correlations=correlations,
         )
 
-    def _formation_correlation(
-        self, result1: RewardLensResult, result2: RewardLensResult
-    ) -> float:
+    def _formation_correlation(self, result1: RewardLensResult, result2: RewardLensResult) -> float:
         """Compute correlation between two normalized preference formation curves.
 
         We normalize both curves to [0, 1] range and interpolate to the same
         number of points, then compute Pearson correlation.
         """
+
         def normalize_curve(result: RewardLensResult) -> np.ndarray:
             diff = result.differential
             if abs(diff[-1]) < 1e-8:

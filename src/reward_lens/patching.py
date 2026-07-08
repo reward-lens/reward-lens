@@ -34,14 +34,14 @@ need arbitrary hook composition.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-from reward_lens.model import ActivationCache, RewardModel
+from reward_lens.model import RewardModel
 
 
 @dataclass
@@ -113,9 +113,7 @@ class PatchingResult:
         attn_effects = np.zeros(max_layer)
         mlp_effects = np.zeros(max_layer)
 
-        for i, (layer_idx, ctype) in enumerate(
-            zip(self.layer_indices, self.component_types)
-        ):
+        for i, (layer_idx, ctype) in enumerate(zip(self.layer_indices, self.component_types)):
             if ctype == "attn" and layer_idx >= 0:
                 attn_effects[layer_idx] = effects[i]
             elif ctype == "mlp" and layer_idx >= 0:
@@ -136,15 +134,11 @@ class PatchingResult:
             vmax=vmax,
             yticklabels=["Attention", "MLP"],
             xticklabels=[str(i) for i in range(max_layer)],
-            cbar_kws={
-                "label": "Norm. Patch Effect" if normalized else "Patch Effect"
-            },
+            cbar_kws={"label": "Norm. Patch Effect" if normalized else "Patch Effect"},
         )
         ax.set_xlabel("Layer")
         unit = "normalized" if normalized else "raw"
-        ax.set_title(
-            title or f"Activation Patching ({self.patching_mode}, {unit})"
-        )
+        ax.set_title(title or f"Activation Patching ({self.patching_mode}, {unit})")
 
         plt.tight_layout()
         if save_path:
@@ -247,10 +241,13 @@ class ActivationPatcher:
         if mode == "mean":
             if mean_corpus is None:
                 from reward_lens.diagnostic_data_v2 import get_pairs_v2
+
                 pairs = get_pairs_v2()
                 mean_corpus = [(p.prompt, p.preferred) for p in pairs[:50]]
             return self.patch_all_components_mean(
-                prompt, preferred, dispreferred,
+                prompt,
+                preferred,
+                dispreferred,
                 corpus_pairs=mean_corpus,
                 max_length=max_length,
                 show_progress=show_progress,
@@ -268,13 +265,19 @@ class ActivationPatcher:
 
         # Prepare inputs for the target completion
         if mode == "noising":
-            target_inputs = self.model.tokenize_conversation(prompt, preferred, max_length=max_length)
+            target_inputs = self.model.tokenize_conversation(
+                prompt, preferred, max_length=max_length
+            )
             source_cache = cache_l  # Patch FROM dispreferred
         elif mode == "denoising":
-            target_inputs = self.model.tokenize_conversation(prompt, dispreferred, max_length=max_length)
+            target_inputs = self.model.tokenize_conversation(
+                prompt, dispreferred, max_length=max_length
+            )
             source_cache = cache_w  # Patch FROM preferred
         elif mode == "zero":
-            target_inputs = self.model.tokenize_conversation(prompt, preferred, max_length=max_length)
+            target_inputs = self.model.tokenize_conversation(
+                prompt, preferred, max_length=max_length
+            )
             source_cache = None
         else:
             raise ValueError(f"Unknown patching mode: {mode}")
@@ -300,7 +303,9 @@ class ActivationPatcher:
                 effect = self._patch_component(
                     target_inputs=target_inputs,
                     module=attn_module,
-                    source_activation=source_cache.raw_attn_outputs.get(layer_idx) if source_cache else None,
+                    source_activation=source_cache.raw_attn_outputs.get(layer_idx)
+                    if source_cache
+                    else None,
                     mode=mode,
                     original_reward_w=reward_w,
                     original_reward_l=reward_l,
@@ -317,7 +322,9 @@ class ActivationPatcher:
                 effect = self._patch_component(
                     target_inputs=target_inputs,
                     module=mlp_module,
-                    source_activation=source_cache.raw_mlp_outputs.get(layer_idx) if source_cache else None,
+                    source_activation=source_cache.raw_mlp_outputs.get(layer_idx)
+                    if source_cache
+                    else None,
                     mode=mode,
                     original_reward_w=reward_w,
                     original_reward_l=reward_l,
@@ -382,9 +389,7 @@ class ActivationPatcher:
         try:
             with torch.no_grad():
                 patched_output = self.model.model(**target_inputs)
-            patched_reward = self.model.adapter.extract_reward(
-                patched_output, target_inputs
-            ).item()
+            patched_reward = self.model.adapter.extract_reward(patched_output, target_inputs).item()
         finally:
             handle.remove()
 
@@ -433,8 +438,12 @@ class ActivationPatcher:
         """
         if mode == "mean":
             result = self.patch_all_components(
-                prompt, preferred, dispreferred, mode="mean",
-                max_length=max_length, show_progress=False,
+                prompt,
+                preferred,
+                dispreferred,
+                mode="mean",
+                max_length=max_length,
+                show_progress=False,
                 mean_corpus=mean_corpus,
             )
             # Find the specific component in the result
@@ -454,13 +463,19 @@ class ActivationPatcher:
         original_diff = reward_w - reward_l
 
         if mode == "noising":
-            target_inputs = self.model.tokenize_conversation(prompt, preferred, max_length=max_length)
+            target_inputs = self.model.tokenize_conversation(
+                prompt, preferred, max_length=max_length
+            )
             source_cache = cache_l
         elif mode == "denoising":
-            target_inputs = self.model.tokenize_conversation(prompt, dispreferred, max_length=max_length)
+            target_inputs = self.model.tokenize_conversation(
+                prompt, dispreferred, max_length=max_length
+            )
             source_cache = cache_w
         elif mode == "zero":
-            target_inputs = self.model.tokenize_conversation(prompt, preferred, max_length=max_length)
+            target_inputs = self.model.tokenize_conversation(
+                prompt, preferred, max_length=max_length
+            )
             source_cache = None
         else:
             raise ValueError(f"Unknown mode: {mode}")
@@ -518,16 +533,20 @@ class ActivationPatcher:
         layers = self.model.adapter.get_layers(self.model.model)
 
         target_inputs = self.model.tokenize_conversation(
-            prompt, preferred if mode == "noising" else dispreferred,
+            prompt,
+            preferred if mode == "noising" else dispreferred,
             max_length=max_length,
         )
         # Source-side: opposite completion.
         source_text = dispreferred if mode == "noising" else preferred
         source_per_head = self._capture_per_head_o_proj_inputs(
-            prompt, source_text, max_length=max_length,
+            prompt,
+            source_text,
+            max_length=max_length,
         )
         target_per_head = self._capture_per_head_o_proj_inputs(
-            prompt, preferred if mode == "noising" else dispreferred,
+            prompt,
+            preferred if mode == "noising" else dispreferred,
             max_length=max_length,
         )
         other_reward = reward_l if mode == "noising" else reward_w
@@ -538,6 +557,7 @@ class ActivationPatcher:
         patch_effects: list[float] = []
 
         from tqdm import tqdm as _tqdm
+
         iterator = range(n_layers)
         if show_progress:
             iterator = _tqdm(iterator, desc=f"head-patching ({mode})")
@@ -573,7 +593,10 @@ class ActivationPatcher:
         )
 
     def _capture_per_head_o_proj_inputs(
-        self, prompt: str, response: str, max_length: int,
+        self,
+        prompt: str,
+        response: str,
+        max_length: int,
     ) -> dict[int, torch.Tensor]:
         """For every layer with o_proj, capture (1, T, n_heads, d_head) at the
         last forward pass (full sequence)."""
@@ -594,7 +617,9 @@ class ActivationPatcher:
                     B, T, F = x.shape
                     d_head = F // n_heads
                     captured[layer_idx] = x.view(B, T, n_heads, d_head).detach().clone()
+
                 return pre_hook
+
             handles.append(o_proj.register_forward_pre_hook(make_hook(L)))
 
         try:
@@ -624,12 +649,17 @@ class ActivationPatcher:
             src_aligned = src_head[:, :T_target, :]
         else:
             pad = torch.zeros(
-                src_head.shape[0], T_target - src_head.shape[1], src_head.shape[2],
-                dtype=src_head.dtype, device=src_head.device,
+                src_head.shape[0],
+                T_target - src_head.shape[1],
+                src_head.shape[2],
+                dtype=src_head.dtype,
+                device=src_head.device,
             )
             src_aligned = torch.cat([src_head, pad], dim=1)
 
-        delta_head = (src_aligned.to(self.model.device) - tgt_head[:, :T_target, :].to(self.model.device))
+        delta_head = src_aligned.to(self.model.device) - tgt_head[:, :T_target, :].to(
+            self.model.device
+        )
 
         def pre_hook(module, args):
             x = args[0] if isinstance(args, tuple) else args  # (B, T, n_heads * d_head)
@@ -680,6 +710,7 @@ class ActivationPatcher:
         """
         # Compute mean activations across the corpus per component.
         from collections import defaultdict
+
         attn_means: dict[int, torch.Tensor] = {}
         mlp_means: dict[int, torch.Tensor] = {}
         attn_count: dict[int, int] = defaultdict(int)
@@ -689,7 +720,10 @@ class ActivationPatcher:
         # over the *final* token only (the most relevant for reward).
         for p, r in corpus_pairs:
             _, cache = self.model.forward_with_cache(
-                p, r, cache_full_sequences=False, max_length=max_length,
+                p,
+                r,
+                cache_full_sequences=False,
+                max_length=max_length,
             )
             for L, t in cache.attn_outputs.items():
                 if L not in attn_means:
@@ -721,6 +755,7 @@ class ActivationPatcher:
         layer_indices = []
         patch_effects = []
         from tqdm import tqdm as _tqdm
+
         iterator = range(len(layers))
         if show_progress:
             iterator = _tqdm(iterator, desc="mean-patching")
@@ -731,7 +766,7 @@ class ActivationPatcher:
         for L in iterator:
             for kind, mean_dict, get_mod in (
                 ("attn", attn_means, self.model.adapter.get_attn_module),
-                ("mlp",  mlp_means,  self.model.adapter.get_mlp_module),
+                ("mlp", mlp_means, self.model.adapter.get_mlp_module),
             ):
                 module = get_mod(layers[L])
                 if module is None or L not in mean_dict:
@@ -739,8 +774,11 @@ class ActivationPatcher:
                 mean_vec = mean_dict[L].to(self.model.device)  # (1, d_model)
 
                 def hook_fn(module, input, output, kind=kind, mean_vec=mean_vec):
-                    hidden = self.model.adapter.extract_attn_output(output) if kind == "attn" \
+                    hidden = (
+                        self.model.adapter.extract_attn_output(output)
+                        if kind == "attn"
                         else self.model.adapter.extract_mlp_output(output)
+                    )
                     new_hidden = hidden.clone()
                     new_hidden[:, attn_mod_seq_pos, :] = mean_vec.to(new_hidden.dtype)
                     if isinstance(output, tuple):

@@ -19,10 +19,10 @@ from typing import Callable, Optional, Sequence
 
 import numpy as np
 
-
 # =============================================================================
 # Effect sizes
 # =============================================================================
+
 
 def cohens_d(
     a: Sequence[float] | np.ndarray,
@@ -76,6 +76,7 @@ def cohens_d(
 # Bootstrap
 # =============================================================================
 
+
 @dataclass
 class BootstrapResult:
     """A point estimate together with its bootstrap CI.
@@ -87,6 +88,7 @@ class BootstrapResult:
         ci_level: Confidence level used (e.g. 0.95).
         n_resamples: How many bootstrap resamples were drawn.
     """
+
     point: float
     ci_low: float
     ci_high: float
@@ -213,6 +215,7 @@ def bootstrap_cohens_d(
 # Permutation test
 # =============================================================================
 
+
 def paired_permutation_test(
     a: Sequence[float] | np.ndarray,
     b: Sequence[float] | np.ndarray,
@@ -280,6 +283,7 @@ def paired_permutation_test(
 # Multiple-testing correction
 # =============================================================================
 
+
 def bh_fdr(
     p_values: Sequence[float] | np.ndarray,
     alpha: float = 0.05,
@@ -332,6 +336,7 @@ def bh_fdr(
 # =============================================================================
 # Spearman with CI
 # =============================================================================
+
 
 def spearman_with_ci(
     x: Sequence[float] | np.ndarray,

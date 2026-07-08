@@ -1,9 +1,6 @@
 """Tests for the activation patching module."""
 
-import pytest
 import numpy as np
-import torch
-import torch.nn as nn
 
 from tests.test_analysis import make_mock_reward_model
 
@@ -17,7 +14,10 @@ class TestActivationPatcher:
         rm = make_mock_reward_model(n_layers=4)
         patcher = ActivationPatcher(rm)
         result = patcher.patch_all_components(
-            "hello", "good response", "bad response", mode="noising",
+            "hello",
+            "good response",
+            "bad response",
+            mode="noising",
             show_progress=False,
         )
         assert len(result.component_names) > 0
@@ -31,7 +31,10 @@ class TestActivationPatcher:
 
         for mode in ["noising", "denoising", "zero"]:
             result = patcher.patch_all_components(
-                "hello", "good", "bad", mode=mode,
+                "hello",
+                "good",
+                "bad",
+                mode=mode,
                 show_progress=False,
             )
             assert len(result.component_names) > 0
@@ -42,13 +45,16 @@ class TestActivationPatcher:
         rm = make_mock_reward_model(n_layers=4)
         patcher = ActivationPatcher(rm)
         result = patcher.patch_all_components(
-            "hello", "good", "bad", mode="noising", show_progress=False,
+            "hello",
+            "good",
+            "bad",
+            mode="noising",
+            show_progress=False,
         )
 
         # Should have: 4 attn + 4 mlp = 8 components
         assert len(result.component_names) == 8, (
-            f"Expected 8 components, got {len(result.component_names)}: "
-            f"{result.component_names}"
+            f"Expected 8 components, got {len(result.component_names)}: {result.component_names}"
         )
 
     def test_top_k(self):
@@ -57,7 +63,11 @@ class TestActivationPatcher:
         rm = make_mock_reward_model(n_layers=4)
         patcher = ActivationPatcher(rm)
         result = patcher.patch_all_components(
-            "hello", "good", "bad", mode="noising", show_progress=False,
+            "hello",
+            "good",
+            "bad",
+            mode="noising",
+            show_progress=False,
         )
 
         top = result.top_k(k=3)
@@ -72,7 +82,11 @@ class TestActivationPatcher:
         rm = make_mock_reward_model(n_layers=4)
         patcher = ActivationPatcher(rm)
         result = patcher.patch_all_components(
-            "hello", "good", "bad", mode="noising", show_progress=False,
+            "hello",
+            "good",
+            "bad",
+            mode="noising",
+            show_progress=False,
         )
 
         normed = result.normalized_effects()
@@ -88,7 +102,6 @@ class TestActivationPatcher:
 
         # Patch a specific layer's attention
         effect = patcher.patch_single_component(
-            "hello", "good", "bad",
-            layer_idx=0, component_type="attn", mode="noising"
+            "hello", "good", "bad", layer_idx=0, component_type="attn", mode="noising"
         )
         assert isinstance(effect, float)
