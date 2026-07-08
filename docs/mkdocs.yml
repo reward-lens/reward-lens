@@ -1,7 +1,6 @@
 # reward-lens documentation — Material for MkDocs configuration.
 #
-# This is the build-ready base. The content under content/ is authored per
-# AUTHORING_PROMPT.md. Preview locally with:  mkdocs serve -f docs/mkdocs.yml
+# Preview locally with:  mkdocs serve -f docs/mkdocs.yml
 # (run from the repository root), or `cd docs && mkdocs serve`.
 
 site_name: reward-lens

@@ -1,9 +1,7 @@
 # reward-lens docs
 
 The documentation site, built with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).
-Self-contained in this folder. The content is authored per
-[`AUTHORING_PROMPT.md`](AUTHORING_PROMPT.md) — read that first if you are the one
-writing (or generating) the pages.
+Self-contained in this folder.
 
 ## Layout
 
@@ -11,7 +9,6 @@ writing (or generating) the pages.
 docs/
   mkdocs.yml              # site config: theme, plugins, nav
   requirements-docs.txt   # build deps (no torch needed)
-  AUTHORING_PROMPT.md     # the brief: what to write and how
   content/                # docs_dir — every page lives here
     index.md              # Home / Why reward-lens
     concepts/  getting-started/  tutorials/  how-to/
@@ -50,13 +47,13 @@ geometry, inline Mermaid, matplotlib-from-real-runs) and when to use each.
 
 ## Deploy
 
-The repo is not currently a git repository. To publish on GitHub Pages:
+Documentation publishes to GitHub Pages automatically. The
+[`Deploy Docs to GitHub Pages`](../.github/workflows/docs.yml) workflow builds
+the site with MkDocs on every push to the default branch and serves the built
+HTML directly, so Pages never falls back to rendering a README.
 
-```bash
-git init && git add -A && git commit -m "docs"
-git remote add origin https://github.com/suhailnadaf509/reward-lens.git
-mkdocs gh-deploy -f docs/mkdocs.yml   # pushes built site to the gh-pages branch
-```
+One-time repository setup: **Settings → Pages → Build and deployment → Source →
+GitHub Actions**. After that, every push to `main` rebuilds and redeploys.
 
 A ReadTheDocs build also works (point it at `docs/mkdocs.yml`). `site_url` in
-`mkdocs.yml` currently assumes GitHub Pages; change it to match your host.
+`mkdocs.yml` assumes GitHub Pages; change it to match your host.
