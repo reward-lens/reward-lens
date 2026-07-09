@@ -33,7 +33,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
-import torch
 
 from reward_lens.model import ActivationCache, BatchedActivationCache, RewardModel
 
@@ -456,6 +455,8 @@ def _batch_head_attribution(
         adapter does not expose an ``o_proj`` are skipped, so an adapter without
         head access simply yields no head components (never an error).
     """
+    from reward_lens.attribution.dla import head_reward_contributions
+
     layers = model.adapter.get_layers(model.model)
     n_heads = model.n_heads
     w_r = model.reward_direction.float()  # (d_model,)
@@ -471,21 +472,11 @@ def _batch_head_attribution(
         if o_proj is None:
             continue
         head_out = cache.attn_head_outputs[layer_idx]  # (batch, n_heads, d_head)
-        # Detach the projection weight: attribution is pure inference, and the
-        # o_proj weight is a live Parameter (requires grad) whereas the cached
-        # head outputs are already detached.
-        weight = o_proj.weight.detach()  # (d_model, n_heads * d_head)
-        d_head = weight.shape[1] // n_heads
-        w_r_dev = w_r.to(weight.device)
-
-        # contrib[b, h] = (head_out[b, h] @ W_h.T) @ w_r
-        #              = head_out[b, h] . (W_h.T @ w_r)
-        # Precompute each head's reward projector once: (n_heads, d_head).
-        weight_heads = weight.float().reshape(weight.shape[0], n_heads, d_head)
-        projector = torch.einsum("d,dhk->hk", w_r_dev, weight_heads)
-        head_out = head_out.float().to(weight.device)
-        contrib = torch.einsum("bhk,hk->bh", head_out, projector)  # (batch, n_heads)
-        per_layer_contribs.append(contrib.cpu().numpy())
+        # The head decomposition lives in one canonical place now
+        # (reward_lens.attribution.dla). The o_proj weight is a live Parameter,
+        # so it is detached before the pure-inference projection.
+        contrib = head_reward_contributions(head_out, o_proj.weight.detach(), w_r, n_heads)
+        per_layer_contribs.append(np.asarray(contrib))  # (batch, n_heads)
 
         for head_idx in range(n_heads):
             names.append(f"head_L{layer_idx}_H{head_idx}")
