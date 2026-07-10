@@ -1,6 +1,6 @@
 """reward-lens: the reference instrument for the science of reward misspecification.
 
-Version 3 is one kernel, sixteen sciences, and three gates. The kernel is a set of subsystems
+reward-lens 2.0 is one kernel, sixteen sciences, and three gates. The kernel is a set of subsystems
 (``core``, ``stats``, ``runtime``, ``signals``, ``data``, ``concepts``, ``interventions``,
 ``geometry``, ``measure``, ``attribution``, ``organisms``, ``dynamics``, ``loops``, ``studies``,
 ``artifacts``); the sciences are studies over it; the gates (calibration, gauge, registration)
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-__version__ = "3.0.0"
+__version__ = "2.0.0"
 
 # Legacy v1 symbols, imported lazily so `import reward_lens` stays torch-free. Accessing any of
 # these (for example `reward_lens.RewardModel`) imports the underlying module on demand; that
