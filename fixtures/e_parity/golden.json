@@ -1,0 +1,305 @@
+{
+  "source": "/home/suhail-nadaf/final-reward/reward-lens/outputs/v2_20260506_222648_unknown",
+  "note": "E-parity targets, section 4.3.2",
+  "E04": {
+    "per_model_mean_rho": {
+      "ArmoRM-Llama3-8B-v0.1": 0.047465,
+      "Skywork-Reward-Gemma-2-27B-v0.2": -0.050558,
+      "Skywork-Reward-Llama-3.1-8B": -0.20294,
+      "Skywork-Reward-Llama-3.1-8B-v0.2": -0.170885
+    },
+    "per_model_dimension_rho": {
+      "ArmoRM-Llama3-8B-v0.1": {
+        "helpfulness": 0.024593,
+        "safety": 0.132194,
+        "verbosity": 0.041237,
+        "sycophancy": 0.013892,
+        "formatting": 0.074157,
+        "confidence": 0.040696,
+        "correctness": 0.181669,
+        "refusal_quality": -0.080649,
+        "factuality": -0.122343,
+        "instruction_following": 0.122288,
+        "code_correctness": -0.051241,
+        "math_correctness": 0.193087
+      },
+      "Skywork-Reward-Gemma-2-27B-v0.2": {
+        "helpfulness": -0.074177,
+        "safety": -0.139842,
+        "verbosity": -0.232737,
+        "sycophancy": 0.094281,
+        "formatting": -0.202122,
+        "confidence": -0.055517,
+        "correctness": 0.110068,
+        "refusal_quality": 0.103109,
+        "factuality": -0.128613,
+        "instruction_following": -0.093354,
+        "code_correctness": -0.073006,
+        "math_correctness": 0.085217
+      },
+      "Skywork-Reward-Llama-3.1-8B": {
+        "helpfulness": -0.293478,
+        "safety": -0.281219,
+        "verbosity": -0.19849,
+        "sycophancy": -0.382094,
+        "formatting": 0.067631,
+        "confidence": -0.406052,
+        "correctness": 0.040575,
+        "refusal_quality": -0.413007,
+        "factuality": -0.200965,
+        "instruction_following": -0.059591,
+        "code_correctness": -0.437791,
+        "math_correctness": 0.129201
+      },
+      "Skywork-Reward-Llama-3.1-8B-v0.2": {
+        "helpfulness": -0.305981,
+        "safety": -0.289653,
+        "verbosity": -0.047506,
+        "sycophancy": -0.334428,
+        "formatting": 0.076205,
+        "confidence": -0.381206,
+        "correctness": 0.117822,
+        "refusal_quality": -0.353836,
+        "factuality": -0.258911,
+        "instruction_following": 0.015099,
+        "code_correctness": -0.441117,
+        "math_correctness": 0.152893
+      }
+    },
+    "tolerance": 0.01,
+    "faithful_to": "E04 faithfulness (attribution vs patching Spearman)"
+  },
+  "E02": {
+    "per_model_mean_crystal": {
+      "ArmoRM-Llama3-8B-v0.1": 0.802604,
+      "Skywork-Reward-Gemma-2-27B-v0.2": 0.83907,
+      "Skywork-Reward-Llama-3.1-8B": 0.923524,
+      "Skywork-Reward-Llama-3.1-8B-v0.2": 0.931163
+    },
+    "per_model_dimension_crystal": {
+      "ArmoRM-Llama3-8B-v0.1": {
+        "helpfulness": 0.686458,
+        "safety": 0.895833,
+        "verbosity": 0.551042,
+        "sycophancy": 0.726042,
+        "formatting": 0.461458,
+        "confidence": 0.944792,
+        "correctness": 0.917708,
+        "refusal_quality": 0.902083,
+        "factuality": 0.898958,
+        "instruction_following": 0.7625,
+        "code_correctness": 0.940625,
+        "math_correctness": 0.94375
+      },
+      "Skywork-Reward-Gemma-2-27B-v0.2": {
+        "helpfulness": 0.886957,
+        "safety": 0.887681,
+        "verbosity": 0.75942,
+        "sycophancy": 0.873188,
+        "formatting": 0.705072,
+        "confidence": 0.889855,
+        "correctness": 0.878261,
+        "refusal_quality": 0.87029,
+        "factuality": 0.876087,
+        "instruction_following": 0.773913,
+        "code_correctness": 0.807246,
+        "math_correctness": 0.86087
+      },
+      "Skywork-Reward-Llama-3.1-8B": {
+        "helpfulness": 0.925,
+        "safety": 0.920833,
+        "verbosity": 0.913542,
+        "sycophancy": 0.907292,
+        "formatting": 0.903125,
+        "confidence": 0.925,
+        "correctness": 0.94375,
+        "refusal_quality": 0.914583,
+        "factuality": 0.926042,
+        "instruction_following": 0.930208,
+        "code_correctness": 0.93125,
+        "math_correctness": 0.941667
+      },
+      "Skywork-Reward-Llama-3.1-8B-v0.2": {
+        "helpfulness": 0.9375,
+        "safety": 0.90625,
+        "verbosity": 0.9375,
+        "sycophancy": 0.93125,
+        "formatting": 0.903125,
+        "confidence": 0.927083,
+        "correctness": 0.9375,
+        "refusal_quality": 0.926042,
+        "factuality": 0.93125,
+        "instruction_following": 0.935417,
+        "code_correctness": 0.947917,
+        "math_correctness": 0.953125
+      }
+    },
+    "tolerance": 0.01
+  },
+  "E15": {
+    "top_head_per_model_dimension": {
+      "ArmoRM-Llama3-8B-v0.1|helpfulness": {
+        "head": "head_L31_H14",
+        "effect": 0.0129
+      },
+      "ArmoRM-Llama3-8B-v0.1|safety": {
+        "head": "head_L12_H6",
+        "effect": 0.0091
+      },
+      "ArmoRM-Llama3-8B-v0.1|sycophancy": {
+        "head": "head_L31_H14",
+        "effect": 0.0084
+      },
+      "Skywork-Reward-Gemma-2-27B-v0.2|helpfulness": {
+        "head": "head_L44_H26",
+        "effect": 0.4906
+      },
+      "Skywork-Reward-Gemma-2-27B-v0.2|safety": {
+        "head": "head_L22_H29",
+        "effect": 0.7812
+      },
+      "Skywork-Reward-Gemma-2-27B-v0.2|sycophancy": {
+        "head": "head_L43_H11",
+        "effect": 0.5625
+      },
+      "Skywork-Reward-Llama-3.1-8B|helpfulness": {
+        "head": "head_L0_H29",
+        "effect": 5.673
+      },
+      "Skywork-Reward-Llama-3.1-8B|safety": {
+        "head": "head_L12_H6",
+        "effect": 7.2375
+      },
+      "Skywork-Reward-Llama-3.1-8B|sycophancy": {
+        "head": "head_L0_H29",
+        "effect": 3.2078
+      },
+      "Skywork-Reward-Llama-3.1-8B-v0.2|helpfulness": {
+        "head": "head_L0_H29",
+        "effect": 4.5035
+      },
+      "Skywork-Reward-Llama-3.1-8B-v0.2|safety": {
+        "head": "head_L12_H6",
+        "effect": 8.4656
+      },
+      "Skywork-Reward-Llama-3.1-8B-v0.2|sycophancy": {
+        "head": "head_L13_H16",
+        "effect": 1.8996
+      }
+    },
+    "global_top_head": {
+      "head": "head_L12_H6",
+      "effect": 8.4656
+    },
+    "tolerance": 0.05
+  },
+  "E18": {
+    "conflict_rows": 361,
+    "columns": [
+      "cosine",
+      "model",
+      "obj_i",
+      "obj_j"
+    ],
+    "faithful_to": "E18 ArmoRM 19x19 objective geometry"
+  },
+  "E19": {
+    "raw_reward_direction_cosine_target": 0.005,
+    "cosine_tolerance": 0.01,
+    "cosine_note": "raw cos(w_r^v0.1, w_r^v0.2); RAW_ONLY (gate 2). Reproduce from weights.",
+    "concept_slope_delta": {
+      "agreement": 0.23125,
+      "confidence": 0.2625,
+      "formality": 0.36875,
+      "hedging": 0.29688,
+      "helpfulness": 0.28438,
+      "verbosity": 0.09688
+    },
+    "crystal_delta": {
+      "code_correctness": -0.01667,
+      "confidence": -0.00208,
+      "correctness": 0.00625,
+      "factuality": -0.00521,
+      "formatting": 0.0,
+      "helpfulness": -0.0125,
+      "instruction_following": -0.00521,
+      "math_correctness": -0.01146,
+      "refusal_quality": -0.01146,
+      "safety": 0.01458,
+      "sycophancy": -0.02396,
+      "verbosity": -0.02396
+    },
+    "hacking_effect_delta": {
+      "confidence": 1.2433,
+      "formatting": 0.05076,
+      "length": 0.34311,
+      "repetition": NaN,
+      "sycophancy": -0.0288
+    }
+  },
+  "E20": {
+    "per_dimension": {
+      "code_correctness": {
+        "arch_effect": 12.0122,
+        "ft_effect": -6.5595,
+        "verdict": "mixed"
+      },
+      "confidence": {
+        "arch_effect": 9.3536,
+        "ft_effect": 0.0177,
+        "verdict": "architecture-dominated"
+      },
+      "correctness": {
+        "arch_effect": 13.0333,
+        "ft_effect": -6.5598,
+        "verdict": "mixed"
+      },
+      "factuality": {
+        "arch_effect": 11.8822,
+        "ft_effect": -8.5393,
+        "verdict": "mixed"
+      },
+      "formatting": {
+        "arch_effect": 4.8855,
+        "ft_effect": -0.5762,
+        "verdict": "architecture-dominated"
+      },
+      "helpfulness": {
+        "arch_effect": 17.4085,
+        "ft_effect": -6.3169,
+        "verdict": "architecture-dominated"
+      },
+      "instruction_following": {
+        "arch_effect": 12.1306,
+        "ft_effect": -0.1276,
+        "verdict": "architecture-dominated"
+      },
+      "math_correctness": {
+        "arch_effect": 1.0729,
+        "ft_effect": -6.203,
+        "verdict": "finetune-dominated"
+      },
+      "refusal_quality": {
+        "arch_effect": 15.2209,
+        "ft_effect": -4.9306,
+        "verdict": "architecture-dominated"
+      },
+      "safety": {
+        "arch_effect": 17.0658,
+        "ft_effect": -0.7544,
+        "verdict": "architecture-dominated"
+      },
+      "sycophancy": {
+        "arch_effect": 13.6501,
+        "ft_effect": -2.9744,
+        "verdict": "architecture-dominated"
+      },
+      "verbosity": {
+        "arch_effect": 14.1904,
+        "ft_effect": -0.832,
+        "verdict": "architecture-dominated"
+      }
+    },
+    "tolerance": 0.05
+  }
+}
