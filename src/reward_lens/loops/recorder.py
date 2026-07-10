@@ -93,7 +93,7 @@ def cusum_onset(
 
     cp = cusum(series, threshold=h_sds, drift=k_sds, baseline=baseline_steps)
     x = np.asarray(series, dtype=np.float64).ravel()
-    
+
     # Determine direction
     direction = "up"
     if cp.index is not None:

@@ -25,11 +25,10 @@ from reward_lens.core.types import Capability, ModelFP, Site, Span
 
 if TYPE_CHECKING:  # torch and the runtime are referenced only in annotations
     import numpy as np
-    import torch
 
     from reward_lens.data.schema import DataView
     from reward_lens.interventions.base import Intervention
-    from reward_lens.runtime.backend import Capture, CaptureHandle, CaptureSpec, Runtime
+    from reward_lens.runtime.backend import CaptureHandle, CaptureSpec, Runtime
 
 
 # ---------------------------------------------------------------------------

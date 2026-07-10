@@ -1105,7 +1105,7 @@ def curl_harmonic_organism(
         topic = topics[int(rng.integers(len(topics)))]
         length = int(rng.integers(4, 8))
         responses = tuple(Response(text=render_response(topic, styles_ring[k])) for k in range(length))
-        
+
         edges: list[EdgeObs] = []
         for step in range(length):
             a, b = step, (step + 1) % length
@@ -1113,7 +1113,7 @@ def curl_harmonic_organism(
                 edges.append(EdgeObs(i=a, j=b, wins_i=wins, wins_j=0))
             else:
                 edges.append(EdgeObs(i=b, j=a, wins_i=0, wins_j=wins))
-                
+
         edges_tuple = tuple(edges)
         content = tournament_content(f"Rank responses about {topic}.", responses, edges_tuple)
         lineage = make_lineage(

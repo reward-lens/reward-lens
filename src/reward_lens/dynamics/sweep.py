@@ -20,7 +20,7 @@ as inspectable and diffable as the store it rides on (DESIGN 2.1.2).
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
