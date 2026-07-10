@@ -173,23 +173,33 @@ def circuit_overlap_plot(
         figsize: Figure size.
     """
     import matplotlib.pyplot as plt
-    import seaborn as sns
 
     setup_style()
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    sns.heatmap(
-        overlap_matrix,
-        ax=ax,
-        annot=True,
-        fmt=".2f",
-        cmap="YlOrRd",
-        vmin=0,
-        vmax=1,
-        xticklabels=dimension_names,
-        yticklabels=dimension_names,
-        square=True,
-    )
+    im = ax.imshow(overlap_matrix, cmap="YlOrRd", vmin=0, vmax=1)
+    
+    # Add colorbar
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    
+    # Set tick marks and labels
+    n = len(dimension_names)
+    ax.set_xticks(np.arange(n))
+    ax.set_yticks(np.arange(n))
+    ax.set_xticklabels(dimension_names)
+    ax.set_yticklabels(dimension_names)
+    
+    # Rotate the tick labels
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    
+    # Add text annotations in each cell
+    for i in range(n):
+        for j in range(n):
+            val = overlap_matrix[i, j]
+            # Use white text for dark backgrounds, black text for light backgrounds
+            color = "white" if val > 0.6 else "black"
+            ax.text(j, i, f"{val:.2f}", ha="center", va="center", color=color)
+            
     ax.set_title("Circuit Overlap Between Preference Dimensions")
 
     plt.tight_layout()
@@ -197,3 +207,4 @@ def circuit_overlap_plot(
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.show()
     plt.close()
+
