@@ -56,7 +56,7 @@ pip install "reward-lens[dev]"    # tests, ruff, mypy
 From source:
 
 ```bash
-git clone https://github.com/suhailnadaf509/reward-lens.git
+git clone https://github.com/reward-lens/reward-lens.git
 cd reward-lens
 pip install -e ".[dev]"
 ```
@@ -194,16 +194,18 @@ This is alpha, and honest about which parts are load-bearing today. The epistemi
 
 ## Documentation
 
-Full documentation, including the theory behind each index and a candid account of what the observational tools can and cannot tell you, is at <https://suhailnadaf509.github.io/reward-lens/>.
+Full documentation, including the theory behind each index and a candid account of what the observational tools can and cannot tell you, is at <https://reward-lens.github.io/reward-lens/>.
 
 ## Citation
 
 ```bibtex
-@software{nadaf2026rewardlens,
-    title  = {reward-lens: An Instrument for the Science of Reward Misspecification},
-    author = {Nadaf, Mohammed Suhail B},
-    year   = {2026},
-    url    = {https://github.com/suhailnadaf509/reward-lens},
+@misc{nadaf2026rewardlens,
+    title         = {reward-lens: A Mechanistic Interpretability Library for Reward Models},
+    author        = {Nadaf, Mohammed Suhail B},
+    year          = {2026},
+    eprint        = {2604.26130},
+    archivePrefix = {arXiv},
+    url           = {https://arxiv.org/abs/2604.26130},
 }
 ```
 
