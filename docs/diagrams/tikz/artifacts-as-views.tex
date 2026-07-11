@@ -1,0 +1,108 @@
+% Artifacts as views. One claim: a card can only say what the store can back.
+% Card, Atlas and Safety case are lenses over an append-only evidence store; each
+% cites nodes it does not compute. A manuscript number tagged with an evidence id
+% that is not in the store fails the claims-check and exits nonzero.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+
+% a biconvex lens: the artifact-as-view glyph. #1 cx #2 cy #3 half-width #4 label
+\newcommand{\rllens}[4]{%
+  \draw[draw=rlAccent, line width=1.0pt, fill=rlAccent, fill opacity=0.08]
+    (#1-#3,#2)
+      .. controls (#1-#3*0.5,#2+0.62) and (#1+#3*0.5,#2+0.62) .. (#1+#3,#2)
+      .. controls (#1+#3*0.5,#2-0.62) and (#1-#3*0.5,#2-0.62) .. (#1-#3,#2) -- cycle;
+  \node[font=\sffamily\bfseries\small, text=rlAccent] at (#1,#2) {#4};%
+}
+
+\begin{document}
+\begin{tikzpicture}[scale=1.0,
+    dag/.style={draw=rlInk2, line width=0.7pt, -{Stealth[length=1.6mm, width=1.3mm]}},
+    cite/.style={draw=rlAccent, line width=0.75pt},
+    evnode/.style={draw=rlLine, fill=rlSurfaceTwo, rounded corners=2.5pt, line width=0.6pt,
+                   minimum width=1.04cm, minimum height=0.62cm, inner sep=1pt},
+  ]
+
+  % ---------- figure background panel ----------
+  \fill[rlSurfaceTwo, rounded corners=7pt] (-0.45,-0.4) rectangle (13.35,8.35);
+
+  % ---------- orienting labels (top: artifacts / bottom: store) ----------
+  \node[font=\sffamily\scriptsize, text=rlMuted] at (4.4,7.98) {artifacts: views over the store};
+
+  % ---------- the evidence store: an append-only DAG of Evidence ----------
+  \draw[draw=rlLine, fill=rlSurface, line width=0.7pt, rounded corners=5pt]
+    (0.5,2.3) rectangle (8.35,5.35);
+
+  % evidence nodes (tiny cards). lower row = roots; upper row = derived (fan-in)
+  \node[evnode] (nA) at (1.75,2.95) {\texttt{\scriptsize \#a31}};
+  \node[evnode] (nB) at (3.75,2.95) {\texttt{\scriptsize \#b7c}};
+  \node[evnode] (nC) at (5.75,2.95) {\texttt{\scriptsize \#c04}};
+  \node[evnode] (nF) at (7.35,2.95) {\texttt{\scriptsize \#f08}};
+  \node[evnode] (nD) at (2.75,4.15) {\texttt{\scriptsize \#d59}};
+  \node[evnode] (nE) at (4.75,4.15) {\texttt{\scriptsize \#e12}};
+
+  % trust pips: the store holds evidence at graded trust levels
+  \fill[rlTrustCal] ($(nA.north east)+(-2.4pt,-2.4pt)$) circle (1.15pt);
+  \fill[rlTrustExp] ($(nB.north east)+(-2.4pt,-2.4pt)$) circle (1.15pt);
+  \fill[rlTrustCal] ($(nC.north east)+(-2.4pt,-2.4pt)$) circle (1.15pt);
+  \fill[rlTrustExp] ($(nF.north east)+(-2.4pt,-2.4pt)$) circle (1.15pt);
+  \fill[rlTrustReg] ($(nD.north east)+(-2.4pt,-2.4pt)$) circle (1.15pt);
+  \fill[rlTrustCal] ($(nE.north east)+(-2.4pt,-2.4pt)$) circle (1.15pt);
+
+  % provenance edges: derived evidence points back to its parents (a real DAG join)
+  \draw[dag] (nA.north east) -- (nD.south west);
+  \draw[dag] (nB.north west) -- (nD.south east);
+  \draw[dag] (nC.north west) -- (nE.south east);
+
+  % ---------- the three artifacts, each a lens over the store ----------
+  \rllens{2.1}{7.05}{1.0}{Card}
+  \rllens{4.35}{7.05}{0.95}{Atlas}
+  \rllens{6.75}{7.05}{1.25}{Safety case}
+
+  % citations: each lens draws down to the specific nodes it cites (never computes)
+  \foreach \sx/\tgt in {2.1/nA, 2.1/nD, 4.35/nB, 4.35/nE, 6.75/nC, 6.75/nF}{
+    \draw[cite] (\sx,6.6) -- (\tgt.north);
+    \draw[draw=rlAccent, fill=rlSurface, line width=0.7pt] (\tgt.north) circle (1.35pt);
+  }
+
+  % store caption (kept clear of the citation field, under the DAG)
+  \node[font=\sffamily\bfseries\footnotesize, text=rlInk2, anchor=east] (cap) at (4.55,1.95) {evidence store};
+  \node[draw=rlMuted, text=rlMuted, rounded corners=2.5pt, inner xsep=5pt, inner ysep=2.3pt,
+        font=\sffamily\bfseries\scriptsize, anchor=west] at (4.72,1.95) {append-only};
+
+  % ---------- the red example: an unbacked number fails the check ----------
+  % a manuscript that states a number and cites an evidence id
+  \node[rlcard, minimum width=2.75cm, minimum height=1.75cm] (ms) at (11.55,6.42) {};
+  \node[rlnote, anchor=south] at (11.55,7.42) {a manuscript};
+  \draw[rlLine, line width=0.8pt] (10.45,7.02) -- (12.2,7.02);
+  \draw[rlLine, line width=0.8pt] (10.45,6.79) -- (11.78,6.79);
+  \node[rlvalue, font=\sffamily\bfseries\small, text=rlInk] at (11.55,6.42) {margin\; +24.03};
+  \node[draw=rlRejected, text=rlRejected, rounded corners=2.5pt, inner xsep=4pt, inner ysep=2pt,
+        font=\sffamily\bfseries\scriptsize] at (11.55,5.93) {cites \#9d2};
+
+  % the manuscript's citation is resolved by the claims-check
+  \draw[draw=rlRejected, line width=0.9pt, dashed, -{Stealth[length=2mm]}]
+    (11.55,5.55) -- (11.55,4.72);
+  \node[draw=rlInk2, fill=rlSurface, line width=0.85pt, rounded corners=3pt,
+        minimum width=2.45cm, minimum height=0.66cm, font=\sffamily\bfseries\footnotesize,
+        text=rlInk] (chk) at (11.55,4.38) {claims-check};
+
+  % the lookup reaches the store and finds no matching card (a dangling citation)
+  \draw[draw=rlRejected, line width=0.8pt, dashed] (chk.west) -- (8.72,3.98);
+  \draw[rlRejected, line width=0.9pt] (8.62,3.97) circle (2.1mm);
+  \draw[rlRejected, line width=0.9pt] ($(8.62,3.97)+(135:2.1mm)$) -- ($(8.62,3.97)+(-45:2.1mm)$);
+  \node[text=rlRejected, font=\sffamily\scriptsize, anchor=south] at (9.5,4.4) {not in store};
+
+  % the verdict: nonzero exit
+  \draw[draw=rlRejected, line width=0.9pt, -{Stealth[length=2mm]}] (11.55,4.05) -- (11.55,3.5);
+  \fill[rlSurface] (11.55,3.13) circle (3mm);
+  \draw[rlRejected, line width=0.9pt] (11.55,3.13) circle (3mm);
+  \draw[rlRejected, line width=1.3pt] ($(11.55,3.13)+(-1.5mm,-1.5mm)$) -- ($(11.55,3.13)+(1.5mm,1.5mm)$);
+  \draw[rlRejected, line width=1.3pt] ($(11.55,3.13)+(-1.5mm,1.5mm)$) -- ($(11.55,3.13)+(1.5mm,-1.5mm)$);
+  \node[text=rlRejected, font=\sffamily\bfseries\scriptsize, anchor=north] at (11.55,2.76) {nonzero exit};
+
+  % ---------- the claim, in plain words ----------
+  \node[rlnote, anchor=north west, align=left] at (0.35,1.4)
+    {an artifact only cites the store; it never mints a number.\\%
+     cite an id the store cannot show and the check exits nonzero.};
+\end{tikzpicture}
+\end{document}

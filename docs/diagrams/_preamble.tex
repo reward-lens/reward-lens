@@ -1,0 +1,107 @@
+% House preamble for every reward-lens TikZ figure.
+% The figure file sets \documentclass{standalone} and, before it is \input, the build
+% sets \rltheme (light|dark). This file loads the matching palette and defines the shared
+% visual vocabulary, so consistency across figures comes from here, not from discipline.
+%
+% Engine: lualatex or xelatex gives the real Inter (matches the site). pdflatex falls back
+% to Fira Sans, which is close. Either way the figures do not speak Computer Modern.
+
+\usepackage{iftex}
+\ifLuaTeX
+  \usepackage{fontspec}\setsansfont{Inter}[BoldFont={Inter SemiBold}, ItalicFont={Inter Italic}]
+\else\ifXeTeX
+  \usepackage{fontspec}\setsansfont{Inter}[BoldFont={Inter SemiBold}, ItalicFont={Inter Italic}]
+\else
+  \usepackage[T1]{fontenc}\usepackage[sfdefault]{FiraSans}
+\fi\fi
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{
+  positioning, calc, arrows.meta, fit, backgrounds, shapes.geometric,
+  shapes.misc, decorations.pathreplacing, decorations.pathmorphing,
+  shadows.blur, patterns, math
+}
+
+\input{_palette.tex} % defines the rl* colors for the current \rltheme
+
+% digit-name aliases, so both rlInkTwo and rlInk2 resolve
+\colorlet{rlInk2}{rlInkTwo}
+\colorlet{rlSurface2}{rlSurfaceTwo}
+
+% ---- global defaults -------------------------------------------------------
+\tikzset{
+  >={Stealth[length=2.4mm, width=1.8mm]},
+  font=\sffamily,
+  every node/.append style={text=rlInk},
+}
+
+% ---- chips: the three-chip vocabulary (tier / gauge status / works-on) ------
+% Outline chip reads correctly on both themes because the role color is a mid-tone.
+\tikzset{
+  rlchip/.style 2 args={
+    draw=#1, text=#1, line width=0.5pt, rounded corners=2.5pt,
+    inner xsep=5pt, inner ysep=2.6pt, font=\sffamily\bfseries\scriptsize,
+    label/.expanded=#2,
+  },
+  rlchip/.default={rlMuted}{},
+  % filled variant, surface-colored text so it contrasts in both themes
+  rlchipfill/.style={
+    draw=#1, fill=#1, text=rlSurface, rounded corners=2.5pt,
+    inner xsep=5pt, inner ysep=2.6pt, font=\sffamily\bfseries\scriptsize,
+  },
+}
+% simple outline chip taking one color (most common)
+\newcommand{\rlchipnode}[3][rlMuted]{\node[draw=#1, text=#1, line width=0.6pt,
+  rounded corners=2.5pt, inner xsep=5pt, inner ysep=2.6pt,
+  font=\sffamily\bfseries\scriptsize] (#2) {#3};}
+
+% ---- cards and panels ------------------------------------------------------
+\tikzset{
+  rlcard/.style={
+    draw=rlLine, fill=rlSurface, line width=0.7pt, rounded corners=4pt,
+    blur shadow={shadow blur steps=7, shadow xshift=0pt, shadow yshift=-1pt,
+      shadow opacity=18, shadow blur radius=3pt},
+  },
+  rlpanel/.style={draw=rlLine, fill=rlSurfaceTwo, line width=0.6pt, rounded corners=3pt},
+  rlfield/.style={font=\sffamily\scriptsize, text=rlMuted, align=left},
+  rlvalue/.style={font=\sffamily\bfseries, text=rlInk},
+  rllabel/.style={font=\sffamily\footnotesize, text=rlInk2},
+  rlnote/.style={font=\sffamily\scriptsize\itshape, text=rlMuted},
+}
+
+% ---- lines, axes, vectors --------------------------------------------------
+\tikzset{
+  rlaxis/.style={draw=rlLine, line width=0.7pt, -{Stealth[length=1.8mm]}},
+  rlbaseline/.style={draw=rlBaseline, line width=0.6pt, dash pattern=on 2pt off 2pt},
+  rlflow/.style={draw=rlInk2, line width=0.9pt, -{Stealth[length=2.4mm]}},
+  rlvec/.style={line width=1.3pt, -{Stealth[length=2.8mm, width=2.2mm]}},
+  rldrop/.style={draw=rlMuted, line width=0.5pt, dash pattern=on 1.6pt off 1.6pt},
+}
+
+% ---- gate glyph: a narrow keyhole the evidence must pass to climb a rung ----
+% \rlgate{name}{fill color}{label}  draws a small rounded gate node.
+\newcommand{\rlgate}[3]{%
+  \node[draw=#2, fill=rlSurface, line width=0.9pt, rounded corners=2pt,
+        minimum width=6.5mm, minimum height=6.5mm, inner sep=0pt] (#1) {};
+  \node[text=#2, font=\sffamily\bfseries\footnotesize] at (#1) {#3};%
+}
+
+% ---- answer-key glyph (calibration): a tiny key ----------------------------
+\newcommand{\rlkey}[2][rlTrustAdj]{%
+  \begin{scope}[shift={(#2)}, rotate=45]
+    \draw[fill=#1, draw=#1] (0,0) circle (1.6mm);
+    \fill[rlSurface] (0,0) circle (0.6mm);
+    \draw[#1, line width=1.1pt] (0,-1.6mm) -- (0,-4.4mm);
+    \draw[#1, line width=1.1pt] (0,-3.0mm) -- (1.1mm,-3.0mm);
+    \draw[#1, line width=1.1pt] (0,-4.0mm) -- (0.9mm,-4.0mm);
+  \end{scope}%
+}
+
+% ---- frozen-study seal: a small notched stamp ------------------------------
+\newcommand{\rlseal}[2][rlTrustReg]{%
+  \node[star, star points=12, star point ratio=0.9, draw=#1, fill=#1,
+        text=rlSurface, minimum size=9mm, inner sep=0pt,
+        font=\sffamily\bfseries\tiny] at (#2) {\#hash};%
+}

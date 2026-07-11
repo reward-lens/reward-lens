@@ -1,59 +1,42 @@
-# Observational vs causal
+# Observational versus causal
 
-Two questions sound the same and are not:
+Two tools, same model, same pair. One says the last MLP layers wrote the reward. The other says the early layers cause it. Which do you believe?
 
-- Where does the reward *accumulate*?
-- What *causes* the reward?
+The honest answer is that they measure different things, and the moment you forget that is the moment you publish a plausible, backwards result. This is the single most important idea in the library, so it gets its own page and a measured result to make it concrete.
 
-The first is answered by reading activations. Project each component onto \(w_r\), see who has the largest projection, and you know where the reward is visible. The second is answered by intervening. Change a component's activation, rerun the model, and see whether the reward moves. One is a correlation. The other is a cause. On real reward models, they give different answers, and the whole library is organized around not confusing them.
+## The two questions
 
-=== "Observational"
+An **observational** tool reads. It takes an activation, projects it onto the reward direction, and reports how far the model has leaned toward its verdict by that point. The [reward lens](../instruments/lens-crystallization.md) and [component attribution](../instruments/attribution.md) are observational. They are cheap, one or two forward passes, and they answer "where does the reward *appear*?"
 
-    Read an activation and project it onto \(w_r\). Cheap: one or two forward passes for a whole model. Answers "where is the reward, along this decomposition?"
+A **causal** tool intervenes. It changes an activation, runs the model forward from there, and measures how the reward moves. [Patching](../instruments/patch-grid.md) is causal. It is expensive, one forward pass per component, and it answers a different question: "which components, if you change them, *change the reward*?"
 
-    Tools: [Reward Lens](../tools/reward-lens.md), [Component Attribution](../tools/component-attribution.md), [SAE features](../tools/sae-features.md), [Concept vectors](../tools/concept-vectors.md).
+Appear and cause sound like the same thing. On real reward models they are not. Every instrument page in the site wears a chip that says which of the two claims it licenses, and the runner will not let an observational tool hand back a causal one.
 
-    Claim you may make: "this component's output has a large projection onto the reward direction."
+## The result
 
-    <span class="rl-badge rl-badge--observational">Observational</span>
+Rank Skywork's components by attribution. Rank them again by patch effect. Correlate the two rankings and you get Spearman \(\rho = -0.171\). Negative. That is the mean across quality dimensions, and on the strongest ones it is sharper: about \(-0.31\) on helpfulness, \(-0.44\) on code correctness. The components that carry the most attribution are, if anything, mildly *anti*-predictive of the components that carry the most causal weight.
 
-=== "Causal"
-
-    Intervene on an activation and measure the change in margin. Expensive: on the order of two forward passes per component. Answers "does this component *cause* the preference?"
-
-    Tools: [Activation Patching](../tools/activation-patching.md), [Path Patching](../tools/path-patching.md), [Divergence-aware Patching](../tools/divergence-patching.md).
-
-    Claim you may make: "ablating this component changes the margin by this much."
-
-    <span class="rl-badge rl-badge--causal">Causal</span>
-
-Every tool page in this site wears one of those badges. It is not decoration. It tells you exactly which of the two claims the tool licenses, and the library refuses to let an observational tool make a causal one.
-
-## The result that forces the doctrine
-
-Here is why this matters, on this library's own models, with numbers.
-
-Take a preference pair. Run [Component Attribution](../tools/component-attribution.md): every component's signed share of the margin. Run [Activation Patching](../tools/activation-patching.md): every component's causal effect on the margin. Now line the two rankings up. If attribution were a good proxy for causal importance, the components attribution ranks highest would be the ones patching finds most necessary, and the two would correlate positively.
-
-They anti-correlate.
-
-![Attribution against patch effect for every component of a helpfulness pair. Points hug the two axes: a component matters to one method or the other, almost never both.](../assets/figures/attribution-vs-patching.svg){ .rl-fig .rl-fig--hero }
+![Attribution rank against patch-effect rank on Skywork; the cloud tilts the wrong way.](../assets/figures/attribution-vs-patching-light.svg#only-light){ .rl-fig .rl-fig--hero }
+![Attribution rank against patch-effect rank on Skywork; the cloud tilts the wrong way.](../assets/figures/attribution-vs-patching-dark.svg#only-dark){ .rl-fig .rl-fig--hero }
 
 /// caption
-Each point is one component. Horizontal: its attribution, the reward it appears to carry. Vertical: its patch effect, the reward it actually causes. The cloud hugs both axes and leaves the diagonal empty. `mlp_L0` (early, top left) causes a large swing in the margin but is credited almost nothing by attribution. `mlp_L31` (late, bottom right) is credited the most and causes almost nothing. Spearman \(\rho = -0.45\) on this dimension.
+**Attribution and causation point different ways.** Each dot is a component: its attribution rank against its patch-effect rank. A tool that read cause would put the cloud on the rising diagonal. On Skywork it tilts the other way. The late MLPs dominate attribution; the top causal head sits at layer 0.
 ///
 
-Averaged over helpfulness, correctness, and safety, the rank correlation between attribution and patch effect is \(\rho = -0.256\) on Skywork and \(-0.027\) on ArmoRM. Negative to zero. Never positive. The single canonical sky-is-blue pair shows the same thing on its own: \(\rho = -0.230\).
+Concretely: attribution on the sky-is-blue pair is led by the final MLPs, `mlp_L31` at \(+3.99\), then `mlp_L30`, then `mlp_L29`. Patching tells a different story. The single component whose change moves the reward most is an early head, `head_L0_H29` for helpfulness, and across dimensions the largest patch effects cluster early.
 
-The mechanism behind the number is legible. Attribution credits the **last MLP layers**, because that is where the margin is largest, that is literally what [crystallization](crystallization.md) measures. Patching credits the **early layers**, because that is where the computation the late layers merely report on actually happens. Break an early layer and the whole chain downstream is wrong. Break the last MLP and the model mostly recovers. The reward becomes *visible* late and is *caused* early, and attribution can only see where it is visible.
+The mechanism behind the number is legible once you see it. Break an early layer and the whole chain downstream computes on garbage, so the reward swings. Break the last MLP and the model has mostly already decided, so it recovers. The reward becomes *visible* late, which is exactly what [crystallization](crystallization.md) measures, and it is *built* early, which is what patching finds. Attribution can only see where it is visible.
 
-## What to do about it
+## What it is not
 
-This is not a reason to distrust the tools. It is a reason to use them for what each is for.
+This is not a claim that attribution is broken. Attribution answers its own question correctly: the late MLPs really do carry most of the reward's final expression, and if you want to know where the score is written, that is a true and useful answer. The error is only in the substitution. "The late MLPs explain the reward" quietly becomes "the late MLPs cause the reward," and the second sentence is false on this model.
 
-!!! tip "The workflow the doctrine implies"
-    **Explore with the observational tools. Confirm with the causal ones.**
+The result is also model-dependent, which is itself the point. On ArmoRM the same correlation is about \(+0.05\), near zero, no reliable relationship in either direction. So you cannot even memorize "attribution anti-predicts patching" as a law. What a tool sees and what is true line up differently on different models, which is precisely why you cannot take any single tool's word for it.
 
-    The Reward Lens and attribution are fast and give you a map: where the reward lives, which components carry it, what concepts it aligns with. Use them freely to generate hypotheses. But the moment a claim becomes load-bearing, "this head is responsible for the length bias," "this circuit implements the preference," you have crossed into a causal statement, and only patching can support it. Run the patch. Do not ship the attribution bar as if it were the cause.
+## The rule, and where it leads
 
-Most overclaiming in interpretability is exactly this substitution: a clean observational picture, presented as a causal one, because the picture was clean and the intervention was never run. Reward models make the substitution unusually tempting, because the scalar target makes attribution so crisp. These docs badge every tool so you always know which claim you are entitled to. The full set of honest limits, off-distribution patching included, is the [interpreting-results-honestly](../caveats.md) section, which is where a careful reader should go next.
+Read with the observational tools, confirm with the causal ones, and never quote one as if it were the other.
+
+That rule is easy to state and easy to forget under deadline, so the library stopped relying on you to remember it. In the first version both tools returned a bare number, and nothing stopped you from ranking components by the cheap one and calling them causal. Now every measurement comes back marked with how far it has earned your belief, and a tool earns a stronger claim only by being checked against a case where the answer is known. This anti-correlation is the exact case that motivated that machinery. An instrument you cannot check against a known answer is a rumor, and until you can plant that answer and score the tool against it, "attribution predicts causation" is a rumor you should not repeat.
+
+That is the door into the second half of the site. [A measurement you can trust](measurement-you-can-trust.md) says what the receipt on every number means, and [calibration and organisms](../discipline/calibration-and-organisms.md) shows how a tool earns a stronger one. The full accounting of this and the other traps lives on the [honesty page](../caveats.md).

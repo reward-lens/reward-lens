@@ -1,0 +1,94 @@
+% The calibration loop. One claim: no instrument earns trust on say-so. It has to
+% recover a rule someone planted first; only then does the gate promote it from
+% exploratory (grey) to calibrated (blue). The organism is the answer key.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+  \def\Rr{3.8}          % ring radius (node centers)
+  \def\Rl{3.18}         % edge-label ring (inside the arcs)
+
+  % subtle theme-matched panel behind the whole loop (never white)
+  \fill[rlSurfaceTwo, rounded corners=8pt] (-5.6,-5.5) rectangle (5.6,5.35);
+
+  % shared station style: a card that lifts off the panel
+  \tikzset{station/.style={rlcard, align=center, inner sep=6pt, minimum width=2.25cm}}
+
+  % ---- the five stations, placed clockwise from the top ---------------------
+  % n1 organism (top), tagged with the planted answer key
+  \node[station, minimum width=2.5cm] (r1) at (90:\Rr)
+    {{\sffamily\bfseries\small organism}\\[1pt]%
+     {\sffamily\scriptsize\color{rlMuted}a rule planted}\\%
+     {\sffamily\scriptsize\color{rlMuted}by construction}};
+  \rlkey[rlTrustAdj]{$(r1.north)+(-0.56,0.34)$}
+  \node[font=\sffamily\bfseries\scriptsize, text=rlTrustAdj, anchor=west]
+        at ($(r1.north)+(-0.30,0.28)$) {answer key};
+
+  % n2 trained head (right)
+  \node[station] (r2) at (18:\Rr)
+    {{\sffamily\bfseries\small trained head}\\[1pt]%
+     {\sffamily\scriptsize\color{rlMuted}rule now in $w_r$}};
+
+  % n3 instrument (lower right)
+  \node[station] (r3) at (-54:\Rr)
+    {{\sffamily\bfseries\small instrument}\\[1pt]%
+     {\sffamily\scriptsize\color{rlMuted}recovers $\hat w$}};
+
+  % n4 scorecard (lower left): a tiny ROC + cosine to the trained head
+  \node[station, minimum height=1.78cm, minimum width=2.7cm] (r4) at (-126:\Rr) {};
+  \node[font=\sffamily\bfseries\footnotesize, text=rlInk, anchor=north]
+        at ($(r4.north)+(0,-0.13)$) {scorecard};
+  \begin{scope}[shift={($(r4.center)+(-0.74,-0.36)$)}]
+    \draw[rlLine, line width=0.5pt] (0,0) -- (0.82,0);
+    \draw[rlLine, line width=0.5pt] (0,0) -- (0,0.82);
+    \draw[rlBaseline, line width=0.5pt, dash pattern=on 1.4pt off 1.4pt] (0,0) -- (0.82,0.82);
+    \fill[rlGauge, opacity=0.13] (0,0) .. controls (0.02,0.6) and (0.11,0.8) .. (0.82,0.8) -- (0.82,0) -- cycle;
+    \draw[rlGauge, line width=1.1pt] (0,0) .. controls (0.02,0.6) and (0.11,0.8) .. (0.82,0.8);
+  \end{scope}
+  \node[font=\sffamily\bfseries\scriptsize, text=rlGauge, anchor=west]
+        at ($(r4.center)+(0.24,0.12)$) {AUC 1.0};
+  \node[font=\sffamily\scriptsize, text=rlMuted, anchor=west]
+        at ($(r4.center)+(0.24,-0.14)$) {OOD split};
+  \node[font=\sffamily\scriptsize, text=rlInk2, anchor=south]
+        at ($(r4.south)+(0,0.11)$) {$\cos(\hat w,\,w_r)=0.96$};
+
+  % n5 promote (upper left): the trust rung rises exploratory -> calibrated
+  \node[station, minimum height=1.55cm, minimum width=2.35cm] (r5) at (162:\Rr) {};
+  \node[fill=rlTrustCal, draw=rlTrustCal, text=rlSurface, rounded corners=3pt,
+        inner xsep=5pt, inner ysep=2pt, font=\sffamily\bfseries\scriptsize]
+        (cal) at ($(r5.center)+(0,0.35)$) {calibrated};
+  \node[fill=rlTrustExp, draw=rlTrustExp, text=rlSurface, rounded corners=3pt,
+        inner xsep=5pt, inner ysep=2pt, font=\sffamily\bfseries\scriptsize]
+        (exp) at ($(r5.center)+(0,-0.37)$) {exploratory};
+  \draw[-{Stealth[length=2.2mm]}, rlTrustCal, line width=1.4pt] (exp.north) -- (cal.south);
+
+  % ---- the loop: five clockwise arcs in the gaps between stations -----------
+  \draw[rlflow] (70:\Rr)   arc[start angle=70,   end angle=38,   radius=\Rr];
+  \draw[rlflow] (-2:\Rr)   arc[start angle=-2,   end angle=-34,  radius=\Rr];
+  \draw[rlflow] (-74:\Rr)  arc[start angle=-74,  end angle=-106, radius=\Rr];
+  \draw[rlflow] (142:\Rr)  arc[start angle=142,  end angle=110,  radius=\Rr];
+  % the gated edge, scorecard -> promote
+  \draw[rlflow] (-146:\Rr) arc[start angle=-146, end angle=-178, radius=\Rr];
+
+  % ---- the gate: evidence promotes ONLY by passing through it ---------------
+  \begin{scope}[shift={(-162:\Rr)}]
+    \node[draw=rlTrustCal, fill=rlSurface, line width=1.0pt, rounded corners=2pt,
+          minimum width=6.8mm, minimum height=6.8mm, inner sep=0pt] (gate) {};
+    \fill[rlTrustCal] (0,0.7mm) circle (1.0mm);
+    \fill[rlTrustCal] (-0.7mm,0.7mm) -- (0.7mm,0.7mm) -- (0.4mm,-2.1mm) -- (-0.4mm,-2.1mm) -- cycle;
+  \end{scope}
+  \node[font=\sffamily\bfseries\scriptsize, text=rlTrustCal, anchor=north]
+        at ($(-162:\Rr)+(0,-0.52)$) {gate};
+
+  % ---- edge verbs, on the inner label ring ----------------------------------
+  \node[rlfield, text=rlMuted] at (54:\Rl)  {train};
+  \node[rlfield, text=rlMuted] at (-18:\Rl) {recover};
+  \node[rlfield, text=rlMuted] at (-90:\Rl) {score};
+  \node[rlfield, text=rlMuted] at (126:\Rl) {plant};
+
+  % ---- the claim, in the house note voice -----------------------------------
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (-5.3,-4.15)
+    {the organism is the answer key, a rule planted by construction. an instrument earns\\
+     calibration only by recovering it and clearing the gate. no answer key, no promotion.};
+\end{tikzpicture}
+\end{document}

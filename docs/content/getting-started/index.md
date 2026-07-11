@@ -1,85 +1,70 @@
 # Getting started
 
-The fastest way to understand what this library is for is to run one pair through it and look at the result. Fifteen lines, one preference pair, and you will see where a reward model made up its mind and which parts of it wrote the score.
-
-## Install
+Two ways in. One runs on your laptop this minute and needs nothing. The other loads a real 8B reward model on a GPU and shows you the result the rest of the site keeps coming back to. Start with whichever matches the hardware in front of you.
 
 ```bash
 pip install reward-lens
 ```
 
-That pulls in `torch`, `transformers`, and the rest. Python 3.10 or newer. For the sparse-autoencoder tooling, `pip install "reward-lens[sae]"`; for a dev checkout with tests, `pip install "reward-lens[dev]"`.
+Python 3.10 or newer. The [install page](install.md) has the extras, the Hugging Face access notes for gated models, and the honest word on memory.
 
-!!! note "What actually bites, before you run anything"
-    - **You need the model weights.** `reward-lens` hooks a real model in memory, so anything API-only is out of reach. If `transformers` can load it, you can open it up.
-    - **The good reward models are gated.** Skywork and ArmoRM live behind a license click on the Hugging Face Hub. Accept the terms on the model page, then `huggingface-cli login` with a token, or the load will fail with a 401.
-    - **Budget the memory.** An 8B reward model in `bfloat16` wants about 16 GB of GPU memory for the observational tools (Reward Lens, attribution). A full [activation-patching](../tools/activation-patching.md) sweep runs a forward pass per component, so it wants more headroom and more time. Nemotron-340B needs several GPUs. Everything runs in inference mode; you never train the reward model.
-    - **Which models just work.** Llama-based reward models (Skywork, FsfairX, QRM), Mistral, Gemma-2, InternLM2, ArmoRM's multi-objective head, and any `AutoModelForSequenceClassification` with a linear reward head through the generic adapter. Adding your own family is [one small class](../how-to/write-an-adapter.md).
+## On your laptop, right now
 
-## Your first trace
+`from_tiny` builds a real, small reward model on CPU with random weights. No download, no GPU, under a minute from a cold start. It is enough to meet every moving part: a signal, a measurement, and the receipt the measurement comes back with.
 
 ```python
-from reward_lens import RewardModel
-from reward_lens.lens import RewardLens
-from reward_lens.attribution import ComponentAttribution
+from reward_lens.signals import from_tiny
+from reward_lens.measure import base as mb
+from reward_lens.measure.battery import DirectLinearAttribution
+from reward_lens.data.builtin.diagnostic_v3 import load_diagnostic_v3
+from reward_lens.data.schema import DataView
 
-rm = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
+signal = from_tiny(seed=0)
+view = DataView(list(load_diagnostic_v3()["helpfulness"].items)[:8])
 
-prompt = "A student asks: 'Why is the sky blue?' Please give a clear, accurate explanation."
-chosen = ("Sunlight is a mix of all visible wavelengths. When it enters Earth's atmosphere, "
-          "molecules scatter the shorter (blue) wavelengths much more strongly than the longer "
-          "(red) ones — this is Rayleigh scattering. Blue light bounces around the sky in every "
-          "direction, so when you look up, blue is what reaches your eyes from almost everywhere.")
-rejected = ("The sky is blue because blue is the color of the sky. It has always been blue and "
-            "always will be. Nobody really knows why, it's just one of those things.")
+ev = mb.run(DirectLinearAttribution(), mb.Context(signal=signal, view=view))
 
-# 1. When does the preference form?
-trace = RewardLens(rm).trace(prompt, chosen, rejected)
-print(f"margin: {trace.differential[-1]:+.2f}")            # +24.03
-print(f"crystallizes at layer {trace.crystallization_layer} of {rm.n_layers}")   # 30 of 32
-
-# 2. Which components wrote the score?
-attrib = ComponentAttribution(rm).attribute(prompt, chosen, rejected)
-for name, value in attrib.top_k(5, by="differential"):
-    print(f"{name:>10}  {value:+.2f}")                     # mlp_L31 +3.99, mlp_L30 +1.32, ...
+print(ev.observable)                    # DirectLinearAttribution
+print(ev.value["dominant_component"])   # the component that wrote each pair's reward gap
+print(ev.gauge)                         # invariant
+print(ev.trust)                         # TrustLevel.EXPLORATORY
 ```
 
-Run that and you have a real result: Skywork prefers the Rayleigh answer by a margin of about 24, it commits to that preference only in the last two layers, and the components that carry the largest share of the score are the final MLPs.
+That last line is the point of the rebuild. The measurement did not return a bare number. It returned a value wrapped in its own credentials, and the trust level reads `EXPLORATORY` because nothing has yet checked this tool against a case with a known answer. It is not the tool's job to promise it is right. It is the tool's job to say how far it has earned your belief. The [trust story](../concepts/measurement-you-can-trust.md) is where that number starts to climb.
 
-![The margin between chosen and rejected, layer by layer, flat until the late layers then rising sharply past the halfway line at layer 30.](../assets/figures/lens-curve.svg){ .rl-fig }
+Everything in the epistemics layer runs like this, on CPU. You can go a long way before you ever need a GPU.
 
-/// caption
-What the trace looks like: the margin stays near zero for two-thirds of the network, then forms in a rush, crossing half its final value at layer 30. This shape, flat then late, is the thing to recognize.
-///
+## On a GPU, on a real model
 
-That last fact is a trap, and learning why is the point of everything that follows. The components with the largest *attribution* are not the ones [causal patching](../tools/activation-patching.md) finds most *necessary*. On this pair they anti-correlate. The [observational-vs-causal](../concepts/observational-vs-causal.md) split is the first idea to internalize, and the [honesty section](../caveats.md) is where the library keeps itself honest about it.
+The same shape, pointed at an 8B classifier reward model. Load a signal, pick a measurement, run it. Here is the reward lens on the canonical pair carried through the whole site: a good and a bad answer to "why is the sky blue?"
 
-## Where to go next
+```python
+from reward_lens.signals import load_signal
+from reward_lens.measure import base as mb
+from reward_lens.measure.battery import LensCrystallization
+from reward_lens.data import make_pair
+from reward_lens.data.schema import DataView
 
-<div class="grid cards" markdown>
+signal = load_signal("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2", allow_download=True)
 
--   __Understand the idea__
+prompt = "Why is the sky blue?"
+chosen = ("Sunlight is a mix of wavelengths, and air molecules scatter the short, blue ones far "
+          "more than the long, red ones. That scattered blue light reaches your eyes from every "
+          "direction, so the sky looks blue. It is Rayleigh scattering.")
+rejected = "The sky is blue because blue is the color of the sky. It has always been that way."
 
-    Five short pages that install the mental model the whole library assumes.
+pair = make_pair(prompt=prompt, chosen=chosen, rejected=rejected,
+                 axis="helpfulness", seed_id="sky-blue", builder_id="docs")
+ev = mb.run(LensCrystallization(), mb.Context(signal=signal, view=DataView([pair])))
 
-    [:octicons-arrow-right-24: Concepts](../concepts/index.md)
+ev.value["mean_crystal_frac"]     # 0.93  ->  the margin is half-formed only near layer 30 of 32
+```
 
--   __Follow the curriculum__
+On Skywork the preferred answer scores about \(-2.22\) and the rejected one about \(-26.25\), a margin of \(+24.03\). The reward lens shows the two curves staying tangled and flat for most of the network, then splitting late. A crystallization fraction of 0.93 is what that shape means: the model waits until it has nearly finished building its representations before it commits.
 
-    The intro notebook runs the full arc on one pair, end to end, with a free Colab GPU.
+!!! warning "This step needs a GPU"
+    `load_signal` on a hub model is gated behind `allow_download=True`, and an 8B model in `bfloat16` wants roughly 16 GB of GPU memory. Without the flag the loader refuses rather than pretend, and points you at `wrap_hf_model` for a model you have already loaded, or `from_tiny` for the CPU path above. The numbers here were measured on that model. The library does not fabricate them on hardware that cannot hold it.
 
-    [:octicons-arrow-right-24: Tutorials](../tutorials/index.md)
+## Next
 
--   __Do one specific thing__
-
-    Goal-indexed recipes: detect length bias, compare two models, write an adapter.
-
-    [:octicons-arrow-right-24: How-to guides](../how-to/index.md)
-
--   __Open a tool__
-
-    Every tool, grouped by what claim it lets you make.
-
-    [:octicons-arrow-right-24: Tools](../tools/index.md)
-
-</div>
+The [concepts](../concepts/index.md) pages are the mental model: one direction, a pair as a controlled experiment, and where the preference forms. If you would rather stay hands-on, the [tutorials](../tutorials/index.md) run two full arcs end to end, and [models and signals](../models-and-signals/index.md) answers the first question half of readers bring, which is whether any of this attaches to the grader you actually have.

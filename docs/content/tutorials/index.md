@@ -1,33 +1,23 @@
 # Tutorials
 
-Pick one preference pair and never let go of it. That is the whole curriculum. A student asks why the sky is blue; one answer explains Rayleigh scattering, the other says the sky is blue because it has always been blue and nobody really knows why. The arc below points six tools at that single pair, one after another, so they stop being a list of techniques and become six views of one example.
+**Two ways in, and they answer different questions.** One takes a single reward model apart and shows you where its opinion lives, which parts of it wrote the score, and the moment two of our own tools contradict each other. The other never touches a big model: it teaches the thing that makes 2.0 different, that every number here arrives with a receipt saying how far to trust it, and it runs start to finish on a CPU in about a minute.
 
-## The arc
+Read them in either order. If you came for interpretability, start with the first. If you came because a clean-looking metric has burned you before, start with the second.
 
-Each step is one tool, one question, and one number you can check against your own run.
+<div class="grid cards" markdown>
 
-1. **Trace it.** Project every layer onto the reward direction and watch the margin form. Skywork prefers the good answer by \(\Delta = +24.03\), and the preference does not crystallize until layer 30 of 32. Late. [Reward Lens](../tools/reward-lens.md).
-2. **Attribute it.** Split the final score by component and ask which parts wrote it. The late MLPs take almost all the credit, `mlp_L31` most of all at \(+3.99\). [Component Attribution](../tools/component-attribution.md).
-3. **Patch it.** Now intervene instead of read. Swap each component between the two responses and measure how the margin moves. The *early* layers turn out to be the necessary ones, `mlp_L0` most of all. On this single pair the two rankings anti-correlate at Spearman \(\rho = -0.230\): the reward is visible late but computed early, and that gap is the most important lesson in the library. [Activation Patching](../tools/activation-patching.md).
-4. **Break it.** Hold the content fixed, vary a surface feature, and read the reward swing as an effect size. Skywork and ArmoRM even disagree on sign for overconfident phrasing (Cohen's \(d\) of \(-2.19\) versus \(+2.94\)): one penalizes it, the other rewards it. [Hacking Detector](../tools/hacking-detector.md).
-5. **Probe its concepts.** Extract a direction for a human-legible concept and measure its cosine with \(w_r\). "Agreement" aligns at \(+0.343\), and pushing that direction into this response's activations moves the reward almost one-for-one (dose-response slope \(+0.965\)). The concept report puts the model's overall hacking risk at 47.5%. [Concept vectors](../tools/concept-vectors.md).
-6. **Compare it.** Run the same pair through a second reward model. Skywork and ArmoRM trace nearly the same formation-curve *shape* (correlation around 0.85), yet ArmoRM commits earlier and noisier than Skywork's near-90%-of-depth crystallization. Same answer, different mechanism. [Compare two models](../how-to/compare-two-models.md).
+-   __Inside one reward model__
 
-## Run the whole arc
+    Trace the sky-is-blue pair and watch the preference form late. Attribute the score to components. Patch to find what actually causes it. See attribution and patching disagree, with the real numbers. Then scan the model for bias. The scientific results come from a real 8B grader; the same instruments run on a toy model on your CPU.
 
-All six steps live in one notebook, run end to end on the sky-is-blue pair, with the outputs already rendered so you can read it through before running a line.
+    [:octicons-arrow-right-24: Inside one reward model](inside-one-reward-model.md)
 
-[Intro demo (notebook)](intro-demo.ipynb)
+-   __Measurements you can trust__
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/suhailnadaf509/reward-lens/blob/main/Reward_Lens_Intro_Demo.ipynb)
+    Six steps, all on the CPU, all runnable now. Build a tiny signal, run an instrument, and read why the number comes back untrusted. Plant a rule you know the answer to, calibrate a detector against it, and watch trust climb. Freeze a question, run it, and let the frozen prediction adjudicate itself.
 
-Open it in Colab for a free GPU, enough to load an 8B reward model in `bfloat16` and reproduce every number above yourself.
+    [:octicons-arrow-right-24: Measurements you can trust](measurements-you-can-trust.md)
 
-!!! note "Coming soon"
-    The intro demo is the first tutorial, not the last. On the roadmap next:
+</div>
 
-    - **A written walkthrough per tool,** the notebook's arc expanded into standalone pages you can read without a GPU in front of you.
-    - **A short video** tracing the sky-is-blue pair from model load to cross-model comparison.
-    - **An interactive activation viewer,** for scrubbing the per-layer projections instead of reading them off a static plot.
-
-    Until each of these lands, the [tools](../tools/index.md) pages and the intro notebook cover the same ground.
+The first arc is the classic white-box story, refreshed for the 2.0 API. The second is the one to internalize before you publish a number, because it is the difference between a plot and a claim.

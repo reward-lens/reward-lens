@@ -1,0 +1,88 @@
+% The gauge picture. One claim: a raw cross-model number is a coordinate, not a
+% fact. Two reward directions look orthogonal in raw coordinates (cos = 0.005);
+% fix a shared frame and the same two directions sit at a small true angle. The
+% gauge gate refuses the comparison until that frame exists.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+  % ---- the two reward directions keep their identity across both panels ------
+  % A is rlChosen (blue), B is rlSeriesB (orange). Track blue and orange from the
+  % left panel (far apart) to the right panel (nearly aligned).
+
+  \coordinate (OL) at (2.9,1.6);   % left origin,  raw coordinates
+  \coordinate (OR) at (10.7,1.6);  % right origin, shared frame
+
+  % ---- the two panels, each a subtle rlSurfaceTwo ground --------------------
+  \node[rlpanel, minimum width=6cm, minimum height=5.4cm, anchor=south west] (PL) at (0,0) {};
+  \node[rlpanel, minimum width=6cm, minimum height=5.4cm, anchor=south west] (PR) at (7.8,0) {};
+
+  % ---- LEFT: an arbitrary raw basis, drawn grey because it means nothing -----
+  \draw[rlMuted, line width=0.5pt, dash pattern=on 1.4pt off 1.8pt, opacity=0.55]
+    ($(OL)+(-1.75,0)$) -- ($(OL)+(2.25,0)$);
+  \draw[rlMuted, line width=0.5pt, dash pattern=on 1.4pt off 1.8pt, opacity=0.55]
+    ($(OL)+(0,-0.85)$) -- ($(OL)+(0,2.65)$);
+
+  % ---- RIGHT: the canonical frame, a whitened metric (dotted unit circle) + axes
+  \draw[rlGauge, line width=0.6pt, dash pattern=on 0.8pt off 1.7pt, opacity=0.5]
+    (OR) circle (1.5);
+  \draw[rlGauge, line width=0.7pt, opacity=0.85, -{Stealth[length=1.7mm]}]
+    ($(OR)+(-1.7,0)$) -- ($(OR)+(1.95,0)$);
+  \draw[rlGauge, line width=0.7pt, opacity=0.85, -{Stealth[length=1.7mm]}]
+    ($(OR)+(0,-0.95)$) -- ($(OR)+(0,2.6)$);
+
+  % ---- the angle each panel is really about ---------------------------------
+  \draw[rlMuted, line width=0.8pt] ($(OL)+(9:0.74)$) arc[start angle=9, end angle=98, radius=0.74];
+  \draw[rlInk2, line width=1.1pt] ($(OR)+(54:0.92)$) arc[start angle=54, end angle=78, radius=0.92];
+
+  % ---- LEFT vectors: near-orthogonal ----------------------------------------
+  \coordinate (AL) at ($(OL)+(9:2.4)$);
+  \coordinate (BL) at ($(OL)+(98:2.4)$);
+  \draw[rlvec, draw=rlChosen] (OL) -- (AL);
+  \draw[rlvec, draw=rlSeriesB] (OL) -- (BL);
+  \fill[rlInk] (OL) circle (1.4pt);
+  \node[rlvalue, text=rlChosen, anchor=west]  at ($(AL)+(0.05,0.0)$)  {$w_r^{A}$};
+  \node[rlvalue, text=rlSeriesB, anchor=south] at ($(BL)+(0,0.06)$)   {$w_r^{B}$};
+
+  % ---- RIGHT vectors: the same two, now at a small true angle ---------------
+  \coordinate (AR) at ($(OR)+(54:2.6)$);
+  \coordinate (BR) at ($(OR)+(78:2.6)$);
+  \draw[rlvec, draw=rlChosen] (OR) -- (AR);
+  \draw[rlvec, draw=rlSeriesB] (OR) -- (BR);
+  \fill[rlInk] (OR) circle (1.4pt);
+  \node[rlvalue, text=rlChosen, anchor=west]  at ($(AR)+(0.05,-0.02)$) {$w_r^{A}$};
+  \node[rlvalue, text=rlSeriesB, anchor=south] at ($(BR)+(0,0.06)$)     {$w_r^{B}$};
+
+  % ---- the gauge gate between them: fix a frame, or the comparison is refused
+  \coordinate (GC) at (6.9,2.55);
+  \draw[line width=0.9pt, draw=rlMuted, dash pattern=on 2pt off 2pt] (6.03,2.55) -- (6.585,2.55);
+  \node[draw=rlGauge, fill=rlSurface, line width=1.0pt, rounded corners=2.5pt,
+        minimum width=0.62cm, minimum height=0.86cm, inner sep=0pt] (gate) at (GC) {};
+  \draw[rlGauge, line width=0.7pt] ($(GC)+(-1.6mm,0)$) -- ($(GC)+(1.6mm,0)$);
+  \draw[rlGauge, line width=0.7pt] ($(GC)+(0,-1.7mm)$) -- ($(GC)+(0,1.9mm)$);
+  \draw[rlflow, draw=rlGauge] (7.215,2.55) -- (7.77,2.55);
+  \node[font=\sffamily\bfseries\scriptsize, text=rlInk2, anchor=south] at ($(gate.north)+(0,0.6mm)$) {fix a frame};
+  \node[font=\sffamily\bfseries\scriptsize, text=rlGauge, anchor=north] at ($(gate.south)+(0,-0.6mm)$) {gauge gate};
+
+  % ---- panel headers + a gauge-status chip each -----------------------------
+  \node[font=\sffamily\bfseries\footnotesize, text=rlInk2, anchor=west] at (0.32,5.06) {raw coordinates};
+  \node[draw=rlMuted, text=rlMuted, line width=0.6pt, rounded corners=2.5pt,
+        inner xsep=4.5pt, inner ysep=2pt, font=\sffamily\bfseries\scriptsize, anchor=west]
+    at (2.72,5.06) {raw only};
+  \node[font=\sffamily\bfseries\footnotesize, text=rlInk2, anchor=west] at (8.12,5.06) {shared frame};
+  \node[draw=rlGauge, text=rlGauge, line width=0.6pt, rounded corners=2.5pt,
+        inner xsep=4.5pt, inner ysep=2pt, font=\sffamily\bfseries\scriptsize, anchor=west]
+    at (10.1,5.06) {frame fixed};
+
+  % ---- the readout each panel produces --------------------------------------
+  \node[font=\sffamily\small, text=rlInk, anchor=base, fill=rlSurfaceTwo, inner xsep=3pt, inner ysep=2pt]
+    at (2.9,0.42) {raw $\cos={}$\textbf{0.005}};
+  \node[font=\sffamily\small, text=rlInk, anchor=base, fill=rlSurfaceTwo, inner xsep=3pt, inner ysep=2pt]
+    at (10.7,0.42) {canonical $\cos \gg 0$};
+
+  % ---- the claim, in words --------------------------------------------------
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (0.1,-0.42)
+    {The gauge gate refuses a cross-model comparison until a shared frame is fixed.\\
+     Raw coordinates are not facts: canonicalize into one frame and the true angle appears.};
+\end{tikzpicture}
+\end{document}

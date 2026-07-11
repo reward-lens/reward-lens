@@ -1,0 +1,49 @@
+% The trust ladder. One claim: trust is computed by gates, not written down by the
+% caller. Four rungs, each reached only by passing a gate; no shortcut exists.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+  \def\dx{4.15}
+  \def\dy{0.62}
+
+  % the four rungs, rising and gaining saturation left to right
+  \foreach \i/\col/\name/\sub in {%
+      0/rlTrustExp/EXPLORATORY/{a bare measurement},
+      1/rlTrustCal/CALIBRATED/{has a scorecard},
+      2/rlTrustReg/REGISTERED/{predicted in advance},
+      3/rlTrustAdj/ADJUDICATED/{survived the test}}{
+    \pgfmathsetmacro{\x}{\i*\dx}
+    \pgfmathsetmacro{\y}{\i*\dy}
+    \node[fill=\col, draw=\col, rounded corners=4pt, text=rlSurface,
+          minimum width=2.7cm, minimum height=1.05cm, inner sep=3pt, align=center]
+      (r\i) at (\x,\y) {{\sffamily\bfseries\small \name}\\[1pt]{\sffamily\scriptsize \sub}};
+  }
+
+  % gates between the rungs: a portcullis the evidence passes through, named by its cost
+  \foreach \i/\next/\req in {0/1/{a scorecard}, 1/2/{a frozen spec}, 2/3/{it held up}}{
+    \pgfmathsetmacro{\gx}{\i*\dx+2.075}
+    \pgfmathsetmacro{\gy}{\i*\dy+0.31}
+    \draw[rlflow] (r\i.east) -- (r\next.west);
+    \begin{scope}
+      \node[fill=rlSurface, draw=rlInk2, line width=0.8pt, rounded corners=2pt,
+            minimum width=0.5cm, minimum height=0.92cm, inner sep=0pt] (g\i) at (\gx,\gy) {};
+      \foreach \b in {-1,0,1}{ \draw[rlInk2, line width=0.6pt]
+        ($(g\i.center)+(\b*1.2mm,-3.4mm)$) -- ($(g\i.center)+(\b*1.2mm,3.4mm)$); }
+      \node[rlfield, text=rlInk2, anchor=south, font=\sffamily\scriptsize] at ($(g\i.north)+(0,0.5mm)$) {\req};
+    \end{scope}
+  }
+
+  % the claim: no shortcut. A dashed attempt to jump straight to adjudicated, refused.
+  \draw[rldrop, bend left=32] (r0.north) to
+    node[pos=0.5] (xmark) {} (r3.north);
+  \fill[rlSurface, draw=rlRejected, line width=0.7pt] (xmark) circle (3.1mm);
+  \draw[rlRejected, line width=1.1pt] ($(xmark)+(-1.5mm,-1.5mm)$) -- ($(xmark)+(1.5mm,1.5mm)$);
+  \draw[rlRejected, line width=1.1pt] ($(xmark)+(-1.5mm,1.5mm)$) -- ($(xmark)+(1.5mm,-1.5mm)$);
+  \node[rlnote, text=rlRejected, anchor=south] at ($(xmark)+(0,3.4mm)$) {no shortcut};
+
+  % what the caller actually controls
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (-1.35,-0.95)
+    {the caller supplies the facts: a scorecard, a frozen spec, a surviving prediction.\\the rung is computed from them. no argument to \texttt{make\_evidence} sets it.};
+\end{tikzpicture}
+\end{document}

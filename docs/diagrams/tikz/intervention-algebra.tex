@@ -1,0 +1,74 @@
+% Intervention algebra. One claim: the five causal edits compose into a single
+% compiled intervention, and the dangerous one (erase) only counts once it carries
+% a receipt: recovery driven to chance is CALIBRATED, a sham that leaves it at 1.0
+% stays EXPLORATORY. Causal tier, so amber (rlTierCausal) throughout.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+
+  % ---- panel -------------------------------------------------------------
+  \fill[rlSurfaceTwo, rounded corners=6pt] (-0.65,-0.7) rectangle (14.5,3.55);
+
+  % ---- one compiled intervention: brace + label over the strip -----------
+  \draw[decorate, decoration={brace, amplitude=5pt}, line width=0.8pt, rlMuted]
+    (0.45,2.44) -- (11.95,2.44);
+  \node[font=\sffamily\bfseries\small, text=rlInk] at (6.2,3.2)
+    {one compiled intervention};
+  \node[font=\sffamily\scriptsize, text=rlMuted] at (6.2,2.86)
+    {{\ttfamily compose(\ldots)} mounts them in declaration order at one shared site $\ell$};
+
+  % ---- the five interlocking blocks --------------------------------------
+  % Each block is a jigsaw tile: a socket on the left, a knob on the right, so
+  % consecutive blocks snap along a shared wavy seam.
+  \newcommand{\ivblock}[5]{% #1 cx  #2 name  #3 gloss  #4 leftsocket(0/1)  #5 rightknob(0/1)
+    \pgfmathsetmacro{\cx}{#1}%
+    \def\cy{1.6}\def\hw{1.15}\def\hh{0.72}\def\kr{0.26}%
+    \draw[line width=0.9pt, draw=rlTierCausal, fill=rlSurface]
+      (\cx-\hw,\cy-\hh) -- (\cx+\hw,\cy-\hh)
+      \ifnum#5=1 -- (\cx+\hw,\cy-\kr) arc[start angle=-90, end angle=90, radius=0.26cm] -- (\cx+\hw,\cy+\hh)
+      \else -- (\cx+\hw,\cy+\hh)\fi
+      -- (\cx-\hw,\cy+\hh)
+      \ifnum#4=1 -- (\cx-\hw,\cy+\kr) arc[start angle=90, end angle=-90, radius=0.26cm] -- (\cx-\hw,\cy-\hh)
+      \else -- (\cx-\hw,\cy-\hh)\fi
+      -- cycle;
+    \node[font=\sffamily\bfseries\small, text=rlTierCausal] at (\cx,\cy+0.18) {#2};
+    \node[font=\sffamily\scriptsize, text=rlMuted] at (\cx,\cy-0.24) {#3};
+  }
+  \ivblock{1.6}{patch}{swap in a value}{0}{1}
+  \ivblock{3.9}{steer}{add a direction}{1}{1}
+  \ivblock{6.2}{ablate}{zero a subspace}{1}{1}
+  \ivblock{8.5}{edit}{rewrite a value}{1}{1}
+  \ivblock{10.8}{erase}{remove all trace}{1}{0}
+
+  % ---- receipt stamped onto the erase block ------------------------------
+  % pin from the erase block out to the certificate
+  \fill[rlTierCausal] (11.95,1.5) circle (1.1pt);
+  \draw[rlTierCausal, line width=0.9pt] (11.95,1.5) -- (12.42,1.42);
+
+  % the certificate card (a stamped, perforated receipt), in the calibrated blue
+  \def\rx{12.42}\def\rX{14.2}\def\ry{0.5}\def\rY{2.18}
+  \draw[rlTrustCal, line width=1.0pt, fill=rlSurface,
+        blur shadow={shadow blur steps=7, shadow xshift=0.4pt, shadow yshift=-1.2pt,
+                     shadow opacity=22, shadow blur radius=3pt}]
+    (\rx,\ry) rectangle (\rX,\rY);
+  % perforation strip near the top (tear-off holes)
+  \foreach \px in {12.6,12.8,...,14.0}{\fill[rlSurfaceTwo] (\px,1.98) circle (0.5mm);}
+  \node[font=\sffamily\scriptsize\itshape, text=rlMuted] at (13.31,2.06) {erasure certificate};
+  \node[font=\sffamily\scriptsize, text=rlInk2] at (13.31,1.6) {recovery AUC};
+  \node[font=\sffamily\bfseries\large, text=rlTrustCal] at (13.31,1.26) {0.51};
+  \node[draw=rlTrustCal, fill=rlTrustCal, text=rlSurface, rounded corners=2.5pt,
+        inner xsep=5pt, inner ysep=2.6pt, font=\sffamily\bfseries\scriptsize]
+    at (13.31,0.84) {CALIBRATED};
+
+  % the sham counterfactual: no drop, no receipt, no lift off the floor
+  \node[font=\sffamily\scriptsize, text=rlMuted, align=center] at (13.31,0.06)
+    {sham keeps AUC 1.00\\[-1pt]{\color{rlTrustExp}stays exploratory}};
+
+  % ---- the claim, in plain words -----------------------------------------
+  \node[anchor=north west, align=left, font=\sffamily\footnotesize\itshape, text=rlMuted]
+    at (-0.5,0.28)
+    {\texttt{compose()} chains five causal edits into one hook at one site.\\
+     Erase is the dangerous one: it must show a receipt, or it stays exploratory.};
+\end{tikzpicture}
+\end{document}

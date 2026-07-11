@@ -1,28 +1,40 @@
 #!/usr/bin/env bash
 #
-# Compile every TikZ source in diagrams/tikz/*.tex into an SVG under
-# content/assets/figures/. SVGs are committed, so the site builds (and deploys
-# on ReadTheDocs / GitHub Pages) with no LaTeX toolchain in CI.
+# Compile every TikZ source in diagrams/tikz/*.tex into a light and a dark SVG under
+# content/assets/figures/ (<name>-light.svg and <name>-dark.svg). The committed SVGs mean
+# the site builds in CI with no LaTeX toolchain.
 #
-# Run from the docs/ directory:
-#     ./diagrams/build_figures.sh
+# Run from the diagrams/ directory:
+#     ./build_figures.sh                 # build every source, both themes
+#     ./build_figures.sh reward-projection trust-ladder   # build only these
 #
-# Dependencies (local only, one-time):
-#     - a LaTeX distribution providing pdflatex   (TeX Live / MacTeX)
-#     - one PDF->SVG converter: pdf2svg  (preferred), or dvisvgm, or inkscape
-#         Debian/Ubuntu:  sudo apt-get install texlive-pictures pdf2svg
-#         macOS (brew):   brew install --cask mactex-no-gui && brew install pdf2svg
+# Dependencies (local, one-time):
+#   - lualatex or xelatex (for the real Inter font) or pdflatex (falls back to Fira Sans)
+#   - one PDF->SVG converter: pdf2svg (preferred), or dvisvgm, or inkscape
+#     Debian/Ubuntu:  sudo apt-get install texlive-luatex texlive-fonts-extra pdf2svg
+#     The Inter font (fonts-inter) makes the figures match the site exactly.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC_DIR="$HERE/tikz"
 OUT_DIR="$HERE/../content/assets/figures"
+export TEXINPUTS="$HERE:$SRC_DIR:${TEXINPUTS:-}"
 
 mkdir -p "$OUT_DIR"
 
-if ! command -v pdflatex >/dev/null 2>&1; then
-  echo "error: pdflatex not found. Install TeX Live (texlive-pictures)." >&2
+# One source of truth for color: regenerate the LaTeX/CSS/matplotlib palettes first.
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$HERE/emit_palette.py"
+fi
+
+# Engine: prefer one that can load the system Inter via fontspec.
+engine=""
+for e in lualatex xelatex pdflatex; do
+  if command -v "$e" >/dev/null 2>&1; then engine="$e"; break; fi
+done
+if [ -z "$engine" ]; then
+  echo "error: need lualatex, xelatex, or pdflatex on PATH." >&2
   exit 1
 fi
 
@@ -35,25 +47,51 @@ if [ -z "$converter" ]; then
   exit 1
 fi
 
+echo "engine: $engine   converter: $converter"
+
+# Build the requested sources, or every source if none named.
 shopt -s nullglob
-tex_files=("$SRC_DIR"/*.tex)
+if [ "$#" -gt 0 ]; then
+  tex_files=(); for n in "$@"; do tex_files+=("$SRC_DIR/${n%.tex}.tex"); done
+else
+  tex_files=("$SRC_DIR"/*.tex)
+fi
 if [ ${#tex_files[@]} -eq 0 ]; then
-  echo "no .tex sources in $SRC_DIR — nothing to build."
+  echo "no .tex sources to build in $SRC_DIR."
   exit 0
 fi
 
-for tex in "${tex_files[@]}"; do
-  name="$(basename "$tex" .tex)"
-  work="$(mktemp -d)"
-  echo "compiling $name ..."
-  pdflatex -interaction=nonstopmode -halt-on-error -output-directory "$work" "$tex" >/dev/null
+convert_one() { # $1 pdf  $2 svg
   case "$converter" in
-    pdf2svg)  pdf2svg "$work/$name.pdf" "$OUT_DIR/$name.svg" ;;
-    dvisvgm)  dvisvgm --pdf "$work/$name.pdf" -o "$OUT_DIR/$name.svg" >/dev/null 2>&1 ;;
-    inkscape) inkscape "$work/$name.pdf" --export-type=svg --export-filename="$OUT_DIR/$name.svg" >/dev/null 2>&1 ;;
+    pdf2svg)  pdf2svg "$1" "$2" ;;
+    dvisvgm)  dvisvgm --pdf "$1" -o "$2" >/dev/null 2>&1 ;;
+    inkscape) inkscape "$1" --export-type=svg --export-filename="$2" >/dev/null 2>&1 ;;
   esac
-  rm -rf "$work"
-  echo "  -> $OUT_DIR/$name.svg"
+}
+
+fail=0
+for tex in "${tex_files[@]}"; do
+  [ -f "$tex" ] || { echo "  skip (missing): $tex"; continue; }
+  name="$(basename "$tex" .tex)"
+  for theme in light dark; do
+    work="$(mktemp -d)"
+    job="$name-$theme"
+    if "$engine" -interaction=nonstopmode -halt-on-error \
+        -output-directory "$work" -jobname "$job" \
+        "\def\rltheme{$theme}\input{$tex}" >"$work/log" 2>&1; then
+      convert_one "$work/$job.pdf" "$OUT_DIR/$job.svg"
+      echo "  $job.svg"
+    else
+      echo "ERROR building $job:" >&2
+      tail -20 "$work/log" >&2
+      fail=1
+    fi
+    rm -rf "$work"
+  done
 done
 
-echo "done. Embed with:  ![caption](assets/figures/<name>.svg)"
+[ "$fail" -eq 0 ] || { echo "one or more figures failed." >&2; exit 1; }
+echo "done -> $OUT_DIR"
+echo "embed dual-theme with:"
+echo "  ![Alt](assets/figures/<name>-light.svg#only-light)"
+echo "  ![Alt](assets/figures/<name>-dark.svg#only-dark)"

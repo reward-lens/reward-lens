@@ -1,72 +1,63 @@
 # API reference
 
-There are two import surfaces, and knowing which one an object is on removes the most common error. The names you reach for most often are exported at the top level, so `from reward_lens import RewardModel, RewardLens, ComponentAttribution` works directly. The rest stay in their own submodules: the result dataclasses, the SAE stack, the hacking detector, the diagnostic pairs, the comparator, and the adapters all import from `reward_lens.<module>`. The table below gives the exact line for every object, and a failed import is almost always a top-level name that actually lives in a submodule, or the reverse.
+**Which import surface owns a name, and will reaching for it pull in torch?** Those two questions cause most import errors, and this section answers them one page per kernel subsystem.
 
-## Every object and where it imports from
+The pages are generated. mkdocstrings reads the source in `src/` through griffe, which parses the code statically instead of importing it, so the reference builds with no torch, no model, and no GPU, and it cannot drift from the signatures it documents. What you read here is what the source says.
 
-| Object | Import |
-| --- | --- |
-| `RewardModel` | `from reward_lens import RewardModel` |
-| `ActivationCache` | `from reward_lens import ActivationCache` |
-| `BatchedActivationCache` | `from reward_lens import BatchedActivationCache` |
-| `RewardLens` | `from reward_lens import RewardLens` |
-| `RewardLensResult` | `from reward_lens.lens import RewardLensResult` |
-| `reward_lens_plot` | `from reward_lens import reward_lens_plot` |
-| `ComponentAttribution` | `from reward_lens import ComponentAttribution` |
-| `ComponentResult` | `from reward_lens.attribution import ComponentResult` |
-| `ActivationPatcher` | `from reward_lens import ActivationPatcher` |
-| `PatchingResult` | `from reward_lens.patching import PatchingResult` |
-| `PathPatcher` | `from reward_lens import PathPatcher` |
-| `PathPatchResult` | `from reward_lens import PathPatchResult` |
-| `DivergenceAwarePatching` | `from reward_lens import DivergenceAwarePatching` |
-| `DivergenceAwarePatchingResult` | `from reward_lens import DivergenceAwarePatchingResult` |
-| `TopKSAE` | `from reward_lens.sae import TopKSAE` |
-| `SAETrainer` | `from reward_lens.sae import SAETrainer` |
-| `ActivationCollector` | `from reward_lens.sae import ActivationCollector` |
-| `FeatureAnalyzer` | `from reward_lens.sae import FeatureAnalyzer` |
-| `ConceptExtractor` | `from reward_lens import ConceptExtractor` |
-| `ConceptAlignmentReport` | `from reward_lens import ConceptAlignmentReport` |
-| `quick_concept_analysis` | `from reward_lens import quick_concept_analysis` |
-| `HackingDetector` | `from reward_lens.hacking import HackingDetector` |
-| `DistortionAnalyzer` | `from reward_lens import DistortionAnalyzer` |
-| `MisalignmentCascadeDetector` | `from reward_lens import MisalignmentCascadeDetector` |
-| `RewardConflictAnalyzer` | `from reward_lens import RewardConflictAnalyzer` |
-| `quick_conflict_check` | `from reward_lens import quick_conflict_check` |
-| `PreferencePair` | `from reward_lens.diagnostic_data import PreferencePair` |
-| `get_diagnostic_pairs` | `from reward_lens.diagnostic_data import get_diagnostic_pairs` |
-| `ModelComparator` | `from reward_lens.comparison import ModelComparator` |
-| `ModelAdapter` | `from reward_lens.model_adapters import ModelAdapter` |
-| `get_adapter` | `from reward_lens.model_adapters import get_adapter` |
-| `statistics` | `from reward_lens import statistics` |
-
-## Reference pages
+The layout follows the kernel. `import reward_lens` and the two pure-Python subsystems under it, `reward_lens.core` and `reward_lens.stats`, pull only numpy and scipy. Everything that touches a model lives one level down in its own subsystem and is imported from there: `from reward_lens.signals import load_signal`, `from reward_lens.measure.battery import DirectLinearAttribution`. The top level stays deliberately thin. The 1.0 names it still exposes are lazy, resolved on first access, so importing the package costs nothing you did not ask for.
 
 <div class="grid cards" markdown>
 
--   :material-cube-outline:{ .lg } &nbsp; __[Core](core.md)__
+-   __[Core and evidence](core.md)__
 
-    The model wrapper, the activation caches, the reward lens, and per-component attribution. Where every analysis starts.
+    The `Evidence` object, the trust and gauge enums, the three gates, and the append-only store. Torch-free.
 
--   :material-flask-outline:{ .lg } &nbsp; __[Causal tools](causal.md)__
+-   __[Stats](stats.md)__
 
-    Activation patching, path patching, and divergence-aware patching. The tools that measure cause, not correlation.
+    Effective sample size, clone detection, cluster bootstrap, effect sizes, ROC, and mutual information. Pure numpy and scipy.
 
--   :material-grain:{ .lg } &nbsp; __[Representation tools](representation.md)__
+-   __[Signals](signals.md)__
 
-    Sparse autoencoders and concept vectors. Two ways to split the reward direction into interpretable pieces.
+    The `RewardSignal` protocol, the loaders, and the eight grader adapters behind one interface.
 
--   :material-shield-alert-outline:{ .lg } &nbsp; __[Vulnerability tools](vulnerability.md)__
+-   __[Data](data.md)__
 
-    Hacking detector, distortion index, misalignment cascade, and reward-term conflict. What breaks under optimization.
+    The preference schema, the built-in diagnostic set, lineage for honest sample sizes, and span maps.
 
--   :material-database-outline:{ .lg } &nbsp; __[Data and adapters](data-and-adapters.md)__
+-   __[Measure and indices](measure.md)__
 
-    The diagnostic preference pairs, the model comparator, the adapter layer, and the statistics helpers.
+    The runner, the eleven battery observables, and the eighteen scalar indices.
+
+-   __[Interventions](interventions.md)__
+
+    Patch, steer, ablate, edit, erase, and the erasure certificate that grades its own success.
+
+-   __[Geometry](geometry.md)__
+
+    Frames, canonicalization, the cross-model angle that arrives with a receipt, and the Hessian spectrum.
+
+-   __[Concepts](concepts.md)__
+
+    Concept directions, reward alignment, dose-response slopes, and calibrated probes.
+
+-   __[Organisms](organisms.md)__
+
+    The twelve planted-rule generators and the scorecard that grades an instrument against a known answer.
+
+-   __[Dynamics and loops](dynamics-loops.md)__
+
+    Checkpoint chains, best-of-N accounting, susceptibility, and the rollout recorder.
+
+-   __[Studies](studies.md)__
+
+    The spec, freeze, run, and the theorem scoreboard.
+
+-   __[Artifacts and operate](artifacts-operate.md)__
+
+    Cards, the population Atlas, the manuscript claims checker, the CLI, and the in-process MCP surface.
+
+-   __[Legacy (1.0 API)](legacy.md)__
+
+    The preserved 1.0 compatibility layer and the submodule-only tools it did not fold in.
 
 </div>
-
-!!! warning "Head-level attribution is not available in 1.0.0"
-    `ComponentAttribution.attribute_heads` is non-functional in this release: it calls an undefined helper and raises `NameError`. There is no observational head-level attribution. For per-head analysis, take the causal route with [`ActivationPatcher.patch_all_heads`](causal.md#reward_lens.patching.ActivationPatcher), which works and reports each head's effect on the margin.
-
-!!! note "HackingDetector.scan() runs a fixed suite"
-    `HackingDetector.scan()` runs its built-in probe set (length, confidence, formatting, sycophancy, repetition) and reports an effect size per axis. It accepts `prompt` and `response` arguments, but they are not used in 1.0.0; the suite is fixed. Pass `scan(tests=[...])` to run a subset, not `scan(prompt=..., response=...)`.

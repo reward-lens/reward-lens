@@ -1,0 +1,87 @@
+% Crystallization, schematic. One claim: the model makes up its mind in the last
+% few layers. Two reward-lens traces stay tangled and flat for two-thirds of the
+% depth, then chosen holds while rejected falls away, opening a margin. The
+% per-layer contribution bars are near zero until they spike at the same late
+% layers, and the margin crosses half its final value at the crystallization layer.
+% Schematic values, not measured. Compile via build_figures.sh with \rltheme set.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}
+  % --- geometry -------------------------------------------------------------
+  % x = 0.28 * layer  (layer 0..32 -> 0..8.96 cm)
+  % y = 2.38 + 0.40 * value   (reward=0 sits at y=2.38; rejected dives below)
+  \def\zero{2.38}      % y of the reward=0 reference line
+  \def\bb{-0.30}       % bar / layer-axis baseline
+
+  % subtle theme-matched panel (never a hardcoded white card)
+  \fill[rlSurfaceTwo, rounded corners=7pt] (-1.05,-1.18) rectangle (10.65,3.52);
+
+  % --- axes -----------------------------------------------------------------
+  \draw[rlaxis] (-0.15,0.42) -- (-0.15,3.02);                 % reward-lens value
+  \node[rlfield, rotate=90] at (-0.78,1.55) {reward-lens value};
+  \draw[rlaxis] (-0.05,\bb) -- (9.42,\bb);                    % layer
+  \node[rlfield, anchor=north] at (4.48,-0.94) {layer};
+  \foreach \L/\lab in {0/0, 8/8, 16/16, 24/24, 32/32}{
+    \draw[rlLine, line width=0.6pt] ({0.28*\L},\bb) -- ({0.28*\L},{\bb-0.09});
+    \node[rlfield, anchor=north] at ({0.28*\L},{\bb-0.13}) {\lab};
+  }
+
+  % reward = 0 reference, where the tangled curves live
+  \draw[rlbaseline] (-0.15,\zero) -- (9.15,\zero);
+  \node[rlfield, anchor=east] at (-0.24,\zero) {$0$};
+
+  % --- the opening margin (drawn under the curves) --------------------------
+  \fill[rlAccent, opacity=0.14]
+     plot[smooth, tension=0.6] coordinates
+       {(6.16,2.428) (6.72,2.452) (7.28,2.476) (7.84,2.508)
+        (8.40,2.548) (8.68,2.572) (8.96,2.588)}
+     -- plot[smooth, tension=0.6] coordinates
+       {(8.96,0.548) (8.68,1.032) (8.40,1.528) (7.84,1.888)
+        (7.28,2.136) (6.72,2.272) (6.16,2.368)}
+     -- cycle;
+  \node[rlfield, text=rlAccent, anchor=west] at (8.62,1.72) {margin};
+
+  % --- per-layer contribution to the margin (bars) --------------------------
+  % a flat, near-zero carpet for two-thirds of the depth (muted), then the
+  % contribution spikes at the same late layers (accent).
+  \foreach \L in {1,...,24}{
+    \fill[rlMuted] ({0.28*\L-0.072},\bb) rectangle ({0.28*\L+0.072},{\bb+0.447*0.055});
+  }
+  \foreach \L/\h in {25/0.10, 26/0.20, 27/0.34, 28/0.55, 29/0.82, 30/1.08, 31/1.30, 32/1.15}{
+    \fill[rlAccent] ({0.28*\L-0.072},\bb) rectangle ({0.28*\L+0.072},{\bb+0.447*\h});
+  }
+  \node[rlfield, anchor=west] at (0.06,-0.05) {margin added per layer};
+
+  % --- crystallization marker: half the final margin is reached here --------
+  \draw[rldrop, draw=rlInk2, line width=0.8pt] (8.40,\bb) -- (8.40,2.74);
+  \node[text=rlInk2, font=\sffamily\scriptsize, align=right, anchor=south east]
+    at (8.55,2.76) {crystallization\\(layer 30)};
+
+  % --- the two traces -------------------------------------------------------
+  % rejected: tangled and flat, then falls away
+  \draw[rlRejected, line width=1.2pt]
+     plot[smooth, tension=0.6] coordinates
+       {(0,2.332) (0.56,2.432) (1.12,2.320) (1.68,2.424) (2.24,2.344)
+        (2.80,2.444) (3.36,2.336) (3.92,2.372) (4.48,2.320) (5.04,2.416)
+        (5.60,2.352) (6.16,2.368) (6.72,2.272) (7.28,2.136) (7.84,1.888)
+        (8.40,1.528) (8.68,1.032) (8.96,0.548)};
+  % chosen: tangled and flat, then holds
+  \draw[rlChosen, line width=1.2pt]
+     plot[smooth, tension=0.6] coordinates
+       {(0,2.444) (0.56,2.340) (1.12,2.452) (1.68,2.356) (2.24,2.460)
+        (2.80,2.332) (3.36,2.436) (3.92,2.396) (4.48,2.448) (5.04,2.360)
+        (5.60,2.420) (6.16,2.428) (6.72,2.452) (7.28,2.476) (7.84,2.508)
+        (8.40,2.548) (8.68,2.572) (8.96,2.588)};
+
+  % end points and trace labels
+  \fill[rlChosen]   (8.96,2.588) circle (1.5pt);
+  \fill[rlRejected] (8.96,0.548) circle (1.5pt);
+  \node[text=rlChosen,   font=\sffamily\bfseries\footnotesize, anchor=west] at (9.08,2.588) {chosen};
+  \node[text=rlRejected, font=\sffamily\bfseries\footnotesize, anchor=west] at (9.08,0.548) {rejected};
+
+  % --- the claim ------------------------------------------------------------
+  \node[rlnote, anchor=north west, align=left] at (0.05,3.36)
+    {two-thirds tangled and flat,\\then the margin opens late};
+\end{tikzpicture}
+\end{document}

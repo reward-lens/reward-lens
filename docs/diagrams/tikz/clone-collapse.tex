@@ -1,0 +1,94 @@
+% Clone collapse. One claim: thirty clones are not thirty data points. Six seeds,
+% each mutated into five near-duplicate rows, give an effective sample size of six,
+% so the bootstrap must resample the six seeds, never the thirty rows.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+
+% a small sampling urn in a seed color: tapered body with an open elliptical mouth
+\newcommand{\urnglyph}[3]{%
+  \begin{scope}[shift={(#1,#2)}]
+    \filldraw[fill=#3, draw=#3, line width=0.5pt, line join=round]
+      (-0.27,0.20) -- (0.27,0.20) -- (0.19,-0.22) -- (-0.19,-0.22) -- cycle;
+    \filldraw[fill=rlSurfaceTwo, draw=#3, line width=0.6pt]
+      (0,0.20) ellipse (0.27 and 0.062);
+  \end{scope}%
+}
+
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+
+  % ---- subtle theme-matched canvas (never a hardcoded white card) -----------
+  \fill[rlSurfaceTwo, rounded corners=7pt] (-1.65,-1.05) rectangle (10.25,4.68);
+
+  % ======================================================================
+  % ZONE A : the raw data. 30 tiles, six seed-families of five (1 seed + 4 mutations)
+  % ======================================================================
+  \foreach [count=\i from 0] \col in {rlChosen,rlSeriesB,rlTierObs,rlSignal,rlTrustAdj,rlTrustReg}{
+    \pgfmathsetmacro{\ry}{3.60-\i*0.64}
+    % the seed itself: a solid, saturated tile
+    \filldraw[fill=\col, draw=\col, rounded corners=1.1pt, line width=0.7pt]
+      (-0.25,\ry-0.25) rectangle (0.25,\ry+0.25);
+    % its four mutations: faded copies of the same seed color
+    \foreach \j in {1,2,3,4}{
+      \pgfmathsetmacro{\cx}{\j*0.64}
+      \filldraw[fill=\col!26!rlSurfaceTwo, draw=\col, rounded corners=1.1pt, line width=0.55pt]
+        (\cx-0.25,\ry-0.25) rectangle (\cx+0.25,\ry+0.25);
+    }
+  }
+
+  % brace: the six grid-rows are six seeds
+  \draw[decorate, decoration={brace, amplitude=5pt}, rlInk2, line width=0.8pt]
+    (-0.42,3.86) -- (-0.42,0.14);
+  \node[rlfield, text=rlInk2, anchor=east, align=center] at (-0.70,2.0) {6\\seeds};
+
+  % the count, and a one-line key for the tint
+  \node[text=rlInk, anchor=north, font=\sffamily\bfseries\small] at (1.28,-0.04) {$n = 30$};
+  \node[rlnote, text=rlMuted, anchor=north] at (1.28,-0.46)
+    {solid $=$ seed $\cdot$ faded $=$ its 4 mutations};
+
+  % ======================================================================
+  % ZONE B : the collapse
+  % ======================================================================
+  \fill[rlInk2]
+    (3.15,1.85) rectangle (5.45,2.15)
+    (5.45,1.60) -- (6.20,2.00) -- (5.45,2.40) -- cycle;
+  \node[text=rlInk2, anchor=south, font=\sffamily\bfseries\footnotesize] at (4.55,2.60) {collapse};
+  \node[text=rlInk2, anchor=north, font=\sffamily\scriptsize] at (4.55,1.34)
+    {\texttt{duplicate\_fraction} $= 0.8$};
+  \node[rlnote, text=rlMuted, anchor=north] at (4.55,0.98) {24 of 30 rows are copies};
+
+  % ======================================================================
+  % ZONE C : effective n = 6, and the bootstrap that respects it
+  % ======================================================================
+  % the six seeds survive as six sampling urns
+  \foreach [count=\i from 0] \col in {rlChosen,rlSeriesB,rlTierObs,rlSignal,rlTrustAdj,rlTrustReg}{
+    \pgfmathsetmacro{\uy}{3.35-\i*0.55}
+    \urnglyph{6.85}{\uy}{\col}
+  }
+  \node[anchor=south, align=center] at (6.85,3.66)
+    {{\sffamily\bfseries\small\color{rlInk}$n_{\mathrm{eff}} = 6$}\\[1pt]
+     {\sffamily\scriptsize\color{rlMuted}effective sample size}};
+
+  % the correct bootstrap: resample the six seeds, with replacement
+  \draw[rlflow] (7.16,2.45) -- (7.82,2.45);
+  \foreach [count=\k from 0] \col in {rlSeriesB,rlSeriesB,rlSignal,rlChosen,rlTrustAdj,rlTrustAdj}{
+    \pgfmathsetmacro{\bx}{7.98+\k*0.32}
+    \filldraw[fill=\col, draw=\col, line width=0.4pt] (\bx,2.45) circle (0.125);
+  }
+  \node[text=rlInk2, anchor=south, font=\sffamily\scriptsize] at (8.78,2.75) {one bootstrap draw};
+  \node[rlnote, text=rlMuted, anchor=north] at (8.78,2.17) {6 seeds, with replacement};
+
+  % the wrong unit: the 30 rows, crossed out
+  \foreach \c in {0,1,2,3,4}{
+    \foreach \r in {0,1,2,3,4,5}{
+      \pgfmathsetmacro{\dx}{8.36+\c*0.19}
+      \pgfmathsetmacro{\dy}{1.40-\r*0.16}
+      \fill[rlMuted!42!rlSurfaceTwo] (\dx,\dy) circle (0.05);
+    }
+  }
+  \draw[rlRejected, line width=1.3pt] (8.28,0.52) -- (9.20,1.48);
+  \draw[rlRejected, line width=1.3pt] (8.28,1.48) -- (9.20,0.52);
+  \node[text=rlRejected, anchor=north, font=\sffamily\scriptsize] at (8.74,0.40) {not the 30 rows};
+
+\end{tikzpicture}
+\end{document}

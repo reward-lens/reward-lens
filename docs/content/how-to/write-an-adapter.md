@@ -1,105 +1,69 @@
-# Write an adapter for your model
+# Write an adapter
 
-You have a reward model from a family `reward-lens` does not ship an adapter for, and you want the tools to work on it.
+**You have a grader reward-lens does not ship an adapter for. How do you make every instrument work on it?**
 
-## First, just try to load it
+Teach it to speak one protocol. In reward-lens a grader is a signal: whatever produces a reward, a classifier head, an LLM judge, a DPO log-ratio, a process model, exposes the same `RewardSignal` interface, and an Observable written against that interface runs on all of them. Adding a new grader paradigm means writing an adapter that implements the protocol and passes the conformance suite. Once it does, the whole battery, every index, and every science attach to it unchanged.
 
-The generic adapter auto-detects most `AutoModelForSequenceClassification` models with a linear reward head. Try before you write anything:
+## First, check whether an adapter already fits
 
-```python
-from reward_lens import RewardModel
+Eight adapters ship: classifier, generative judge, process, implicit (DPO), rubric, trajectory, dense, and ensemble. Most models are already covered, so try before you write anything.
 
-rm = RewardModel.from_pretrained("your-org/your-reward-model")
-print(rm.score("Explain photosynthesis.", "Plants convert light into chemical energy."))
-```
-
-If that returns a float, you are done: no adapter needed. Write one only when the auto-detector cannot find the reward head or cannot navigate the layers.
-
-## The adapter is one class
-
-An adapter tells `reward-lens` how to walk a specific model's module tree. Subclass `ModelAdapter` and implement its abstract methods. The one that matters most is `get_reward_head_params`, which hands back the reward direction \(w_r\) and its bias; everything else is a short accessor into the module tree.
+A Hugging Face sequence classifier with a linear reward head wraps directly with `wrap_hf_model`, which runs a quick conformance check as it wraps and refuses a model whose readout does not match its head:
 
 ```python
-import torch
-import torch.nn as nn
-from typing import Any, Optional
-from reward_lens.model_adapters import ModelAdapter
+from reward_lens.signals import wrap_hf_model
 
-class MyModelAdapter(ModelAdapter):
-    """Adapter for the MyModel reward-model family."""
-
-    # The one method every tool depends on: the reward direction w_r and its bias.
-    def get_reward_head_params(self, model: nn.Module) -> tuple[torch.Tensor, float]:
-        head = model.reward_head                       # your linear head, weight (1, d_model)
-        w_r = head.weight.data.squeeze().float()       # (d_model,)
-        bias = float(head.bias.data.item()) if head.bias is not None else 0.0
-        return w_r, bias
-
-    # Where the transformer blocks live, and how many.
-    def get_layers(self, model: nn.Module) -> nn.ModuleList:
-        return model.transformer.blocks
-    def n_layers(self, model: nn.Module) -> int:
-        return len(model.transformer.blocks)
-    def n_heads(self, model: nn.Module) -> int:
-        return model.config.num_attention_heads
-
-    # The two sublayers inside one block.
-    def get_attn_module(self, layer: nn.Module) -> Optional[nn.Module]:
-        return layer.attn
-    def get_mlp_module(self, layer: nn.Module) -> Optional[nn.Module]:
-        return layer.mlp
-
-    # How this architecture packages each forward output, often a tuple.
-    def extract_layer_output(self, output: Any) -> torch.Tensor:
-        return output[0] if isinstance(output, tuple) else output
-    def extract_attn_output(self, output: Any) -> torch.Tensor:
-        return output[0] if isinstance(output, tuple) else output
-    def extract_mlp_output(self, output: Any) -> torch.Tensor:
-        return output
-
-    # The token embedding, and the scalar reward off the final output.
-    def get_embedding(self, model: nn.Module) -> nn.Module:
-        return model.transformer.embed_tokens
-    def extract_reward(self, output: Any, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
-        return output.logits.squeeze(-1)
-
-    # Optional: expose o_proj to enable per-head patching. Return None to skip.
-    def get_attn_o_proj(self, layer: nn.Module) -> Optional[nn.Module]:
-        return layer.attn.o_proj
+signal = wrap_hf_model(model, tokenizer, device="cpu")   # your loaded HF classifier
 ```
 
-Swap the attribute names (`model.transformer.blocks`, `layer.attn`, `model.reward_head`) for wherever your architecture actually keeps them. That is the whole job.
+If your grader is one of the other seven families, its constructor is the entry point (`GenerativeJudge.from_causal_lm`, `ImplicitRM.from_models`, `ProcessRM.from_sequence_classifier`, and so on). You only write an adapter when your grader is a genuinely new paradigm none of these describe.
 
-## Wire it into the dispatch
+## The protocol is the whole contract
 
-There is no registry. `get_adapter(model, model_name)` is a hardcoded if-chain that matches on the model's class name and config `model_type`. Add a branch for your family, before the generic fallback:
+`RewardSignal` is small on purpose. An adapter declares three attributes and implements six methods:
 
 ```python
-# in reward_lens/model_adapters/__init__.py, inside get_adapter(...)
-    if "mymodel" in class_name or model_type == "mymodel":
-        return MyModelAdapter()
+class RewardSignal(Protocol):
+    meta: SignalMeta        # identity and fingerprint
+    caps: Capability        # which capabilities it supports (scores, activations, gradients, ...)
+    runtime: Runtime        # device, dtype, layer count
+
+    def readouts(self) -> list[Readout]: ...
+    def score(self, view, readout="reward"): ...              # -> Evidence[Scores]
+    def score_prefixes(self, view, readout="reward"): ...     # -> Evidence[TokenCurves]
+    def capture(self, view, spec): ...                        # -> CaptureHandle over activations
+    def with_interventions(self, *ivs): ...                   # -> a wrapped RewardSignal
+    def tokenize(self, item): ...                             # -> TokenizedInput (owns span carry-through)
 ```
 
-Reinstall (`pip install -e .`) and `RewardModel.from_pretrained("your-org/your-reward-model")` picks it up automatically.
+`caps` is the honest part: it declares what your grader can actually do, and an Observable that needs a capability your signal lacks is refused before it runs rather than fed a fabricated activation. Five of the shipped adapters subclass a common base that supplies the scoring and capture plumbing, so a new adapter usually fills in tokenization, the readout, and the capability set rather than all six methods from scratch. Study the classifier adapter as the reference implementation.
 
-To try it without editing the library, construct `RewardModel` directly with your adapter:
+## Conformance is how you know it is wired right
+
+The reason to trust an adapter is not that it imported cleanly. It is that it passes `run_adapter_conformance`, the suite that checks the invariants a reward readout must have: the same input scores identically twice, a batch scores the same as one item at a time, left-padding does not change the score, the readout matches the head in fp32, and prefix scores are consistent. Run it on any conforming signal and read the report:
 
 ```python
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from reward_lens import RewardModel
+from reward_lens.signals import from_tiny, run_adapter_conformance
+from reward_lens.data.builtin.diagnostic_v3 import load_diagnostic_v3
 
-name = "your-org/your-reward-model"
-device = torch.device("cuda")
-hf = AutoModelForSequenceClassification.from_pretrained(
-    name, torch_dtype=torch.bfloat16, trust_remote_code=True
-).to(device).eval()
-tok = AutoTokenizer.from_pretrained(name)
+signal = from_tiny(seed=0)
+items = list(load_diagnostic_v3()["helpfulness"].items)[:5]
 
-rm = RewardModel(hf, tok, MyModelAdapter(), device=device)
+report = run_adapter_conformance(signal, items=items, readout="reward")
+print("passed:", report.passed, "| checks:", report.n_passed)
+for c in report.checks:
+    print("  ", "pass" if c.passed else "FAIL", c.name)
+# passed: True | checks: 5
+#    pass determinism
+#    pass batch_vs_single
+#    pass left_pad_invariance
+#    pass readout_matches_head
+#    pass prefix_consistency
 ```
 
-!!! note "Per-head analysis is opt-in"
-    `get_attn_o_proj` is the one optional method with teeth. Return the attention output projection and per-head tools like `ActivationPatcher.patch_all_heads` light up; return `None`, the default, and analysis stays at the sublayer level. Skip it until you need heads.
+Five checks, all passing, on a real adapter. The `readout_matches_head` check is the one that catches the failure class that used to sink white-box work silently: a model that half-loads, or a readout computed in the wrong precision, prints plausible scores that do not match the head it claims to read. Conformance turns that into a `FAIL` instead of a wrong paper. When your adapter passes this suite, it is wired right, and every instrument in the library is available to it.
 
-Got a working adapter? It is worth contributing back so the next person with that model family gets it for free. See [contributing](../contributing/index.md).
+!!! note "Composite and paired adapters skip the head check"
+    `run_adapter_conformance` runs the checks that apply: pass `check_head=False` for an ensemble or an implicit signal that has no single linear head to match against. A skipped check is reported as a skip, not a silent pass, so the report never overstates what was verified.
+
+See also: [classifier reward models](../models-and-signals/classifier-rms.md), [the signals index](../models-and-signals/index.md), [`RewardSignal`](../reference/signals.md#reward_lens.signals.base.RewardSignal), [`run_adapter_conformance`](../reference/signals.md#reward_lens.signals.conformance_adapters.run_adapter_conformance).

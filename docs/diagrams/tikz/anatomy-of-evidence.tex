@@ -1,0 +1,75 @@
+% Anatomy of one Evidence. One claim: a measurement here is a number that
+% carries its own credentials. The value sits at the center of a single card;
+% its uncertainty (with an honest effective sample size), gauge status,
+% calibration reference, and provenance sit around it, and the trust stamp in
+% the corner is computed from those credentials, not written by the caller.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}
+
+  % ---- the panel the specimen card rests on (never hardcode white) ----------
+  \fill[rlSurfaceTwo, rounded corners=9pt] (-0.55,-0.55) rectangle (12.55,8.75);
+
+  % ---- the Evidence, one card ----------------------------------------------
+  \node[rlcard, minimum width=12cm, minimum height=8.2cm, anchor=south west]
+    (card) at (0,0) {};
+
+  % ---- header: what this specimen is, and the trust stamp -------------------
+  \node[anchor=north west, font=\sffamily\bfseries\large, text=rlInk]
+    (obs) at (0.55,7.94) {sycophancy\_bias};
+  \node[anchor=north west, rlfield] (subj) at (0.6,7.44)
+    {tiny-rm \,·\, 6 seeds × 5 rows};
+
+  \node[anchor=east, rlfield] (trustk) at (9.12,7.72) {trust};
+  \node[draw=rlTrustExp, fill=rlTrustExp, text=rlInk, rounded corners=2.5pt,
+        inner xsep=6.5pt, inner ysep=3.2pt, font=\sffamily\bfseries\scriptsize,
+        anchor=north east] (trust) at (11.45,7.92) {exploratory};
+
+  \draw[rlLine, line width=0.6pt] (0.55,7.06) -- (11.45,7.06);
+
+  % ---- the value, at the center --------------------------------------------
+  \node[anchor=base east, font=\sffamily\normalsize, text=rlMuted] (dsym)
+    at (4.80,3.68) {\itshape d\,=};
+  \node[anchor=base, text=rlInk, font=\sffamily\bfseries\fontsize{44}{50}\selectfont]
+    (val) at (6.18,3.68) {−0.31};
+
+  % ---- LEFT column: how it was measured ------------------------------------
+  % uncertainty, with n and the honest effective n visibly different
+  \node[anchor=north west, rlfield] (unck) at (0.7,6.66) {uncertainty};
+  \node[anchor=north west, text=rlInk, font=\sffamily\bfseries\large] (uncv)
+    at (0.7,6.34) {±0.12};
+  \node[anchor=north west, font=\sffamily\small] (uncn) at (0.7,5.80)
+    {\textcolor{rlMuted}{n}\,\textcolor{rlInk}{\bfseries 30}%
+     \ \textcolor{rlAccent}{→}\ %
+     \textcolor{rlMuted}{n\_eff}\,\textcolor{rlInk}{\bfseries 6}};
+
+  % provenance: a git sha and the cost it took to produce the number
+  \node[anchor=north west, rlfield] (provk) at (0.7,2.64) {provenance};
+  \node[anchor=north west, font=\sffamily\small] (provv) at (0.7,2.32)
+    {\textcolor{rlMuted}{sha}\ \textcolor{rlInk}{\bfseries a3f9c2e}};
+  \node[anchor=north west, font=\sffamily\scriptsize, text=rlMuted] (provc)
+    at (0.7,1.86) {4.2 gpu-seconds \,·\, 18k tokens};
+
+  % ---- RIGHT column: how far to trust it -----------------------------------
+  % gauge status, as a chip
+  \node[anchor=north east, rlfield] (gauk) at (11.3,6.66) {gauge};
+  \node[draw=rlGauge, text=rlGauge, rounded corners=2.5pt, line width=0.7pt,
+        inner xsep=6.5pt, inner ysep=3.2pt, font=\sffamily\bfseries\scriptsize,
+        anchor=north east] (gau) at (11.3,6.34) {invariant};
+
+  % calibration reference: none, which is exactly why the trust stamp is grey
+  \node[anchor=north east, rlfield] (calk) at (11.3,2.64) {calibration};
+  \node[anchor=north east, font=\sffamily\small] (calv) at (11.3,2.32)
+    {\textcolor{rlInk}{\bfseries none}};
+  \node[anchor=north east, font=\sffamily\scriptsize] (calx) at (11.3,1.86)
+    {\textcolor{rlMuted}{→}\ \textcolor{rlTrustExp}{\bfseries exploratory}};
+
+  % ---- footer strip: the claim in plain words -------------------------------
+  \fill[rlSurfaceTwo, rounded corners=3pt] (0.24,0.26) rectangle (11.76,1.40);
+  \node[anchor=center, font=\sffamily\footnotesize, text=rlMuted, align=center]
+    at (6.0,0.83)
+    {trust is computed from the credentials around the value, not written by the caller.};
+
+\end{tikzpicture}
+\end{document}

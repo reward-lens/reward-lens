@@ -1,103 +1,149 @@
-/* reward-lens documentation — design layer on top of Material.
-   Restrained on purpose. This is a base the author extends, not a finished skin. */
+/* reward-lens documentation — design layer on top of Material for MkDocs.
+   Every color comes from _palette.css, which is generated from diagrams/palette.json.
+   Do not hardcode hex here; add a role to palette.json and regenerate. */
+
+@import "_palette.css";
 
 :root {
-  --md-primary-fg-color:        #3f51b5;
-  --md-primary-fg-color--light: #5c6bc0;
-  --md-primary-fg-color--dark:  #303f9f;
-  --md-accent-fg-color:         #ff5722;
-  --rl-observational:           #0d9488; /* teal  — reads activations, no intervention */
-  --rl-causal:                  #b45309; /* amber — intervenes, makes causal claims   */
-  --rl-vulnerability:           #be123c; /* rose  — hacking / distortion / cascade     */
+  --md-accent-fg-color: var(--rl-accent);
 }
 
-/* Slightly roomier measure for prose-heavy pages. */
+/* Slightly roomier measure and tabular figures for prose-heavy pages. */
 .md-typeset {
   font-feature-settings: "kern", "liga", "tnum";
 }
 
-/* Lead paragraph for the top of concept pages. */
+/* Lead paragraph for the top of a page. */
 .md-typeset .rl-lead {
   font-size: 1.15rem;
   line-height: 1.6;
   color: var(--md-default-fg-color--light);
 }
 
-/* Tier badges. Put one at the top of every tool page:
-   <span class="rl-badge rl-badge--observational">Observational</span>
-   The observational vs causal split is a spine of these docs, so make it visible. */
-.rl-badge {
-  display: inline-block;
-  padding: 0.12em 0.6em;
+/* ---------------------------------------------------------------------------
+   Chips. Three kinds ride at the top of an instrument page:
+     tier (observational / causal / vulnerability),
+     gauge status (invariant / needs a frame / raw only),
+     works-on (what the instrument needs from a signal).
+   Trust chips (exploratory..adjudicated) appear on discipline pages.
+   Outline by default so the color reads on both themes; a filled variant
+   exists for the trust rungs where a solid block is clearer.
+--------------------------------------------------------------------------- */
+.rl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0.15rem 0 0.7rem;
+}
+.rl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.14em 0.62em;
   border-radius: 999px;
-  font-size: 0.7rem;
+  border: 1px solid currentColor;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: #fff;
+  line-height: 1.55;
+  white-space: nowrap;
   vertical-align: middle;
 }
-.rl-badge--observational { background: var(--rl-observational); }
-.rl-badge--causal        { background: var(--rl-causal); }
-.rl-badge--vulnerability { background: var(--rl-vulnerability); }
+/* a lowercase key inside a chip, e.g. the "gauge" in "gauge: invariant" */
+.rl-chip .rl-chip__k {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.65;
+}
+/* tier */
+.rl-chip--obs    { color: var(--rl-tier-observational); }
+.rl-chip--causal { color: var(--rl-tier-causal); }
+.rl-chip--vuln   { color: var(--rl-tier-vulnerability); }
+/* gauge status */
+.rl-chip--gauge  { color: var(--rl-gauge); }
+/* works-on: neutral, sentence case, reads as a requirement not a category */
+.rl-chip--works {
+  color: var(--md-default-fg-color--light);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+/* trust rungs, filled: grey rising to the earned color */
+.rl-chip--fill { border-color: transparent; color: #fff; }
+.rl-chip--exploratory { background: var(--rl-trust-exploratory); border-color: transparent; color: #fff; }
+.rl-chip--calibrated  { background: var(--rl-trust-calibrated);  border-color: transparent; color: #fff; }
+.rl-chip--registered  { background: var(--rl-trust-registered);  border-color: transparent; color: #fff; }
+.rl-chip--adjudicated { background: var(--rl-trust-adjudicated); border-color: transparent; color: #fff; }
 
-/* "How to read this figure" caption block — pair one with every plot. */
+/* Backward-compatible badge aliases (older pages used .rl-badge). */
+.rl-badge { display: inline-block; padding: 0.12em 0.6em; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; }
+.rl-badge--observational { background: var(--rl-tier-observational); }
+.rl-badge--causal        { background: var(--rl-tier-causal); }
+.rl-badge--vulnerability { background: var(--rl-tier-vulnerability); }
+
+/* ---------------------------------------------------------------------------
+   Figures. Dual-theme SVGs carry their own theme-matched background, so there
+   is no white card. Pair a light and a dark variant and let the scheme pick.
+--------------------------------------------------------------------------- */
+.md-typeset img.rl-fig,
+.md-typeset .rl-figure img {
+  display: block;
+  margin: 0.5rem auto 0.2rem;
+  max-width: 100%;
+}
+.md-typeset img.rl-fig--hero { max-width: 620px; }
+.md-typeset img.rl-fig--wide { max-width: 100%; }
+
+/* Show the right variant per theme. Append #only-light / #only-dark to the src. */
+[data-md-color-scheme="default"] img[src$="#only-dark"]  { display: none; }
+[data-md-color-scheme="slate"]   img[src$="#only-light"] { display: none; }
+
+/* "How to read this figure" note, paired with a plot. */
 .md-typeset .rl-readout {
-  border-left: 3px solid var(--md-accent-fg-color);
+  border-left: 3px solid var(--rl-accent);
   padding: 0.2rem 0 0.2rem 0.9rem;
-  margin: 0.8rem 0 1.2rem;
+  margin: 0.6rem 0 1.2rem;
   color: var(--md-default-fg-color--light);
   font-size: 0.85rem;
 }
 
-/* Figures render centered with a muted caption. */
-.md-typeset figure img,
-.md-typeset .rl-figure img { max-width: 100%; }
+/* Caption blocks (pymdownx.blocks.caption): bold lead names the takeaway. */
 .md-typeset figcaption {
   color: var(--md-default-fg-color--light);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  max-width: 46rem;
+  margin: 0.2rem auto 0;
+}
+.md-typeset figcaption > p:first-child strong:first-child,
+.md-typeset figcaption > p:first-child b:first-child {
+  color: var(--md-default-fg-color);
 }
 
-/* Grid card tuning for the landing tool gallery (uses Material grid cards). */
-.md-typeset .grid.cards > :is(ul, ol) > li {
-  border-radius: 0.4rem;
-}
-
-/* Figures render on a white card so matplotlib and TikZ output stays legible in
-   both light and dark mode. Tag every figure image with { .rl-fig }. */
-.md-typeset img.rl-fig,
-.md-typeset .rl-figure img {
-  background: #ffffff;
-  padding: 0.7rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
-  display: block;
-  margin: 0.4rem auto 0.2rem;
-  max-width: 100%;
-}
-
-/* A hero figure gets a touch more room. */
-.md-typeset img.rl-fig--hero {
-  max-width: 560px;
-}
-
-/* Several badges in a row (tool headers) keep a little air. */
-.rl-badge + .rl-badge { margin-left: 0.3rem; }
-
-/* Tool-page header: badge sits above the title, not inline with body text. */
-.md-typeset .rl-toolhead { margin-bottom: 0.2rem; }
-
-/* Tier key used on the tools landing page. */
+/* ---------------------------------------------------------------------------
+   Tier key and grid cards for landing galleries.
+--------------------------------------------------------------------------- */
 .rl-key { font-size: 0.8rem; color: var(--md-default-fg-color--light); }
 .rl-key .rl-dot {
   display: inline-block; width: 0.7em; height: 0.7em; border-radius: 50%;
   margin-right: 0.25em; vertical-align: middle;
 }
-.rl-dot--observational { background: var(--rl-observational); }
-.rl-dot--causal        { background: var(--rl-causal); }
-.rl-dot--vulnerability { background: var(--rl-vulnerability); }
+.rl-dot--observational { background: var(--rl-tier-observational); }
+.rl-dot--causal        { background: var(--rl-tier-causal); }
+.rl-dot--vulnerability { background: var(--rl-tier-vulnerability); }
 
-/* Give the grid-card tool gallery a left accent stripe by tier. */
-.md-typeset .grid.cards.rl-obs > ul > li { border-left: 3px solid var(--rl-observational); }
-.md-typeset .grid.cards.rl-cau > ul > li { border-left: 3px solid var(--rl-causal); }
-.md-typeset .grid.cards.rl-vul > ul > li { border-left: 3px solid var(--rl-vulnerability); }
+.md-typeset .grid.cards > :is(ul, ol) > li { border-radius: 0.4rem; }
+.md-typeset .grid.cards.rl-obs > ul > li { border-left: 3px solid var(--rl-tier-observational); }
+.md-typeset .grid.cards.rl-cau > ul > li { border-left: 3px solid var(--rl-tier-causal); }
+.md-typeset .grid.cards.rl-vul > ul > li { border-left: 3px solid var(--rl-tier-vulnerability); }
+
+/* Inline trust dot for prose, e.g. a rung named mid-sentence. */
+.rl-trust { display: inline-flex; align-items: center; gap: 0.3em; font-weight: 600; }
+.rl-trust::before { content: ""; width: 0.6em; height: 0.6em; border-radius: 50%; background: currentColor; }
+.rl-trust--exploratory { color: var(--rl-trust-exploratory); }
+.rl-trust--calibrated  { color: var(--rl-trust-calibrated); }
+.rl-trust--registered  { color: var(--rl-trust-registered); }
+.rl-trust--adjudicated { color: var(--rl-trust-adjudicated); }

@@ -1,0 +1,38 @@
+{
+  "_comment": "Single source of truth for every color in the docs: TikZ figures, matplotlib figures, and the site CSS. Roles are semantic, not decorative. Each role carries a light and a dark value. Regenerate the three consumers with `python emit_palette.py`; it fails loudly if a consumer has drifted.",
+  "meta": {
+    "font": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "roles": {
+    "ink":        { "light": "#16181D", "dark": "#E6E8EB", "tex": "rlInk",        "desc": "primary text and lines" },
+    "ink2":       { "light": "#4B5563", "dark": "#B7BDC7", "tex": "rlInkTwo",     "desc": "secondary text" },
+    "muted":      { "light": "#6B7280", "dark": "#9AA0AA", "tex": "rlMuted",      "desc": "annotations, de-emphasis" },
+    "line":       { "light": "#D7DAE0", "dark": "#3A3D44", "tex": "rlLine",       "desc": "gridlines, hairlines, panel borders" },
+    "surface":    { "light": "#FFFFFF", "dark": "#1D1E22", "tex": "rlSurface",    "desc": "panel / card fill (theme-matched, never hardcoded white)" },
+    "surface2":   { "light": "#F4F5F7", "dark": "#26272C", "tex": "rlSurfaceTwo", "desc": "subtle inset fill" },
+    "baseline":   { "light": "#C3C2B7", "dark": "#55565E", "tex": "rlBaseline",   "desc": "zero line / reference baseline" },
+
+    "tier_observational": { "light": "#0D9488", "dark": "#2DD4BF", "tex": "rlTierObs",    "desc": "observational tier: reads activations, no intervention" },
+    "tier_causal":        { "light": "#B45309", "dark": "#F59E0B", "tex": "rlTierCausal", "desc": "causal tier: intervenes, makes causal claims" },
+    "tier_vulnerability": { "light": "#BE123C", "dark": "#FB7185", "tex": "rlTierVuln",   "desc": "vulnerability tier: hacking / distortion / cascade" },
+
+    "trust_exploratory":  { "light": "#94A3B8", "dark": "#64748B", "tex": "rlTrustExp", "desc": "trust rung 0: unaudited grey" },
+    "trust_calibrated":   { "light": "#3B82F6", "dark": "#60A5FA", "tex": "rlTrustCal", "desc": "trust rung 1: has a scorecard" },
+    "trust_registered":   { "light": "#7C3AED", "dark": "#A78BFA", "tex": "rlTrustReg", "desc": "trust rung 2: prediction predated the data" },
+    "trust_adjudicated":  { "light": "#15803D", "dark": "#22C55E", "tex": "rlTrustAdj", "desc": "trust rung 3: survived, the earned color" },
+
+    "signal":   { "light": "#A21CAF", "dark": "#E879F9", "tex": "rlSignal", "desc": "signal / grader family accent" },
+    "gauge":    { "light": "#0891B2", "dark": "#22D3EE", "tex": "rlGauge",  "desc": "gauge / frame accent" },
+
+    "chosen":   { "light": "#2A78D6", "dark": "#5598E7", "tex": "rlChosen",   "desc": "chosen / preferred / toward what the reward wants" },
+    "rejected": { "light": "#E34948", "dark": "#F0716F", "tex": "rlRejected", "desc": "rejected / dispreferred" },
+
+    "series_b": { "light": "#EB6834", "dark": "#F98A5C", "tex": "rlSeriesB", "desc": "second model / second series (e.g. ArmoRM against Skywork)" },
+    "accent":   { "light": "#E85D2C", "dark": "#FB8C5A", "tex": "rlAccent",  "desc": "emphasis: the read-this-figure caption rule, highlights" }
+  },
+  "ramps": {
+    "sequential": { "light": ["#CDE2FB", "#0D366B"], "dark": ["#0D366B", "#CDE2FB"], "desc": "low-to-high magnitude" },
+    "diverging":  { "endpoints": ["chosen", "rejected"], "mid": { "light": "#F0EFEC", "dark": "#2A2B31" }, "desc": "signed / chosen-vs-rejected" }
+  }
+}

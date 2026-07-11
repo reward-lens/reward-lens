@@ -1,36 +1,33 @@
-# Background & theory
+# Background and theory
 
-The rest of these docs take the reward model as given. Here is \(w_r\), here is the score, here is how to read it layer by layer. This section asks the question underneath that one. Why is there a \(w_r\) to read along at all, what did fitting it assume, and where do those assumptions stop being true?
+**Why is there a \(w_r\) to read along at all?** The rest of these docs take the reward model as given: here is the direction, here is the score, here is how to watch the preference form layer by layer. This section asks the question underneath that one. Where does the number come from, what did fitting it assume, and where do those assumptions stop being true?
 
-Three threads run through everything the tools do, and each gets a page here.
+Five threads run through everything the instruments do, and each gets a page.
 
-The first is that the reward is a fitted probabilistic object, not a measurement. It comes from the Bradley-Terry model of pairwise preference, and that model assumes a single scalar quality and a consistent ordering that real human judgments do not always have. Knowing where the fit leaks tells you which results to trust.
-
-The second is that any reward model is a proxy, and optimizing a proxy hard enough eventually moves it away from the thing it stood in for. That is not pessimism. It is Goodhart's law, and it has a measured shape.
-
-The third is that four of the library's tools are each a direct computation of a specific research result. The Distortion Index, the Misalignment Cascade detector, and the Reward-Term Conflict analyzer operationalize recent papers; the Hacking Detector operationalizes a set of documented failure modes. These pages explain the ideas. The tool pages hold the citations and the code.
+The reward is a fitted probabilistic object, not a measurement. It comes from the Bradley-Terry model of pairwise preference, which pins the reward down only up to an additive constant and assumes a single scalar quality that real judgments do not always have. Optimizing any such proxy hard enough moves it away from what it stood in for, which is Goodhart's law with a measured shape rather than a slogan. The instruments themselves belong to a family, the lenses that read a hidden state along a meaningful direction, and the reward lens is the one case where the direction is handed to you exactly. Underneath the additive constant sits a larger identifiability question, the gauge freedom that lets raw cross-model coordinates lie. And underneath the scalar assumption sits the possibility that preference is not rank-one at all, that it cycles in ways no single quality number can express.
 
 <div class="grid cards" markdown>
 
--   :material-compare:{ .lg } &nbsp; __[Bradley-Terry in depth](bradley-terry.md)__
+-   :material-compare:{ .lg } &nbsp; __[Bradley-Terry and preference](bradley-terry.md)__
 
-    The preference model the reward is fitted under, the reason only margins mean anything, and the assumptions that leak: one scalar quality, a consistent ordering, one latent judge.
+    The model the reward is fitted under, why only margins carry information, and the assumptions that leak: one scalar quality, a consistent ordering, one latent judge.
 
--   :material-target:{ .lg } &nbsp; __[Goodhart & overoptimization](goodhart.md)__
+-   :material-target:{ .lg } &nbsp; __[Goodhart and overoptimization](goodhart.md)__
 
-    Why the reward's blind spots become the policy's exploits, as structure and not cynicism, and where each vulnerability tool sits on the overoptimization timeline.
+    Why the reward's blind spots become the policy's exploits, as structure and not cynicism, and how you can price optimization pressure in nats before you spend it.
 
 -   :material-family-tree:{ .lg } &nbsp; __[The lens lineage](lens-lineage.md)__
 
-    Where the reward lens sits among methods that read a hidden state along a meaningful direction, and how `reward-lens` positions itself honestly against TransformerLens and nnsight.
+    Where the reward lens sits among methods that read a hidden state along a direction, how it positions against TransformerLens and nnsight, and the one thing it adds.
+
+-   :material-axis-arrow:{ .lg } &nbsp; __[Identifiability and gauge](identifiability.md)__
+
+    The transformations that leave preferences unchanged but make raw coordinates lie, why two reward directions can look orthogonal and mean the same thing, and how a frame sees through it.
+
+-   :material-vector-triangle:{ .lg } &nbsp; __[When preference is not rank-one](preference-rank.md)__
+
+    The intransitive preferences a scalar head provably cannot express, the skew-symmetric test that measures them, and why a positive recovery means the scalar summary discarded real structure.
 
 </div>
 
-## Where each result is operationalized
-
-Each vulnerability tool folds its citation into its own page. The map from idea to tool:
-
-- [Distortion Index](../tools/distortion-index.md): Wang and Huang, reward hacking as an equilibrium under finite evaluation.
-- [Misalignment Cascade](../tools/misalignment-cascade.md): MacDiarmid et al., emergent misalignment from reward hacking in production RL.
-- [Reward-Term Conflict](../tools/reward-conflict.md): Kaufmann et al., when reward terms are aligned, orthogonal, or in conflict.
-- [Hacking Detector](../tools/hacking-detector.md): a battery of commonly documented surface-feature failures, with no single paper behind it, and honest about that.
+These pages explain the ideas. Where an idea becomes a preregistered experiment you can run or refute, it turns up again in [the sixteen sciences](../sciences.md), and where the instrument that computes it lives, the [reference](../reference/index.md) holds the exact call.

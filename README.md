@@ -1,328 +1,211 @@
 # reward-lens
 
 [![PyPI version](https://badge.fury.io/py/reward-lens.svg)](https://pypi.org/project/reward-lens/)
+[![Python](https://img.shields.io/pypi/pyversions/reward-lens.svg)](https://pypi.org/project/reward-lens/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Mechanistic interpretability toolkit for reward models.**
+White-box tools and built-in epistemic discipline for reward models, the objects that define what RLHF optimizes.
 
-The first comprehensive open-source library for understanding *what happens inside* the models that define the RLHF training signal. Reward-lens is to reward model interpretability what TransformerLens is to generative model interpretability — the foundation that makes the work possible.
+Every model trained with RLHF was shaped by a reward model. That reward model sat in the loop and decided, on pair after pair, which of two answers was better. It is the closest thing the pipeline has to a written-down definition of what we asked for, and almost nobody looks inside one. That is strange, because the reward model is where alignment actually gets decided. A policy does not optimize your intentions. It optimizes the number this model hands back, and whatever the reward model fails to measure becomes the exact thing the policy is free to exploit. If you want to know why a model learned to pad its answers, agree with whatever you said, or wrap everything in confident structure, the honest place to look is not the policy. It is the function that rewarded it.
 
----
+reward-lens is the instrument for looking.
 
-## Known Limitations (Read Before Using)
+## The one output direction
 
-### Attribution ≠ Causal Importance
-The most important finding from our own validation experiments:
-**component attribution does NOT reliably predict causal importance.**
-Spearman ρ between attribution and patch effects was -0.256 (Skywork) and
--0.027 (ArmoRM) — negative to zero, never positive.
+A reward model is a language model with its vocabulary head removed and a single linear layer bolted on. The score is a dot product:
 
-This means: use the Reward Lens and attribution for *exploration*,
-then validate important claims with activation patching.
-This actually strengthens your credibility in the mech interp community — researchers respect honesty about limitations far more than overselling.
+```
+r(x) = w_r · h + b
+```
 
----
+The final hidden state `h` is read out along one fixed vector `w_r`, the reward direction. It is not something you probe for or approximate. It sits in the weights, known exactly, the same for every input. A generative model spreads its answer across fifty thousand logits; a reward model concentrates it into one number along one line. Once you see the reward as a projection, most of the tools here become variations on a single move. Project each layer's activation onto `w_r` and you watch the preference form. Split the final state into its parts and project each, and you get a per-component ledger. Intervene on a component and remeasure, and you get a causal test. Same direction, different questions.
 
-## Why This Exists
+## Why the measurements need discipline, not just tools
 
-Every RLHF-trained language model was shaped by a reward model. The reward model is the mathematical object that encodes "what we want." It is the most safety-critical component in the alignment pipeline — and as of early 2026, it has received approximately 0.5% of the interpretability community's attention.
+The first version of this library was a bag of those primitives. Running them at scale taught the lesson that reshaped everything since: naive reward-model measurement produces confident, wrong numbers, and it does it in ways that look fine on the page.
 
-This is not because reward models are hard to study. They may actually be *easier* than generative models:
+A concrete one. Rank a model's components by how much attribution assigns them, rank them again by how much causal patching says they carry, and on Skywork the two rankings correlate at Spearman ρ = -0.256. Negative. The last MLP layers dominate attribution; the early layers dominate patching. The place the reward visibly accumulates is not the place that causes it. Quote the cheap observational tool as if it were the causal one and you have published a plausible, backwards result.
 
-- **Scalar output** — attribution targets a single number, not a 50K-token distribution
-- **Built-in contrastive structure** — preference pairs give natural controlled comparisons
-- **Known "answer direction"** — the reward head weight vector defines exactly what the model is optimizing
+There were more of these. Confidence intervals computed over five hand-written stimuli that had been cloned into "thirty pairs," so the interval described the cloning and not the model. Cross-model reward directions compared in raw coordinates, where a change of basis reads as a change of function. Instruments with no answer key, reporting numbers nobody had ever checked against a case with known ground truth. None of these are exotic. They are the predictable output of tools that carry no notion of evidence, provenance, or calibration. So the rebuild does not add more tools. It puts the discipline underneath them.
 
-Reward-lens provides the tools to exploit these structural advantages.
+## One kernel, sixteen sciences, three gates
 
----
+reward-lens 2.0 is a small kernel of subsystems, a layer of studies that consume it, and three gates that hold the whole thing honest.
 
-## Architectural Decisions
+Every measurement returns an `Evidence` object, never a bare float. Evidence carries the value, its uncertainty (including an effective sample size that counts unique content, not cloned rows), its gauge status, its calibration reference, its provenance back to the inputs it came from, and a trust level. The trust level is never set by the caller. It is computed by the gates.
 
-### Why not TransformerLens?
+- **Calibration gate.** An instrument with no scorecard, meaning no measured performance against a case whose ground truth is known, cannot claim more than exploratory trust. You earn calibration by grading the instrument on model organisms with structure planted by construction, and then the same measurement on a real model cites that scorecard.
+- **Gauge gate.** A quantity that only means something in a fixed basis (a direction, an angle, a subspace overlap) cannot be compared across models without a shared frame. Ask for that comparison without fixing the gauge and the library raises, rather than handing back a number that confuses a coordinate change for a real one.
+- **Registration gate.** A confirmatory claim requires a frozen preregistration. A study is a spec plus a thin analysis function; freezing it stamps the git sha and locks the predictions before the run, so the result is adjudicated against a prediction made in advance, not a story fit afterward.
 
-TransformerLens was built for generative models. Its core abstractions — the logit lens, direct logit attribution, the unembedding matrix — all assume the model outputs a distribution over vocabulary tokens. Reward models replace the unembedding with a scalar head, which breaks every one of these tools.
+The trust ladder runs exploratory, calibrated, registered, adjudicated, and an Evidence sits on the highest rung the facts actually support. This is the part worth being direct about. The honesty is in the type system, not in a disclaimer. You do not have to remember to be careful. The instrument will not let you quote a number as more than it is.
 
-Rather than fighting TransformerLens's abstractions, reward-lens builds purpose-built primitives directly on HuggingFace `transformers` models using lightweight PyTorch hooks. This means:
+## Install
 
-- **Any HuggingFace reward model works out of the box** — `AutoModelForSequenceClassification`, custom reward heads, multi-objective models
-- **No model zoo dependency** — if HuggingFace can load it, reward-lens can analyze it
-- **The hook system is minimal and auditable** — ~200 lines, not thousands
-
-### Why not nnsight?
-
-nnsight is a powerful general-purpose intervention library. But reward model interpretability needs domain-specific primitives — reward lens plots, differential reward attribution, preference circuit identification — that would be clumsy to build on top of a generic framework. We build these as first-class citizens.
-
-### The Core Insight
-
-The reward head is a linear projection: `r(x,y) = w_r^T @ h_final + b`. The weight vector `w_r` defines the **reward direction** in activation space. Every tool in this library is, at its core, a projection onto or decomposition along this direction:
-
-- **Reward Lens**: project each layer's residual stream onto `w_r` to see when preference forms
-- **Component Attribution**: decompose `h_final` into per-head, per-MLP contributions and project each onto `w_r`
-- **Feature Attribution**: decompose through SAE features and measure each feature's alignment with `w_r`
-- **Activation Patching**: swap components between preferred/dispreferred and measure reward change
-
----
-
-## Installation
-
-Install from PyPI (recommended):
 ```bash
 pip install reward-lens
 ```
 
-### Advanced Installation (from source)
+Python 3.10 or newer. The base install brings torch and transformers, because most of the library eventually touches a model. If all you want is the epistemics layer it is still one line, and `import reward_lens.core` and `import reward_lens.stats` will not import torch.
 
-Clone the repository and install:
+```bash
+pip install "reward-lens[sae]"    # SAE training support
+pip install "reward-lens[dev]"    # tests, ruff, mypy
+```
+
+From source:
+
 ```bash
 git clone https://github.com/suhailnadaf509/reward-lens.git
 cd reward-lens
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-For SAE training support:
-```bash
-pip install -e ".[sae]"
-```
+## A first look
 
-For development:
-```bash
-pip install -e ".[all]"
-```
-
----
-
-## Quick Start
-
-### 5-Line Reward Lens
+Start with the part that needs no GPU, because it is the part that explains the rest. Trust is not a label you write down. It is computed from what you actually did to earn it.
 
 ```python
-from reward_lens import RewardModel, reward_lens_plot
+from reward_lens.core import make_evidence, CalibrationRef, SubjectRef, ModelFP
 
-model = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
+subject = SubjectRef(signals=(ModelFP("mfp:demo"),), dataset="ds:demo", readout="reward")
 
-prompt = "Explain quantum computing."
-good = "Quantum computing uses qubits that can exist in superposition..."
-bad = "Quantum computing is when computers are really fast..."
+# A bare measurement is exploratory. Nothing has earned it more than that.
+ev = make_evidence(observable="BiasBattery", observable_version="1",
+                   subject=subject, value=-0.05)
+print(ev.trust)          # TrustLevel.EXPLORATORY
 
-reward_lens_plot(model, prompt, good, bad, save_path="reward_lens.png")
+# Calibrate it against a scorecard graded on planted ground truth and it climbs a rung.
+cal = CalibrationRef(scorecard_entry="ev:...", organism_family="spurious-correlation")
+ev = make_evidence(observable="BiasBattery", observable_version="1",
+                   subject=subject, value=-0.05, calibration=cal)
+print(ev.trust)          # TrustLevel.CALIBRATED
 ```
 
-### Full Analysis Pipeline
+When you do reach for a model, a measurement is the same three steps every time: load a signal, pick an observable, run it through the gated runner. Here it is on a small model that runs on CPU, so nothing downloads.
 
 ```python
-from reward_lens import RewardModel
-from reward_lens.lens import RewardLens
-from reward_lens.attribution import ComponentAttribution
-from reward_lens.patching import ActivationPatcher
+from reward_lens.signals import from_tiny
+from reward_lens.measure import base as mb
+from reward_lens.measure.battery import DirectLinearAttribution
+from reward_lens.data.builtin.diagnostic_v3 import load_diagnostic_v3
+from reward_lens.data.schema import DataView
 
-# Load model
-rm = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
+signal = from_tiny(seed=0)
+view = DataView(list(load_diagnostic_v3()["helpfulness"].items)[:8])
 
-# Define preference pair
-prompt = "What is 2+2?"
-preferred = "2+2 equals 4."
-dispreferred = "2+2 equals 5."
-
-# 1. Reward Lens — when does preference form?
-lens = RewardLens(rm)
-result = lens.trace(prompt, preferred, dispreferred)
-result.plot()  # Layer-by-layer preference formation
-print(f"Preference crystallizes at layer {result.crystallization_layer}")
-
-# 2. Component Attribution — which heads/MLPs drive the preference?
-attrib = ComponentAttribution(rm)
-components = attrib.attribute(prompt, preferred, dispreferred)
-components.plot_top_k(k=15)  # Top 15 components by reward contribution
-
-# 3. Activation Patching — which components are causally necessary?
-patcher = ActivationPatcher(rm)
-effects = patcher.patch_all_components(prompt, preferred, dispreferred)
-effects.plot()  # Heatmap of patch effects
+ev = mb.run(DirectLinearAttribution(), mb.Context(signal=signal, view=view))
+print(ev.value["dominant_component"])   # which head or MLP wrote the reward difference
+print(ev.trust)                         # EXPLORATORY, until this observable earns a scorecard
 ```
 
-### Reward Hacking Detection
+The same call runs on an 8B classifier reward model, a generative judge, or a process reward model, because they all satisfy one signal protocol. Only the readout changes.
+
+To make a confirmatory claim, you freeze the prediction before the run. Freezing stamps the git sha and locks the predictions, and the runner adjudicates the result against them.
 
 ```python
-from reward_lens import RewardModel
-from reward_lens.hacking import HackingDetector
+from reward_lens.studies import StudySpec, Hypothesis, Prediction, SubjectQuery, freeze, run_study
 
-rm = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
-detector = HackingDetector(rm)
-
-# Test for known failure modes
-report = detector.scan(
-    prompt="Explain relativity.",
-    response="Einstein's theory of relativity...",
-    tests=["length", "confidence", "formatting", "sycophancy"],
+spec = StudySpec(
+    id="smoke-thermo", title="Mean reward rises under mild optimization", science="S03-thermo",
+    hypotheses=(Hypothesis(id="H1", statement="mean reward exceeds 0.3",
+        prediction=Prediction(metric="mean_reward", comparator=">", threshold=0.3),
+        scoreboard_row="T9"),),
+    analysis="yourpkg.analysis.thermo_smoke",
+    subjects=SubjectQuery(signals=("mfp:study-test",)),
 )
-report.print_summary()
-# Length bias: +0.34 reward per 100 tokens (SIGNIFICANT)
-# Confidence bias: +0.12 for authoritative vs hedged (moderate)
-# Formatting bias: +0.08 for markdown vs plain (low)
+
+frozen = freeze(spec)                                    # study:smoke-thermo@v1#<hash>, git sha stamped
+frozen, result = run_study(spec, subjects={"primary": signal}, store=store)
+print(result.outcomes["H1"])                             # "confirmed" or "refuted", against the frozen prediction
 ```
 
-### Predictive Hacking Analysis (v0.2.0)
+The Evidence this produces is registered, and it lands in an append-only store. Everything downstream (an RM card, the population leaderboard, a safety case) is a view over that store, so a card and a paper are guaranteed to quote the same number. The command line is the operator surface over the same store, and it draws a clean line. Anything that is a view over stored evidence runs here and now with no model. Anything that needs a reward model names the exact kernel call it would make and refuses rather than printing a number it did not compute.
 
-```python
-from reward_lens import RewardModel, DistortionAnalyzer
-from reward_lens.diagnostic_data import get_diagnostic_pairs
+```bash
+reward-lens card mfp:...        # an RM card: every stored Evidence about one model
+reward-lens scoreboard          # standing theorems and candidate laws
+reward-lens claims paper.md     # nonzero exit if the manuscript cites a number the store cannot back
+reward-lens atlas export        # the population leaderboard, as JSON and HTML
 
-rm = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
-
-# Predict which quality dimensions are under-covered (will be hacked)
-analyzer = DistortionAnalyzer(rm)
-report = analyzer.compute_distortion_index(
-    quality_dimensions=["helpfulness", "safety", "honesty"],
-    evaluation_probes={
-        "helpfulness": get_diagnostic_pairs(["helpfulness"]),
-        "safety": get_diagnostic_pairs(["safety"]),
-        "honesty": [],  # No probes - will be flagged as under-covered!
-    },
-)
-report.print_summary()
-# Shows "honesty" has high distortion index (likely to be hacked)
+reward-lens score <signal>      # GPU-gated: dispatches to signals.load_signal(...).score(...)
 ```
 
-### Misalignment Cascade Detection (v0.2.0)
+That `claims` command is worth pausing on. It reads a manuscript, finds every number tagged with an evidence id, and fails if the store does not hold that exact value. A paper cannot claim a figure the evidence does not support, and you find out in CI rather than in review.
 
-```python
-from reward_lens import MisalignmentCascadeDetector
+## What is in the kernel
 
-detector = MisalignmentCascadeDetector(rm)
-report = detector.detect_cascade()  # Tests multiple misalignment dimensions
-report.print_summary()
-# Shows if failures are correlated (systemic vulnerability)
-```
+The kernel is the set of subsystems every study stands on. You rarely touch all of them; you reach for the ones a question needs. Imports stay lazy and layered, so the epistemics layer pulls only numpy and scipy, and nothing loads torch until you touch a model.
 
-### Concept Vector Analysis (v0.2.0)
+**Signals** give one interface over the different things people call a reward. The `RewardSignal` protocol carries first-class readouts and positions, so eight substrates look the same to every tool downstream: classifier reward models, generative judges, process reward models, implicit (DPO log-ratio) rewards, rubric graders, trajectory models, dense per-token rewards, and ensembles. A new kind of grader becomes a new adapter that passes the conformance suite, and the whole battery works on it unchanged.
 
-```python
-from reward_lens import quick_concept_analysis
+**Data** is the plane instruments read from, and never construct themselves. Pairs, quadruples, tournaments, and trajectories are typed and lineage-tracked. A `DataView` reports its effective sample size and a content checksum, which is where the cloned-stimulus problem dies: the statistics count unique content, not duplicated rows.
 
-report = quick_concept_analysis(rm)
-report.print_summary()
-# Shows which concepts (confidence, verbosity, sycophancy)
-# align with reward and may be hackable
-```
+**Measure** is the library of things you can measure. A battery of eleven observables ports the interpretability primitives (the reward lens across depth, per-component attribution, activation and path patching, the bias battery, concept dose-response, SAE feature alignment, multi-objective geometry, cross-model circuit overlap). On top sit eighteen scalar indices, each one a named theory object with a formal definition it must stay faithful to: the knowledge-utilization gap that predicts which dimension gets hacked, reward susceptibility from fluctuation-dissipation, the tail exponent that sets the critical optimization pressure, a verification score that separates checking work from reading style, and more. Every observable returns gated Evidence. There is no path that returns an unguarded number.
 
----
+**Interventions** are the causal side: patch, steer, ablate, edit the reward head in weight space, and erase a concept with a closed-form affine map (LEACE) that you can then certify by training a fresh probe and reporting how much it recovers. An erasure that cannot be certified stays exploratory.
 
-## Core Modules
+**Geometry** is what makes cross-model comparison mean something. It fixes the gauge, whitens to a canonical frame, and reports the STARC-invariant angle whose cosine is the on-distribution correlation of two reward readouts. It also carries Hessian spectroscopy and a skew-symmetric test for the intransitive preferences a scalar head cannot express.
 
-### `reward_lens.model` — Reward Model Wrapper
+**Dynamics** watches a reward model form across training. Checkpoints link into a hash-verified chain, the battery sweeps over them, and the curves show when bias enters and when the reward direction stops rotating and merely rescales.
 
-Wraps any HuggingFace reward model with hooks for activation caching and intervention. Handles the architectural differences between single-scalar models (Skywork, Starling) and multi-objective models (ArmoRM, Nemotron).
+**Organisms** are the ground truth. An organism is a reward model with a rule planted by construction, so you know the answer. Grading an instrument against the planted structure is how it earns a calibration scorecard, and the scorecard has to be monotone in the planted signal strength before it counts. This is the floor the calibration gate stands on.
 
-### `reward_lens.lens` — Reward Lens
+**Loops** wire the instrument into the training run. A framework-agnostic reward function, geometry logging on fixed probes every few steps, best-of-N and tilt analysis for reading optimization pressure, and a rollout recorder that watches reward-feature drift and can name an exploited direction with a lead time before the true reward diverges. Bindings for TRL, veRL, and OpenRLHF share the same reward and logging shapes.
 
-The core primitive. Projects intermediate residual stream states onto the reward direction to trace preference formation across layers. The reward model analogue of the logit lens.
+**Studies** are preregistered experiments: a frozen spec, a thin analysis function, kill criteria, and a runner that adjudicates the result against predictions made before the run. Standing results accumulate on a theorem scoreboard.
 
-### `reward_lens.attribution` — Component Attribution
+**Artifacts** are views over the evidence store, never fresh computation. Build an RM card for a model, a population leaderboard, or a safety case, which is the strictest artifact of all: it assembles a claim about what is safe to optimize and refuses unless every component it rests on is both calibrated and registered.
 
-Decomposes the reward score into signed per-component contributions (each attention head and MLP layer). Answers: "why did the model assign this score?"
+Underneath all of it, **core**, **stats**, and **runtime** hold the floor: the Evidence atom, provenance, the append-only store, and the gates in core; a real numpy statistics engine (effect sizes, bootstrap and cluster-bootstrap CIs, multiplicity control, ROC and calibration, changepoint detection, mutual information) in stats; and the HuggingFace execution layer (hooks, per-family numerics policies with an fp32 reward head, model fingerprinting, an activation cache) in runtime.
 
-### `reward_lens.patching` — Activation Patching
+## The sixteen sciences
 
-Causal intervention tool. Swaps component activations between preferred and dispreferred completions to identify causally necessary components for each preference dimension.
+The kernel exists so the research on top can be thin. Each science is a family of preregistered studies that add only a hypothesis and a short analysis function, never new infrastructure, and every result is adjudicated against a prediction frozen before the run. A theorem scoreboard tracks which claims have held up, and refutations show up as plainly as confirmations. Here is what they ask.
 
-### `reward_lens.hacking` — Reward Hacking Detection
+| Science | The question it puts to a reward model |
+|---|---|
+| Gauge | Can two reward directions be compared at all, when a head is fixed only up to shift and scale? |
+| Thermodynamics | Which features will optimization exploit, read off base-policy statistics before any RL? |
+| Capacity | How much bias does a scalar head force just by routing many criteria through few dimensions? |
+| Topology | What share of reward error is topologically obligatory, beyond any scalar reward's reach? |
+| Embryology | Does the reward direction form gradually or in jumps, and which features enter first? |
+| Factorization | How much does the reward know but fail to use, and is its error epistemic or about values? |
+| Verification | Does the reward check the work, or just read the style around it? |
+| Decompiling | How much of the decision function can be put into words, and what stays tacit? |
+| Values | Does the model encode "this pair is contested," and is a judge's verdict set before its critique? |
+| Hackability | Can a number read off the weights name the dimension that gets hacked, before training starts? |
+| Coupling | Watching policy and grader as one loop, does representational divergence come before hacking? |
+| Phase | Is the hacking transition reversible, or does hysteresis mean a hacked policy cannot anneal back? |
+| Forensics | How does the grader weigh evidence: does it rank a caught fabrication below saying nothing? |
+| Robustness | Does the model know it is being tested, and does that recognition inflate the score? |
+| Universality | Do two reward models converge on values beyond what shared world-modeling forces? |
+| Performative | How fast does a metric decay once developers start optimizing against it? |
 
-Automated detection of hackable features in reward models. Tests for length bias, confidence bias, formatting bias, sycophancy, and more. Produces vulnerability reports.
+The last two run across a whole population of reward models rather than a single one.
 
-### `reward_lens.sae` — Sparse Autoencoder Integration
+## Coming from version 1
 
-Train and apply SAEs to reward model activations. Decompose reward into interpretable feature-level contributions. Identify features aligned with the reward direction.
+The 1.0 API still works. Every v1 name lives on under `reward_lens.legacy` and stays importable from the top level, so `from reward_lens import RewardModel, RewardLens, ComponentAttribution` keeps running while you migrate. As each primitive settles into its new home behind the protocols, its legacy entry is repointed at a thin adapter with no change on your side. The pure layers never import any of it, so the torch-free promise holds regardless.
 
-### `reward_lens.diagnostic_data` — Diagnostic Datasets
+## Status
 
-Curated preference pairs for controlled experiments across preference dimensions: helpfulness, safety, verbosity, sycophancy, formatting, confidence.
+This is alpha, and honest about which parts are load-bearing today. The epistemics layer (core, stats, the data plane, the index math) is pure, tested, and usable now without a GPU. The measurement, intervention, and study machinery is wired end to end and proven on small synthetic models and organisms in the test suite. The paths that need an 8B model or a flagship GPU, real dataset downloads, or an external judge are gated: they name the call and refuse rather than fabricate a result. Where a dependency is still landing, the code says so in place instead of returning a plausible number. Interfaces in the science layer may still move.
 
----
+## Documentation
 
-## New Modules (v0.2.0)
-
-Based on cutting-edge interpretability research (2025-2026):
-
-### `reward_lens.distortion` — Distortion Index
-
-Predicts which quality dimensions are under-covered by evaluation and thus likely to be hacked. Based on "Reward Hacking as Equilibrium under Finite Evaluation" — moves from detecting hacking to **predicting** it.
-
-### `reward_lens.divergence_patching` — Divergence-Aware Patching
-
-Extends activation patching with out-of-distribution detection. Flags when interventions create divergent representations that may make causal claims unreliable. Based on "Addressing Divergent Representations from Causal Interventions."
-
-### `reward_lens.cascade` — Misalignment Cascade Detection
-
-Tests for correlations between different misalignment dimensions. Based on "Natural Emergent Misalignment from Reward Hacking" — reward hacking onset correlates with broad emergent misalignment.
-
-### `reward_lens.conflict` — Reward Conflict Analysis
-
-Classifies relationships between reward terms as aligned/orthogonal/in-conflict. In-conflict terms may cause models to hide reasoning. Based on "When Can We Safely Optimize CoT?"
-
-### `reward_lens.concepts` — Concept Vector Extraction
-
-Extracts linear concept vectors from activations and analyzes their reward alignment. Identifies concepts that may enable hacking (e.g., confidence, verbosity, sycophancy). Based on "Emotion Concepts and their Function in an LLM."
-
----
-
-## Supported Models
-
-| Model | Architecture | Type | Status |
-|-------|-------------|------|--------|
-| Skywork-Reward-Llama-3.1-8B-v0.2 | Llama 3.1 + classification head | Single scalar | ✅ Full support |
-| ArmoRM-Llama3-8B-v0.1 | Llama 3 + multi-objective head + MoE gating | Multi-objective | ✅ Full support |
-| Nemotron-4-340B-Reward | Nemotron + 5-dim linear head | Multi-dimensional | ⚠️ Requires multi-GPU |
-| FsfairX-LLaMA3-RM-v0.1 | Llama 3 + classification head | Single scalar | ✅ Full support |
-| Any `AutoModelForSequenceClassification` | Varies | Single scalar | ✅ Auto-detected |
-
-**Adding new models:** Any model loadable via `AutoModelForSequenceClassification` with a linear reward head works automatically. Models with custom architectures (like ArmoRM's MoE gating) need a thin adapter — see `reward_lens/model_adapters/`.
-
----
-
-## What This Toolkit Can and Cannot Do
-
-### Can Do
-- Trace preference formation across layers for any HuggingFace reward model
-- Decompose reward scores into per-component (head/MLP) signed contributions
-- Identify causally necessary components via activation patching
-- Detect reward hacking vulnerabilities (length, confidence, formatting, sycophancy)
-- Train SAEs on reward model activations and decompose reward through features
-- Compare preference circuits across different reward models
-
-### Cannot Do (Honestly)
-- **Process reward models (PRMs)** are partially supported — per-step analysis works, but step-boundary detection and accumulated quality tracking are not yet implemented
-- **Proprietary models** — this toolkit requires access to model weights. API-only models cannot be analyzed
-- **Causal claims from correlational tools** — the reward lens and component attribution are observational. Only activation patching provides causal evidence. We are explicit about this distinction in the API
-- **Guaranteed completeness** — mechanistic interpretability never guarantees you've found everything. The toolkit helps you find what's there, but absence of evidence is not evidence of absence
-
----
-
-## Compute Requirements
-
-All analyses run in inference mode. No training of the reward model is required.
-
-| Analysis | 8B model | Hardware | Time |
-|----------|----------|----------|------|
-| Reward Lens (single pair) | ~2 forward passes | 1× GPU (16GB+) | ~5 seconds |
-| Component Attribution (single pair) | ~2 forward passes | 1× GPU (16GB+) | ~10 seconds |
-| Activation Patching (all components) | ~n_components × 2 forward passes | 1× GPU (24GB+) | ~30 minutes |
-| SAE Training (single layer) | Activation collection + training | 1× GPU (24GB+) | ~8-24 hours |
-| Full Hacking Scan | ~50 paired forward passes | 1× GPU (16GB+) | ~5 minutes |
-
----
+Full documentation, including the theory behind each index and a candid account of what the observational tools can and cannot tell you, is at <https://suhailnadaf509.github.io/reward-lens/>.
 
 ## Citation
 
 ```bibtex
 @software{nadaf2026rewardlens,
-    title = {reward-lens: Mechanistic Interpretability Toolkit for Reward Models},
+    title  = {reward-lens: An Instrument for the Science of Reward Misspecification},
     author = {Nadaf, Mohammed Suhail B},
-    year = {2026},
-    url = {https://github.com/suhailnadaf509/reward-lens},
+    year   = {2026},
+    url    = {https://github.com/suhailnadaf509/reward-lens},
 }
 ```
-
----
 
 ## License
 

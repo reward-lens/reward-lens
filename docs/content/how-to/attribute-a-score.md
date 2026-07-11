@@ -1,47 +1,64 @@
 # Attribute a reward score
 
-You have one preference the model got right or wrong, and you want to break its margin into per-component contributions: which attention layers and MLPs wrote the score.
+**Which parts of the network wrote the margin between chosen and rejected?**
+
+Decompose it. Because the residual stream is a running sum and the reward is a linear read of the final state, the reward differential of a preference pair splits exactly into signed per-component contributions: the embedding, and each layer's attention and MLP output, projected onto the reward direction \( w_r \). Positive means the component pushes the chosen completion's reward above the rejected one's. `DirectLinearAttribution` computes the split, and the contributions sum back to the differential by construction.
 
 ```python
-from reward_lens import RewardModel, ComponentAttribution
+import numpy as np
+from reward_lens.signals import from_tiny
+from reward_lens.measure import base as mb
+from reward_lens.measure.battery import DirectLinearAttribution
+from reward_lens.data.builtin.diagnostic_v3 import load_diagnostic_v3
+from reward_lens.data.schema import DataView
 
-rm = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
+signal = from_tiny(seed=0)
+view = DataView(list(load_diagnostic_v3()["helpfulness"].items)[:6])
 
-prompt = "A student asks: 'Why is the sky blue?' Please give a clear, accurate explanation."
-chosen = ("Sunlight is a mix of all visible wavelengths. When it enters Earth's atmosphere, "
-          "molecules scatter the shorter (blue) wavelengths much more strongly than the longer "
-          "(red) ones — this is Rayleigh scattering. Blue light bounces around the sky in every "
-          "direction, so when you look up, blue is what reaches your eyes from almost everywhere.")
-rejected = ("The sky is blue because blue is the color of the sky. It has always been blue and "
-            "always will be. Nobody really knows why, it's just one of those things.")
+ev = mb.run(DirectLinearAttribution(), mb.Context(signal=signal, view=view))
+print(ev.trust, ev.gauge)                 # EXPLORATORY invariant
+print("n_pairs:", ev.value["n_pairs"])    # n_pairs: 6
 
-res = ComponentAttribution(rm).attribute(prompt, chosen, rejected)
+v = ev.value
+diff = np.asarray(v["differential"])      # (n_pairs, n_components)
+print("differential shape:", diff.shape)  # differential shape: (6, 5)
+per_component = diff.mean(axis=0)          # mean signed contribution per component
+for name, c in sorted(zip(v["component_names"], per_component), key=lambda t: -abs(t[1])):
+    print(f"{name:8s} {c:+.5f}")
+# attn_L1  +0.00022
+# attn_L0  +0.00003
+# mlp_L1   -0.00001
+# mlp_L0   -0.00001
+# embed    +0.00000
 
-for name, value in res.top_k(10, by="differential"):
-    print(f"{name:>8}  {value:+.2f}")
-# mlp_L31 +3.99, mlp_L30 +1.32, mlp_L29 +0.86, mlp_L28 +0.63, attn_L31 +0.51,
-# mlp_L27 +0.45, mlp_L26 +0.39, mlp_L25 +0.33, mlp_L22 +0.33, mlp_L23 +0.31
-
-res.by_type("mlp")     # contributions from MLP components only
-res.plot_top_k()       # bar chart of the top components by |differential|
+# The contributions sum to the reward differential, per pair, to numerical precision:
+csum = diff.sum(axis=1)
+print("max completeness error:",
+      float(np.max(np.abs(csum - np.asarray(v["reward_differential"])))))
+# max completeness error: 7.275957614183426e-12
+print("dominant_component:", v["dominant_component"])
+# dominant_component: ['attn_L0', 'attn_L0', 'attn_L1', 'attn_L0', 'attn_L0', 'attn_L1']
 ```
 
-Each contribution is that component's output projected onto the reward direction, differenced between chosen and rejected. They sum, with the embedding and bias, to the final margin. On the sky-is-blue pair the last few MLPs carry almost all of it.
+The tiny model has two layers and random weights, so its margins are near zero and the contributions are near zero with them. What this run proves is the machinery and the identity: five components (the embedding plus two layers of attention and MLP), a signed contribution each, and a sum that returns the reward differential to twelve decimal places. `dominant_component` is a per-pair list, the largest-magnitude component for each pair, not a single scalar.
 
-![Top component attributions for the sky-is-blue pair.](../assets/figures/attribution-bars.svg){ .rl-fig }
+## The result lives on a real model
 
-/// caption
-The ten components with the largest signed share of the +24.03 margin. `mlp_L31` leads at +3.99, and the bars fall off fast through the late twenties. This is the crystallization signature: the reward becomes legible in the final layers.
-///
+On the 8B Skywork model the same decomposition is where the reward becomes legible. Measured from the committed artifacts, on the "why is the sky blue" pair with margin \(+24.03\), the attribution is led by the late MLPs:
 
-The tall bars are where the reward is visible, not where it was decided.
+| Component | Contribution |
+| --- | --- |
+| `mlp_L31` | \(+3.99\) |
+| `mlp_L30` | \(+1.32\) |
+| `mlp_L29` | \(+0.86\) |
 
-## What this does and does not tell you
+The tall bars sit in the final layers. That is the crystallization signature: the margin is written where the model finishes making up its mind, not spread evenly through the stack.
 
-- **Per component, not per token.** The split is by which attention layer or MLP wrote the score, not by which words in the response. Attribution cannot tell you that "Rayleigh scattering" earned three points; it can tell you `mlp_L31` did.
-- **Observational, not causal.** These are projections onto \(w_r\): they locate the reward, they do not explain it. The components attribution ranks highest are not the ones [activation patching](../tools/activation-patching.md) finds necessary. On this exact pair the two anti-correlate at Spearman \(\rho = -0.230\). If your claim is "this component is responsible," you have to [patch](../tools/activation-patching.md) it. See [observational vs causal](../concepts/observational-vs-causal.md).
+!!! warning "Needs a GPU"
+    Reproducing this needs the 8B model in fp32, which does not fit an 8 GB GPU. The 2.0 call is the same shape as the tiny one: `mb.run(DirectLinearAttribution(), mb.Context(signal=skywork, view=pairs))`, with `skywork` wrapped from a downloaded checkpoint. The numbers above are read from committed artifacts, not fabricated.
 
-!!! note "Head-level attribution is not in 1.0.0"
-    `ComponentAttribution` stops at the attention layer and the MLP. There is no working per-head attribution. For head resolution, use the causal route: `ActivationPatcher.patch_all_heads(prompt, chosen, rejected)` measures each head's effect directly.
+## This locates the reward; it does not explain it
 
-See also: [Component Attribution](../tools/component-attribution.md), [Activation Patching](../tools/activation-patching.md).
+The contributions are projections onto \( w_r \). They tell you where the reward is visible, not what caused it, and the distinction is not academic. On Skywork-v0.2 the attribution ranking and the causal patching ranking anti-correlate: the components attribution ranks highest are not the ones [patching](patching-memory.md) finds necessary. The Spearman rho between the two rankings is \(-0.171\) on average and reaches \(-0.441\) on the code-correctness axis. Late MLPs explain the score; early heads move it. If your claim is that a component is responsible, attribution is the first look and patching is the test. See [observational vs causal](../concepts/observational-vs-causal.md).
+
+See also: [Component attribution](../instruments/attribution.md), [The reward direction](../concepts/reward-direction.md). API: [`DirectLinearAttribution`](../reference/measure.md#reward_lens.measure.battery.dla.DirectLinearAttribution).

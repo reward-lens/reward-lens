@@ -1,52 +1,67 @@
-% Concept addition as vector addition.
-% An activation h is shifted by alpha*c along a concept direction c. Because c
-% has a positive component along w_r, the projection onto w_r grows: the reward
-% goes up by alpha * w_r^T c.
-% Compile with ../build_figures.sh -> content/assets/figures/concept-vector.svg
-\documentclass[border=10pt]{standalone}
-\usepackage{tikz}
-\usetikzlibrary{calc,arrows.meta}
-\definecolor{rlink}{HTML}{3F51B5}    % reward direction
-\definecolor{raccent}{HTML}{FF5722}  % the increase in reward
-\definecolor{rmuted}{HTML}{6B7280}
+% Concept addition as a dose-response. One claim: push an activation h along a
+% concept direction c and the reward rises by alpha*(w_r . c). The slope of that
+% rise is w_r . c = |w_r| cos(theta), so it steepens as c turns toward w_r.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
 \begin{document}
-\begin{tikzpicture}[>=Stealth, line width=0.9pt, font=\small]
+\begin{tikzpicture}[scale=1.0]
   \coordinate (O)  at (0,0);
-  \coordinate (W)  at (18:4.4);
-  \coordinate (H)  at (1.7,1.5);       % activation h
-  \coordinate (HC) at (2.95,2.35);     % h + alpha c
-  \coordinate (FH) at ($ (O)!(H)!(W) $);    % foot of h on the reward axis
-  \coordinate (FC) at ($ (O)!(HC)!(W) $);   % foot of h + alpha c
+  \coordinate (W)  at (20:4.85);          % reward direction w_r (the reward axis)
+  \coordinate (C)  at (58:2.4);           % concept direction c, at angle theta to w_r
+  \coordinate (H)  at (2.75,1.9);         % an activation h
+  \coordinate (HC) at ($(H)+(58:1.15)$);  % h shifted by the dose: h + alpha*c
+  \coordinate (FH) at ($(O)!(H)!(W)$);    % foot of h on the reward axis
+  \coordinate (FC) at ($(O)!(HC)!(W)$);   % foot of h + alpha*c on the reward axis
 
-  % activation-space frame
-  \draw[rmuted!25, line width=0.6pt] (-0.5,-0.6) rectangle (4.9,2.95);
-  \node[rmuted, font=\scriptsize, anchor=south west] at (-0.5,2.95) {activation space};
+  % activation space, a subtle theme-matched region (never a hardcoded white card)
+  \fill[rlSurfaceTwo, rounded corners=6pt] (-0.8,-1.4) rectangle (5.35,3.72);
+  \node[rlnote, text=rlMuted, anchor=north west] at (-0.6,3.6)
+    {activation space (residual stream)};
 
-  % reward direction (thin, so the orange increase reads on the axis)
-  \draw[rlink, ->, line width=1.1pt] (O) -- (W) node[above right, rlink] {$w_r$};
+  % the reward direction w_r: the axis every reward is read along
+  \draw[rlvec, draw=rlInk] (O) -- (W);
+  \node[rlvalue, text=rlInk, anchor=south west] at (W) {$w_r$};
 
-  % orthogonal drops onto the reward axis
-  \draw[rmuted, dashed, line width=0.8pt] (H)  -- (FH);
-  \draw[rmuted, dashed, line width=0.8pt] (HC) -- (FC);
+  % the concept direction c and the angle it makes with w_r
+  \draw[draw=rlSignal, line width=1.1pt, -{Stealth[length=2.4mm, width=1.8mm]}] (O) -- (C);
+  \node[rlvalue, text=rlSignal, anchor=south west] at (C) {$c$};
+  \draw[rlMuted, line width=0.6pt] (20:1.2) arc (20:58:1.2);
+  \node[rlfield, text=rlMuted] at (39:0.85) {$\theta$};
 
-  % baseline projection of h, then the orange increase from adding the concept
-  \draw[rmuted, line width=1.5pt] (O) -- (FH);
-  \draw[raccent, line width=1.9pt] (FH) -- (FC);
+  % orthogonal drops from both activations onto the reward axis
+  \draw[rldrop] (H)  -- (FH);
+  \draw[rldrop] (HC) -- (FC);
+  % right-angle marks: each drop meets w_r squarely, so each foot is a true projection
+  \draw[rlMuted, line width=0.55pt]
+    ($(FH)+(200:0.22)$) -- ($(FH)+(200:0.22)+(110:0.22)$) -- ($(FH)+(110:0.22)$);
+  \draw[rlMuted, line width=0.55pt]
+    ($(FC)+(20:0.22)$)  -- ($(FC)+(20:0.22)+(110:0.22)$)  -- ($(FC)+(110:0.22)$);
 
-  % the activation and the concept step
-  \draw[black, ->, line width=1.1pt] (O) -- (H);
-  \draw[black, ->, line width=1.1pt] (H) -- (HC)
-     node[midway, above, sloped, black, font=\scriptsize] {$\alpha\,c$};
-  \node[black, font=\scriptsize, anchor=south] at (2.05,2.5) {concept direction};
+  % the reward you already had: how far h reaches along w_r
+  \draw[rlInk2, line width=1.5pt] (O) -- (FH);
+  \fill[rlInk2] (FH) circle (1.7pt);
+  \coordinate (MB) at ($(O)!0.55!(FH)$);
+  \node[rlfield, text=rlInk2, anchor=north] at ($(MB)+(-70:0.34)$) {$w_r^{\top}h$};
 
-  % points
-  \fill (H)  circle (1.7pt) node[above left, black] {$h$};
-  \fill (HC) circle (1.7pt) node[above right, black] {$h+\alpha c$};
-  \fill[rmuted]  (FH) circle (1.6pt);
-  \fill[raccent] (FC) circle (1.6pt);
+  % the punchline: adding alpha*c moves the foot forward by exactly alpha*(w_r . c)
+  \draw[rlAccent, line width=2.3pt] (FH) -- (FC);
+  \fill[rlAccent] (FC) circle (1.9pt);
+  \coordinate (MG) at ($(FH)!0.5!(FC)$);
+  \node[rlvalue, text=rlAccent, anchor=north, font=\sffamily\bfseries\small]
+    at ($(MG)+(-70:0.44)$) {$\alpha\,(w_r^{\top}c)$};
 
-  % labels for the two segments on the axis
-  \node[rmuted, font=\scriptsize, anchor=north] at (1.15,0.14) {$w_r^{\!\top} h$};
-  \node[raccent, font=\scriptsize, anchor=north] at (2.82,0.64) {$\alpha\,w_r^{\!\top} c$};
+  % the activation, and the dose that pushes it along c
+  \draw[rlvec, draw=rlSignal] (H) -- (HC);
+  \node[rlfield, text=rlSignal, anchor=east, font=\sffamily\scriptsize]
+    at ($(H)!0.5!(HC)+(148:0.16)$) {$\alpha\,c$};
+  \fill[rlChosen] (H)  circle (2.0pt);
+  \node[rlvalue, text=rlChosen, anchor=east, xshift=-2pt] at (H) {$h$};
+  \fill[rlChosen] (HC) circle (2.0pt);
+  \node[rlvalue, text=rlChosen, anchor=south, yshift=2pt] at (HC) {$h+\alpha c$};
+
+  % the claim the figure exists to make
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (-0.6,-0.5)
+    {push $h$ along $c$ by a dose $\alpha$ and the reward rises by $\alpha\,(w_r^{\top}c)$.\\%
+     the slope $w_r^{\top}c=\lVert w_r\rVert\cos\theta$ steepens as $c$ turns toward $w_r$.};
 \end{tikzpicture}
 \end{document}

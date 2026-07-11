@@ -1,0 +1,132 @@
+% Eight graders, one protocol. One claim: whatever grades your rollouts, the
+% same instruments attach. Eight distinct grader archetypes each present the
+% same small set of verbs, so an instrument binds to the interface, not the
+% grader. The rlSignal accent marks the grader family; a single bus collects
+% all eight into one protocol panel on the right.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[scale=1.0,
+    % glyph vocabulary: neutral structure in ink/muted, family accent in rlSignal
+    gline/.style={draw=rlInk2, line width=0.7pt},
+    gmut/.style={draw=rlMuted, line width=0.6pt},
+    gsig/.style={draw=rlSignal, line width=0.8pt},
+    gbox/.style={draw=rlMuted, fill=rlSurfaceTwo, line width=0.6pt, rounded corners=1pt},
+    % each grader taps the shared bus; the tap points toward the protocol
+    rlattach/.style={draw=rlSignal, line width=0.9pt, -{Stealth[length=1.7mm]}},
+    rlbus/.style={draw=rlSignal, line width=2pt, line cap=round,
+      -{Stealth[length=3mm, width=2.6mm]}},
+  ]
+  \def\sy{1.5}   % the shared bus runs through the central gutter
+
+  % subtle theme-matched backdrop (never a hardcoded white card)
+  \fill[rlSurfaceTwo, rounded corners=8pt] (-1.75,-2.2) rectangle (14.8,4.35);
+
+  % the destination: one protocol, drawn as the family-accented endpoint card
+  \node[draw=rlSignal, fill=rlSurface, line width=1.15pt, rounded corners=5pt,
+        minimum width=3.6cm, minimum height=4.75cm, inner sep=0pt] (panel) at (12.6,\sy) {};
+  % header band
+  \fill[rlSignal, rounded corners=3pt] (11.05,3.15) rectangle (14.15,3.72);
+  \node[font=\sffamily\bfseries\small, text=rlSurface] at (12.6,3.44) {one protocol};
+  \node[font=\sffamily\scriptsize, text=rlMuted] at (12.6,2.8) {every grader implements};
+  % the three shared verbs
+  \foreach \vy/\verb in {2.18/{score}, 1.45/{score over positions}, 0.72/{expose activations}}{
+    \fill[rlSignal] (11.28,\vy) circle (0.05);
+    \node[anchor=west, font=\sffamily\footnotesize, text=rlInk] at (11.46,\vy) {\verb};
+  }
+  \draw[rlLine, line width=0.6pt] (11.15,0.22) -- (14.05,0.22);
+  \node[font=\sffamily\scriptsize, text=rlMuted] at (12.6,-0.14) {eight adapters};
+
+  % the shared bus: eight taps collapse into one line into the protocol
+  \draw[rlbus] (-0.55,\sy) -- (panel.west);
+
+  % the eight grader cards, two rows of four
+  \foreach \cx/\cy/\lbl in {%
+      0/3.0/{classifier RM}, 2.9/3.0/{LLM judge}, 5.8/3.0/{process RM}, 8.7/3.0/{implicit (DPO)},
+      0/0.0/{rubric head}, 2.9/0.0/{trajectory}, 5.8/0.0/{dense per-token}, 8.7/0.0/{ensemble}}{
+    \node[rlcard, minimum width=2.5cm, minimum height=1.75cm, inner sep=0pt] at (\cx,\cy) {};
+    \node[rllabel, text=rlInk2] at (\cx,\cy-0.55) {\lbl};
+  }
+
+  % taps: top row drops down onto the bus, bottom row rises up onto it
+  \foreach \cx in {0,2.9,5.8,8.7}{
+    \draw[rlattach] (\cx,2.125) -- (\cx,\sy+0.02);
+    \draw[rlattach] (\cx,0.875) -- (\cx,\sy-0.02);
+  }
+
+  % ---- glyphs (upper half of each card; label sits below) ------------------
+  % 1. classifier RM: a reward head on a stack of layers
+  \begin{scope}[shift={(0,3.30)}]
+    \foreach \yy in {-0.26,-0.12,0.02}{ \draw[gbox] (-0.34,\yy) rectangle (0.34,\yy+0.09); }
+    \draw[rlSignal, line width=0.8pt, -{Stealth[length=1.3mm]}] (0,0.13) -- (0,0.185);
+    \fill[rlSignal] (0,0.30) circle (0.10);
+  \end{scope}
+
+  % 2. LLM judge: a speech bubble delivering a verdict
+  \begin{scope}[shift={(2.9,3.30)}]
+    \draw[gline, fill=rlSurfaceTwo, rounded corners=2.5pt] (-0.42,-0.04) rectangle (0.42,0.34);
+    \fill[rlSurfaceTwo] (-0.24,0.0) -- (-0.30,-0.22) -- (-0.10,0.0) -- cycle;
+    \draw[gline] (-0.24,-0.005) -- (-0.30,-0.22) -- (-0.10,-0.005);
+    \draw[rlSignal, line width=1.2pt, line cap=round] (-0.13,0.14) -- (-0.03,0.05) -- (0.16,0.25);
+  \end{scope}
+
+  % 3. process RM: rising steps, each with a per-step tick
+  \begin{scope}[shift={(5.8,3.28)}]
+    \foreach \i in {0,1,2}{
+      \pgfmathsetmacro{\sx}{-0.38+\i*0.30}
+      \pgfmathsetmacro{\syy}{-0.22+\i*0.13}
+      \draw[gbox] (\sx,\syy) rectangle (\sx+0.20,\syy+0.15);
+      \draw[rlSignal, line width=0.9pt, line cap=round]
+        (\sx+0.04,\syy+0.22) -- (\sx+0.08,\syy+0.18) -- (\sx+0.15,\syy+0.30);
+    }
+  \end{scope}
+
+  % 4. implicit (DPO): two policies, an implicit log-ratio readout
+  \begin{scope}[shift={(8.7,3.30)}]
+    \draw[gbox] (-0.48,0.06) rectangle (-0.06,0.30);
+    \node[font=\tiny, text=rlInk2] at (-0.27,0.18) {$\pi_\theta$};
+    \draw[gbox] (-0.48,-0.30) rectangle (-0.06,-0.06);
+    \node[font=\tiny, text=rlMuted] at (-0.27,-0.18) {$\pi_{\mathrm{ref}}$};
+    \draw[rlSignal, line width=0.9pt] (-0.02,0.18) -- (0.10,0.18) -- (0.10,-0.18) -- (-0.02,-0.18);
+    \node[font=\tiny\bfseries, text=rlSignal, anchor=west] at (0.14,0) {log};
+  \end{scope}
+
+  % 5. rubric head: several criteria bars of differing length
+  \begin{scope}[shift={(0,0.30)}]
+    \draw[gmut] (-0.40,0.32) -- (-0.40,-0.30);
+    \fill[rlSignal, fill opacity=0.90] (-0.40,0.19) rectangle (0.24,0.29);
+    \fill[rlSignal, fill opacity=0.62] (-0.40,0.03) rectangle (0.02,0.13);
+    \fill[rlSignal, fill opacity=0.78] (-0.40,-0.13) rectangle (0.16,-0.03);
+    \fill[rlSignal, fill opacity=0.50] (-0.40,-0.29) rectangle (-0.06,-0.19);
+  \end{scope}
+
+  % 6. trajectory: a scored path through waypoints
+  \begin{scope}[shift={(2.9,0.30)}]
+    \draw[gline, line cap=round, -{Stealth[length=1.8mm]}]
+      plot[smooth,tension=0.7] coordinates {(-0.45,-0.16)(-0.18,0.15)(0.08,-0.10)(0.30,0.13)(0.46,0.26)};
+    \foreach \p in {(-0.45,-0.16),(-0.18,0.15),(0.08,-0.10),(0.30,0.13)}{
+      \fill[rlSignal] \p circle (0.03); }
+  \end{scope}
+
+  % 7. dense per-token: a token strip with a bar over each token
+  \begin{scope}[shift={(5.8,0.30)}]
+    \foreach \i/\hh in {0/0.12,1/0.27,2/0.16,3/0.34,4/0.20,5/0.29}{
+      \pgfmathsetmacro{\tx}{-0.45+\i*0.16}
+      \draw[gbox] (\tx,-0.30) rectangle (\tx+0.12,-0.16);
+      \fill[rlSignal] (\tx+0.02,-0.13) rectangle (\tx+0.10,-0.13+\hh);
+    }
+  \end{scope}
+
+  % 8. ensemble: several graders stacked into one
+  \begin{scope}[shift={(8.7,0.28)}]
+    \draw[gmut, fill=rlSurfaceTwo, rounded corners=2pt] (-0.34,-0.28) rectangle (0.22,0.06);
+    \draw[gline, fill=rlSurfaceTwo, rounded corners=2pt] (-0.26,-0.18) rectangle (0.30,0.16);
+    \draw[gsig, fill=rlSurface, rounded corners=2pt] (-0.18,-0.08) rectangle (0.38,0.26);
+    \node[font=\tiny\bfseries, text=rlSignal] at (0.10,0.09) {N};
+  \end{scope}
+
+  % the plain-words payoff (not a title; the mechanism behind the claim)
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (-1.45,-1.05)
+    {Different objects, one interface. An instrument binds to the interface, not the grader,\\so the same measurement runs on all eight without a line of change.};
+\end{tikzpicture}
+\end{document}

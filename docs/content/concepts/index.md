@@ -1,47 +1,14 @@
-# The reward-direction picture
+# Concepts
 
-Interpretability tools built for generative models assume the output is a distribution over tokens. A reward model breaks that assumption. It outputs one number. That single difference changes what a lens is, what attribution decomposes, and what a "circuit" even means here, and it is worth installing the right mental model before you touch the API.
+What do you have to believe before any of the tools make sense? Not much, and it is worth getting straight first, because every instrument in the library is a variation on the same few ideas.
 
-The model is small. Six terms carry the whole library, and the rest of the site reuses them exactly as defined here.
+These pages are the mental model, six short reads. They assume no interpretability background, only that you know what a reward model is and what a preference pair looks like. Every one of them traces the same example: a student asks why the sky is blue, one answer explains Rayleigh scattering, the other says the sky is blue because it has always been blue. Skywork scores the good answer at \(-2.22\) and the bad one at \(-26.25\), a margin of about \(+24\). You will watch that margin form, see which components wrote it, and learn why the components that wrote it are not the ones that caused it.
 
-## The six terms
+- [The reward direction](reward-direction.md). A reward model has exactly one output direction, and it is known exactly. That single fact is what makes reward models an easier target than the generative models they come from.
+- [Preference geometry](preference-geometry.md). A pair is two points in activation space. Only the difference between them means anything, and there is a reason it has to be that way.
+- [Why reward is relative](reward-is-relative.md). A bare reward number is close to meaningless. A margin is not. The difference is not a technicality, it is the whole reason the numbers behave.
+- [Crystallization depth](crystallization.md). Where along the network the preference actually forms, and why "late" is the common answer.
+- [Observational versus causal](observational-vs-causal.md). The one distinction that keeps you honest, and the measured result that forces you to take it seriously.
+- [A measurement you can trust](measurement-you-can-trust.md). Every number the library returns arrives with a receipt. This page is what the receipt says, in plain words, and it is the door into the deeper half of the site.
 
-**Reward direction** (\(w_r\)). The weight vector of the reward head. A reward model ends in a single linear layer, so its score is \(r = w_r^{\top} h + b\): the final hidden state \(h\) read out along \(w_r\). This vector is fixed by the trained model and known exactly. You do not learn it or probe for it. It is the one direction the score reads along. → [The reward direction](reward-direction.md)
-
-**Projection.** The quantity \(w_r^{\top} h\): how far an activation reaches along the reward direction. Applying this one operation to different activations is what every tool does.
-
-**Margin** (\(\Delta\)). The reward of the chosen completion minus the reward of the rejected one. This is the only quantity that carries meaning, because absolute reward is arbitrary. Every plot in these docs shows a difference, never a level. → [Why reward is relative](reward-is-relative.md)
-
-**Component contribution.** One component's output (an attention layer, an MLP) projected onto \(w_r\): its signed share of the reward. Because the readout is linear, these shares sum to the score. → [Preference geometry](preference-geometry.md)
-
-**Observational vs causal.** Reading an activation's projection is observational. Intervening on the activation and measuring how the reward moves is causal. They answer different questions, and on real models they can disagree, hard. → [Observational vs causal](observational-vs-causal.md)
-
-**Crystallization depth.** The layer where the margin first reaches half its final value: where the model has, in effect, half made up its mind. A reward-model-native measurement with no generative analog. → [Crystallization depth](crystallization.md)
-
-## One example, everywhere
-
-Every page in this site traces the same preference pair. A student asks why the sky is blue. One answer explains Rayleigh scattering. The other says the sky is blue because it has always been blue. Skywork scores the good answer at \(-2.22\) and the bad one at \(-26.25\), a margin of about \(+24\). You will watch that margin form across layers, see which components wrote it, patch to find which ones cause it, and probe the concepts it aligns with. Six tools, one pair, until the mental model is yours.
-
-<div class="grid cards" markdown>
-
--   :material-arrow-projectile:{ .lg } &nbsp; __[The reward direction](reward-direction.md)__
-
-    What \(w_r\) is, and why a known answer direction makes reward models a privileged target.
-
--   :material-vector-difference:{ .lg } &nbsp; __[Preference geometry](preference-geometry.md)__
-
-    Chosen and rejected as two points. The margin is their difference, projected.
-
--   :material-scale-balance:{ .lg } &nbsp; __[Why reward is relative](reward-is-relative.md)__
-
-    Bradley-Terry says only margins mean anything. So we only ever plot differences.
-
--   :material-chart-line-variant:{ .lg } &nbsp; __[Crystallization depth](crystallization.md)__
-
-    Where the preference forms. On Skywork, around 90% of the way through.
-
--   :material-call-split:{ .lg } &nbsp; __[Observational vs causal](observational-vs-causal.md)__
-
-    The doctrine of this library, and the result that forces it.
-
-</div>
+Read them in order the first time. After that, [the instruments](../instruments/index.md) are where the ideas turn into calls you can run, and [the measurement discipline](../discipline/index.md) is where the last page opens all the way up.

@@ -1,0 +1,97 @@
+% The RLHF loop, instrumented. One claim: the reward model is the one object held
+% fixed while everything is optimized against it, and it is the least inspected, so
+% it is exactly where the instruments attach. Static instruments clamp on the model;
+% live hooks clip into the optimization loop.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[
+    stage/.style={rlcard, minimum width=2.15cm, minimum height=1.02cm,
+                  inner sep=3pt, align=center, font=\sffamily},
+    loopn/.style={rlcard, minimum width=2.2cm, minimum height=0.98cm,
+                  inner sep=3pt, align=center, font=\sffamily},
+    sinst/.style={draw=rlTierObs, text=rlTierObs, fill=rlSurface, line width=0.6pt,
+                  rounded corners=2.5pt, inner xsep=5pt, inner ysep=2.8pt,
+                  font=\sffamily\bfseries\scriptsize},
+    lhook/.style={draw=rlSignal, text=rlSignal, fill=rlSurface, line width=0.6pt,
+                  rounded corners=2.5pt, inner xsep=5pt, inner ysep=2.8pt,
+                  font=\sffamily\bfseries\scriptsize},
+    loopar/.style={draw=rlAccent, line width=1.25pt, -{Stealth[length=2.6mm]}},
+  ]
+
+  % ---- geometry -----------------------------------------------------------
+  \coordinate (PD) at (-5.35,0);   % preference data
+  \coordinate (TR) at (-2.70,0);   % reward-model training
+  \coordinate (RM) at (0,0);       % the pivot
+  \coordinate (PO) at (3.45,1.32); % policy optimization
+  \coordinate (RO) at (3.45,-1.32);% rollouts
+
+  % ---- subtle theme-matched panel (never a hardcoded white card) ----------
+  \begin{scope}[on background layer]
+    \fill[rlSurfaceTwo, rounded corners=7pt] (-6.6,-2.98) rectangle (6.15,3.28);
+  \end{scope}
+
+  % ---- inflow: preference data -> training -> the reward model -------------
+  % one-way and neutral: the model is built here, then held fixed
+  \node[stage] (pd) at (PD)
+    {{\bfseries\small preference data}\\[2pt]
+     {\scriptsize\textcolor{rlChosen}{chosen}\,$\succ$\,\textcolor{rlRejected}{rejected}}};
+  \node[stage] (tr) at (TR)
+    {{\bfseries\small reward-model}\\{\bfseries\small training}};
+
+  % ---- the reward model: the pivot (highlighted, rlInk) --------------------
+  \node[rlcard, draw=rlInk, line width=1.5pt, minimum width=2.8cm,
+        minimum height=1.78cm, inner sep=4pt, align=center] (rm) at (RM)
+    {{\sffamily\bfseries reward model}\\[3pt]
+     {\scriptsize\color{rlMuted}$r=w_r^{\top}h+b$}};
+
+  \draw[rlflow] (pd) -- (tr);
+  \draw[rlflow] (tr) -- (rm);
+
+  % ---- the optimization loop: the pressure everything applies -------------
+  \node[loopn] (po) at (PO) {{\bfseries\small policy}\\{\bfseries\small optimization}};
+  \node[loopn] (ro) at (RO) {{\bfseries\small rollouts}};
+
+  % the cycle: reward drives the policy, the policy emits rollouts, rollouts
+  % are scored by the model, producing more reward
+  \draw[loopar] (rm.north east) to[bend left=10]
+    node[pos=0.52, above, font=\sffamily\bfseries\scriptsize, text=rlAccent] {reward} (po.west);
+  \draw[loopar] (po.south) .. controls +(0:1.4) and +(0:1.4) .. (ro.north);
+  \draw[loopar] (ro.west) to[bend left=10]
+    node[pos=0.42, below, font=\sffamily\scriptsize, text=rlMuted] {score} (rm.south east);
+
+  % what the loop is doing to the model, stated once inside the ring
+  \node[align=center, font=\sffamily\itshape\scriptsize, text=rlAccent] at (3.3,0)
+    {optimized\\against};
+
+  % ---- static instruments clamped on the model ---------------------------
+  % a bracket on the fixed object; these read it in place
+  \draw[rlTierObs, line width=0.9pt, decorate,
+        decoration={brace, amplitude=5pt}]
+    ($(rm.north west)+(0.08,0.1)$) -- ($(rm.north east)+(-0.08,0.1)$);
+  \draw[rlTierObs, line width=0.9pt] (0,1.2) -- (0,1.84);
+  \node[sinst] (i1) at (-1.28,2.04) {lens};
+  \node[sinst] (i2) at (0,2.04) {attribution};
+  \node[sinst] (i3) at (1.32,2.04) {patch};
+  \node[font=\sffamily\bfseries\scriptsize, text=rlTierObs] at (0,2.74)
+    {static instruments \textnormal{\itshape\color{rlMuted}clamp on the model}};
+
+  % ---- live hooks clipped into the loop ----------------------------------
+  % a right-side column; each pill clips into one live element of the loop
+  \node[font=\sffamily\bfseries\scriptsize, text=rlSignal] at (5.62,2.12) {live hooks};
+  \node[font=\sffamily\itshape\scriptsize, text=rlMuted] at (5.62,1.79) {clip into the loop};
+  \node[lhook] (h1) at (5.62,1.32) {best-of-N};
+  \node[lhook] (h2) at (5.62,0) {tilt};
+  \node[lhook] (h3) at (5.62,-1.32) {recorder};
+  \coordinate (arcpt) at (4.74,0);
+  \draw[rlSignal, line width=0.7pt] (h1.west) -- (po.east); \fill[rlSignal] (po.east) circle (1.2pt);
+  \draw[rlSignal, line width=0.7pt] (h2.west) -- (arcpt);   \fill[rlSignal] (arcpt) circle (1.2pt);
+  \draw[rlSignal, line width=0.7pt] (h3.west) -- (ro.east); \fill[rlSignal] (ro.east) circle (1.2pt);
+
+  % ---- the claim, in plain words -----------------------------------------
+  \node[rlnote, anchor=north west, align=left] at (-6.4,-2.18)
+    {one object is held fixed while everything else is optimized against it, and it is the
+     least inspected.\\the instruments attach right here: clamped on the model, or hooked into
+     the loop.};
+\end{tikzpicture}
+\end{document}

@@ -1,47 +1,61 @@
 # Patch without running out of memory
 
-You want the causal answer from activation patching, but a full sweep is blowing up your GPU or your afternoon.
+**You want the causal patch effects, but a full sweep is blowing up your GPU or your afternoon.**
 
-The cost is structural: `patch_all_components` runs one forward-pass pair per component, so on an 8B model with 32 layers that is 64 components, roughly half an hour and 24 GB or more. You rarely need all 64.
+`PatchGrid` answers the causal question: for each preference pair it splices the rejected side's activation into the chosen forward, one component at a time, and reads how far the margin collapses. A large collapse means the component is load-bearing for the preference. That is one patched forward pass per component per pair, so the cost is set by two numbers you control: how many components the grid has, and how many pairs you feed it.
 
-## Patch a chosen handful
+The first number is the `granularity` lever.
 
-`patch_single_component` runs exactly one component and returns its effect. Loop over the few you care about:
+## Component granularity is the cheap grid
+
+`granularity="component"` (the default) patches the attention and MLP output of each layer: two cells per layer. On a 32-layer model that is 64 cells. The grid runs on the tiny CPU model as a correctness check of the mechanism, no download and no GPU:
 
 ```python
-from reward_lens import RewardModel, ActivationPatcher
+from reward_lens.signals import from_tiny
+from reward_lens.data.builtin.diagnostic_v3 import load_diagnostic_v3
+from reward_lens.data.schema import DataView
+from reward_lens.measure import base as mb
+from reward_lens.measure.battery import PatchGrid
 
-rm = RewardModel.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
-patcher = ActivationPatcher(rm)
+signal = from_tiny(seed=0)                                    # 2 layers, 4 heads, CPU
+view = DataView(list(load_diagnostic_v3()["helpfulness"].items)[:5])
 
-prompt = "A student asks: 'Why is the sky blue?' Please give a clear, accurate explanation."
-chosen = ("Sunlight is a mix of all visible wavelengths. When it enters Earth's atmosphere, "
-          "molecules scatter the shorter (blue) wavelengths much more strongly than the longer "
-          "(red) ones — this is Rayleigh scattering. Blue light bounces around the sky in every "
-          "direction, so when you look up, blue is what reaches your eyes from almost everywhere.")
-rejected = ("The sky is blue because blue is the color of the sky. It has always been blue and "
-            "always will be. Nobody really knows why, it's just one of those things.")
-
-targets = [("mlp", 0), ("mlp", 4), ("mlp", 6), ("attn", 11)]
-for ctype, layer in targets:
-    effect = patcher.patch_single_component(
-        prompt, chosen, rejected,
-        layer_idx=layer, component_type=ctype,
-        mode="noising", max_length=512,
-    )
-    print(f"{ctype}_L{layer}:  {effect:+.2f}")
-# mlp_L0 +17.41,  mlp_L4 +8.78,  mlp_L6 +15.66,  attn_L11 +5.97
+ev = mb.run(PatchGrid(granularity="component"), mb.Context(signal=signal, view=view))
+print(ev.value["component_names"])
+print(ev.value["top_component"], ev.trust, ev.gauge)
+# ['attn_L0', 'mlp_L0', 'attn_L1', 'mlp_L1']
+# attn_L0 EXPLORATORY invariant
 ```
 
-Four component patches instead of sixty-four, at a lower `max_length`, and the same causal number for each component you actually ask about.
+Four cells on the two-layer model, one per attention and MLP sublayer. Each returned effect is `original_differential - patched_differential`, in reward units, gauge-invariant within one signal. The Evidence is EXPLORATORY: patching proves the mechanism runs, but nothing here has been graded against an answer key yet.
 
-## The levers, cheapest first
+## Head granularity is the expensive grid, and gated at scale
 
-- **Triage with the observational tools.** The [Reward Lens](../tools/reward-lens.md) and [attribution](../tools/component-attribution.md) are one or two forward passes for the whole model. Run them first to find the band where the margin forms, then patch only there. The two [disagree](../concepts/observational-vs-causal.md), though: attribution credits late layers, patching keeps finding early ones necessary (`mlp_L0 +17.41` above, against attribution's `mlp_L31`), so patch a bracket around and before crystallization rather than only the top attribution bar.
-- **Patch a subset, not the sweep.** `patch_single_component` for named components, or slice your loop to the layers in question. A full `patch_all_components` is the thing to avoid when memory is tight.
-- **Lower `max_length`.** Every patch is two cached forward passes whose memory scales with sequence length. Dropping `max_length` from 2048 to 512 cuts the activation cache roughly fourfold.
+`granularity="head"` patches every attention head, so the grid grows to layers times heads. On the tiny model that is 8 cells and still runs on CPU:
 
-!!! tip "Spend the cheap passes first"
-    The observational tools are one or two passes; the causal ones are one pair of passes per component. Reserve patching for the handful of components a load-bearing claim actually rests on. See [interpreting results honestly](../caveats.md).
+```python
+ev = mb.run(PatchGrid(granularity="head"), mb.Context(signal=signal, view=view))
+print(len(ev.value["component_names"]), ev.value["top_component"])
+# 8 head_L0_H0
+```
 
-See also: [Activation Patching](../tools/activation-patching.md).
+The same call on an 8B model is a different animal. The head grid needs the model's reward direction \(w_r\) and a patched forward per head in fp32, and an 8B model in fp32 does not fit an 8 GB GPU. That path is gated: it names the exact call and the hardware, rather than fabricating a number.
+
+!!! warning "Needs a GPU"
+    ```python
+    # Requires the 8B model in fp32 (its w_r and per-head forwards). Gated on hardware.
+    from reward_lens.signals import load_signal
+    signal = load_signal("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2", allow_download=True)
+    ev = mb.run(PatchGrid(granularity="head"), mb.Context(signal=signal, view=view))
+    ```
+    The head-granularity result is recorded from committed artifacts: on Skywork-v0.2 the strongest causal head is `head_L12_H6` (effect \(8.47\) on the safety dimension), and the helpfulness top head is `head_L0_H29`, layer zero. The causal signal sits early, which is the opposite end of the stack from where [attribution](../instruments/attribution.md) puts the reward.
+
+## The three levers, cheapest first
+
+- **Stay at component granularity.** Two cells per layer instead of one per head. Drop to `"head"` only once a component-level result points you at a specific layer and you need to know which head inside it carries the effect.
+- **Shrink the view.** Cost scales with the number of pairs. A grid over five well-chosen pairs answers most causal questions; a grid over five hundred rarely earns its runtime. Slice the `DataView` before you run.
+- **Triage with an observational pass, then patch the bracket.** [Attribution](../instruments/attribution.md) is one forward pair for the whole model, so run it first to see where the margin becomes visible. Then patch a bracket around and *before* that band, not only the top attribution bar: on real models attribution credits late layers while patching keeps finding early ones necessary. That disagreement is the whole point of running the causal instrument, and it is treated in [observational vs causal](../concepts/observational-vs-causal.md).
+
+For a single named component you do not need the grid at all. The [intervention algebra](../instruments/interventions.md) exposes `ComponentPatch`, one forward pair for one site, which is the smallest causal question you can ask.
+
+See also: [the patch grid instrument](../instruments/patch-grid.md), [`PatchGrid`](../reference/measure.md#reward_lens.measure.battery.patch.PatchGrid).

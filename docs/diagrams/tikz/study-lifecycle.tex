@@ -1,0 +1,92 @@
+% The study lifecycle. One claim: the spec adjudicates, not the author. A study is
+% frozen before the run (content hash + git sha, registered-trust violet), and from
+% the seal onward the runner checks each prediction against the freeze, never against
+% the author who wrote it. A fired kill criterion exits cleanly as "refuted".
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[scale=1.0]
+
+  % ---- subtle panel background (never a hardcoded white) -----------------
+  \fill[rlSurfaceTwo, rounded corners=7pt] (-1.75,-3.05) rectangle (12.15,2.5);
+
+  % ---- coordinates -------------------------------------------------------
+  \coordinate (draft)  at (0,0);
+  \coordinate (seal)   at (3.6,0);
+  \coordinate (run)    at (7.0,0);
+  \coordinate (rep)    at (10.6,0);
+  \coordinate (ref)    at (10.6,-2.3);
+  \coordinate (author) at (0,1.4);
+
+  % ---- the author: a small bust on the editable side --------------------
+  \draw[rlMuted, line width=0.9pt, fill=rlSurfaceTwo] (author) circle (2.3mm);
+  \draw[rlMuted, line width=0.9pt, fill=rlSurfaceTwo]
+     ($(author)+(-4.4mm,-6.8mm)$) -- ($(author)+(-3.6mm,-3.0mm)$)
+     arc (180:0:3.6mm and 2.6mm) -- ($(author)+(4.4mm,-6.8mm)$) -- cycle;
+  \node[rlfield, text=rlMuted, anchor=west] at ($(author)+(6mm,-0.6mm)$) {the author};
+
+  % ---- DRAFT: still editable, so a dashed (unlocked) card ----------------
+  \node[draw=rlMuted, fill=rlSurface, line width=0.85pt, rounded corners=4pt,
+        dash pattern=on 3pt off 2pt, minimum width=2.5cm, minimum height=1.15cm,
+        inner sep=3pt, align=center] (draftN) at (draft)
+      {{\sffamily\bfseries\small DRAFT}\\[1.5pt]{\sffamily\scriptsize\itshape StudySpec, editable}};
+
+  % ---- FROZEN: the wax seal, registered-trust violet, is the pivot -------
+  \node[rlfield, text=rlTrustReg, anchor=south, font=\sffamily\bfseries\footnotesize]
+    at ($(seal)+(0,0.6)$) {FROZEN};
+  \rlseal{seal}
+  \node[text=rlTrustReg, anchor=north, align=center,
+        font=\sffamily\scriptsize] at ($(seal)+(0,-0.58)$)
+    {content \texttt{9f3a1c}\ldots\\[-1pt]git \texttt{4c1e0b2}};
+
+  % ---- RUNNING -----------------------------------------------------------
+  \node[rlcard, minimum width=2.5cm, minimum height=1.15cm, inner sep=3pt, align=center]
+    (runN) at (run) {{\sffamily\bfseries\small RUNNING}\\[1.5pt]{\sffamily\scriptsize the runner}};
+
+  % ---- REPORTED: the confirmed door (upper) ------------------------------
+  \node[rlcard, minimum width=2.5cm, minimum height=1.15cm, inner sep=3pt, align=center]
+    (repN) at (rep) {{\sffamily\bfseries\small REPORTED}\\[1.5pt]{\sffamily\scriptsize Scoreboard}};
+
+  % ---- refuted: the kill-criterion door (lower), dignified, never red ----
+  \node[draw=rlInk2, fill=rlSurface, line width=0.85pt, rounded corners=4pt,
+        minimum width=2.5cm, minimum height=1.0cm, inner sep=3pt, align=center]
+    (refN) at (ref) {{\sffamily\bfseries\small refuted}\\[1.5pt]{\sffamily\scriptsize kill criterion fired}};
+
+  % ---- pipeline: draft -> freeze -> run ----------------------------------
+  \draw[rlflow] (draftN.east) -- node[rlfield, above, text=rlInk2] {freeze}
+    ($(seal)+(-0.56,0)$);
+  \draw[rlflow] ($(seal)+(0.56,0)$) -- node[rlfield, above, text=rlInk2] {run}
+    (runN.west);
+
+  % ---- the two outcomes, equally dignified -------------------------------
+  \draw[rlflow, draw=rlTrustAdj] (runN.east)
+    -- node[rlfield, above, text=rlTrustAdj] {confirmed} (repN.west);
+  \draw[rlflow, draw=rlInk2] (runN.south east)
+    to[out=-32,in=180] node[rlfield, below, text=rlInk2, pos=0.62] {refuted} (refN.west);
+
+  % ---- the crux: the runner checks each prediction against the frozen spec
+  % (the arrow returns to the seal, not to the author) --------------------
+  \draw[rlInk, line width=1.0pt, -{Stealth[length=2.6mm]}]
+    (runN.north) to[out=122,in=46]
+    node[pos=0.5, above, align=center, font=\sffamily\scriptsize, text=rlInk, yshift=1pt]
+      {each prediction checked\\against the frozen spec}
+    ($(seal)+(0.36,0.40)$);
+
+  % ...and the check stops at the seal; it does not reach back to the author
+  \coordinate (nox) at (2.12,0.74);
+  \draw[rldrop] ($(seal)+(-0.40,0.30)$) to[out=163,in=-12] ($(nox)+(0.24,-0.02)$);
+  \draw[rldrop] ($(nox)+(-0.24,0.05)$) to[out=172,in=-28] ($(author)+(0.55,-0.58)$);
+  \fill[rlSurface, draw=rlRejected, line width=0.7pt] (nox) circle (2.3mm);
+  \draw[rlRejected, line width=1.0pt] ($(nox)+(-1.2mm,-1.2mm)$) -- ($(nox)+(1.2mm,1.2mm)$);
+  \draw[rlRejected, line width=1.0pt] ($(nox)+(-1.2mm,1.2mm)$) -- ($(nox)+(1.2mm,-1.2mm)$);
+  \node[rlfield, text=rlRejected, anchor=south, font=\sffamily\scriptsize]
+    at ($(nox)+(0,2.7mm)$) {not the author};
+
+  % ---- the claim, in words (house idiom: a bottom-left note) -------------
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (-1.6,-1.35)
+    {frozen before the run: a content hash and git sha, no edits after the seal.\\
+     the runner checks each result against the frozen spec, not the author.\\
+     a fired kill criterion exits cleanly as \emph{refuted}, never as failure.};
+
+\end{tikzpicture}
+\end{document}

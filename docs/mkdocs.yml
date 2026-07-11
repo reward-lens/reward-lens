@@ -1,10 +1,11 @@
 # reward-lens documentation — Material for MkDocs configuration.
 #
-# Preview locally with:  mkdocs serve -f docs/mkdocs.yml
-# (run from the repository root), or `cd docs && mkdocs serve`.
+# Preview locally:  mkdocs serve -f docs/mkdocs.yml   (from the repository root)
+# Build (strict):   mkdocs build -f docs/mkdocs.yml --strict
+# Figures:          cd docs/diagrams && ./build_figures.sh   (regenerates SVGs + palette)
 
 site_name: reward-lens
-site_description: Mechanistic interpretability toolkit for reward models.
+site_description: White-box instruments and built-in measurement discipline for reward models.
 site_url: https://suhailnadaf509.github.io/reward-lens/
 site_author: Mohammed Suhail B Nadaf
 copyright: Copyright &copy; 2026 Mohammed Suhail B Nadaf — MIT License
@@ -13,22 +14,19 @@ repo_url: https://github.com/suhailnadaf509/reward-lens
 repo_name: suhailnadaf509/reward-lens
 edit_uri: edit/main/docs/content/
 
-# Keep the whole documentation project self-contained inside docs/.
 docs_dir: content
 site_dir: _site
 
 theme:
   name: material
   language: en
-  # logo and favicon are placeholders — drop real assets in and point here.
-  # logo: assets/images/logo.svg
-  # favicon: assets/images/favicon.png
   font:
     text: Inter
     code: JetBrains Mono
   icon:
     repo: fontawesome/brands/github
     edit: material/pencil
+    logo: material/circle-double
   features:
     - navigation.tabs
     - navigation.sections
@@ -47,14 +45,14 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
+      primary: black
       accent: deep orange
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
+      primary: black
       accent: deep orange
       toggle:
         icon: material/weather-sunny
@@ -68,7 +66,6 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 markdown_extensions:
-  # Prose and structure
   - abbr
   - attr_list
   - def_list
@@ -78,22 +75,16 @@ markdown_extensions:
   - toc:
       permalink: true
       title: On this page
-  # Admonitions, callouts, collapsible detail
   - admonition
   - pymdownx.details
   - pymdownx.blocks.caption
-  # Code and content
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
       slugify: !!python/object/apply:pymdownx.slugs.slugify
@@ -104,14 +95,11 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  # Math
   - pymdownx.arithmatex:
       generic: true
 
 plugins:
   - search
-  # API reference is generated statically from the source tree (griffe reads
-  # src/ without importing torch, so this builds without a GPU or heavy deps).
   - mkdocstrings:
       handlers:
         python:
@@ -128,15 +116,71 @@ plugins:
             members_order: source
             filters: ["!^_"]
             heading_level: 2
-  # Renders committed .ipynb notebooks as pages. execute:false — an 8B reward
-  # model cannot run in CI, so notebooks are executed once locally and committed.
   - mkdocs-jupyter:
       execute: false
       include_source: true
       ignore_h1_titles: true
 
+# Nav order encodes altitude: doing first, understanding next, the discipline
+# after that, reference last. A reader's scroll position roughly equals their depth.
 nav:
   - Home: index.md
+  - Getting started:
+      - getting-started/index.md
+      - Install: getting-started/install.md
+  - Tutorials:
+      - tutorials/index.md
+      - Inside one reward model: tutorials/inside-one-reward-model.md
+      - Measurements you can trust: tutorials/measurements-you-can-trust.md
+  - How-to guides:
+      - how-to/index.md
+      - Load or wrap a reward model: how-to/load-a-reward-model.md
+      - Use a DPO checkpoint as a signal: how-to/dpo-implicit-reward.md
+      - Use an LLM judge as a signal: how-to/llm-judge-signal.md
+      - Score with a process reward model: how-to/process-reward-model.md
+      - Detect length bias: how-to/detect-length-bias.md
+      - Attribute a reward score: how-to/attribute-a-score.md
+      - Patch without running out of memory: how-to/patching-memory.md
+      - Compare two reward models: how-to/compare-two-models.md
+      - Effective sample size of an eval set: how-to/effective-sample-size.md
+      - Calibrate a detector on an organism: how-to/calibrate-on-an-organism.md
+      - Freeze and run a study: how-to/freeze-and-run-a-study.md
+      - Build a card, check a manuscript: how-to/cards-and-claims.md
+      - Hook into a training loop: how-to/training-loop-hooks.md
+      - Write an adapter: how-to/write-an-adapter.md
+  - Models & signals:
+      - models-and-signals/index.md
+      - Classifier reward models: models-and-signals/classifier-rms.md
+      - Generative judges: models-and-signals/generative-judges.md
+      - Process reward models: models-and-signals/process-rms.md
+      - Implicit (DPO) rewards: models-and-signals/implicit-dpo.md
+      - Rubric heads: models-and-signals/rubric-heads.md
+      - Trajectory graders: models-and-signals/trajectory-graders.md
+      - Dense per-token rewards: models-and-signals/dense-rewards.md
+      - Ensembles and distributions: models-and-signals/ensembles.md
+  - Instruments:
+      - instruments/index.md
+      - Observational:
+          - Reward lens and crystallization: instruments/lens-crystallization.md
+          - Component attribution: instruments/attribution.md
+          - Bias battery: instruments/bias-battery.md
+          - Prompt SNR: instruments/prompt-snr.md
+          - Conflict matrix: instruments/conflict-matrix.md
+          - Circuit overlap: instruments/circuit-overlap.md
+          - Feature-reward alignment: instruments/feature-alignment.md
+          - Multi-objective geometry: instruments/multi-objective-geometry.md
+      - Causal:
+          - Patch grid: instruments/patch-grid.md
+          - Path effects: instruments/path-effects.md
+          - Concept dose-response: instruments/concept-dose-response.md
+          - The intervention algebra: instruments/interventions.md
+      - The index library: instruments/index-library.md
+  - Training loops:
+      - training-loops/index.md
+      - Best-of-N analysis: training-loops/best-of-n.md
+      - Tilt and susceptibility: training-loops/tilt-susceptibility.md
+      - The rollout recorder: training-loops/rollout-recorder.md
+      - Framework integrations: training-loops/integrations.md
   - Concepts:
       - concepts/index.md
       - The reward direction: concepts/reward-direction.md
@@ -144,47 +188,39 @@ nav:
       - Why reward is relative: concepts/reward-is-relative.md
       - Crystallization depth: concepts/crystallization.md
       - Observational vs causal: concepts/observational-vs-causal.md
-  - Getting started:
-      - getting-started/index.md
-  - Tutorials:
-      - tutorials/index.md
-      - Intro demo (notebook): tutorials/intro-demo.ipynb
-  - How-to guides:
-      - how-to/index.md
-      - Detect length bias: how-to/detect-length-bias.md
-      - Attribute a reward score: how-to/attribute-a-score.md
-      - Compare two reward models: how-to/compare-two-models.md
-      - Patch without running out of memory: how-to/patching-memory.md
-      - Train an SAE on reward activations: how-to/train-an-sae.md
-      - Write an adapter for your model: how-to/write-an-adapter.md
-  - Tools:
-      - tools/index.md
-      - Observational:
-          - Reward Lens: tools/reward-lens.md
-          - Component Attribution: tools/component-attribution.md
-          - SAE feature attribution: tools/sae-features.md
-          - Concept vectors: tools/concept-vectors.md
-      - Causal:
-          - Activation Patching: tools/activation-patching.md
-          - Path Patching: tools/path-patching.md
-          - Divergence-aware Patching: tools/divergence-patching.md
-      - Vulnerability:
-          - Hacking Detector: tools/hacking-detector.md
-          - Distortion Index: tools/distortion-index.md
-          - Misalignment Cascade: tools/misalignment-cascade.md
-          - Reward-Term Conflict: tools/reward-conflict.md
+      - A measurement you can trust: concepts/measurement-you-can-trust.md
+  - The measurement discipline:
+      - discipline/index.md
+      - The anatomy of evidence: discipline/anatomy-of-evidence.md
+      - The trust ladder: discipline/trust-ladder.md
+      - Calibration and organisms: discipline/calibration-and-organisms.md
+      - Gauge and frames: discipline/gauge-and-frames.md
+      - Studies and preregistration: discipline/studies-and-preregistration.md
+      - The evidence store: discipline/evidence-store.md
+  - The sciences: sciences.md
   - Interpreting results honestly: caveats.md
   - Background & theory:
       - theory/index.md
-      - Bradley-Terry and the preference model: theory/bradley-terry.md
+      - Bradley-Terry and preference: theory/bradley-terry.md
       - Goodhart and overoptimization: theory/goodhart.md
       - The lens lineage: theory/lens-lineage.md
+      - Identifiability and gauge: theory/identifiability.md
+      - When preference is not rank-one: theory/preference-rank.md
+  - Command line: cli.md
   - API reference:
       - reference/index.md
-      - Core: reference/core.md
-      - Causal tools: reference/causal.md
-      - Representation tools: reference/representation.md
-      - Vulnerability tools: reference/vulnerability.md
-      - Data and adapters: reference/data-and-adapters.md
-  - Contributing:
-      - contributing/index.md
+      - Core and evidence: reference/core.md
+      - Stats: reference/stats.md
+      - Signals: reference/signals.md
+      - Data: reference/data.md
+      - Measure and indices: reference/measure.md
+      - Interventions: reference/interventions.md
+      - Geometry: reference/geometry.md
+      - Concepts: reference/concepts.md
+      - Organisms: reference/organisms.md
+      - Dynamics and loops: reference/dynamics-loops.md
+      - Studies: reference/studies.md
+      - Artifacts and operate: reference/artifacts-operate.md
+      - Legacy (1.0 API): reference/legacy.md
+  - Coming from 1.0: migration.md
+  - Contributing: contributing/index.md

@@ -1,0 +1,47 @@
+/* AUTO-GENERATED from palette.json by emit_palette.py. Do not edit by hand. */
+/* Consumed by extra.css. Light values are the default; the slate scheme overrides. */
+:root {
+  --rl-ink: #16181D;
+  --rl-ink2: #4B5563;
+  --rl-muted: #6B7280;
+  --rl-line: #D7DAE0;
+  --rl-surface: #FFFFFF;
+  --rl-surface2: #F4F5F7;
+  --rl-baseline: #C3C2B7;
+  --rl-tier-observational: #0D9488;
+  --rl-tier-causal: #B45309;
+  --rl-tier-vulnerability: #BE123C;
+  --rl-trust-exploratory: #94A3B8;
+  --rl-trust-calibrated: #3B82F6;
+  --rl-trust-registered: #7C3AED;
+  --rl-trust-adjudicated: #15803D;
+  --rl-signal: #A21CAF;
+  --rl-gauge: #0891B2;
+  --rl-chosen: #2A78D6;
+  --rl-rejected: #E34948;
+  --rl-series-b: #EB6834;
+  --rl-accent: #E85D2C;
+}
+
+[data-md-color-scheme="slate"] {
+  --rl-ink: #E6E8EB;
+  --rl-ink2: #B7BDC7;
+  --rl-muted: #9AA0AA;
+  --rl-line: #3A3D44;
+  --rl-surface: #1D1E22;
+  --rl-surface2: #26272C;
+  --rl-baseline: #55565E;
+  --rl-tier-observational: #2DD4BF;
+  --rl-tier-causal: #F59E0B;
+  --rl-tier-vulnerability: #FB7185;
+  --rl-trust-exploratory: #64748B;
+  --rl-trust-calibrated: #60A5FA;
+  --rl-trust-registered: #A78BFA;
+  --rl-trust-adjudicated: #22C55E;
+  --rl-signal: #E879F9;
+  --rl-gauge: #22D3EE;
+  --rl-chosen: #5598E7;
+  --rl-rejected: #F0716F;
+  --rl-series-b: #F98A5C;
+  --rl-accent: #FB8C5A;
+}

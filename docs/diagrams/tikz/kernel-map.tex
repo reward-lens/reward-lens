@@ -1,0 +1,63 @@
+% The kernel map. One claim: there is a single kernel underneath, so a study on
+% top is thin. The broad block below (evidence engine, signals + data, the
+% measurement subsystems) is one card; the studies and artifacts that sit on it
+% are thin slabs, because the kernel already does the work.
+\documentclass[border=8pt]{standalone}
+\input{_preamble.tex}
+\begin{document}
+\begin{tikzpicture}[font=\sffamily]
+
+  % ---- subtle whole-figure panel (never hardcoded white) --------------------
+  \fill[rlSurfaceTwo, rounded corners=8pt] (-0.5,-1.0) rectangle (12.35,6.5);
+
+  % ---- the kernel: one card carrying everything below the study layer -------
+  \node[rlcard, fit={(0,0.05) (11.0,4.42)}, inner sep=0pt] (kernel) {};
+
+  % foundation strip: the evidence engine and the three gates that guard it
+  \node[rlpanel, fit={(0.32,0.32) (10.68,1.30)}, inner sep=0pt] (found) {};
+  \node[text=rlInk2, anchor=west, font=\sffamily\bfseries\footnotesize]
+    at (0.52,0.81) {core \ $\cdot$ \ stats \ $\cdot$ \ evidence};
+  % three gates, drawn as the small portcullis used on the trust ladder
+  \foreach \gx/\gname in {4.15/calibration, 6.15/gauge, 7.62/registration}{
+    \node[draw=rlInk2, fill=rlSurface, line width=0.7pt, rounded corners=1.5pt,
+          minimum width=0.32cm, minimum height=0.52cm, inner sep=0pt] (gate) at (\gx,0.81) {};
+    \foreach \b in {-1,1}{ \draw[rlInk2, line width=0.5pt]
+        ($(gate.center)+(\b*0.9mm,-1.9mm)$) -- ($(gate.center)+(\b*0.9mm,1.9mm)$);}
+    \node[text=rlMuted, anchor=west, font=\sffamily\scriptsize] at (\gx+0.25,0.81) {\gname};
+  }
+
+  % base layer: signals + runtime, with data beside it
+  \node[rlpanel, fit={(0.32,1.50) (7.00,2.72)}, inner sep=0pt] (sig) {};
+  \node[text=rlInk, font=\sffamily\bfseries\small] at (3.66,2.11) {signals \,+\, runtime};
+  \node[rlpanel, fit={(7.16,1.50) (10.68,2.72)}, inner sep=0pt] (data) {};
+  \node[text=rlInk, font=\sffamily\bfseries\small] at (8.92,2.11) {data};
+
+  % measurement subsystems: concepts, interventions, geometry, measure
+  \foreach \i/\name in {0/concepts, 1/interventions, 2/geometry, 3/measure}{
+    \pgfmathsetmacro{\cx}{0.32 + \i*2.63}
+    \pgfmathsetmacro{\cxr}{\cx+2.47}
+    \pgfmathsetmacro{\cxc}{(\cx+\cxr)/2}
+    \node[rlpanel, fit={(\cx,2.90) (\cxr,4.12)}, inner sep=0pt] (m\i) {};
+    \node[text=rlInk, font=\sffamily\bfseries\footnotesize] at (\cxc,3.51) {\name};
+  }
+
+  % ---- what a study adds: a thin slab resting on the kernel ------------------
+  \node[rlcard, fit={(0.62,4.64) (10.38,5.22)}, inner sep=0pt] (studies) {};
+  \node[text=rlInk, font=\sffamily\bfseries\small] at (5.5,4.93) {studies};
+
+  % ---- and what it emits: another thin slab, on top -------------------------
+  \node[rlcard, fit={(0.62,5.44) (10.38,6.02)}, inner sep=0pt] (arts) {};
+  \node[text=rlInk, font=\sffamily\bfseries\small] at (5.5,5.73) {artifacts};
+
+  % ---- the claim, made explicit: all of that below is one kernel ------------
+  \draw[rlInk2, line width=0.8pt, decorate,
+        decoration={brace, mirror, amplitude=5pt, raise=3pt}]
+     (11.0,0.05) -- (11.0,4.42);
+  \node[text=rlInk2, font=\sffamily\bfseries\small, rotate=90] at (11.72,2.235) {one kernel};
+
+  % ---- plain-words takeaway (one claim) -------------------------------------
+  \node[rlnote, anchor=north west, align=left] at (0.0,-0.16)
+    {one kernel does the work underneath, so a study on top is only a spec and a\\
+     thin analysis, never a new subsystem, and an artifact is a view over the store.};
+\end{tikzpicture}
+\end{document}

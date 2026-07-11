@@ -1,46 +1,48 @@
-% Hero figure: the one idea the whole library is built on.
-% A residual-stream state h projected onto the reward direction w_r.
-% The reward is that projection (plus bias); the dashed line is a level set r = const.
-% Compile with ../build_figures.sh -> content/assets/figures/reward-projection.svg
-\documentclass[border=10pt]{standalone}
-\usepackage{tikz}
-\usetikzlibrary{calc,arrows.meta}
-\definecolor{rlink}{HTML}{3F51B5}    % reward direction
-\definecolor{raccent}{HTML}{FF5722}  % the readout
-\definecolor{rmuted}{HTML}{6B7280}
+% The reward readout. One claim: the reward model's entire opinion is a single
+% direction in activation space, and every point on a line perpendicular to it
+% earns the same reward.
+\documentclass[border=7pt]{standalone}
+\input{_preamble.tex}
 \begin{document}
-\begin{tikzpicture}[>=Stealth, line width=0.9pt, font=\small]
+\begin{tikzpicture}[scale=1.08]
   \coordinate (O) at (0,0);
-  \coordinate (W) at (30:4.2);
-  \coordinate (H) at (2.1,2.75);
-  \coordinate (F) at ($ (O)!(H)!(W) $);
+  \coordinate (W) at (30:4.5);
+  \coordinate (F) at (30:2.6);          % projection foot of h onto w_r
+  \coordinate (H) at ($(F)+(120:1.5)$); % h sits off the w_r line, so H-F is a clean right angle
 
-  % faint activation-space frame
-  \draw[rmuted!25, line width=0.6pt] (-0.5,-0.5) rectangle (4.8,3.95);
-  \node[rmuted, font=\scriptsize, anchor=south west] at (-0.5,3.95) {activation space};
+  % the activation space, a subtle theme-matched region (no hardcoded white card)
+  \fill[rlSurfaceTwo, rounded corners=6pt] (-0.85,-1.05) rectangle (5.25,3.75);
+  \node[rlnote, text=rlMuted, anchor=north west] at (-0.7,3.66) {activation space (residual stream)};
 
-  % level set of constant reward, perpendicular to w_r, through h
-  \draw[raccent!65, dashed, line width=0.8pt]
-     ($ (H) + (120:1.9) $) -- ($ (H) + (-60:1.9) $);
-  \node[raccent, font=\scriptsize, anchor=west] at ($ (H) + (-60:1.55) $)
-     {$r = w_r^{\top} h + b = \mathrm{const}$};
+  % a family of iso-reward level sets, perpendicular to w_r
+  \foreach \t in {1.0, 1.8, 3.4}{
+    \draw[rlLine, line width=0.7pt] ($(30:\t)+(120:1.75)$) -- ($(30:\t)+(120:-1.2)$);
+  }
+  % the level set through h carries the argument, so it is drawn in the readout color
+  \draw[rlAccent, line width=0.9pt, dash pattern=on 3pt off 2pt]
+    ($(F)+(120:1.95)$) -- ($(F)+(120:-1.35)$);
+  \node[rlfield, text=rlAccent, anchor=north] at ($(F)+(120:-1.35)$) {$r=\text{const}$};
 
-  % reward direction
-  \draw[rlink, ->, line width=1.35pt] (O) -- (W)
-     node[above right, rlink] {$w_r$};
+  % the reward direction w_r
+  \draw[rlvec, draw=rlInk] (O) -- (W);
+  \node[rlvalue, text=rlInk, anchor=south west] at (W) {$w_r$};
 
-  % a residual-stream state at some layer
-  \draw[->, line width=1.1pt] (O) -- (H) node[above left] {$h^{(\ell)}$};
+  % a hidden state h and its orthogonal drop onto w_r
+  \draw[rlvec, draw=rlChosen] (O) -- (H);
+  \node[rlvalue, text=rlChosen, anchor=south] at ($(H)+(0,0.02)$) {$h^{(\ell)}$};
+  \draw[rldrop] (H) -- (F);
+  \fill[rlChosen] (H) circle (1.6pt);
+  % right-angle mark: the drop is orthogonal to w_r
+  \draw[rlMuted, line width=0.6pt]
+    ($(F)+(210:0.24)$) -- ($(F)+(210:0.24)+(120:0.24)$) -- ($(F)+(120:0.24)$);
 
-  % orthogonal drop onto the reward axis
-  \draw[rmuted, dashed] (H) -- (F);
+  % the readout: how far h reaches along w_r
+  \draw[rlAccent, line width=1.9pt] (O) -- (F);
+  \fill[rlAccent] (F) circle (1.8pt);
+  \node[rlfield, text=rlAccent, anchor=north, yshift=-2pt] at ($(O)!0.5!(F)$) {$w_r^{\top}h + b$};
 
-  % the reward readout: how far h reaches along w_r
-  \draw[raccent, line width=1.7pt] (O) -- (F);
-  \node[raccent, font=\scriptsize, anchor=north west] at ($ (O)!0.5!(F) $)
-     {$w_r^{\top} h$};
-
-  \fill (H) circle (1.5pt);
-  \fill[raccent] (F) circle (1.5pt);
+  % the claim the figure exists to make
+  \node[rlnote, text=rlMuted, anchor=north west, align=left] at (-0.7,-0.4)
+    {slide $h$ along its level line and the reward does not move.\\only the component along $w_r$ is scored.};
 \end{tikzpicture}
 \end{document}
