@@ -106,7 +106,6 @@ def cusum_onset(
     return Onset(index=cp.index, direction=direction, statistic=cp.strength)
 
 
-
 def cusum_changepoint(
     series: Sequence[float] | np.ndarray, n_perm: int = 1000, seed: int = 0
 ) -> Changepoint:

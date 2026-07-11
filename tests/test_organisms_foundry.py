@@ -195,7 +195,6 @@ def test_curl_harmonic_organism():
     assert ch.rho["n_rings"] == 10
 
 
-
 def test_dataset_checksum_is_stable_and_content_derived():
     """Regenerating the same organism yields the same checksum; a different dose yields a different one."""
     v1, _ = F.spurious_correlation_organism(rho=0.8, n=50, seed=3)

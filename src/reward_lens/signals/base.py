@@ -113,9 +113,7 @@ class PositionSpec:
             return [int(i) for i in idx]
         if self.kind in ("step_ends", "span_ends"):
             want = self.detail if self.kind == "span_ends" else "step"
-            ends = [
-                min(s.end, valid[-1]) for s in tokens.spans if want is None or s.kind == want
-            ]
+            ends = [min(s.end, valid[-1]) for s in tokens.spans if want is None or s.kind == want]
             return ends or [valid[-1]]
         raise ValueError(f"unknown PositionSpec kind: {self.kind}")
 

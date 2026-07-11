@@ -455,7 +455,9 @@ def synthetic_planted_sequence(
     def _logistic(x: float) -> float:
         return 1.0 / (1.0 + float(np.exp(-x)))
 
-    alphas = [alpha_max * _logistic((t - alpha_midpoint) / alpha_width) for t in range(n_checkpoints)]
+    alphas = [
+        alpha_max * _logistic((t - alpha_midpoint) / alpha_width) for t in range(n_checkpoints)
+    ]
     scales = [1.0 + scale_growth * t for t in range(n_checkpoints)]
 
     # A ground-truth expectation for the stabilization step, computed from the schedule's own unit

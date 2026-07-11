@@ -207,4 +207,3 @@ def circuit_overlap_plot(
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.show()
     plt.close()
-

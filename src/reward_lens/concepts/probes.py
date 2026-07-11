@@ -593,7 +593,8 @@ def fit_probe(
         answer_key: The organism `AnswerKey` to grade against for calibration (gate 1).
         store: If given, the direction Evidence (and its scorecard parent) are appended.
         seed: Seed for the CV shuffle.
-        target_tpr, target_fpr: The operating point the scorecard states its detection at.
+        target_tpr: The true-positive rate of the operating point the scorecard states its detection at.
+        target_fpr: The false-positive rate of that same operating point.
 
     Returns:
         A `ProbeFit` whose ``direction`` is the persisted section 2.5.1 `Direction`.

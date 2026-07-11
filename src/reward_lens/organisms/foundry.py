@@ -1086,9 +1086,7 @@ def curl_harmonic_organism(
             EdgeObs(i=2, j=0, wins_i=wins, wins_j=0),
         )
         content = tournament_content(f"Rank responses about {topic}.", responses, edges)
-        lineage = make_lineage(
-            f"{builder_id}:curl:{split}:{t}", builder_id, ("curl",), content
-        )
+        lineage = make_lineage(f"{builder_id}:curl:{split}:{t}", builder_id, ("curl",), content)
         tournaments.append(
             Tournament(
                 prompt=f"Rank responses about {topic}.",
@@ -1100,11 +1098,21 @@ def curl_harmonic_organism(
         )
 
     # 2. Planted chordless rings of length 4 to 7 (pure harmonic)
-    styles_ring = ({"cites"}, {"factual"}, {"structured"}, {"polite"}, {"detailed"}, {"hedged"}, {"code"})
+    styles_ring = (
+        {"cites"},
+        {"factual"},
+        {"structured"},
+        {"polite"},
+        {"detailed"},
+        {"hedged"},
+        {"code"},
+    )
     for r in range(n_rings):
         topic = topics[int(rng.integers(len(topics)))]
         length = int(rng.integers(4, 8))
-        responses = tuple(Response(text=render_response(topic, styles_ring[k])) for k in range(length))
+        responses = tuple(
+            Response(text=render_response(topic, styles_ring[k])) for k in range(length)
+        )
 
         edges: list[EdgeObs] = []
         for step in range(length):
@@ -1144,7 +1152,6 @@ def curl_harmonic_organism(
         notes="mixture of pure curl (3-cycles) and pure harmonic (chordless cycles of lengths 4-7)",
     )
     return DataView(tournaments, name=f"curl-harmonic-{split}"), key
-
 
 
 def kinship_organism(**_kwargs: Any) -> tuple[DataView, AnswerKey]:
