@@ -48,6 +48,12 @@ print(ev.trust)                         # EXPLORATORY, until this measurement ea
 
 The trust level says `EXPLORATORY` because nothing has yet checked this tool against a known answer. [Making it climb](concepts/measurement-you-can-trust.md) is the whole second half of the story.
 
+## Or run it without installing anything
+
+There is a guided tour notebook that takes the whole library end to end in a browser: build a reward model whose answer you already know, read it out along its one direction, watch a measurement come back as evidence rather than a float, intervene on it, and freeze a study that adjudicates itself. It installs itself on Colab's free tier, and the CPU path never asks for a GPU.
+
+[Open the tour in Colab](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing){ .md-button .md-button--primary }
+
 ## Where to go next
 
 <div class="grid cards" markdown>
@@ -75,6 +81,12 @@ The trust level says `EXPLORATORY` because nothing has yet checked this tool aga
     Why a measurement carries credentials, how a tool earns calibration against a planted answer key, and why cross-model numbers lie without a shared frame.
 
     [:octicons-arrow-right-24: The measurement discipline](discipline/index.md)
+
+-   __Run it instead of reading it__
+
+    The guided tour, in a browser, with nothing installed. Every idea on this site, executed cell by cell on Colab's free tier.
+
+    [:octicons-arrow-right-24: The Colab tour](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing)
 
 </div>
 

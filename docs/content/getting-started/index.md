@@ -1,12 +1,18 @@
 # Getting started
 
-Two ways in. One runs on your laptop this minute and needs nothing. The other loads a real 8B reward model on a GPU and shows you the result the rest of the site keeps coming back to. Start with whichever matches the hardware in front of you.
+Three ways in. One is a browser tab and installs nothing. One runs on your laptop this minute. The last loads a real 8B reward model on a GPU and shows you the result the rest of the site keeps coming back to. Start with whichever matches the hardware in front of you.
 
 ```bash
 pip install reward-lens
 ```
 
 Python 3.10 or newer. The [install page](install.md) has the extras, the Hugging Face access notes for gated models, and the honest word on memory.
+
+## In a browser, nothing installed
+
+The [Colab tour](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing) is the whole library in one runnable notebook, and it is the shortest path from curiosity to a number you measured yourself. It starts by building a reward model with a rule planted in it, so your first reading is one you can check, and it carries on through the reward direction, evidence and the trust ladder, the intervention algebra, gauge, training loops, and a preregistered study. It runs on Colab's free tier, and the parts that want a GPU say so and offer the CPU path instead.
+
+[Open the tour in Colab](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing){ .md-button .md-button--primary }
 
 ## On your laptop, right now
 

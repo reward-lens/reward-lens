@@ -11,6 +11,9 @@ Python 3.10 or newer. Two extras, both optional:
 - `pip install "reward-lens[sae]"` adds the sparse-autoencoder tooling for feature-reward alignment.
 - `pip install "reward-lens[dev]"` adds the test suite and tooling for a source checkout.
 
+!!! tip "Nothing on your machine at all"
+    The [Colab tour](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing) installs the library into a free hosted runtime and walks the whole thing end to end. It is the way to try the library before you commit anything to your own environment.
+
 ## Half the library never imports torch
 
 The epistemics layer, the part that computes evidence, uncertainty, effective sample size, and trust, is written in numpy and imports nothing from torch. You can confirm that in three lines:

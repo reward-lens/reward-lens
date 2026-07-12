@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/reward-lens.svg)](https://pypi.org/project/reward-lens/)
 [![Python](https://img.shields.io/pypi/pyversions/reward-lens.svg)](https://pypi.org/project/reward-lens/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing)
 
 White-box tools and built-in epistemic discipline for reward models, the objects that define what RLHF optimizes.
 
@@ -63,7 +64,9 @@ pip install -e ".[dev]"
 
 ## A first look
 
-Start with the part that needs no GPU, because it is the part that explains the rest. Trust is not a label you write down. It is computed from what you actually did to earn it.
+If you would rather run the code than read it, there is a [guided tour notebook on Colab](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing) that takes the whole library from the reward direction through evidence, interventions, gauge, and preregistered studies. It installs itself, opens on the free tier, and the CPU path needs no GPU at all.
+
+Otherwise, start with the part that needs no GPU, because it is the part that explains the rest. Trust is not a label you write down. It is computed from what you actually did to earn it.
 
 ```python
 from reward_lens.core import make_evidence, CalibrationRef, SubjectRef, ModelFP
@@ -195,6 +198,8 @@ This is alpha, and honest about which parts are load-bearing today. The epistemi
 ## Documentation
 
 Full documentation, including the theory behind each index and a candid account of what the observational tools can and cannot tell you, is at <https://reward-lens.github.io/reward-lens/>.
+
+The same material with the code actually running is the [Colab tour](https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing). It is the fastest way to see what a gated measurement feels like in the hand.
 
 ## Citation
 

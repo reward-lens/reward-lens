@@ -132,6 +132,7 @@ nav:
       - tutorials/index.md
       - Inside one reward model: tutorials/inside-one-reward-model.md
       - Measurements you can trust: tutorials/measurements-you-can-trust.md
+      - The Colab tour: https://colab.research.google.com/drive/1x5zG07HdsWlNsJmkl2ddJ1yalmwwujfY?usp=sharing
   - How-to guides:
       - how-to/index.md
       - Load or wrap a reward model: how-to/load-a-reward-model.md
