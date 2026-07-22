@@ -22,7 +22,7 @@ The epistemics layer, the part that computes evidence, uncertainty, effective sa
 import sys
 import reward_lens, reward_lens.core, reward_lens.stats
 
-reward_lens.__version__     # '2.0.0'
+reward_lens.__version__     # '2.0.1'
 "torch" in sys.modules      # False, nothing model-touching was pulled in
 "numpy" in sys.modules      # True
 ```

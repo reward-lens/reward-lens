@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.0.1] - 2026-07-23
+
+### Fixed
+- Declared `scipy`, `pydantic`, and `pydantic-settings` as runtime dependencies.
+  All three are imported at module scope (`pydantic` and `pydantic-settings` by
+  `reward_lens.core.config`, `scipy` by `reward_lens.stats` and
+  `reward_lens.geometry`), but they were absent from the 2.0.0 dependency list.
+  The result was an install that looked healthy and was not: `pip install
+  reward-lens` succeeded, `import reward_lens` succeeded and reported its
+  version, and the first real use failed with `ModuleNotFoundError`. The
+  dependency list was corrected in the source tree shortly after 2.0.0 went out;
+  this release is what carries that correction to PyPI. There are no code
+  changes, so 2.0.0 and 2.0.1 behave identically once the three packages are
+  present.
+
 ## [2.0.0] - 2026-07-10
 
 Major redesign. The library is reorganized around a single kernel with a lazy,

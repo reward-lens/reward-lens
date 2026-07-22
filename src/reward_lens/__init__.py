@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 # Legacy v1 symbols, imported lazily so `import reward_lens` stays torch-free. Accessing any of
 # these (for example `reward_lens.RewardModel`) imports the underlying module on demand; that

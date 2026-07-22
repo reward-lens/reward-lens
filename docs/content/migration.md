@@ -8,7 +8,7 @@
 
 ```python
 import reward_lens
-print(reward_lens.__version__)          # 2.0.0
+print(reward_lens.__version__)          # 2.0.1
 
 from reward_lens import RewardModel, RewardLens, ComponentAttribution   # still here
 ```
