@@ -6,7 +6,7 @@ again: an envelope with no ``schema_version`` key is version 0, because there is
 it could be.
 
 A migration is a pure function on the envelope dict, registered against the exact pair of versions
-it bridges, and `migrate` walks the chain. Chained rather than direct so that adding version 4
+it bridges, and `migrate` walks the chain. Chained rather than direct so that adding a later version
 means writing one function, not three.
 
 **The trap, stated once because it will not be obvious later.** An envelope's ``value`` is not

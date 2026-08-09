@@ -22,7 +22,7 @@ wants and is safe here for one checkable reason: the census below finds no `Blin
 `record.labels` type anywhere in the store, because the store predates that type by a release. The
 census runs, rather than being asserted, in `CampaignStore.payload_types`.
 
-**Sidecar resolution across two stores.** The campaign left two stores. The one that
+**Sidecar resolution across two stores.** Section E3 of the errata records two stores. The one that
 carries the adjudications, ``runs/campaign``, is referentially exact: 1,076 sidecar names
 referenced, 1,076 files present, 0 missing and 0 orphaned. The other, ``store/``, holds arrays the
 first does not, so `CampaignStore` takes a search path rather than a single directory. Resolution
@@ -43,7 +43,7 @@ from reward_lens.core.store import EvidenceStore
 #: Observable prefixes the campaign used for its two close-out row families. The adjudication rows
 #: carry the per-card verdict and the metrics it was computed from; the result rows carry the
 #: report payload. Nineteen of the twenty-seven cards have both; eight have only the adjudication,
-#: and those eight are exactly the cards that have to be re-read.
+#: and those eight are exactly the cards this build has to re-read.
 ADJUDICATION_PREFIX = "campaign.adjudication."
 RESULT_PREFIX = "campaign.result."
 
@@ -116,7 +116,7 @@ def _envelopes(store: EvidenceStore) -> Iterator[Mapping[str, Any]]:
     `EvidenceStore` exposes no public iterator over raw envelopes: `__iter__` and `find` both go
     through `evidence_from_envelope`, which is what raises on this store. The private index is read
     here through a guarded accessor so that adding a public one upstream removes this branch rather
-    than breaking it.
+    than breaking it. The exact patch is in this package's build report.
     """
     public = getattr(store, "envelopes", None)
     if callable(public):
@@ -148,8 +148,8 @@ class CampaignStore:
     """The campaign's evidence store, opened read-only and decoded permissively.
 
     Construct it with the directory holding ``evidence.jsonl`` and ``payloads/``. Extra sidecar
-    directories are searched in order after the store's own, which is how the campaign's second
-    store is reached without copying anything out of it.
+    directories are searched in order after the store's own, which is how the second store of
+    errata E3 is reached without copying anything out of it.
     """
 
     def __init__(

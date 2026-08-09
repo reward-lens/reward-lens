@@ -1,11 +1,11 @@
-"""Study specifications: the unit of confirmatory work.
+"""Study specifications: the unit of confirmatory work (section 2.14, gate 3, R12).
 
-A Study is data (a spec) plus a thin analysis function, never a subsystem. The spec states the
-hypotheses, each with a registered prediction whose sign and effect predate the run; the subjects;
-the analysis plan; and the kill criteria as schema fields, not prose, so the scoreboard can render
-them and a reviewer can check them. Freezing the spec (``freeze``) hashes it and records the git
-sha, after which Evidence produced under it is REGISTERED, and any edit creates a new visible
-version.
+A Study is data (a spec) plus a thin analysis function, never a subsystem (R9). The spec states
+the hypotheses, each with a registered prediction whose sign and effect predate the run; the
+subjects; the analysis plan; and the kill criteria as schema fields, not prose, so the scoreboard
+can render them and a reviewer can check them (R12). Freezing the spec (section 2.14, ``freeze``)
+hashes it and records the git sha, after which Evidence produced under it is REGISTERED (gate 3),
+and any edit creates a new visible version.
 
 Everything here is a plain, serializable dataclass so the spec can be hashed and stored. The
 analysis is named by a dotted path, not held as a callable, so the frozen content is stable.
@@ -24,7 +24,7 @@ Comparator = Literal[">", "<", ">=", "<=", "==", "!=", "abs>", "abs<"]
 
 @dataclass(frozen=True)
 class Prediction:
-    """A registered, checkable prediction.
+    """A registered, checkable prediction (R12).
 
     ``metric`` names the quantity the analysis will compute; ``comparator`` and ``threshold`` state
     the predicted relationship (for example ``metric="spearman_chi_vs_drift", comparator=">",
@@ -67,7 +67,7 @@ class Hypothesis:
 
 @dataclass(frozen=True)
 class KillCriterion:
-    """A schema-fielded kill criterion.
+    """A schema-fielded kill criterion (R12, section 2.14).
 
     If ``metric`` stands in ``comparator`` relation to ``threshold`` after the run, the criterion
     fires and the study produces a first-class negative-result report rather than a hidden failure.
@@ -100,7 +100,7 @@ class SubjectQuery:
 
 @dataclass(frozen=True)
 class StudySpec:
-    """The full specification of a confirmatory study."""
+    """The full specification of a confirmatory study (section 2.14)."""
 
     id: str
     title: str
@@ -155,7 +155,7 @@ class StudySpec:
 
 @dataclass
 class StudyResult:
-    """The outcome of a study run.
+    """The outcome of a study run (section 2.14).
 
     ``outcomes`` maps each hypothesis id to "confirmed" / "refuted" / "void"; ``metrics`` holds the
     computed values the predictions and kill criteria were checked against; ``evidence`` lists the

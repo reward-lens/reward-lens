@@ -1,4 +1,4 @@
-"""The tensor store, and the three-way reference that makes non-storage the default.
+"""The tensor store, and the three-way reference that makes non-storage the default (section 2.2.1).
 
 A `TensorRef` is one of three things and the third one is the important one:
 
@@ -31,9 +31,14 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Literal, Mapping, Protocol, Union, runtime_checkable
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Protocol, Union, runtime_checkable
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy", extra="record")
 
 from reward_lens.core.reading import Refusal, RefusalReason
 from reward_lens.core.types import ModelFP, Site, content_hash, hash_bytes
@@ -54,9 +59,9 @@ def residual_bytes(*, d_model: int, tokens: int = 1, layers: int = 1, dtype_byte
 
     The rule is ``dtype_bytes * d_model`` per token per layer, and ``dtype_bytes`` defaults to 2
     because bf16 is what training runs hold activations in. This is a function rather than a
-    constant in a docstring so the numbers in the module docstring are checkable: at
-    ``d_model = 8192`` it returns 16,384 bytes per token per layer, 1.6384e13 over 10^9 tokens on
-    one layer, and 1.31072e15 over eighty.
+    constant in a docstring so the numbers in section 2.2.1 are checkable: at ``d_model = 8192``
+    it returns 16,384 bytes per token per layer, 1.6384e13 over 10^9 tokens on one layer, and
+    1.31072e15 over eighty.
     """
     if d_model <= 0 or tokens < 0 or layers < 0 or dtype_bytes <= 0:
         raise ValueError(
@@ -162,14 +167,14 @@ class RecomputeRef:
     """Not stored. Here is exactly what to run to get it back.
 
     Every field is load-bearing for reproduction, and ``engine`` is the one people leave out.
-    Measuring HuggingFace against vLLM on pinned revisions with identical prompt token ids in BF16
-    found 0.18% relative L2 on a small dense model and 3.28% on a hybrid MoE, with compiled and
-    eager vLLM disagreeing with each other by about as much as either disagrees with HuggingFace.
-    Two configurations of the same weights are two instruments, so a recompute recipe without the
-    engine is not a recipe.
+    Section 4.7 measured HuggingFace against vLLM on pinned revisions with identical prompt token
+    ids in BF16 and found 0.18% relative L2 on a small dense model and 3.28% on a hybrid MoE, with
+    compiled and eager vLLM disagreeing with each other by about as much as either disagrees with
+    HuggingFace. Two configurations of the same weights are two instruments, so a recompute recipe
+    without the engine is not a recipe.
 
     ``expected_numerics_floor`` is the relative disagreement to expect when this is honoured, in
-    the same unit as those measurements (relative L2, so 0.0033 is 0.33%). It is not a
+    the same unit the section 4.7 table is in (relative L2, so 0.0033 is 0.33%). It is not a
     tolerance the caller may widen quietly: `honour` refuses when the achieved disagreement
     exceeds it, because a recomputed tensor that disagrees with the original by more than the
     substrate's own noise floor is a different tensor.
@@ -255,9 +260,9 @@ DEFAULT_REMEDY: dict[AbsenceReason, str] = {
     ),
     AbsenceReason.RECOMPUTE_UNAVAILABLE: (
         "Make the recipe's model and engine reachable: the exact revision and attention "
-        "implementation named in the RecomputeRef, not a near equivalent. Eager and compiled vLLM "
-        "disagree with each other as much as either disagrees with HuggingFace, so a near "
-        "equivalent is a different instrument."
+        "implementation named in the RecomputeRef, not a near equivalent. Section 4.7 measured "
+        "eager and compiled vLLM disagreeing with each other as much as either disagrees with "
+        "HuggingFace, so a near equivalent is a different instrument."
     ),
     AbsenceReason.NUMERICS_FLOOR_EXCEEDED: (
         "Recompute on the engine, revision, dtype and attention implementation named in the "
@@ -272,7 +277,7 @@ DEFAULT_REMEDY: dict[AbsenceReason, str] = {
 
 
 #: Which `RefusalReason` each absence becomes when an instrument has to give up because of it.
-#: One row per reason, decided by reading that reason's own remedy above and asking one question:
+#: One row per reason, decided by reading that reason's own remedy above and asking E30's question:
 #: is the remedy answerable where the reader is standing, or only upstream where the record was
 #: written? The two point in opposite directions, and a refusal that says "get more access" when
 #: the honest answer is "your run did not dump this" costs somebody an afternoon and then still
@@ -297,11 +302,11 @@ DEFAULT_REMEDY: dict[AbsenceReason, str] = {
 #: is upstream, and it is the one the reader reaches only after exhausting the first, so it stays
 #: in the remedy string rather than splitting the row.
 #:
-#: `COMPACTED` is the row that would move if a `QUANTITY_UNDEFINED` reason were ever added. An
-#: importance ratio across a rewritten prefix is not a quantity that a better record answers, it
+#: `COMPACTED` is the row that would move if SPEC-ERRATA E48's proposed `QUANTITY_UNDEFINED` lands.
+#: An importance ratio across a rewritten prefix is not a quantity that a better record answers, it
 #: is a quantity the object does not have. `RECORD_INCOMPLETE` is the closer of the sixteen because
-#: a run recorded without that compaction does carry the tensor, and adding a seventeenth member to
-#: the kernel's refusal vocabulary is not a decision this module makes.
+#: a run recorded without that compaction does carry the tensor, and the seventeenth member is not
+#: a builder's decision to take mid-wave.
 ABSENCE_REFUSAL: dict[AbsenceReason, RefusalReason] = {
     AbsenceReason.NOT_CAPTURED: RefusalReason.RECORD_INCOMPLETE,
     AbsenceReason.EGRESS_REFUSED: RefusalReason.RECORD_INCOMPLETE,
@@ -343,7 +348,7 @@ class AbsentRef:
     def as_refusal(self, instrument: str) -> Refusal:
         """Convert to a kernel `Refusal` when an instrument cannot proceed without this tensor.
 
-        The mapping is per reason and it is decided by each reason's own remedy, which is the
+        The mapping is per reason and it is decided by each reason's own remedy, which is E30's
         test: `ACCESS_INSUFFICIENT` when the remedy is answerable where the reader is standing,
         `RECORD_INCOMPLETE` when it is answerable only upstream, where the record was produced.
         See `ABSENCE_REFUSAL` for the table and the argument for each row. This used to be one
@@ -370,10 +375,10 @@ class AbsentRef:
 
 TensorRef = Union[StoredRef, RecomputeRef, AbsentRef]
 
-#: A `TensorRef` whose leading axis is tokens. The alias exists because
-#: `Trajectory.advantage_tokens` carries this type and the leading-axis convention is the whole
-#: content of the distinction: a per-token quantity compared against a per-sequence one is
-#: `UNIT_MISMATCH`, the commonest silent error in this literature.
+#: A `TensorRef` whose leading axis is tokens. The alias exists because section 2.2 gives
+#: `Trajectory.advantage_tokens` this type and the leading-axis convention is the whole content of
+#: the distinction: a per-token quantity compared against a per-sequence one is `UNIT_MISMATCH`,
+#: the commonest silent error in this literature.
 TokenTensorRef = TensorRef
 
 
@@ -444,12 +449,12 @@ class CaptureRef:
 class Engine:
     """The serving or training stack a tensor came out of, identified well enough to reproduce.
 
-    The canonical schema types this field as an opaque `EngineID`. It is a structure here because
-    the numerics floor needs the components and an opaque id cannot supply them: the limits of
-    detection are cached per ``(model, engine, revision, dtype, attention_impl, layer)``, and
-    "vLLM" is not one instrument (compiled and eager disagree with each other about as much as
-    either disagrees with HuggingFace). `Engine.id` is the printed `EngineID`, so anything typed
-    against the id is unaffected.
+    Section 2.2 types this field as an opaque `EngineID`. It is a structure here because section
+    4.7 requires the components and an opaque id cannot supply them: the limits of detection are
+    cached per ``(model, engine, revision, dtype, attention_impl, layer)``, and "vLLM" is not one
+    instrument (compiled and eager disagree with each other about as much as either disagrees with
+    HuggingFace). `Engine.id` is the printed `EngineID`, so anything typed against the id is
+    unaffected.
     """
 
     name: str
@@ -546,17 +551,17 @@ def honour(ref: RecomputeRef, recomputer: Recomputer | None) -> "np.ndarray | Ab
 
 
 class TensorStore:
-    """Content-addressed tensor shards plus a JSON manifest.
+    """Content-addressed tensor shards plus a JSON manifest (section 4.3).
 
     One shard per content address, holding one array. Deduplication is then free and exact: two
     runs that captured identical bytes share one file, and re-putting an array already present is
     a no-op that returns the same `StoredRef`.
 
-    **Container formats.** safetensors is implemented, but the default is ``.npy`` because numpy is
-    a base dependency and safetensors is behind the ``white-box`` extra, and a record whose tensors
-    cannot be read on a base install is useless to the auditor profile that only ever gets handed a
-    record. The manifest records which container each shard uses, so a store can hold both and a
-    reader never has to guess.
+    **Container formats.** The spec names safetensors and that is implemented, but the default is
+    ``.npy`` because numpy is a base dependency and safetensors is behind the ``white-box`` extra,
+    and a record whose tensors cannot be read on a base install is useless to the auditor profile
+    that only ever gets handed a record. The manifest records which container each shard uses, so
+    a store can hold both and a reader never has to guess.
     """
 
     def __init__(self, root: str | Path, *, container: Container = "npy") -> None:

@@ -896,7 +896,7 @@ _STATIC_ENVELOPE = EnvelopeSpec(
 
 _SOURCE_ACCESS_DEVIATION = (
     "reads the grader's source and never modifies it; declared `Access.SOURCE`, added for the D "
-    "series after this deviation was recorded. "
+    "series after this deviation was recorded. See SPEC-ERRATA E20. "
     "That is strictly stronger than what this instrument consumes, which reads the source and "
     "never modifies it."
 )

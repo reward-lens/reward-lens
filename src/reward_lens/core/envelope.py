@@ -1,10 +1,10 @@
-"""The validity envelope: what an instrument needs to be true, not merely available.
+"""The validity envelope: what an instrument needs to be true, not merely available (section 2.4).
 
 Access, phase and substrate all fail loudly. Regime fails quietly, and that is the whole reason
 this module exists. It is the difference between an instrument being *unavailable* and an
 instrument being *silently wrong*.
 
-The worked case. `F1`, the selection term `η·Cov_group(A, f)`, needs a record and a
+The worked case, from the spec. `F1`, the selection term `η·Cov_group(A, f)`, needs a record and a
 featuriser and nothing else, so it will happily compute on any run ever recorded. But it is a
 first-order expansion, so it means nothing if the step is large; it assumes the group has spread,
 so it means nothing on all-fail groups; it assumes the advantage transform is the one you think it
@@ -29,13 +29,13 @@ EvidenceID = str
 class RegimeCondition(enum.Enum):
     """The conditions an estimator can depend on, each measurable from a record.
 
-    Twelve were there from the start. `DESIGN_CROSSED` is a thirteenth and it is a deliberate
-    addition rather than a drift: A2's crossed-design qualifier had been carried as a hard
-    precondition returning `ENVELOPE_VIOLATED` with the gap named in `deviations`, which works and
-    is not what the type system is for.
+    Section 2.4 prints twelve. `DESIGN_CROSSED` is a thirteenth and it is a deliberate amendment
+    rather than a drift: E29 found the merge had dropped A2's crossed-design qualifier, and it was
+    carried instead as a hard precondition returning `ENVELOPE_VIOLATED` with the gap named in
+    `deviations`, which works and is not what the type system is for. See SPEC-ERRATA E49.
     """
 
-    #: Ad = tau_relax * |d log lambda / dt| below threshold.
+    #: Ad = tau_relax * |d log lambda / dt| below threshold. Section 3.4.
     QUASI_STATIC = enum.auto()
     #: The step is small enough that the O(eta^2) term is negligible. Measured by Lambda.
     LINEAR_RESPONSE = enum.auto()
@@ -49,21 +49,21 @@ class RegimeCondition(enum.Enum):
     EXOGENOUS_CURRICULUM = enum.auto()
     #: No prefix rewrite inside the measurement window.
     NO_COMPACTION = enum.auto()
-    #: The effect exceeds the limit of detection.
+    #: The effect exceeds the limit of detection. Section 4.7.
     ABOVE_LOD = enum.auto()
     #: Importance weights have not degenerated.
     ESS_ADEQUATE = enum.auto()
     #: The moment generating function exists; the Hill estimate is below a stated bound.
     LIGHT_TAILED = enum.auto()
-    #: Curl mass below a stated bound.
+    #: Curl mass below a stated bound. Section 3.6.
     SCALAR_REPRESENTABLE = enum.auto()
     #: The loss-mask policy is unchanged across the window.
     MASK_STABLE = enum.auto()
     #: Every subject was scored by every rater at every occasion, so the expected-mean-square
-    #: inversion the G-study rests on is the one that applies. The thirteenth condition, added
+    #: inversion the G-study rests on is the one that applies. Section 2.4's thirteenth, added
     #: because it is the cleanest instance in the library of the class an envelope exists for: an
     #: unbalanced design does not raise and nothing is missing, it just silently returns wrong
-    #: variance components from an inversion that assumes a crossed design.
+    #: variance components from an inversion that assumes a crossed design. SPEC-ERRATA E49.
     DESIGN_CROSSED = enum.auto()
 
 
@@ -82,14 +82,14 @@ class EnvelopeSpec:
     cannot be enforced should not be constructible at all:
 
     An empty ``requires`` fails unless the instrument passes ``unconditional=True``, which is the
-    code form of an explicit ``# envelope: unconditional`` justification and forces the author to
+    code form of the spec's ``# envelope: unconditional`` justification and forces the author to
     write down that they thought about it.
 
     Every condition in ``requires`` must appear in ``measured_by``, so no instrument can declare a
     precondition nobody can check. A declared-but-unmeasurable precondition is worse than no
     precondition, because it reads as rigour and enforces nothing.
 
-    And the third rule, which is easy to get wrong: ``on_violation``
+    And the third rule, which the spec states in prose and is easy to get wrong: ``on_violation``
     of ``"bound"`` without a ``bound_estimator`` is not a policy, it is a promise with nothing
     behind it. The type makes it impossible.
     """

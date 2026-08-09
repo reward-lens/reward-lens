@@ -18,7 +18,9 @@ typo in an extra name is then a failing test rather than a user stuck in a loop.
 
 from __future__ import annotations
 
+import importlib
 import importlib.util
+from typing import Any
 
 from reward_lens.core.errors import RewardLensError
 
@@ -27,32 +29,33 @@ from reward_lens.core.errors import RewardLensError
 #: whole: an environment with torch but not transformers is broken in a way this cannot diagnose
 #: and should not try to.
 EXTRA_PROBE: dict[str, str] = {
+    "trace": "pyarrow",
+    # No runtime dependency yet: no module under src/ imports an HTTP client, and declaring one on
+    # the strength of a plan is what this file's own history warns against. The name is declared in
+    # pyproject.toml so the instruction the error gives can be followed.
+    "judge": "",
+    "train": "torch",
+    "sigstore": "sigstore",
+    # SALib, not coverage: A-002 made coverage a base dependency, so the old probe was
+    # satisfied on every base install; no other extra ships SALib and it depends on numpy.
+    "verifier": "SALib",
     "white-box": "torch",
     "organisms": "peft",
-    "sampling": "vllm",
-    "record": "pyarrow",
-    "dict": "sae_lens",
-    "verifier": "coverage",
-    "fuzz": "atheris",
-    "trl": "trl",
-    "verl": "",  # no runtime dependency; the adapter reads a record
     "viz": "matplotlib",
-    "dev": "pytest",
+    "record": "pyarrow",
 }
 
 #: What each extra is for, in the words a user needs to decide whether they want it.
 EXTRA_PURPOSE: dict[str, str] = {
+    "trace": "reading a run's rollouts out of a Parquet trace",
+    "judge": "calling a model judge through a provider",
+    "train": "reward models, and attaching the tap to a live TRL training run",
+    "sigstore": "signing a record with Sigstore rather than the built-in Ed25519",
+    "verifier": "the verifier series: coverage, mutation, metamorphic relations, sensitivity",
     "white-box": "reading a model's activations and gradients",
     "organisms": "planting and training model organisms",
-    "sampling": "generating rollouts through vLLM",
-    "record": "Parquet scalar tables and safetensors tensor shards, rather than the JSON Lines and .npy the record writes by default",
-    "dict": "sparse dictionary methods, which are candidate generators and never a claim substrate",
-    "verifier": "the verifier series: coverage, mutation, metamorphic relations, sensitivity",
-    "fuzz": "coverage-guided fuzzing for D5 rung 2, which needs a clang toolchain",
-    "trl": "attaching the tap to a live TRL training run",
-    "verl": "reading a veRL record",
     "viz": "rendering figures",
-    "dev": "running the test suite and the linters",
+    "record": "safetensors tensor shards and the numeric side of the record store",
 }
 
 
@@ -95,4 +98,70 @@ def require_extra(extra: str, *, subsystem: str) -> None:
     )
 
 
-__all__ = ["EXTRA_PROBE", "EXTRA_PURPOSE", "ExtraRequiredError", "require_extra"]
+# ---------------------------------------------------------------------------
+# The lazy-module seam
+# ---------------------------------------------------------------------------
+
+
+class _LazyModule:
+    """A stand-in for a module, imported on first attribute access.
+
+    This exists for one measured reason. `uvx` downloads the base closure on every cold
+    invocation, so D-58 keeps numpy out of it; but six modules in the inherited tree carry
+    ``import numpy as np`` at module scope and use ``np.`` in a dozen places each, and the three
+    wave-1 instruments import two of those modules directly. Rewriting eighty-eight call sites to
+    import inside their functions would be eighty-eight chances to move a line that had a reason to
+    be where it was. Swapping one import line for ``np = lazy_module("numpy")`` moves none of them:
+    every ``np.asarray`` still reads the same, and the import happens the first time one runs.
+
+    The proxy resolves to the real module and caches it, so the cost is one dictionary lookup per
+    attribute after the first. What it does not support is subclassing a name off it at module
+    scope (``class X(np.ndarray)``), which would need the module at definition time; nothing in
+    this tree does that, and it would be an honest failure rather than a silent one.
+    """
+
+    def __init__(self, name: str, *, extra: str | None = None, subsystem: str | None = None) -> None:
+        self.__dict__["_name"] = name
+        self.__dict__["_extra"] = extra
+        self.__dict__["_subsystem"] = subsystem or name
+        self.__dict__["_module"] = None
+
+    def _load(self) -> Any:
+        module = self.__dict__["_module"]
+        if module is None:
+            extra = self.__dict__["_extra"]
+            if extra:
+                require_extra(extra, subsystem=self.__dict__["_subsystem"])
+            module = importlib.import_module(self.__dict__["_name"])
+            self.__dict__["_module"] = module
+        return module
+
+    def __getattr__(self, attribute: str) -> Any:
+        return getattr(self._load(), attribute)
+
+    def __dir__(self) -> list[str]:
+        return dir(self._load())
+
+    def __repr__(self) -> str:
+        state = "imported" if self.__dict__["_module"] is not None else "not yet imported"
+        return f"<lazy module {self.__dict__['_name']!r}, {state}>"
+
+
+def lazy_module(name: str, *, extra: str | None = None, subsystem: str | None = None) -> Any:
+    """Return a proxy for ``name`` that imports it on first use.
+
+    ``extra``, when given, is checked through `require_extra` at that first use, so a module that
+    needs an optional numeric stack raises the message naming the extra rather than a bare
+    ``ModuleNotFoundError`` from somewhere in the middle of a calculation.
+    """
+    return _LazyModule(name, extra=extra, subsystem=subsystem)
+
+
+__all__ = [
+    "EXTRA_PROBE",
+    "EXTRA_PURPOSE",
+    "ExtraRequiredError",
+    "lazy_module",
+    "require_extra",
+]
+

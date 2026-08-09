@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reward-lens.github.io/schema/assay/1.0/assay.schema.json",
+  "title": "reward-lens assay record, version 1.0",
+  "description": "One measurement of one reward-system version in one context, made by a stated method, with stated uncertainty, carrying the scope of each claim and the list of what could not be checked (PRODUCT_BUILD_PROMPT.md section 6, D-09 to D-18). Frozen in W0.4. Additive only within the major version (D-64). Every numeric field declares x-scale, the number of decimal places it is quantised to at the record boundary (D-10); a validator rejects a number whose shortest representation carries more digits than its scale. Money is a two-place decimal string. Digests, 64-bit integers and nanosecond timestamps are strings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "assay_id", "created", "producer", "subject", "intent", "measurement", "holes", "findings", "decision", "cost", "provenance", "embedding", "environment_excluded_from_digest"],
+  "properties": {
+    "$schema": {"const": "https://reward-lens.github.io/schema/assay/1.0/assay.schema.json"},
+    "assay_id": {"$ref": "#/$defs/digest", "description": "sha256 over the canonical bytes (RFC 8785) of this record with assay_id, attestation and signature removed, not nulled."},
+    "created": {"$ref": "#/$defs/timestamp"},
+    "producer": {
+      "type": "object", "additionalProperties": false, "required": ["tool", "version", "method_set"],
+      "properties": {"tool": {"const": "reward-lens"}, "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-.+][0-9A-Za-z.]+)?$"}, "method_set": {"$ref": "#/$defs/digest"}}
+    },
+    "subject": {
+      "type": "object", "additionalProperties": false, "required": ["reward_system", "version", "context", "digests"],
+      "properties": {
+        "reward_system": {"type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {"id": {"$ref": "#/$defs/ident"}, "name": {"type": "string", "minLength": 1, "maxLength": 200}}},
+        "version": {"type": "object", "additionalProperties": false, "required": ["id", "digest", "parents", "declared_change"],
+          "properties": {"id": {"$ref": "#/$defs/ident"}, "digest": {"$ref": "#/$defs/digest"}, "parents": {"type": "array", "items": {"$ref": "#/$defs/ident"}},
+            "declared_change": {"oneOf": [{"type": "null"}, {"type": "array", "minItems": 1, "items": {"enum": ["scorer", "judge", "weights", "task_mixture", "trainer_configuration", "outcome_protocol", "other"]}}]}}},
+        "context": {"type": "object", "additionalProperties": false, "required": ["policy", "task_set", "configuration"],
+          "properties": {"policy": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]}, "task_set": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]}, "configuration": {"oneOf": [{"type": "null"}, {"type": "string", "maxLength": 200}]}}},
+        "digests": {"type": "object", "additionalProperties": false,
+          "required": ["source", "environment", "scorer_config", "task_distribution", "samples", "outcome_protocol", "policy", "training_semantics", "instrument_method"],
+          "properties": {
+            "source": {"$ref": "#/$defs/digest_or_null"}, "environment": {"$ref": "#/$defs/digest_or_null"}, "scorer_config": {"$ref": "#/$defs/digest_or_null"},
+            "task_distribution": {"$ref": "#/$defs/digest_or_null"}, "samples": {"$ref": "#/$defs/digest_or_null"}, "outcome_protocol": {"$ref": "#/$defs/digest_or_null"},
+            "policy": {"$ref": "#/$defs/digest_or_null"}, "training_semantics": {"$ref": "#/$defs/digest_or_null"}, "instrument_method": {"$ref": "#/$defs/digest"}}}
+      }
+    },
+    "intent": {
+      "type": "object", "additionalProperties": false, "required": ["success", "constraints", "non_equivalent_pairs", "outcome_check", "attack_budget", "partitions"],
+      "properties": {
+        "success": {"oneOf": [{"type": "null"}, {"type": "string", "minLength": 1, "maxLength": 2000}]},
+        "constraints": {"type": "array", "items": {"type": "string", "maxLength": 500}},
+        "non_equivalent_pairs": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["a", "b", "why"], "properties": {"a": {"type": "string"}, "b": {"type": "string"}, "why": {"type": "string"}}}},
+        "outcome_check": {"type": "object", "additionalProperties": false, "required": ["state", "kind", "provenance", "measured_disagreement"],
+          "properties": {"state": {"enum": ["qualified", "unqualified", "ambiguous"]}, "kind": {"oneOf": [{"type": "null"}, {"enum": ["protected_test_suite", "reference_verifier", "labelled_set", "panel", "other"]}]},
+            "provenance": {"$ref": "#/$defs/digest_or_null"}, "measured_disagreement": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0, "maximum": 1, "x-scale": 4}]}}},
+        "attack_budget": {"type": "object", "additionalProperties": false, "required": ["seeker_calls", "usd"], "properties": {"seeker_calls": {"type": "integer", "minimum": 0}, "usd": {"$ref": "#/$defs/money"}}},
+        "partitions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "digest", "access_log"],
+          "properties": {"id": {"$ref": "#/$defs/ident"}, "kind": {"enum": ["development", "attack_development", "acceptance", "calibration", "transfer"]}, "digest": {"$ref": "#/$defs/digest"}, "access_log": {"type": "array", "items": {"type": "string"}}}}}
+      }
+    },
+    "measurement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["validity", "soundness", "reach", "exploits", "framing", "reward_statistics", "signal", "trace", "forecast", "calibration"],
+      "properties": {
+        "validity": {"$ref": "#/$defs/entries"}, "soundness": {"$ref": "#/$defs/entries"}, "reach": {"$ref": "#/$defs/entries"}, "exploits": {"$ref": "#/$defs/entries"},
+        "framing": {"$ref": "#/$defs/entries"}, "reward_statistics": {"$ref": "#/$defs/entries"}, "signal": {"$ref": "#/$defs/entries"}, "trace": {"$ref": "#/$defs/entries"},
+        "forecast": {"$ref": "#/$defs/entries"}, "calibration": {"$ref": "#/$defs/entries"}
+      }
+    },
+    "holes": {"type": "array", "description": "Derived index of every absence entry across the ten sections, materialised so a reader never assembles it (section 6.2).",
+      "items": {"type": "object", "additionalProperties": false, "required": ["section", "state", "missing_access", "affected_claims", "remedy"],
+        "properties": {"section": {"$ref": "#/$defs/section"}, "entry_id": {"$ref": "#/$defs/entry_id"}, "state": {"$ref": "#/$defs/hole_state"}, "missing_access": {"type": "string", "minLength": 1}, "affected_claims": {"type": "array", "items": {"type": "string"}}, "remedy": {"type": "string", "minLength": 1}}}},
+    "rules": {"type": "array", "description": "SARIF reportingDescriptor per finding class (D-14).",
+      "items": {"type": "object", "additionalProperties": false, "required": ["id", "name", "short_description"], "properties": {"id": {"$ref": "#/$defs/rule_id"}, "name": {"type": "string"}, "short_description": {"type": "string"}, "help": {"type": "string"}, "help_uri": {"type": "string", "format": "uri"}}}},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "join": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["family", "selected", "applied_update_weight", "fix_changes_pressure", "fix_cost"],
+      "properties": {"family": {"type": "string", "minLength": 1}, "selected": {"enum": ["yes", "no", "not_measured"]},
+        "applied_update_weight": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0, "maximum": 1, "x-scale": 4}]},
+        "fix_changes_pressure": {"oneOf": [{"type": "null"}, {"type": "number", "x-scale": 4}]},
+        "fix_cost": {"oneOf": [{"type": "null"}, {"type": "string", "maxLength": 200}]},
+        "missing": {"type": "string", "description": "which input a null cell is waiting for, and what it would take"}}}},
+    "decision": {
+      "type": "object", "additionalProperties": false, "required": ["state", "action", "policy", "reasons", "tradeoff", "signature", "regression_cases"],
+      "properties": {
+        "state": {"enum": ["qualified", "rejected", "unresolved"]},
+        "action": {"oneOf": [{"type": "null"}, {"enum": ["train_on_this_version", "merge_this_grader", "use_for_selection", "publish_this_environment", "other"]}]},
+        "policy": {"oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["id", "digest"], "properties": {"id": {"$ref": "#/$defs/ident"}, "digest": {"$ref": "#/$defs/digest"}}}]},
+        "reasons": {"type": "array", "items": {"type": "string", "pattern": "^(blocking_finding|required_missing|required_stale|required_invalid|required_inconclusive|constraint_violated|tradeoff_unsettled|policy_absent|outcome_unqualified):[A-Za-z0-9_.:/-]+$"}},
+        "tradeoff": {"oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["competing"], "properties": {"competing": {"type": "array", "minItems": 2, "items": {"type": "object", "additionalProperties": false, "required": ["option", "consequences"], "properties": {"option": {"type": "string"}, "consequences": {"type": "array", "items": {"type": "string"}}}}}}}]},
+        "signature": {"oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["backend", "statement_digest"], "properties": {"backend": {"enum": ["ed25519", "sigstore", "github"]}, "statement_digest": {"$ref": "#/$defs/digest"}, "signer": {"type": "string"}}}]},
+        "regression_cases": {"type": "array", "items": {"$ref": "#/$defs/ident"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"state": {"const": "qualified"}}}, "then": {"properties": {"policy": {"type": "object"}, "action": {"type": "string"}}, "description": "qualification requires a named policy and a named action (D-13)"}},
+        {"if": {"properties": {"state": {"const": "rejected"}}}, "then": {"properties": {"policy": {"type": "object"}, "action": {"type": "string"}, "reasons": {"minItems": 1}}}},
+        {"if": {"properties": {"tradeoff": {"type": "object"}}}, "then": {"properties": {"state": {"const": "unresolved"}}, "description": "a tradeoff is a subtype of unresolved and is never collapsed into a score (D-13)"}}
+      ]
+    },
+    "experiments": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "rung", "scope", "registered_expectation", "result", "informative"],
+      "properties": {"id": {"$ref": "#/$defs/ident"}, "rung": {"type": "integer", "minimum": 1, "maximum": 6}, "scope": {"$ref": "#/$defs/scope"}, "registered_expectation": {"type": "string", "minLength": 1}, "registered_at": {"$ref": "#/$defs/timestamp"}, "result": {"oneOf": [{"type": "null"}, {"type": "string"}]}, "informative": {"oneOf": [{"type": "null"}, {"type": "boolean"}]}, "candidates": {"type": "array", "items": {"$ref": "#/$defs/ident"}}, "rejected_rungs": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["rung", "reason"], "properties": {"rung": {"type": "integer"}, "reason": {"type": "string"}, "cost": {"type": "string"}}}}}}},
+    "calibration_links": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["material", "grade", "transfer_gap"],
+      "properties": {"material": {"$ref": "#/$defs/ident"}, "grade": {"enum": ["informational", "reported", "certified", "adopted"]}, "transfer_gap": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0, "x-scale": 6}]}, "transfer_tolerance": {"type": "number", "minimum": 0, "x-scale": 6}, "evidence_id": {"type": "string"}}}},
+    "cost": {"type": "object", "additionalProperties": false, "required": ["wall_s", "cpu_s", "usd", "api_calls"],
+      "properties": {"wall_s": {"type": "number", "minimum": 0, "x-scale": 3}, "cpu_s": {"type": "number", "minimum": 0, "x-scale": 3}, "usd": {"$ref": "#/$defs/money"}, "api_calls": {"type": "integer", "minimum": 0}, "input_tokens": {"type": "integer", "minimum": 0}, "output_tokens": {"type": "integer", "minimum": 0}, "price_table_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}}},
+    "tables": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "digest", "rows", "schema"],
+      "properties": {"id": {"$ref": "#/$defs/ident"}, "digest": {"$ref": "#/$defs/digest"}, "rows": {"type": "integer", "minimum": 0}, "schema": {"type": "string", "pattern": "^schemas/[A-Za-z0-9_.-]+\\.json$"},
+        "inline_rows": {"type": "array", "maxItems": 50, "x-max-inline-rows": 50, "items": {"type": "object"}, "description": "at most x-max-inline-rows sample rows; the table itself is Parquet in the bundle (D-16)"}}}},
+    "embedding": {"type": "object", "additionalProperties": false, "required": ["tier", "omitted_tables"], "properties": {"tier": {"enum": ["A", "B", "C"]}, "omitted_tables": {"type": "array", "items": {"$ref": "#/$defs/ident"}}, "html_bytes": {"type": "integer", "minimum": 0}, "record_bytes": {"type": "integer", "minimum": 0}}},
+    "attestation": {"type": "object", "additionalProperties": false, "required": ["statement_digest", "backend"], "properties": {"statement_digest": {"$ref": "#/$defs/digest_or_null"}, "backend": {"oneOf": [{"type": "null"}, {"enum": ["ed25519", "sigstore", "github"]}]}, "manifest_digest": {"$ref": "#/$defs/digest_or_null"}}},
+    "provenance": {"type": "object", "additionalProperties": false, "required": ["offline", "sandbox_tier", "os", "seed", "reproduce"],
+      "properties": {"offline": {"type": "boolean"}, "sandbox_tier": {"$ref": "#/$defs/sandbox_tier"}, "os": {"enum": ["linux", "macos", "windows"]}, "seed": {"type": "integer"}, "reproduce": {"type": "array", "items": {"type": "string"}}, "run_id": {"type": "string", "pattern": "^run-[0-9a-f]{8,32}$"}, "spend_usd": {"$ref": "#/$defs/money"}, "access_level": {"enum": ["source", "callable", "response_bank", "run_record", "trainer_log", "black_box"]}, "input_access_note": {"type": "string"}}},
+    "environment_excluded_from_digest": {"type": "object", "description": "Everything nondeterministic about the machine, in one clearly excluded block (D-10). Removed before canonicalisation."},
+    "extensions": {"type": "object", "description": "Namespaced extensions with their own schema identity; they survive a round trip uninterpreted and never change the meaning of an established field (D-64, section 6.5).",
+      "propertyNames": {"pattern": "^https?://[^\\s]+$"}, "additionalProperties": {"type": "object"}}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "digest_or_null": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]},
+    "timestamp": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$", "description": "RFC 3339 UTC, second precision, Z (D-10)"},
+    "money": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{2}$", "description": "decimal string with two places; trailing zeros are a claim (D-10)"},
+    "ident": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$"},
+    "entry_id": {"type": "string", "pattern": "^(validity|soundness|reach|exploits|framing|reward_statistics|signal|trace|forecast|calibration)\\.[a-z0-9_.]+$"},
+    "rule_id": {"type": "string", "pattern": "^[a-z_]+\\.[a-z0-9_.]+$"},
+    "finding_id": {"type": "string", "pattern": "^(RGX-[0-9]{4}-[0-9]{4}|RGX-local-[0-9]{4})$"},
+    "section": {"enum": ["validity", "soundness", "reach", "exploits", "framing", "reward_statistics", "signal", "trace", "forecast", "calibration"]},
+    "scope": {"enum": ["evaluator_comparison", "selection_stress", "reconstructed_training_pressure", "controlled_update_response", "short_fork_behavior", "held_out_transfer"]},
+    "hole_state": {"enum": ["NOT_MEASURED", "COULD_NOT_CHECK", "REFUSED"]},
+    "sandbox_tier": {"type": "string", "pattern": "^(T0|L[0-3]|M[01]|W[0-2])$", "description": "the tier that actually held on that machine, in the D-37 vocabulary; OS is in provenance.os"},
+    "verdict": {"enum": ["scored", "invalid_input", "unscored", "grader_error", "timeout", "resource_exhausted", "provider_unavailable", "parse_error", "cancelled"]},
+    "counters": {"type": "object", "additionalProperties": false, "properties": {"calls": {"type": "integer", "minimum": 0}, "cpu_s": {"type": "number", "minimum": 0, "x-scale": 3}, "wall_s": {"type": "number", "minimum": 0, "x-scale": 3}, "peak_rss_bytes": {"type": "integer", "minimum": 0}, "processes": {"type": "integer", "minimum": 0}, "disk_bytes": {"type": "integer", "minimum": 0}, "output_bytes": {"type": "integer", "minimum": 0}, "api_calls": {"type": "integer", "minimum": 0}, "input_tokens": {"type": "integer", "minimum": 0}, "output_tokens": {"type": "integer", "minimum": 0}, "usd": {"$ref": "#/$defs/money"}}},
+    "interval": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "x-scale": 6}},
+    "uncertainty": {"type": "object", "additionalProperties": false, "required": ["method", "level"],
+      "properties": {"standard": {"type": "number", "minimum": 0, "x-scale": 6}, "expanded": {"type": "number", "minimum": 0, "x-scale": 6}, "coverage_factor": {"type": "number", "minimum": 0, "x-scale": 3}, "level": {"type": "number", "minimum": 0, "maximum": 1, "x-scale": 3},
+        "interval": {"$ref": "#/$defs/interval"},
+        "method": {"enum": ["wilson", "clopper_pearson", "exact_zero_event", "cluster_bootstrap", "wild_cluster_bootstrap", "paired_difference", "task_level_bootstrap", "normal_approximation_named", "no_interval_below_15_clusters"]},
+        "reason": {"type": "string", "minLength": 1, "description": "why no interval is available; required when the method is the stated absence of one"},
+        "resamples": {"type": "integer", "minimum": 0}, "cluster_unit": {"type": "string"}, "clusters": {"type": "integer", "minimum": 0},
+        "design_effect": {"type": "number", "minimum": 0, "x-scale": 4}, "icc": {"type": "number", "x-scale": 4}, "icc_interval": {"$ref": "#/$defs/interval"}, "n_eff": {"type": "number", "minimum": 0, "x-scale": 2},
+        "components": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["source", "type", "u"], "properties": {"source": {"type": "string"}, "type": {"enum": ["A", "B"]}, "u": {"type": "number", "minimum": 0, "x-scale": 6}}}}},
+      "allOf": [
+        {"if": {"required": ["method"], "properties": {"method": {"const": "no_interval_below_15_clusters"}}},
+         "then": {"not": {"required": ["interval"]}, "required": ["reason", "clusters"],
+                  "description": "below about 15 clusters, report no interval and say why (rule 9, D-75): endpoints are never invented, and the cluster count that forced it is stated"},
+         "else": {"required": ["interval"],
+                  "description": "every other method carries the interval it produced (D-17, rule 1)"}}
+      ]},
+    "power": {"type": "object", "additionalProperties": false, "required": ["alpha", "power", "n", "mde"], "description": "what a null result could have detected (rule 10)", "properties": {"alpha": {"type": "number", "x-scale": 3}, "power": {"type": "number", "x-scale": 3}, "n": {"type": "integer"}, "design_effect": {"type": "number", "x-scale": 4}, "mde": {"type": "number", "x-scale": 6}, "equivalence_margin": {"type": "number", "x-scale": 6}}},
+    "method": {"type": "object", "additionalProperties": false, "required": ["id", "version", "params_digest", "procedure"],
+      "properties": {"id": {"$ref": "#/$defs/rule_id"}, "version": {"type": "string"}, "params_digest": {"$ref": "#/$defs/digest"}, "procedure": {"type": "string", "minLength": 1}, "credited_to": {"type": "string", "description": "an adjacent published check the audit called rather than reimplemented (D-61)"}}},
+    "entry_provenance": {"type": "object", "additionalProperties": false, "required": ["started", "duration_s", "sandbox_tier", "offline"],
+      "properties": {"started": {"$ref": "#/$defs/timestamp"}, "duration_s": {"type": "number", "minimum": 0, "x-scale": 3}, "sandbox_tier": {"$ref": "#/$defs/sandbox_tier"}, "offline": {"type": "boolean"}, "counters": {"$ref": "#/$defs/counters"}, "actor": {"type": "string", "description": "for seeker entries: which actor proposed (D-71)"}, "arm": {"enum": ["white_box", "black_box"]}, "budget_usd": {"$ref": "#/$defs/money"}}},
+    "entries": {"type": "array", "items": {"$ref": "#/$defs/entry"}},
+    "entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["entry_id", "section", "kind", "measurand", "method", "scope", "subject_ref", "depends_on", "state", "provenance", "limitations"],
+      "properties": {
+        "entry_id": {"$ref": "#/$defs/entry_id"}, "section": {"$ref": "#/$defs/section"},
+        "kind": {"enum": ["witness", "check", "estimate", "detection", "absence"]},
+        "measurand": {"type": "string", "minLength": 1}, "method": {"$ref": "#/$defs/method"}, "scope": {"$ref": "#/$defs/scope"},
+        "subject_ref": {"$ref": "#/$defs/digest"}, "depends_on": {"type": "array", "items": {"type": "string", "pattern": "^digest:(source|environment|scorer_config|task_distribution|samples|outcome_protocol|policy|training_semantics|instrument_method)$"}},
+        "state": {"enum": ["complete", "partial", "absent"]},
+        "result": {"type": "object"},
+        "value": {"type": "number", "x-scale": 6}, "unit": {"type": "string", "minLength": 1}, "n": {"type": "integer", "minimum": 0}, "denominator": {"type": "string"}, "sampling_unit": {"type": "string", "minLength": 1},
+        "uncertainty": {"$ref": "#/$defs/uncertainty"}, "power": {"$ref": "#/$defs/power"}, "exclusions": {"type": "array", "items": {"type": "string"}}, "assumptions": {"type": "array", "items": {"type": "string"}},
+        "witness": {"type": "object", "additionalProperties": false, "required": ["inputs", "procedure", "observed"], "properties": {"inputs": {"type": "object"}, "inputs_ref": {"type": "string"}, "procedure": {"type": "string", "minLength": 1}, "observed": {"type": "string", "minLength": 1}, "artifact_identity": {"$ref": "#/$defs/digest"}, "path": {"type": "string"}}},
+        "check": {"type": "object", "additionalProperties": false, "required": ["predicate", "passed", "scope_tested"], "properties": {"predicate": {"type": "string", "minLength": 1}, "passed": {"type": "boolean"}, "scope_tested": {"type": "string", "minLength": 1}}},
+        "detection": {"type": "object", "additionalProperties": false, "required": ["target", "material"],
+          "properties": {"target": {"type": "string"}, "threshold": {"type": "number", "x-scale": 6}, "LoB": {"type": "number", "x-scale": 6}, "LoD": {"type": "number", "x-scale": 6}, "LoQ": {"type": "number", "x-scale": 6}, "alpha": {"type": "number", "x-scale": 3}, "beta": {"type": "number", "x-scale": 3}, "material": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/ident"}]}, "sensitivity": {"type": "number", "x-scale": 4}, "false_alarm_rate": {"type": "number", "x-scale": 4}, "arl_in_control": {"type": "number", "x-scale": 1}, "arl_out_of_control": {"type": "number", "x-scale": 1}, "unqualified": {"type": "boolean"}, "unqualified_reason": {"type": "string"}}},
+        "absence": {"type": "object", "additionalProperties": false, "required": ["state", "missing_access", "affected_claims", "remedy"], "properties": {"state": {"$ref": "#/$defs/hole_state"}, "missing_access": {"type": "string", "minLength": 1}, "affected_claims": {"type": "array", "items": {"type": "string"}}, "remedy": {"type": "string", "minLength": 1}}},
+        "verdicts": {"type": "object", "description": "counts of grader verdicts observed while producing this entry (D-36)", "propertyNames": {"enum": ["scored", "invalid_input", "unscored", "grader_error", "timeout", "resource_exhausted", "provider_unavailable", "parse_error", "cancelled"]}, "additionalProperties": {"type": "integer", "minimum": 0}},
+        "rate_definition": {"enum": ["false_accept", "false_reject", "false_discovery", "contrast_fraction", "other"], "description": "which of the three rates of D-43 this is, so that none can be reported as another"},
+        "provenance": {"$ref": "#/$defs/entry_provenance"},
+        "limitations": {"type": "array", "items": {"type": "string"}},
+        "extensions": {"type": "object", "propertyNames": {"pattern": "^https?://[^\\s]+$"}, "additionalProperties": {"type": "object"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "witness"}}}, "then": {"required": ["witness", "result"], "properties": {"state": {"enum": ["complete", "partial"]}}}},
+        {"if": {"properties": {"kind": {"const": "check"}}}, "then": {"required": ["check", "result"], "properties": {"state": {"enum": ["complete", "partial"]}}}},
+        {"if": {"properties": {"kind": {"const": "estimate"}}}, "then": {"required": ["value", "unit", "n", "sampling_unit", "uncertainty", "result"], "properties": {"state": {"enum": ["complete", "partial"]}}}},
+        {"if": {"properties": {"kind": {"const": "detection"}}}, "then": {"required": ["detection", "result"], "properties": {"state": {"enum": ["complete", "partial"]}}}},
+        {"if": {"properties": {"kind": {"const": "absence"}}}, "then": {"required": ["absence"], "not": {"required": ["result"]}, "properties": {"state": {"const": "absent"}}}},
+        {"if": {"properties": {"kind": {"const": "detection"}, "detection": {"not": {"properties": {"unqualified": {"const": true}}, "required": ["unqualified"]}}}}, "then": {"properties": {"detection": {"required": ["LoB", "LoD", "alpha", "beta", "sensitivity", "false_alarm_rate"]}}}}
+      ]
+    },
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "rule", "level", "kind", "severity_rationale", "scope", "entries", "partial_fingerprint"],
+      "properties": {
+        "id": {"$ref": "#/$defs/finding_id"}, "rule": {"$ref": "#/$defs/rule_id"},
+        "level": {"enum": ["none", "note", "warning", "error"]},
+        "kind": {"enum": ["pass", "fail", "open", "review", "informational", "notApplicable"]},
+        "severity_rationale": {"type": "string", "minLength": 1}, "scope": {"$ref": "#/$defs/scope"},
+        "entries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/entry_id"}},
+        "partial_fingerprint": {"type": "string", "minLength": 8},
+        "message": {"type": "string"}, "witness_path": {"type": "string"}, "content_id": {"$ref": "#/$defs/digest"},
+        "arm": {"enum": ["white_box", "black_box", "both", "static"]}, "code": {"type": "string", "pattern": "^RL[0-9]{4}$"},
+        "location": {"type": "object", "additionalProperties": false, "properties": {"file": {"type": "string"}, "line": {"type": "integer", "minimum": 1}}}
+      }
+    }
+  }
+}

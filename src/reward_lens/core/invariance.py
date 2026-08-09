@@ -1,4 +1,4 @@
-"""Invariance groups, because causal abstraction is vacuous without a restriction class.
+"""Invariance groups, because causal abstraction is vacuous without a restriction class (section 2.6).
 
 Sutter et al. (2507.08802) map randomly initialised language models to the IOI circuit with perfect
 accuracy. Causal abstraction, the framework under activation patching, causal scrubbing, DAS,
@@ -8,14 +8,15 @@ a fix. A gauge is the fix, and this module is the gauge made executable.
 
 What it buys, concretely: every registered instrument gets one property test it did not write, and
 an instrument that never thought about the question does not merge. That is the single lint rule
-that keeps the whole catalogue answering the question one way rather than one dialect per module.
+that makes a large parallel build produce one library rather than one dialect per builder.
 
 Three things here are easy to get wrong, so they are typed rather than documented.
 
 **A group does not have a status; an instrument's relation to a group does.** `repr.basis` admits
 all three of invariant, covariant and raw_only, and which one applies is a property of the
-instrument. Putting `status` on `InvarianceGroup` cannot express that, so the status lives on
-`Relation` and the group declares which relations its assertion admits.
+instrument. Section 2.6 puts `status` on `InvarianceGroup`, which cannot express that, so the
+status moves onto `Relation` and the group declares which relations its assertion admits. Recorded
+in SPEC-ERRATA as E13.
 
 **A covariant instrument does not return the same value.** It scales by a stated power of the
 group parameter, so the check is `v' == a**weight * v`, not `v' == v`. An implementation that only
@@ -32,14 +33,19 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field, replace
 from random import Random
-from typing import Any, Callable, Literal, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, Sequence
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy")
 
 InvarianceGroupID = str
 
 #: What a deliberate answer of "no group acts on this" resolves to. Distinct from a missing
-#: declaration, which is a lint failure.
+#: declaration, which is a lint failure. See SPEC-ERRATA E11.
 TRIVIAL_GROUP: InvarianceGroupID = "trivial"
 
 Status = Literal["invariant", "covariant", "raw_only"]
@@ -55,7 +61,7 @@ class InvariancePayload:
     """The transformable state a group acts on, in one vocabulary all seven groups share.
 
     A generated test has to hand every instrument the same kind of object, so the seven groups need
-    a common surface to act through. This is it: the fields the seven groups name,
+    a common surface to act through. This is it: the fields the seven groups of Appendix B name,
     each optional, so an instrument that reads only scores is not obliged to manufacture
     activations it never looks at.
 
@@ -105,8 +111,9 @@ class GroupAction:
     ``v' == a**weight * v``, and a failing report has to be able to say which draw broke it, so a
     reproducer is a dict rather than a rerun.
 
-    ``sample`` is the generator: it draws a sibling from the same family. It lives on this type,
-    so a generator is a canonical member of its own family and sampling it yields another.
+    ``sample`` is the generator: it draws a sibling from the same family. Section 2.6 prints it on
+    this type, so a generator is a canonical member of its own family and sampling it yields
+    another. Kept as printed.
     """
 
     name: str
@@ -122,7 +129,7 @@ class GroupAction:
 class InvarianceGroup:
     """A restriction class, with samplable generators and the assertion it licenses.
 
-    ``admits`` is the set of relations this group's assertion offers, which
+    ``admits`` is the set of relations Appendix B's assertion column offers for this group, which
     for three of the seven is more than one. An instrument declaring a relation the group does not
     admit is a lint failure, and that is a real check: declaring `raw_only` under
     `group.permutation` would be a way of opting out of a test that exists to detect position bias.
@@ -186,7 +193,7 @@ RAW_ONLY = Relation("raw_only")
 
 
 # ---------------------------------------------------------------------------
-# The seven groups
+# The seven groups of Appendix B
 # ---------------------------------------------------------------------------
 
 
@@ -255,10 +262,11 @@ def _null() -> InvarianceGroup:
 def _basis() -> InvarianceGroup:
     """`Q ~ Haar(O(d))`, activations `h → Qh`, readouts `w → Qw`.
 
-    The readout transform is written `w → Qw` in one convention and `W → WQᵀ` in the other. Those
-    are the same map under the two conventions for whether directions are rows or columns, and
-    neither statement says which it means. Rows here, so activations `(n, d)` go to `h Qᵀ` and
-    readouts `(k, d)` go to `w Qᵀ`, which keeps every inner product `h·w` exactly invariant.
+    Appendix B writes the readout transform `w → Qw` and section 2.6 writes `W → WQᵀ`. Those are
+    the same map under the two conventions for whether directions are rows or columns, and neither
+    document states which it means. Rows here, so activations `(n, d)` go to `h Qᵀ` and readouts
+    `(k, d)` go to `w Qᵀ`, which keeps every inner product `h·w` exactly invariant. Recorded in
+    SPEC-ERRATA E13.
     """
 
     def make(seed: int) -> GroupAction:
@@ -332,7 +340,7 @@ def _reparam() -> InvarianceGroup:
 def _tokenization() -> InvarianceGroup:
     """Re-tokenise the same string with a different but equivalent tokeniser.
 
-    There is no natural sampler for this generator, because the transform is not a distribution:
+    Appendix B prints no sampler for this generator, because the transform is not a distribution:
     it is "use a different tokeniser that decodes to the same string". The samplable stand-in here
     is a merge-and-split perturbation of the id sequence that preserves length-weighted content,
     which is enough to catch a per-token quantity that never declared a normalisation. An
@@ -365,7 +373,7 @@ def _tokenization() -> InvarianceGroup:
         id="tokenization",
         generators=(make(0),),
         acts_on="tokens",
-        # The assertion offers "be invariant under it, or refuse". A refusal is a `Refusal` value
+        # Appendix B offers "be invariant under it, or refuse". A refusal is a `Refusal` value
         # returned at estimate time; `raw_only` is a declaration that asserts nothing and passes
         # this test unconditionally. Reading the second as the first would let an instrument opt
         # out of the check by declaring itself raw, which is exactly what `admits` exists to stop.
@@ -441,7 +449,7 @@ def _trivial() -> InvarianceGroup:
     on it usefully, so `none` is the correct answer there. It is registered, counted, and its
     generated test passes vacuously, which is honest: there is no transformation to be invariant
     under. Failing to think about the question is what the lint targets, and that is a different
-    act.
+    act. See SPEC-ERRATA E11.
     """
     return InvarianceGroup(
         id=TRIVIAL_GROUP,
@@ -452,7 +460,7 @@ def _trivial() -> InvarianceGroup:
     )
 
 
-#: The seven registered groups, plus the trivial group a deliberate `none` resolves to.
+#: The seven groups of Appendix B, plus the trivial group a deliberate `none` resolves to.
 GROUPS: dict[InvarianceGroupID, InvarianceGroup] = {
     g.id: g
     for g in (
@@ -477,14 +485,14 @@ def get_group(gid: InvarianceGroupID) -> InvarianceGroup:
     normalisation is already the documented behaviour of `inherited_groups` below. It was not the
     behaviour here, so twelve instruments transcribing their registry row faithfully declared
     ``none`` and would have raised the moment a generated test was written for them. One spelling
-    resolves to one object rather than each caller remembering to translate.
+    resolves to one object rather than each caller remembering to translate. SPEC-ERRATA E38.
     """
     key = TRIVIAL_GROUP if gid == "none" else gid
     try:
         return GROUPS[key]
     except KeyError:
         raise KeyError(
-            f"no invariance group registered as {gid!r}. The seven groups are "
+            f"no invariance group registered as {gid!r}. The seven of Appendix B are "
             f"{', '.join(sorted(k for k in GROUPS if k != TRIVIAL_GROUP))}, plus {TRIVIAL_GROUP!r} "
             f"(spelled `none` in spec/QUANTITIES.yaml) for a deliberate declaration of none."
         ) from None
@@ -621,7 +629,7 @@ def check_invariance(
 ) -> InvarianceReport:
     """Draw `n` group elements, apply each, re-run the instrument, assert the declared relation.
 
-    This is the generated invariance property test. Every registered instrument gets one, and
+    This is the generated property test of section 2.6. Every registered instrument gets one, and
     an instrument that declares no group does not merge.
 
     ``instrument`` is anything with a ``name`` and a way to be run. ``run`` supplies the call when
@@ -666,7 +674,7 @@ def check_invariance(
     if rel.status not in g.admits:
         raise ValueError(
             f"{name} declares relation {rel.status!r} under {g.id!r}, which admits "
-            f"{sorted(g.admits)}. This group's assertion does not offer that "
+            f"{sorted(g.admits)}. Appendix B's assertion for this group does not offer that "
             f"relation, so the declaration is a way of opting out of a test rather than a claim."
         )
 
@@ -675,7 +683,7 @@ def check_invariance(
         raise ValueError(
             f"group {g.id!r} has generators with no sampler ({', '.join(unsamplable)}), so drawing "
             f"n elements would return the same element n times and the report would pass on one "
-            f"observation. Every generator must be samplable."
+            f"observation. Section 2.6 requires generators to be samplable."
         )
 
     baseline = _as_float(call(instrument, ctx))
@@ -800,8 +808,8 @@ def resolve_groups(
 ) -> tuple[frozenset[InvarianceGroupID], str]:
     """The groups an instrument is checked under, and where they came from.
 
-    An instrument declares its own group where the catalogue carries one. Where it does not, the
-    groups come from the quantities it estimates, which declare one for all 125 of them. That
+    An instrument declares its own group where Part 5 prints one. Where it does not, the groups
+    come from the quantities it estimates, which Appendix A declares for all 125 of them. That
     inheritance is not a convenience: a quantity's invariance is a property of the quantity, so an
     estimator of it is checked under the same group unless it says otherwise, and 46 of the 52
     instruments whose own column reads OPEN resolve this way.
@@ -863,7 +871,8 @@ def lint_catalogue(
     """Every catalogue instrument declares a group, or inherits one, or is reported.
 
     The rule targets omission. A literal `OPEN` that cannot be resolved from the instrument's
-    quantities is a finding; `none` is an answer and resolves to the trivial group.
+    quantities is a finding; `none` is an answer and resolves to the trivial group. See
+    SPEC-ERRATA E11.
     """
     findings: list[LintFinding] = []
     resolved: dict[str, frozenset[InvarianceGroupID]] = {}

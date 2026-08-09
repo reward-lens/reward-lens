@@ -1,4 +1,4 @@
-"""Reading = Evidence | Refusal. A refusal is a value, not an exception.
+"""Reading = Evidence | Refusal. A refusal is a value, not an exception (section 6.1).
 
 The rule this module enforces is the one that outranks the rest of the design: **a confident wrong
 number is the only unforgivable output.** A `Refusal` carrying a reason, the numbers that produced
@@ -31,31 +31,48 @@ T = TypeVar("T")
 
 
 class RefusalReason(enum.Enum):
-    """The seventeen anticipated conditions an instrument may refuse on.
+    """The fifteen anticipated conditions of section 4.2, plus three ratified amendments.
 
-    Fifteen were there from the start, and two were added later.
+    Fifteen from the specification, which prints these fifteen where the build brief says
+    seventeen; the specification is the contract. Recorded in SPEC-ERRATA E12.
 
-    **The two amendments share one test, and it is the test to apply before proposing a third:
+    **The amendments share one test, and it is the test to apply before proposing a fourth:
     where is the remedy answerable?**
 
-    `RECORD_INCOMPLETE` is the sixteenth. `ACCESS_INSUFFICIENT` means "no estimator works at
+    `RECORD_INCOMPLETE` is the sixteenth (E30). `ACCESS_INSUFFICIENT` means "no estimator works at
     the access you have", answerable **where the reader is standing** by getting more access or
     dropping a rung. This one means "the access is sufficient and the field was never written",
     answerable **upstream**, where the record was produced. Five sites across two packages were
     using one reason for both, and every one of those remedies had the form "record X and re-run".
 
-    `QUANTITY_UNDEFINED` is the seventeenth, and it is the case answerable **nowhere**: the
+    `QUANTITY_UNDEFINED` is the seventeenth (E48), and it is the case answerable **nowhere**: the
     question does not apply to the object. An estimator that does not z-score has no amplification
     to measure, and no access and no rewriting of the record gives it one. It is not
     `SUBSTRATE_MISMATCH` either, which is about the grader's kind rather than the estimator's; the
     two live on different axes and an instrument can be refused on either. Three packages reached
     for it independently before it existed, which is the signal no single report carries and is how
-    `Access.SOURCE` was found.
+    `Access.SOURCE` was found (E20).
+
+    `ESTIMAND_UNSUPPORTED` is the eighteenth, and it is the case answerable **where you are
+    standing, with a different instrument**: the question is well posed and this instrument does not
+    compute in it. The power planner simulates the paired binary test exactly, and a continuous or
+    ordinal estimand is powered against a different test with a different null, so approximating it
+    there would return a confident number computed against the wrong one. It is not
+    `ACCESS_INSUFFICIENT`, which the condition was standing in under: the caller's access is fine
+    and no rung buys the answer. It is not `QUANTITY_UNDEFINED` either, because the power of a
+    continuous comparison is perfectly well defined; it is simply not defined here. And it is not
+    `ENVELOPE_VIOLATED`, which would contradict an envelope declared unconditional. The distinction
+    that matters to the reader is between "you cannot have this" and "you cannot have this from
+    me", and only one of those is a shopping list.
+
+    All three were ratified rather than taken by a builder or an integrator, because a protocol
+    change is not theirs to take, and each landed at an integration rather than mid-wave, because
+    the count assertion below is pinned and a wave of agents writes against it.
     """
 
     #: No estimator exists at this access level. Carries the rung that would work.
     ACCESS_INSUFFICIENT = enum.auto()
-    #: The access is sufficient and the record does not carry the field.
+    #: The access is sufficient and the record does not carry the field. Section 4.2 amendment.
     RECORD_INCOMPLETE = enum.auto()
     #: Asked a program for its activations. A category error, not a hard case.
     SUBSTRATE_MISMATCH = enum.auto()
@@ -80,14 +97,16 @@ class RefusalReason(enum.Enum):
     REFERENCE_UNCERTIFIED = enum.auto()
     #: Scoring against labels with no measured error rate measures the labels.
     LABEL_QUALITY_UNKNOWN = enum.auto()
-    #: A registered prediction's metric is produced by no arc in the plan.
+    #: A registered prediction's metric is produced by no arc in the plan. Section 4.6.
     PLAN_NOT_CLOSED = enum.auto()
     #: The costed plan exceeds the declared budget.
     BUDGET_EXCEEDED = enum.auto()
-    #: The run is not readable at all.
+    #: The run is not readable at all. Section 6.2.
     VOID = enum.auto()
-    #: The question does not apply to this object.
+    #: The question does not apply to this object. Section 4.2 amendment; SPEC-ERRATA E48.
     QUANTITY_UNDEFINED = enum.auto()
+    #: This instrument does not compute in the estimand you supplied. Amendment ratified as D-031.
+    ESTIMAND_UNSUPPORTED = enum.auto()
 
 
 #: What each reason means, in one sentence, for the refusal reference page. Users open that page
@@ -154,6 +173,12 @@ REASON_MEANING: dict[RefusalReason, str] = {
         "This quantity is not defined for this object, so there is nothing here to measure at any "
         "access and from any record. The remedy names the question that does apply instead."
     ),
+    RefusalReason.ESTIMAND_UNSUPPORTED: (
+        "The question is well posed and this instrument does not compute in the estimand you "
+        "supplied. Answering it here would mean powering, or testing, against a different null "
+        "than the one you asked about, so the remedy is a different instrument rather than more "
+        "access."
+    ),
 }
 
 
@@ -212,8 +237,8 @@ if TYPE_CHECKING:
     #:
     #: A real union under the type checker, so `-> Reading` on an instrument that returns a float
     #: is an error mypy catches. It was `Any`, which made every such annotation vacuous and left
-    #: the one rule this module exists to state unenforced by the one tool that could enforce it.
-    #: At runtime it stays `Any`: `evidence` imports nothing from this module and this module
+    #: the one rule section 4.2 states most plainly unenforced by the one tool that could enforce
+    #: it. At runtime it stays `Any`: `evidence` imports nothing from this module and this module
     #: must not start importing `evidence`, because `Refusal.partial` holds an `Evidence` and the
     #: dependency would run both ways.
     Reading: TypeAlias = "Evidence[Any] | Refusal"
@@ -280,7 +305,7 @@ def refuse_incomplete(
     remedy: str,
     **statistics: Any,
 ) -> Refusal:
-    """The record has the shape and not the field.
+    """The record has the shape and not the field. Section 4.2 amendment; SPEC-ERRATA E30.
 
     Kept separate from `refuse_access` because the two send the reader in opposite directions. An
     access refusal is answerable where the reader is standing, by getting more access or dropping a
@@ -311,11 +336,11 @@ def refuse_undefined(
     remedy: str,
     **statistics: Any,
 ) -> Refusal:
-    """The question does not apply to this object.
+    """The question does not apply to this object. Section 4.2 amendment; SPEC-ERRATA E48.
 
     Kept separate from `refuse_access` and `refuse_incomplete` because the three send the reader in
-    three different directions, and one test separates them: **is the remedy answerable where the
-    reader is standing?** An access refusal is answerable there, by getting
+    three different directions, and E30 fixed the test that separates them: **is the remedy
+    answerable where the reader is standing?** An access refusal is answerable there, by getting
     more access or dropping a rung. A record-incomplete refusal is answerable upstream, where the
     record was written. This one is answerable **nowhere**, because no amount of access and no
     rewriting of the record gives a mean-centred estimator an amplification ratio: the quantity is
@@ -330,7 +355,7 @@ def refuse_undefined(
     that does, so it is a required argument rather than an optional courtesy.
 
     Three packages reached for this independently before it existed, which is the signal no single
-    report carries and is exactly how `Access.SOURCE` was found.
+    report carries and is exactly how `Access.SOURCE` was found (E20).
     """
     return Refusal(
         instrument=instrument,

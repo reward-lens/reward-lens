@@ -343,8 +343,8 @@ def generate_mutants_mutmut(source: str, path: Any) -> list[MutantSpec]:
     `FileNotFoundError` from any directory without one. The import therefore happens inside a
     prepared temporary directory with a `setup.cfg` naming a source path.
 
-    Two return shapes, and the difference is a live one. mutmut 3.6.0, which is the version this
-    adapter was first written against, returns `(code, [mutant_name, ...])`. mutmut 3.7.0,
+    Two return shapes, and the difference is a live one. mutmut 3.6.0, which is what the spec's
+    appendix and SPEC-ERRATA E9 both verified, returns `(code, [mutant_name, ...])`. mutmut 3.7.0,
     which is what `mutmut>=3.6.0,<4.0` actually resolves to today, returns a `MutatedFile` with
     `.code`, `.mutant_names` and `.line_span_by_function_name`. Both are handled, because the
     version that gets installed is decided by the resolver rather than by this file.
@@ -743,7 +743,7 @@ _MUTATION_ENVELOPE = EnvelopeSpec(
 
 _MUTATION_DEVIATIONS = (
     "reads the grader's source and never modifies it; declared `Access.SOURCE`, added for the D "
-    "series after this deviation was recorded. "
+    "series after this deviation was recorded. See SPEC-ERRATA E20. "
     "Here MUTATE is exact: this instrument does modify the source.",
     "the catalogue's rung 2 ranks 'mutants by how many rollouts change score', which is zero for "
     "every survivor. Implemented as: survivors ranked by how many rollouts reached the mutated "

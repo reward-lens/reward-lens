@@ -1,12 +1,12 @@
-"""The study runner: execute a frozen study into REGISTERED Evidence and adjudicate it.
+"""The study runner: execute a frozen study into REGISTERED Evidence and adjudicate it (section 2.14).
 
 The runner gives a science's analysis function a ``StudyRun`` handle: it resolves the subjects,
-exposes ``measure`` (which runs an Observable under the study's id so the Evidence is REGISTERED,
-and appends it to the store), and collects the evidence ids the study produced. The analysis
-computes the metrics its frozen predictions named and returns a StudyResult; the runner, not the
-analysis, then checks each prediction and kill criterion against those metrics. That split matters:
-the engine adjudicates against the frozen predictions, so a science cannot quietly move a threshold
-after seeing the data.
+exposes ``measure`` (which runs an Observable under the study's id so the Evidence is REGISTERED by
+gate 3, and appends it to the store), and collects the evidence ids the study produced. The
+analysis computes the metrics its frozen predictions named and returns a StudyResult; the runner,
+not the analysis, then checks each prediction and kill criterion against those metrics. That split
+matters: the engine adjudicates against the frozen predictions, so a science cannot quietly move a
+threshold after seeing the data (R12, I4).
 """
 
 from __future__ import annotations
@@ -31,9 +31,9 @@ class StudyRun:
     """The handle an analysis function uses to measure and record under a frozen study.
 
     ``subjects`` holds the resolved objects (signals, organisms, datasets) keyed by id;
-    ``measure`` runs an Observable with the study id threaded through the Context, so the Evidence
-    is stamped REGISTERED and appended to the store; ``record`` appends an Evidence the analysis
-    built itself. Every id produced is collected in ``evidence_ids`` so the report and the
+    ``measure`` runs an Observable with the study id threaded through the Context, so gate 3 stamps
+    the Evidence REGISTERED and it is appended to the store; ``record`` appends an Evidence the
+    analysis built itself. Every id produced is collected in ``evidence_ids`` so the report and the
     scoreboard can cite the study's adjudicating evidence.
     """
 
@@ -104,7 +104,7 @@ def run_study(
     path, or supplied directly for tests) computes the metrics its predictions named. The runner
     then checks each hypothesis's prediction and each kill criterion against those metrics, sets the
     outcomes, and returns the StudyResult with its adjudicating evidence ids attached. Refutations
-    and fired kill criteria are recorded as prominently as confirmations.
+    and fired kill criteria are recorded as prominently as confirmations (I4).
 
     A metric that was not computed is ``VOID``, with the reason and the remedy attached. It is
     never a pass, never a silent absence, and for a kill criterion it is never a non-firing. That
@@ -114,8 +114,8 @@ def run_study(
 
     ``metric_arcs`` maps a metric name to the id of the arc that was supposed to produce it. When
     a metric is absent the void names that arc, which turns "no value for
-    campaign.bias.battery" into a work item. Plan closure supplies this mapping; it is optional
-    here so the runner can be used before a plan exists.
+    campaign.bias.battery" into a work item. Plan closure (§4.6) supplies this mapping; it is
+    optional here so the runner can be used before a plan exists.
     """
     frozen = spec_or_frozen if isinstance(spec_or_frozen, FrozenStudy) else freeze(spec_or_frozen)
     spec = frozen.spec

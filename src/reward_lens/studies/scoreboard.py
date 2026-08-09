@@ -1,11 +1,11 @@
-"""The theorem scoreboard.
+"""The theorem scoreboard (section 2.14, Appendix C).
 
 The scoreboard registers theorem rows T1 through T14 (and any new ones) with a status in {open,
 confirmed, refuted, mixed} linked to the adjudicating Evidence ids. T1 through T8 are standing
 theorems the program instantiates inside real reward models; T9 through T14 are candidate laws this
 program originates. The difference is a rendered property of the row, not a separate mechanism.
 
-The design is emphatic on one point: refutations render as prominently as confirmations. A
+The design is emphatic on one point (I4): refutations render as prominently as confirmations. A
 scoreboard that hid its refutations would be a marketing document, not a scientific instrument, so
 "refuted" is a first-class status with the same visual weight as "confirmed". The scoreboard
 persists to a JSON file so it composes across studies and can be exported to the site.
@@ -26,7 +26,7 @@ RowStatus = Literal["open", "confirmed", "refuted", "mixed"]
 
 @dataclass
 class ScoreboardRow:
-    """One theorem row."""
+    """One theorem row (section 2.14)."""
 
     id: str
     title: str
@@ -37,8 +37,8 @@ class ScoreboardRow:
     science: str = ""
 
 
-# The standard rows. T1-T8 are standing theorems to instantiate; T9-T14 are the candidate laws
-# this program originates. Titles are compressed from the design's scoreboard notes.
+# The standard rows from Appendix C. T1-T8 are standing theorems to instantiate; T9-T14 are the
+# candidate laws this program originates. Titles are compressed from the design's scoreboard notes.
 DEFAULT_ROWS: tuple[ScoreboardRow, ...] = (
     ScoreboardRow(
         "T1", "Constructive unhackable-subspace finder", "standing_theorem", science="S4"
@@ -72,7 +72,7 @@ DEFAULT_ROWS: tuple[ScoreboardRow, ...] = (
 
 
 class Scoreboard:
-    """A persisted registry of theorem rows and their status."""
+    """A persisted registry of theorem rows and their status (section 2.14)."""
 
     def __init__(self, path: str | Path | None = None):
         self.path = Path(path) if path is not None else None

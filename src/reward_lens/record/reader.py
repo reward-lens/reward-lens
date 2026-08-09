@@ -1,10 +1,10 @@
 """Reading a record, lazily, without materialising the parts nobody asked for.
 
-The design constraint is one sentence of the record schema: `Run.steps` is a `StepStream` and a
-stream is "lazy, chunked, resumable". The case that forces it is the auditor. They are handed a
-record of a run that took four hundred optimizer steps, they want steps 200 to 210 because that is
-where the reward curve bent, and building the other 390 in memory to hand back eleven is the
-difference between an analysis that runs on a laptop and one that does not.
+The design constraint is one sentence from section 2.2: `Run.steps` is a `StepStream` and a stream
+is "lazy, chunked, resumable". The case that forces it is the auditor. They are handed a record of
+a run that took four hundred optimizer steps, they want steps 200 to 210 because that is where the
+reward curve bent, and building the other 390 in memory to hand back eleven is the difference
+between an analysis that runs on a laptop and one that does not.
 
 Laziness here is structural rather than incidental. Partitioning by step range is what makes it
 real: reading steps 200 to 210 of a 401-step run written in partitions of a hundred opens one

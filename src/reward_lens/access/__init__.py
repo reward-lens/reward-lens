@@ -1,8 +1,8 @@
-"""Four-dimensional access resolution and the capability report.
+"""Four-dimensional access resolution and the capability report (sections 2.3, 2.5 and 4.5).
 
 Which instrument applies is decided by four independent things: what you can touch, when you are
 asking, what kind of thing the grader is, and whether the estimator's assumptions are live on this
-run. All four live in the type system. This package resolves all four from what a user
+run. Section 2.3 puts all four in the type system. This package resolves all four from what a user
 actually has on disk, and turns the result into the one output most users will ever see.
 
 Four modules, in the order the report consumes them:
@@ -20,7 +20,7 @@ Four modules, in the order the report consumes them:
     phase is not derivable from access and the attempt is what makes an auditor and a lab
     indistinguishable.
 ``report``
-    The four sections of the report, rendered, with a remedy on every refusal.
+    The four sections of section 4.5, rendered, with a remedy on every refusal.
 
 The package imports no torch and touches no network unless a probe budget authorises it.
 """

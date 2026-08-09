@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reward-lens.github.io/schema/project/1.0/rewardlens.schema.json",
+  "title": "reward-lens project file, version 1.0",
+  "description": "What a project declares about its reward system before anything is measured. Hand-authored beside the pydantic ProjectConfig that implements it; a test in tests/contracts refuses any project file the two layers disagree about.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reward", "tasks", "outcome"],
+  "properties": {
+    "name": {
+      "oneOf": [{"type": "null"}, {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"}],
+      "description": "what the reward system is called, in its authors' words; the record carries it as subject.reward_system.name. Prose, not an identifier: the assay schema's only constraints are non-empty and at most 200 characters, and the pattern adds that a name of whitespace alone is not a name"
+    },
+    "reward": {
+      "type": "object", "additionalProperties": false, "required": ["entry"],
+      "properties": {
+        "entry": {"type": "string", "minLength": 1, "description": "module:callable, or a path to a file with a scoring callable in it"},
+        "kind": {"enum": ["plain", "composite"], "default": "plain"},
+        "shape": {"oneOf": [{"type": "null"}, {"enum": ["plain", "trl", "verifiers", "inspect"]}]},
+        "components": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "entry"],
+          "properties": {"name": {"type": "string", "minLength": 1}, "entry": {"type": "string", "minLength": 1}, "weight": {"type": "number"}}}},
+        "watch": {"type": "array", "items": {"enum": ["none_to_nan", "exception_to_zero", "bool_as_score"]},
+          "description": "the three ways a grader misleads a trainer without raising (D-65)"},
+        "trainer": {"oneOf": [{"type": "null"}, {"enum": ["plain", "trl", "verifiers", "inspect"]}]}
+      }
+    },
+    "tasks": {
+      "type": "object", "additionalProperties": false, "required": ["path", "prompt"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "prompt": {"type": "string", "minLength": 1},
+        "reference": {"type": "string"}, "tests": {"type": "string"}}
+    },
+    "responses": {
+      "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["path"],
+        "properties": {"path": {"type": "string", "minLength": 1}}}]
+    },
+    "outcome": {
+      "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["kind", "path"],
+        "properties": {"kind": {"const": "protected_test_suite"}, "path": {"type": "string", "minLength": 1}}}],
+      "description": "null is a declaration that there is no outcome check, which the record carries as an unqualified outcome, not as a passing one"
+    },
+    "success": {"oneOf": [{"type": "null"}, {"type": "string"}]},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "version": {
+      "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["id"],
+        "properties": {"id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$"},
+          "parents": {"type": "array", "items": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$"}}}}]
+    }
+  }
+}

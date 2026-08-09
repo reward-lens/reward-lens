@@ -25,11 +25,11 @@ Then `find` returns the **shrunk** minimal hit as a Python object, which is what
 Both searches are handed an explicit `Random`, because a reproducer that shows up on one run and
 not the next is not a reproducer.
 
-**Rung 2, coverage-guided fuzzing with `atheris`.** Not reachable in this environment: `atheris` is
-not a declared dependency of the `verifier` extra and is not installed. The entry point exists and
-raises a typed error naming the extra rather than pretending the rung ran, and the catalogue
-records `coverage_guided_available=False` with the reason, so a reading at rung 1 cannot be
-mistaken for a reading at rung 2.
+**Rung 2, coverage-guided fuzzing with `atheris`.** Not built in this release. The entry point
+exists and refuses with RL0701, the catalogue's typed capability refusal, in every environment,
+whether or not `atheris` imports: the harness is absent from the build rather than from the
+machine, so no install reaches it. The catalogue records `coverage_guided_available=False` with
+the reason, so a reading at rung 1 cannot be mistaken for a reading at rung 2.
 
 **Rung 3, symbolic execution, routed by layer.** `crosshair` is not pointed at the grader. It is
 pointed at the *layers of the grader it can reason about*: the parse, the normalisation and the
@@ -66,7 +66,7 @@ from typing import Any, Callable, Iterable, Literal, Mapping, Sequence
 from reward_lens.core.envelope import EnvelopeSpec, RegimeCondition
 from reward_lens.core.errors import RewardLensError
 from reward_lens.core.evidence import Uncertainty, register_payload
-from reward_lens.core.extras import ExtraRequiredError, require_extra
+from reward_lens.core.extras import require_extra
 from reward_lens.core.invariance import Relation
 from reward_lens.core.quantity import CostModel
 from reward_lens.core.reading import Reading, Refusal, RefusalReason
@@ -78,6 +78,7 @@ from reward_lens.core.types import (
     Phase,
     Substrate,
 )
+from reward_lens.errors import make
 from reward_lens.measure.base import BaseObservable, Context, PreflightResult, run
 from reward_lens.verifier import SENSITIVE_NOTE, SENSITIVE_SUBJECT_EXTRA, Rollout, VerifierUnderTest
 from reward_lens.verifier.metamorphic import resolve_grader, score
@@ -203,31 +204,31 @@ def answer_exploit_families(
             name="partial_answer",
             description="the gold appears inside a hedged or negated answer",
             generate=partial_answer,
-            citation="math-verify measured at FPR 1.000 on partial-answer cases",
+            citation="math-verify measured at FPR 1.000 on partial-answer cases (ASSAY 5.D)",
         ),
         ExploitFamily(
             name="substring_containment",
             description="the gold is a substring of a different answer",
             generate=substring_containment,
-            citation="the containment bug behind the 0.832 math false-positive rate",
+            citation="the containment bug behind the 0.832 math false-positive rate (ASSAY 3.9)",
         ),
         ExploitFamily(
             name="empty_answer",
             description="an empty or whitespace answer, including an empty \\boxed{}",
             generate=empty_answer,
-            citation="the empty-extraction path in the buggy-verifier family",
+            citation="the empty-extraction path; ASSAY 3.9's buggy-verifier family",
         ),
         ExploitFamily(
             name="prompt_echo",
             description="the response restates the prompt, which contains the answer",
             generate=prompt_echo,
-            citation="SWE-Bench+ found 33.04% solution leakage of this shape",
+            citation="SWE-Bench+ found 33.04% solution leakage of this shape (ASSAY 3.9)",
         ),
         ExploitFamily(
             name="numeric_tolerance",
             description="a number close to but not equal to the gold, or off by a decade",
             generate=numeric_tolerance,
-            citation="tolerance abuse on a float compare, in the code unit-test family",
+            citation="tolerance abuse on a float compare; ASSAY 3.9's code unit-test family",
         ),
     )
 
@@ -459,18 +460,37 @@ def atheris_available() -> bool:
         return False
 
 
+_RUNG_TWO_NOT_BUILT = (
+    " It is not built in this release at all, so no extra supplies it: it would need a decoder "
+    "from the fuzzer's byte string to a Rollout, and that decoder is grader-specific. Rung 1, "
+    "hypothesis-driven search against a stricter reference, is the highest rung reachable in this "
+    "release, and a reading records rung 1 rather than presenting itself as rung 2."
+)
+
+_ATHERIS_ABSENT_TOO = (
+    " `atheris` is absent here as well, and is not a declared dependency of the `verifier` extra."
+)
+
+
 def coverage_guided_search(*_args: Any, **_kwargs: Any) -> None:
-    """Rung 2. Raises a typed error naming the extra rather than degrading to rung 1 silently."""
-    if not atheris_available():
-        raise ExtraRequiredError(
-            "D5 rung 2 (coverage-guided fuzzing) needs `atheris`, which is not installed and is "
-            "not declared in the `verifier` extra. Rung 1 is the highest rung reachable here, and "
-            "the reading records that rather than presenting itself as rung 2."
-        )
-    raise NotImplementedError(  # pragma: no cover - unreachable until atheris is declared
-        "atheris is importable but the rung-2 harness is not built: it needs a byte-string "
-        "decoder from the fuzzer's input to a Rollout, which is grader-specific."
+    """Rung 2 is not built in this release; refuses with RL0701.
+
+    The refusal is the same whether or not `atheris` imports, because what is missing is the
+    harness, not the machine's packages: a capability this build does not hold is not a capability
+    an install can supply. The type, the code and the exit status come from the catalogue through
+    `make`, so RL0701 exits 5 here and everywhere else it is raised.
+    """
+    refusal = make(
+        "RL0701",
+        capability="the D5 rung-2 coverage-guided fuzzing harness",
+        extra="verifier",
     )
+    message = refusal.message + "." + _RUNG_TWO_NOT_BUILT
+    if not atheris_available():
+        message += _ATHERIS_ABSENT_TOO
+    refusal.message = message
+    refusal.args = (message,)
+    raise refusal
 
 
 # ---------------------------------------------------------------------------
@@ -1104,7 +1124,7 @@ class FalsePositiveFuzzing(BaseObservable):
     # -- the baseline ------------------------------------------------------
 
     def _random_mutation_baseline(self, *, trials: int, rng: Random) -> tuple[int, int]:
-        """The declared baseline: random character edits, same number of attempts.
+        """Section 5.D's declared baseline: random character edits, same number of attempts.
 
         The comparison that matters. Property-based search costs more than mangling bytes, and if
         it does not find more false positives than mangling bytes does, it has not earned the

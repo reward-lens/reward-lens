@@ -1,4 +1,4 @@
-"""``reward_lens.record`` — the canonical process record and its store.
+"""``reward_lens.record`` — the canonical process record and its store (section 2.2).
 
 Everything in Plane B and Plane C reads this and nothing else. If a quantity cannot be computed
 from a `Run`, it is not a quantity this library reports.
@@ -40,6 +40,31 @@ from reward_lens.record.compaction import (
     CompactionSummary,
     crosses,
     events_in_window,
+)
+from reward_lens.record.contract import (
+    GRAINS,
+    ContractField,
+    ContractRecord,
+    ContractRefusal,
+    ContractSchema,
+    ContractWriter,
+    SchemaIncomplete,
+)
+from reward_lens.record.exposure import (
+    ExposureLedger,
+    ExposureTier,
+    MissingExposureTier,
+    TierConflict,
+    TieredValue,
+    quantity_id,
+)
+from reward_lens.record.hardware import (
+    DecodingParameters,
+    EngineIdentity,
+    HardwareIdentity,
+    ReadContext,
+    ReadContextMismatch,
+    capture_hardware,
 )
 from reward_lens.record.labels import (
     Blind,
@@ -208,6 +233,20 @@ __all__ = [
     # group-level structures
     "EstimatorSpec",
     "GroupStats",
+    # the exposure tier (section 7 of the analysis plan)
+    "ExposureTier",
+    "ExposureLedger",
+    "TieredValue",
+    "MissingExposureTier",
+    "TierConflict",
+    "quantity_id",
+    # the read context a behavioural series has to hold fixed (Part 13.3)
+    "HardwareIdentity",
+    "EngineIdentity",
+    "DecodingParameters",
+    "ReadContext",
+    "ReadContextMismatch",
+    "capture_hardware",
     # provenance and compaction
     "SegmentProvenance",
     "SamplingMeta",
@@ -253,7 +292,7 @@ __all__ = [
     # statistics the regime reading is built from
     "logprob_mismatch",
     "mask_policy_signature",
-    # the score tree
+    # the score tree (W2.2)
     "ScoreTree",
     "Leaf",
     "WeightedSum",
@@ -285,7 +324,7 @@ __all__ = [
     "group_scores",
     "overrides",
     "is_additive",
-    # blinded labels
+    # blinded labels (W2.3)
     "Blind",
     "LabelValue",
     "LabelQuality",
@@ -302,7 +341,7 @@ __all__ = [
     "split_trajectory",
     "is_blocked",
     "blocked_names",
-    # arms and coupling
+    # arms and coupling (W2.4)
     "Arm",
     "ArmSet",
     "ArmID",
@@ -321,4 +360,30 @@ __all__ = [
     "run_material",
     "flatten_config",
     "apply_overrides",
+    # the declared field contract a recorder writes against (contract)
+    "ContractSchema",  # the declared fields, their grains and their types
+    "ContractField",  # one declared field
+    "ContractRecord",  # one row written against a schema
+    "ContractRefusal",  # a row the schema will not accept, with the field that stopped it
+    "ContractWriter",  # writes rows and refuses rather than coercing
+    "SchemaIncomplete",  # the schema does not cover what the caller is trying to write
+    "GRAINS",  # the grains a field may be declared at
+    # The modules themselves, so that a full path such as
+    # ``reward_lens.record.hardware`` is a public path rather than a reach into a private one.
+    # ``convert`` is named but not imported here: it is a converter for one published campaign
+    # store and nothing in the record's own path needs it, so it loads when somebody asks for it.
+    "arms",
+    "compaction",
+    "contract",
+    "convert",
+    "exposure",
+    "hardware",
+    "labels",
+    "provenance",
+    "reader",
+    "schema",
+    "scores",
+    "tensors",
+    "turns",
+    "writer",
 ]

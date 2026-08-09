@@ -1,4 +1,4 @@
-"""Held-out labels, in a type a detector's signature cannot accept.
+"""Held-out labels, in a type a detector's signature cannot accept (section 2.2, section 6.1).
 
 A reward-hacking detector is scored against an answer key. The answer key has to live somewhere,
 and wherever it lives it is one attribute access away from the code being scored. Every project
@@ -21,9 +21,9 @@ three tests it names are in `tests/test_record_labels.py`.
 envelope and writes a row to the evidence store saying who opened it, when, for what, and which
 label it was, identified by fingerprint rather than by value. The point of this module is not that
 a label can never be read. A label that can never be read cannot score anything and cannot have its
-own error rate measured, and both of those are required work (`LABEL_QUALITY_UNKNOWN` exists
-precisely because someone has to audit the answer key). The point is that reading one leaves a
-trace a reviewer can find with a single query against the store.
+own error rate measured, and both of those are required work (section 6.1's `LABEL_QUALITY_UNKNOWN`
+exists precisely because someone has to audit the answer key). The point is that reading one leaves
+a trace a reviewer can find with a single query against the store.
 
 **What this does not do, stated plainly.** Python has no private state. `blind._value` reads the
 label, and so does `dataclasses.astuple`. Nothing here stops a determined caller and nothing here
@@ -31,7 +31,7 @@ is a security boundary. What it stops is the accident: the plausible line of cod
 oracle without anyone noticing, including the person who wrote it. Against a deliberate act it
 offers something narrower and still useful, which is that the deliberate act is one grep away
 (`_value`, `astuple`, `__dict__`) and does not look like ordinary code. The type checker is the
-part of this that is actually enforced, which is why there is a mypy job in CI rather than a
+part of this that is actually enforced, which is why W2.3 puts a mypy job in CI rather than a
 docstring here.
 
 Three runtime guards back the type up, because three leakage paths run underneath the type system:
@@ -73,8 +73,8 @@ from reward_lens.core.types import GaugeStatus, SubjectRef, content_hash
 
 # `FeatureID` is imported at runtime rather than under TYPE_CHECKING because `Mapping` is invariant
 # in its key type, so `RolloutFrame.features` typed `Mapping[str, float]` would not satisfy a
-# function annotated `Mapping[FeatureID, float]`, which is the signature a detector has to have.
-# The frame's features are the trajectory's features and they should have the trajectory's
+# function annotated `Mapping[FeatureID, float]`, and that function is the one the acceptance clause
+# names. The frame's features are the trajectory's features and they should have the trajectory's
 # type. No cycle: `record.schema` names this module only under TYPE_CHECKING.
 from reward_lens.record.schema import FeatureID
 
@@ -112,11 +112,11 @@ class LabelLeak(RewardLensError):
 @register_payload
 @dataclass(frozen=True)
 class LabelQuality:
-    """The measured error rate of the labels, and what measured it.
+    """The measured error rate of the labels, and what measured it (section 6.1).
 
-    Scoring an instrument against a one-third-wrong answer key measures the answer key. So this
-    is not decoration on the label, it is the precondition for using the label at all, and
-    `adjudicate` refuses a scoring read when it is absent.
+    Section 6.1: scoring an instrument against a one-third-wrong answer key measures the answer
+    key. So this is not decoration on the label, it is the precondition for using the label at all,
+    and `adjudicate` refuses a scoring read when it is absent.
 
     ``error_rate`` is the fraction of labels found wrong on the audited sample, so it lies in
     [0, 1] and `None` means nobody has looked. ``n_audited`` is how many were checked, and zero
@@ -491,8 +491,9 @@ class Detector(Protocol):
     Not `runtime_checkable`, and that is the point rather than an omission. A runtime-checkable
     Protocol's `isinstance` only checks that the attributes exist, so every callable in Python
     would pass this one and the check would report a leak-free codebase without reading a single
-    annotation. `check_detector` below reads the annotations instead, which is the thing anyone
-    actually wanted from `isinstance` here.
+    annotation. SPEC-ERRATA E16 records the same hollow check on `Instrument`. `check_detector`
+    below reads the annotations instead, which is the thing anyone actually wanted from
+    `isinstance` here.
     """
 
     def __call__(self, frame: RolloutFrame) -> float: ...
@@ -574,7 +575,7 @@ def detector_findings(fn: Any) -> tuple[str, ...]:
     whether characters were typed. Neither constrains anything: `object` accepts a `Blind` under
     mypy as well as at runtime, since every type is a subtype of `object`, and `Any` disables
     checking by definition. A signature annotated with either reads as checked and is not, which is
-    worse than one that reads as unchecked.
+    worse than one that reads as unchecked. SPEC-ERRATA E50 item 8.
     """
     target = _callable_target(fn)
     name = getattr(fn, "__name__", None) or type(fn).__name__
@@ -663,7 +664,7 @@ class ReadPurpose(Enum):
     """Why a label is being opened. Recorded in the row, and it decides the refusal.
 
     Two members, not three, because a third would become the loophole. `AUDIT` is the escape from
-    the circularity: the labels need a measured error rate before anything may be
+    the circularity in section 6.1: the labels need a measured error rate before anything may be
     scored against them, and measuring that rate means reading the labels. `SCORING` is everything
     else and is the one that refuses.
 
@@ -673,7 +674,7 @@ class ReadPurpose(Enum):
     """
 
     #: Scoring an instrument, a detector or a claim against the labels. Refused when the labels
-    #: have no measured error rate.
+    #: have no measured error rate, per section 6.1.
     SCORING = "scoring"
     #: Measuring or inspecting the labels themselves, which is what produces that error rate.
     AUDIT = "audit"
@@ -687,7 +688,7 @@ class LabelRead:
     Carries ``fingerprint`` and not the label. The evidence store is read at `RECORD` access by
     everyone including the person whose detector is being scored, so a row holding the value would
     be a second copy of the answer key sitting outside the type system, reachable by the one access
-    level that every access profile has.
+    level that every profile in section 2.3 has.
 
     ``read_at`` and ``read_index`` are in the payload rather than only in the envelope because the
     evidence id is content-derived and `created_at` is deliberately excluded from it. Without a
@@ -749,7 +750,7 @@ def _as_subject(subject: SubjectRef | str) -> SubjectRef:
 
 
 def _quality_refusal(*, instrument: str, keys: tuple[str, ...], quality: LabelQuality) -> Refusal:
-    """A `LABEL_QUALITY_UNKNOWN` refusal, with the numbers that produced it and a remedy."""
+    """Section 6.1's `LABEL_QUALITY_UNKNOWN`, with the numbers that produced it and a remedy."""
     listed = ", ".join(repr(k) for k in keys)
     return Refusal(
         instrument=instrument,

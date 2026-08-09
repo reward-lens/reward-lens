@@ -1,4 +1,4 @@
-"""The capability report: what you could learn about this run, and what more costs.
+"""The capability report of section 4.5: what you could learn about this run, and what more costs.
 
 This is the product for most users. Somebody with a rollout record and a grader endpoint runs one
 command and gets four things: what access they turned out to have, whether the estimators'
@@ -11,14 +11,14 @@ be the front door. Nothing here loads a model, runs an estimator, or touches the
 Three commitments shape the code more than anything else.
 
 **Availability is only ever claimed for a registered estimator.** `spec/CATALOGUE.yaml` describes 95
-instruments and its `access_min` column is free prose ("all four books", "an exploit log",
-"GRADER:RECORD (r0), REPLICATE (r2+)"). Parsing that into an access
+instruments and its `access_min` column is prose from the specification's own tables ("all four
+books", "an exploit log", "GRADER:RECORD (r0), REPLICATE (r2+)"). Parsing that into an access
 requirement would be a guess, and a guess in the generous direction produces the one output this
 library exists to prevent. So the catalogue's prose is printed verbatim and never parsed, and an
 instrument with no registered estimator appears under SPECIFIED, NOT YET BUILT.
 
-That rule is right and its implementation was silently wrong for a long time, which is worth
-recording here. This paragraph used to end "Today that is all 85 of
+That rule is right and its implementation was silently wrong for the whole build, which is worth
+recording here rather than only in the errata. This paragraph used to end "Today that is all 85 of
 them, and the report says so rather than looking richer than the library is", which was true when it
 was written and became false as forty-three packages closed around it. Nothing re-read it. The
 report's `covered` set is built from `ESTIMATORS`, and estimators register at module import, so in
@@ -77,7 +77,7 @@ from reward_lens.core.types import (
 from reward_lens.measure.base import Context, PreflightResult
 
 # ---------------------------------------------------------------------------
-# Column geometry for the printed report block
+# Column geometry, taken from the block printed in section 4.5
 # ---------------------------------------------------------------------------
 
 _LABEL_COL = 10  # "SUBSTRATE " is the longest label and it is exactly this wide
@@ -86,11 +86,9 @@ _QUANTITY_COL = 48
 _RUNG_COL = 3
 _U_COL = 9
 _REFUSAL_ID_COL = 33
-#: Wide enough for `planned`, the longest status a not-yet-built row can carry, and a gap after it.
-_STATUS_COL = 10
 _WRAP = 79
 #: The ACCESS RESOLVED rows wrap wider than the refusal prose, because their notes start at
-#: column 41 and the longest line in that block is 90 characters.
+#: column 41 and section 4.5's own longest line in that block is 90 characters.
 _ROW_WRAP = 100
 
 #: Refusals print in the order `preflight` checks them, which is the order of how actionable the
@@ -176,7 +174,7 @@ REMEDY_FOR_CONDITION: dict[RegimeCondition, str] = {
     ),
 }
 
-#: What supplies each component, as the flag you would actually type. A remedy such as
+#: What supplies each component, as the flag you would actually type. Section 4.5's
 #: "Remedy: --policy ckpt/step-*/" is this table with one row filled in.
 _SUPPLIES: dict[Component, str] = {
     Component.TASK: "--env <environment source tree>",
@@ -280,7 +278,7 @@ def _envelope_remedy(reading: RegimeReading | None, conditions: Sequence[RegimeC
 class CatalogueInstrument:
     """One row of `spec/CATALOGUE.yaml`, with its declarations normalised.
 
-    The polymorphic-field trap is handled here and nowhere else: six instruments
+    The polymorphic-field trap of SPEC-ERRATA E14 is handled here and nowhere else: six instruments
     store `quantities` as the bare string ``OPEN``, and iterating that yields four single-character
     ids that resolve to nothing and are reported as nothing. `_as_names` normalises a string to an
     empty list explicitly, so an undeclared field reads as undeclared rather than as four phantom
@@ -294,6 +292,7 @@ class CatalogueInstrument:
     phases: frozenset[Phase] = frozenset()
     envelope_requires: frozenset[RegimeCondition] = frozenset()
     access_min: str = ""
+    work_package: str = ""
     wedge: bool = False
     status: str = ""
 
@@ -309,15 +308,13 @@ def _as_names(value: Any) -> tuple[str, ...]:
     return tuple(str(v) for v in value)
 
 
-def _status_word(status: str) -> str:
-    """A row's own `status`, which is the whole of what it can say about work nobody has done.
-
-    Three values, and they are the only three: `built`, `planned`, and `OPEN` for a row that is
-    registered but unscheduled. A row carrying no status at all reads as `OPEN` rather than as
-    blank, because a blank field and a deliberate "nobody has committed to this" look identical
-    and mean different things.
-    """
-    return (status or "").strip() or "OPEN"
+def _work_package(value: Any) -> str:
+    """One instrument (D5) is scheduled across two packages and stores a list. Join, do not repr."""
+    if value in (None, "OPEN"):
+        return ""
+    if isinstance(value, (list, tuple)):
+        return "/".join(str(v) for v in value)
+    return str(value)
 
 
 def _members(names: Sequence[str], enum_cls: Any) -> frozenset[Any]:
@@ -354,6 +351,7 @@ def load_instrument_catalogue(path: Any = None) -> tuple[CatalogueInstrument, ..
             access_min=""
             if row.get("access_min") in (None, "OPEN")
             else str(row.get("access_min")),
+            work_package=_work_package(row.get("work_package")),
             wedge=bool(row.get("wedge", False)),
             status=str(row.get("status", "")),
         )
@@ -408,7 +406,8 @@ class Assessment:
     ``built`` is False for a quantity whose only instrument is a catalogue record. The distinction
     matters in both directions: a not-built instrument is never counted as available, and a
     not-built instrument whose declared envelope already fails on this run is still worth saying
-    out loud, because it tells you the reading would not have been valid even once it is built.
+    out loud, because it tells you the reading would not have been valid even after the wave that
+    builds it lands.
     """
 
     quantity: QuantityID
@@ -434,7 +433,7 @@ class NotBuilt:
     the truth about it. A row with `built=True` has a shipped, linting instrument and no registered
     `EstimatorEntry`, so the report cannot quote its rung, its expected uncertainty or its price,
     and that is the only thing it cannot do. Calling the second one "not yet built" is false about
-    the library.
+    the library, which is the corrected E58.
 
     The obvious shortcut is to fold built rows into `covered` instead. That is worse than the
     defect: the loop that builds this list skips a covered quantity outright, on the assumption it
@@ -446,7 +445,7 @@ class NotBuilt:
     id: str
     name: str
     quantity: str
-    status: str
+    work_package: str
     access_min: str
     wedge: bool = False
     built: bool = False
@@ -454,11 +453,11 @@ class NotBuilt:
 
 @dataclass(frozen=True)
 class CapabilityReport:
-    """The four sections of the report, plus the two the honest version of it needs.
+    """The four sections of section 4.5, plus the two the honest version of it needs.
 
     SPECIFIED, NOT YET BUILT exists because 85 instruments are catalogued and none of them has a
-    registered estimator yet. Folding those into the refusals would misreport what is implemented
-    as an access problem, and hiding them would make the library look smaller than its plan.
+    registered estimator yet. Folding those into the refusals would misreport a build state as an
+    access problem, and hiding them would make the library look smaller than its plan.
 
     NOT CHECKED exists because `PreflightResult.unchecked` has to land somewhere. A report that
     silently omits the checks it could not run is the same failure as an instrument that treats an
@@ -584,7 +583,7 @@ class CapabilityReport:
     def _not_built_block(self, *, show_all: bool) -> list[str]:
         """Two groups, because "nobody wrote it" and "it ships and has no price" are not the same.
 
-        These were one list until a correction. Sixty-three shipped, linting instruments were
+        These were one list until the corrected E58. Sixty-three shipped, linting instruments were
         being described to users as not yet built, because the only signal consulted was whether a
         registered `EstimatorEntry` existed and most instruments do not register one. The rows are
         still both here, and neither is hidden: what changed is that each is now told the truth
@@ -605,29 +604,32 @@ class CapabilityReport:
                 )
             )
             for item in sorted(priced, key=lambda n: _natural(n.id)):
-                lines.append(f"  {item.id:<6}{item.quantity}")
+                lines.append(
+                    f"  {item.id:<6}{item.quantity:<{_REFUSAL_ID_COL}}"
+                    f"{item.work_package or 'unassigned':<12}".rstrip()
+                )
             lines.append("")
 
         lines.append("SPECIFIED, NOT YET BUILT")
         if not unwritten:
             lines.append("  nothing; every catalogued instrument has an implementation.")
             return lines
-        by_status: dict[str, list[NotBuilt]] = {}
+        by_package: dict[str, list[NotBuilt]] = {}
         for item in unwritten:
-            by_status.setdefault(_status_word(item.status), []).append(item)
+            by_package.setdefault(item.work_package or "unassigned", []).append(item)
         if show_all:
             for item in sorted(self.not_built, key=lambda n: _natural(n.id)):
                 lines.append(
                     f"  {item.id:<6}{item.quantity:<{_REFUSAL_ID_COL}}"
-                    f"{_status_word(item.status):<{_STATUS_COL}}"
+                    f"{item.work_package or 'unassigned':<12}"
                     f"{item.access_min}".rstrip()
                 )
         else:
-            for status in sorted(by_status):
-                items = by_status[status]
+            for package in sorted(by_package):
+                items = by_package[package]
                 names = ", ".join(i.id for i in sorted(items, key=lambda n: _natural(n.id)))
                 lines.extend(
-                    _wrap(f"{status}: {_plural(len(items), 'instrument')} ({names})", indent=2)
+                    _wrap(f"{package}: {_plural(len(items), 'instrument')} ({names})", indent=2)
                 )
             lines.append(
                 "  Pass --all to list each one with the access its specification asks for."
@@ -710,6 +712,7 @@ class CapabilityReport:
                     "id": n.id,
                     "name": n.name,
                     "quantity": n.quantity,
+                    "work_package": n.work_package,
                     "access_min": n.access_min,
                 }
                 for n in self.not_built
@@ -749,8 +752,8 @@ def _leaves_matching(
 ) -> tuple[str, ...]:
     """Which live leaves of a composite grader an instrument's declared substrates cover.
 
-    `COMPOSITE` admits all the other substrates *on its leaves*, plus the composition
-    instruments on the tree itself. So a `PROGRAM` instrument in front of a tree
+    Section 2.3: `COMPOSITE` admits all the other substrates *on its leaves*, plus the composition
+    instruments of section 3.3 on the tree itself. So a `PROGRAM` instrument in front of a tree
     with a verifier leaf is not a category error, it is an instrument pointed at the wrong node,
     and those call for different sentences. Without this the report tells someone with a perfectly
     ordinary verifier-plus-judge grader that a coverage instrument will never apply to them, which
@@ -993,9 +996,7 @@ def _assess_catalogue(
     substrate = substrate_reading.substrate
     quantity = instrument.headline_quantity
     stub = f"{instrument.id} ({instrument.name}) is specified and not yet built"
-    # `planned` is the one status worth adding to the stub: the row is scheduled and nobody has run
-    # it. `OPEN` adds nothing the stub has not already said, and `built` would contradict it.
-    schedule = " (planned)" if _status_word(instrument.status) == "planned" else ""
+    package = f", scheduled for {instrument.work_package}" if instrument.work_package else ""
 
     if instrument.substrates and substrate is not None and substrate not in instrument.substrates:
         leaves = _leaves_matching(instrument.substrates, substrate_reading)
@@ -1010,7 +1011,7 @@ def _assess_catalogue(
                     instrument=instrument.id,
                     reason=RefusalReason.SUBSTRATE_MISMATCH,
                     detail=(
-                        f"{stub}{schedule}, and it declares "
+                        f"{stub}{package}, and it declares "
                         f"{', '.join(sorted(s.name for s in instrument.substrates))}; the grader "
                         f"is {substrate.name}"
                         + (
@@ -1038,7 +1039,7 @@ def _assess_catalogue(
                     instrument=instrument.id,
                     reason=RefusalReason.PHASE_MISMATCH,
                     detail=(
-                        f"{stub}{schedule}, and it answers a "
+                        f"{stub}{package}, and it answers a "
                         f"{'/'.join(sorted(p.name for p in instrument.phases))} question; you are "
                         f"at {phase.name}"
                     ),
@@ -1065,7 +1066,7 @@ def _assess_catalogue(
                 refusal=Refusal(
                     instrument=instrument.id,
                     reason=RefusalReason.ENVELOPE_VIOLATED,
-                    detail=f"{stub}{schedule}, and its envelope already fails on this run: "
+                    detail=f"{stub}{package}, and its envelope already fails on this run: "
                     + _condition_detail(regime, failed),
                     remedy=_envelope_remedy(regime, failed),
                     statistics={"conditions": [c.name for c in failed], "built": False},
@@ -1089,7 +1090,7 @@ def capability_report(
 ) -> CapabilityReport:
     """What this access, substrate, phase and regime can measure, and what it would cost.
 
-    The signature is widened from the plain matrix form so the resolvers in this package can hand
+    The signature is the one section 4.2 prints, widened so the resolvers in this package can hand
     over what they know. `access` takes an `AccessMatrix` or an `AccessResolution`; the second
     carries the per-component notes the report prints in parentheses, and the first renders with
     "supplied by the caller" against every row, which is the truth about a bare matrix.
@@ -1149,7 +1150,7 @@ def capability_report(
                 id=row.id,
                 name=row.name,
                 quantity=row.headline_quantity,
-                status=row.status,
+                work_package=row.work_package,
                 access_min=row.access_min,
                 wedge=row.wedge,
                 # The catalogue's own verdict on whether an implementation exists, which is the

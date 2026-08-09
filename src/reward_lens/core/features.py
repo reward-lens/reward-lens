@@ -9,7 +9,7 @@ it had two answers.
 `directions()` accessor. `loops/recorder.py` defined an unrelated dataclass under the same name
 holding named unit directions for dose tracking. Both were exported, nothing flagged it, and the
 two are not interchangeable: one is a structural contract, the other is a concrete container whose
-``directions`` is an attribute rather than a method. A caller working on the record and a caller
+``directions`` is an attribute rather than a method. An agent working on the record and an agent
 working on the indices would each have met a different object under one name.
 
 The protocol is the contract and it lives here. The container is renamed `DirectionBank`, which is

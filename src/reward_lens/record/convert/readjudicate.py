@@ -1,13 +1,13 @@
 """Re-adjudicating the campaign's twenty-seven cards through the void-aware runner.
 
-A missing metric produces `VOID` with a named reason, and this runs that against the real thing:
-the campaign's own frozen specs, its own recorded metrics, and the runner as it now stands. Nothing
-is recomputed. The metrics are read back out of the ``campaign.adjudication.*`` rows exactly as
-they were written, so the only thing that changes between the campaign's verdicts and these is the
-adjudication code.
+This closes the second half of W0.6. The first half proved that a missing metric produces `VOID`
+with a named reason on a synthetic study. This one runs the real thing: the campaign's own frozen
+specs, its own recorded metrics, and the runner as it now stands. Nothing is recomputed. The
+metrics are read back out of the ``campaign.adjudication.*`` rows exactly as they were written, so
+the only thing that changes between the campaign's verdicts and these is the adjudication code.
 
 **Why the frozen study is rebuilt rather than re-frozen.** `run_study` freezes a bare `StudySpec`
-before running it, which would stamp today's date and the current git sha onto a study that was
+before running it, which would stamp today's date and this build's git sha onto a study that was
 frozen on 2026-07-18 against commit ``f93f4b5``. The whole content of gate 3 is that the freeze
 predates the evidence, so a re-adjudication that re-freezes has destroyed the property it is
 supposed to be checking. `frozen_study` rebuilds the `FrozenStudy` from the campaign's own
@@ -216,7 +216,7 @@ class CardReadjudication:
 
 @dataclass
 class ReadjudicationReport:
-    """The counts the re-adjudication is stated in, plus everything behind them."""
+    """The counts W0.6's second clause is stated in, plus everything behind them."""
 
     cards: tuple[CardReadjudication, ...] = ()
     missing_specs: tuple[str, ...] = ()

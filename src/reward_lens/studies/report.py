@@ -1,4 +1,4 @@
-"""Study reports, rendered from Evidence.
+"""Study reports, rendered from Evidence (section 2.14).
 
 A report is a view over the study's frozen spec and the Evidence it produced; it computes nothing
 new. It shows the registered predictions next to their outcomes, so a reader sees exactly what was

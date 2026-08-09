@@ -1,31 +1,30 @@
-# The quantity registry. 179 rows, 103 in the wedge, 37 declaring no group. 124 come from the
-# source quantity table; the other 55 arrived as later corrections, under the `errata` tags the
-# rows themselves carry: E10 (1), E14 (3), E19 (28), E22 (3), E23 (5), E29 (10), and five
-# adjudicated later and listed at the foot of this file. Five source rows carry an amended unit
-# decomposition under E15.
+# The quantity registry. 179 rows, 103 in the wedge, 37 declaring no group. 124 are ASSAY
+# Appendix A; the other 55 are SPEC-ERRATA E10 (1), E14 (3), E19 (28), E22 (3), E23 (5), E29 (10)
+# and five adjudicated at the top of wave 5 and listed at the foot of this file. Five Appendix A
+# rows carry an amended unit decomposition under E15.
 #
-# The counts are derived from the rows, not restated from the prose. The source table's own header
-# says "126 quantities, of which 68 are in the wedge" and the table has 124 rows and 69 markers,
-# which is a defect on record; the instruction "if you edit a row, recount" sits at the top of both
-# files and three errata edited rows before anyone did. The wedge count later moved from 85 to 103:
-# thirteen of the 28 retrofit rows are in the wedge on their own `min_access` and were marked out
+# The counts are derived from the rows, not restated from the prose. Appendix A's own header says
+# "126 quantities, of which 68 are in the wedge" and the table has 124 rows and 69 markers, which is
+# the defect E10 records; the instruction "if you edit a row, recount" sits at the top of both files
+# and three errata edited rows before anyone did. The wedge count moved from 85 to 103 in wave 5:
+# thirteen of E19's 28 retrofit rows are in the wedge on their own `min_access` and were marked out
 # of it, and five new rows are in it.
 #
-# Unit decomposition into (dimension, per, scale) is this build's, because the source table prints
-# one undecomposed token per row and no Unit body appears in either document. `as_printed` always
+# Unit decomposition into (dimension, per, scale) is this build's, because Appendix A prints one
+# undecomposed token per row and no Unit body appears in either document. `as_printed` always
 # carries the source token so the decomposition is checkable.
 #
-# One row is not from the source quantity table. `credit.successor_representation` is named only in
-# a prose footnote, which is the same defect the later document criticises the earlier one
+# One row is not from the Appendix A table. `credit.successor_representation` is named only in
+# the prose footnote at line 2554, which is the same defect ASSAY 1.5 item 9 criticises CALIPER
 # for. It is registered here so the docs build can name it as an open research target, which is
 # what the footnote asks for and what a prose-only mention cannot deliver.
 #
-# Three more are named in the source instrument entries and have no quantity-table row either:
-# `verifier.fp_catalogue` (D5), `verifier.trusted_inputs` (D9) and
-# `selection.dimensionality` (F5). Registered here for the same reason, marked
-# `errata: E14`. Two further ids in the instrument entries, `grader.condorcet` and
-# `reference.u_char`, are alternate spellings of `grader.condorcet_rate` and
-# `reference.u_characterisation`, which the table does carry; those are not registered twice.
+# Three more are named in Part 5's instrument entries and have no Appendix A row either:
+# `verifier.fp_catalogue` (D5, line 1722), `verifier.trusted_inputs` (D9, line 1734) and
+# `selection.dimensionality` (F5, line 1778). Registered here for the same reason, marked
+# `errata: E14`. Two further ids in Part 5, `grader.condorcet` and `reference.u_char`, are
+# alternate spellings of `grader.condorcet_rate` and `reference.u_characterisation`, which the
+# table does carry; those are not registered twice.
 quantities:
 - id: grader.effective_group_size
   unit:
@@ -34,7 +33,7 @@ quantities:
     per: group
     scale: null
   # Amended: `per` was null, which merged this with `verifier.surviving_mutants`, a count with
-  # no denominator at all. The A1 instrument entry defines it over "a group of K rollouts" and reports it
+  # no denominator at all. Part 5 A1 defines it over "a group of K rollouts" and reports it
   # as "4.2, not 16", where 16 is K. `group` is one of the four `per` values the Unit class
   # names and no row used it. See errata E15.
   errata: E15
@@ -44,7 +43,7 @@ quantities:
   instrument:
   - A1
   wedge: true
-  # Filled when A1 stopped multiplying the Kish shape factor into this quantity. The
+  # Filled at wave 6, when A1 stopped multiplying the Kish shape factor into this quantity. The
   # three fields were OPEN because nobody had had to say precisely what the number was until the
   # correction forced the question. Lifted verbatim from `EFFECTIVE_GROUP_SIZE` in
   # `measure/metrology/gstudy.py`, which is the declaration the instrument is checked against.
@@ -74,14 +73,14 @@ quantities:
     dimension: ratio
     per: group
     scale: null
-  # Registered to carry the half of the old `grader.effective_group_size` that was
+  # Registered at wave 6, carrying the half of the old `grader.effective_group_size` that was
   # never a property of the grader. A1 multiplied Kish's shape factor by the reliability and
   # called the product an effective group size; the two answer different questions and their
   # product is not a quantity. The shape factor asks how unequal the deviations within a group
   # are, which is a fact about the policy and the reward. The reliability asks how much of the
   # observed variance is true score, which is a fact about the grader. This id exists so the
   # first one can be reported, compared and stored on its own terms rather than smuggled into
-  # the second.
+  # the second. Proposed by the A1 builder with this reasoning and registered by the integrator.
   #
   # It is `run.` rather than `grader.` deliberately: filing it under `grader.` would re-assert
   # the exact conflation the correction removed.
@@ -107,13 +106,13 @@ quantities:
   - 0.0
   - 1.0
 # ---------------------------------------------------------------------------
-# Series N5-N8, the contract layer.
+# Series N5-N8, the contract layer (W3.9). Registered at wave 6.
 #
-# These exist because nothing was scheduled for the contract layer and the mathematics
-# there is pure wedge. The instruments were built and shipped; their
-# catalogue rows and these four quantity ids were never written, so four shipped instruments were
-# failing `lint_instrument` rule 1 for some time while the schedule read `done`. Found
-# while enumerating the registry for something else, which is the third
+# W3.9 was added to Phase 3 by the build brief, because Part 9 assigns no work package to section
+# 3.5.2 and the mathematics there is pure wedge. The instruments were built and shipped; their
+# catalogue rows and these four quantity ids were never written, so four shipped instruments have
+# been failing `lint_instrument` rule 1 since wave 4 while their package read `done`. Found by the
+# sciences agent at wave 6 while enumerating the registry for something else, which is the third
 # time in this build that an enumeration-as-a-test caught a hole nobody was looking for.
 #
 # The invariance declarations are the shipped instruments' own and they were thought through:
@@ -163,8 +162,8 @@ quantities:
   interpretation: >-
     Whether the reward is mis-weighted, and if so which component is being starved: the one with
     the lowest alpha_i/mu'_i. The phrase "equal compensation principle" is Milgrom and Roberts
-    (1992) and does not appear in Holmstrom and Milgrom (1991). The source description states the
-    principle backwards, and on a real panel the printed rule and the correct one name opposite ends.
+    (1992) and does not appear in Holmstrom and Milgrom (1991). Section 3.5.2 states the principle
+    backwards and the correct direction names the opposite end on a real panel; see SPEC-ERRATA E46.
   support: OPEN
 - id: reward.sorting_cutoff
   unit:
@@ -222,8 +221,8 @@ quantities:
   instrument:
   - A2
   wedge: true
-  # Lifted from the `Quantity` this package has carried since it was written. The module
-  # held the definition because `spec/QUANTITIES.yaml` was not that module's file to write,
+  # Lifted at wave 6 from the `Quantity` this package has carried since W3.2. The module
+  # held the definition because `spec/QUANTITIES.yaml` was not the builder's file to write,
   # and `test_the_registry_carries_no_definition_for_any_of_them` was left as a tripwire so
   # the duplicate would be deleted when the row landed rather than drifting against it.
   definition: >-
@@ -255,8 +254,8 @@ quantities:
   instrument:
   - A2
   wedge: true
-  # Lifted from the `Quantity` this package has carried since it was written. The module
-  # held the definition because `spec/QUANTITIES.yaml` was not that module's file to write,
+  # Lifted at wave 6 from the `Quantity` this package has carried since W3.2. The module
+  # held the definition because `spec/QUANTITIES.yaml` was not the builder's file to write,
   # and `test_the_registry_carries_no_definition_for_any_of_them` was left as a tripwire so
   # the duplicate would be deleted when the row landed rather than drifting against it.
   definition: >-
@@ -282,8 +281,8 @@ quantities:
   instrument:
   - A2
   wedge: true
-  # Lifted from the `Quantity` this package has carried since it was written. The module
-  # held the definition because `spec/QUANTITIES.yaml` was not that module's file to write,
+  # Lifted at wave 6 from the `Quantity` this package has carried since W3.2. The module
+  # held the definition because `spec/QUANTITIES.yaml` was not the builder's file to write,
   # and `test_the_registry_carries_no_definition_for_any_of_them` was left as a tripwire so
   # the duplicate would be deleted when the row landed rather than drifting against it.
   definition: >-
@@ -317,8 +316,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: reward.affine
   min_access: GRADER:QUERY
   rungs: 4
@@ -334,16 +333,16 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: units
   min_access: derived
   rungs: 2
   instrument:
   - A5
   wedge: false
-  # Lifted from the `Quantity` this package has carried since it was written. The module
-  # held the definition because `spec/QUANTITIES.yaml` was not that module's file to write,
+  # Lifted at wave 6 from the `Quantity` this package has carried since W3.2. The module
+  # held the definition because `spec/QUANTITIES.yaml` was not the builder's file to write,
   # and `test_the_registry_carries_no_definition_for_any_of_them` was left as a tripwire so
   # the duplicate would be deleted when the row landed rather than drifting against it.
   definition: >-
@@ -373,8 +372,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: group.permutation
   min_access: GRADER:REPLICATE
   rungs: 3
@@ -450,8 +449,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: reward.null
   min_access: GRADER:RECORD
   rungs: 1
@@ -545,7 +544,7 @@ quantities:
   # Amended: was `none`, which resolves to the trivial group whose generated property test asserts
   # nothing. Relabelling the comparison graph's vertices is a similarity transform of the Laplacian
   # and eigenvalues are similarity-invariant, so this quantity is provably invariant under a group
-  # that really acts on it, and a unit test already asserts it directly. Declaring `none`
+  # that really acts on it, and a W3.3b unit test already asserts it directly. Declaring `none`
   # discarded a free test of a property that holds.
   invariance_group: group.permutation
   min_access: GRADER:RECORD
@@ -819,8 +818,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: repr.basis
   min_access: GRADER:FORWARD
   rungs: 2
@@ -831,7 +830,7 @@ quantities:
   interpretation: OPEN
   support: OPEN
 - id: judge.commitment_position
-  # Amended. This row declared `token idx` (count per token) under `tokenization`, and
+  # Amended at wave 6. This row declared `token idx` (count per token) under `tokenization`, and
   # `tokenization` admits **only** `invariant`, so the row asserted that a raw token index does not
   # move under retokenisation. It does: that is what retokenisation is. The unit and the invariance
   # group were making incompatible claims and the group was the one telling the truth.
@@ -839,9 +838,8 @@ quantities:
   # Same defect as A6's, which is why the fix is the same shape: the quantity becomes the thing that
   # actually holds the declared invariance. A **fraction of the generated sequence** is stable under
   # retokenisation where an index is not, so the fraction is the quantity and the index travels
-  # beside it as presentation. Found in the module that computes it, which had already declared the
-  # fraction and recorded the index in `deviations` rather than declaring an invariance it could
-  # not defend.
+  # beside it as presentation. Found by the W5.5 builder, which had already declared the fraction and
+  # recorded the index in `deviations` rather than declaring an invariance it could not defend.
   unit:
     as_printed: fraction of sequence
     dimension: fraction
@@ -959,9 +957,10 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: this quantity has no unit row at all, so no unit token was recorded for it.
+    open_reason: this quantity has no Appendix A row at all, so no unit token was printed for it.
+      See SPEC-ERRATA E14.
   # Group inherited from its instrument sibling `verifier.false_positive_rate`, which
-  # the source table prints as `none`: a catalogue of accepted-but-wrong inputs is a set of reproducers
+  # Appendix A prints as `none`: a catalogue of accepted-but-wrong inputs is a set of reproducers
   # and no affine rescaling of the reward acts on it.
   invariance_group: none
   min_access: GRADER:QUERY
@@ -1009,8 +1008,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: composite
   rungs: 1
@@ -1026,8 +1025,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: env source
   rungs: 3
@@ -1058,8 +1057,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: source
   rungs: 3
@@ -1075,8 +1074,9 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: this quantity has no unit row at all, so no unit token was recorded for it.
-  # Group inherited from its instrument sibling `verifier.cfg`, which the source table prints as `none`.
+    open_reason: this quantity has no Appendix A row at all, so no unit token was printed for it.
+      See SPEC-ERRATA E14.
+  # Group inherited from its instrument sibling `verifier.cfg`, which Appendix A prints as `none`.
   invariance_group: none
   min_access: source
   rungs: 3
@@ -1108,8 +1108,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: RECORD
   rungs: 1
@@ -1216,11 +1216,11 @@ quantities:
     per: token
     scale: nats
   # Amended: was per=sequence, which made this unit byte-identical to `update.kl_spent` and
-  # licensed exactly the per-token-against-per-sequence comparison the source documents call the
-  # most common silent error in the literature. Four independent lines say per-token: the quantity
-  # table prints bare `nats` while printing `nats/seq` two rows later; the invariance group is
-  # `tokenization`, whose invariance-table assertion is about per-token quantities; the
-  # estimator-transform table routes "what per token means" to E6; and the record schema puts
+  # licensed exactly the per-token-against-per-sequence comparison section 6.1 calls the most
+  # common silent error in the literature. Four independent lines say per-token: Appendix A
+  # prints bare `nats` while printing `nats/seq` two rows later; the invariance group is
+  # `tokenization`, whose Appendix B assertion is about per-token quantities; section 3.2's
+  # estimator-transform table routes "what per token means" to E6; and section 2.2 puts
   # `logprobs_sampling` and `logprobs_train` on `Turn` as per-token vectors. See errata E15.
   errata: E15
   invariance_group: tokenization
@@ -1388,8 +1388,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: repr.basis
   min_access: POLICY:BACKWARD
   rungs: 4
@@ -1405,8 +1405,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: repr.basis
   min_access: POLICY:BACKWARD
   rungs: 4
@@ -1437,7 +1437,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: this quantity has no unit row at all, so no unit token was recorded for it.
+    open_reason: this quantity has no Appendix A row at all, so no unit token was printed for it.
+      See SPEC-ERRATA E14.
   # Group taken from F5's own printed Grp cell, "`repr.basis` (covariant; needs a shared frame
   # for comparison)", which is also what its two registered siblings carry.
   invariance_group: repr.basis
@@ -1471,10 +1472,10 @@ quantities:
     dimension: OPEN
     per: token
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
-  # Amended: `per` was OPEN, but the source instrument entry calls this "a per-token quantity" in
-  # those words and the quantity table's own min-access cell reads `per-token grads`. `dimension` stays
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
+  # Amended: `per` was OPEN, but Part 5 line 1788 calls this "a per-token quantity" in those
+  # words and Appendix A's own min-access cell reads `per-token grads`. `dimension` stays
   # OPEN, so the unit is still undecided and still refuses comparison. See errata E15.
   errata: E15
   invariance_group: tokenization
@@ -1537,8 +1538,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: RECORD
   rungs: 1
@@ -1645,8 +1646,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: RECORD
   rungs: 1
@@ -1767,8 +1768,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: exploit corpus
   rungs: 1
@@ -1799,8 +1800,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: units
   min_access: RECORD
   rungs: 3
@@ -1876,8 +1877,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: units
   min_access: derived
   rungs: 1
@@ -2092,8 +2093,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: none
   min_access: stored artifacts
   rungs: 1
@@ -2154,10 +2155,10 @@ quantities:
     dimension: OPEN
     per: step
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
-  # Amended: `per` was OPEN, but the M2 instrument entry says "per step" and the source documents
-  # say the overhead "is recorded as `InstrumentEffect` per step". `dimension` stays OPEN because `ms, bytes`
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
+  # Amended: `per` was OPEN, but Part 5 M2 says "per step" and section 2.7 says the overhead
+  # "is recorded as `InstrumentEffect` per step". `dimension` stays OPEN because `ms, bytes`
   # is two dimensions in one registry cell, which is a spec defect in its own right and is
   # recorded as such. See errata E15.
   errata: E15
@@ -2176,8 +2177,8 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the unit is recorded as one undecomposed token and no Unit body is given anywhere;
-      this token does not decompose unambiguously into dimension/per/scale.
+    open_reason: Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this
+      token does not decompose unambiguously into dimension/per/scale.
   invariance_group: units
   min_access: baseline+own
   rungs: 1
@@ -2211,14 +2212,13 @@ quantities:
   invariance_group: units
   min_access: design
   rungs: 3
-  # Kept at [M10, M5], against the conflict adjudication's proposal to drop M5. The quantity table
+  # Kept at [M10, M5], against the conflict adjudication's proposal to drop M5. Appendix A line 2547
   # names only M10, and the installed source is rung 2 of the precedence ladder and beats it:
   # `measure/controls/matched.py:449` declares `study.power` and states the argument at :428, that
   # M5's reading is the control's realised detection at the claim's own design, which is the same
   # quantity M10 computes before the run, estimated at a higher rung by measurement rather than by a
   # calculation. It lints clean. Registering a second id for it would make two ladders for one
-  # quantity, which the registry forbids, so the earlier document's K6 `control.matched_positive`
-  # is not registered.
+  # quantity, which is E14's rule, so CALIPER K6's `control.matched_positive` is not registered.
   instrument:
   - M10
   - M5
@@ -2277,7 +2277,7 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the quantity is named in prose and has no unit row of its own
+    open_reason: the quantity is named in the body and has no Appendix A row
   invariance_group: none
   min_access: OPEN
   rungs: 0
@@ -2287,16 +2287,16 @@ quantities:
     s')].
   interpretation: OPEN
   support: OPEN
-  open_reason: 'an open research target rather than a bug: the state abstraction for a language
-    trajectory is undefined and defining it is the research content.'
+  open_reason: 'ASSAY Appendix A line 2554 names it as an open research target rather than a bug: the
+    state abstraction for a language trajectory is undefined and defining it is the research content.'
 
 # ---------------------------------------------------------------------------
-# The shipped battery and index corpus.
+# The shipped battery and index corpus, registered by W1.5. See SPEC-ERRATA E19.
 #
-# The source documents say the 2.0.1 observables "survive as instruments here", and then give none
-# of them a quantity-table row: the catalogue's C series is C1 to C8 and covers none of the shipped
-# battery. So 28 of the 29 retrofitted instruments had no quantity to declare, and an instrument
-# whose quantity is not registered fails at import by design. These 28 rows are what the retrofit
+# ASSAY 5.C says the 2.0.1 observables "survive as instruments here", and then gives none of them
+# an Appendix A row: the catalogue's C series is C1 to C8 and covers none of the shipped battery.
+# So 28 of the 29 retrofitted instruments had no quantity to declare, and an instrument whose
+# quantity is not registered fails at import by design (4.2). These 28 rows are what the retrofit
 # measured off the implementations, one per instrument, at rung 1.
 #
 # None is in the wedge: this is the white-box corpus, which needs GRADER:FORWARD at minimum.
@@ -2399,7 +2399,7 @@ quantities:
   rungs: 1
   instrument:
   - BiasBattery
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: One-sample Cohen's d of the chosen-minus-rejected reward delta on one surface axis, reported
@@ -2418,7 +2418,7 @@ quantities:
   rungs: 1
   instrument:
   - PromptSNR
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The power ratio mean(delta)^2 / var(delta) of the chosen-minus-rejected reward delta across
@@ -2522,7 +2522,7 @@ quantities:
   rungs: 1
   instrument:
   - Contested
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The correlation between the disagreement signal and its projection onto the covariance direction
@@ -2541,7 +2541,7 @@ quantities:
   rungs: 1
   instrument:
   - CoverageDisparity
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: 'The spread of per-property reward coverage across a battery: the range, the standard deviation,
@@ -2560,7 +2560,7 @@ quantities:
   rungs: 1
   instrument:
   - DarkReward
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: One minus the R-squared of the reward regressed on the named-channel contributions, with
@@ -2613,7 +2613,7 @@ quantities:
   rungs: 1
   instrument:
   - InterpCoverage
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The share of attributed reward magnitude carried by interpretable feature nodes rather than
@@ -2649,7 +2649,7 @@ quantities:
   rungs: 1
   instrument:
   - Legibility
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The Spearman rank agreement between the reward and a least-squares program built from predicates
@@ -2668,7 +2668,7 @@ quantities:
   rungs: 1
   instrument:
   - ReceiptReliance
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The share of the corruption reward effect attributable to receipt spans, as the ratio of
@@ -2687,7 +2687,7 @@ quantities:
   rungs: 1
   instrument:
   - Skepticism
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: S = r(claim, receipt absent) - r(claim, receipt showing failure) at matched narrative.
@@ -2705,7 +2705,7 @@ quantities:
   rungs: 1
   instrument:
   - RobustnessSNR
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The variance of the paraphrase-cluster reward means over the mean within-cluster reward
@@ -2741,7 +2741,7 @@ quantities:
   rungs: 1
   instrument:
   - TailIndex
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The generalized-Pareto shape parameter of the reward's right tail, fitted by the method
@@ -2777,7 +2777,7 @@ quantities:
   rungs: 1
   instrument:
   - VCE
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The reward-subspace alignment of a reward-model pair minus their matched capability-subspace
@@ -2797,7 +2797,7 @@ quantities:
   rungs: 1
   instrument:
   - VerificationScore
-  # Amended: in the wedge on this row's own `min_access`. The retrofit marked all 28 rows out of
+  # Amended: in the wedge on this row's own `min_access`. E19 marked all 28 retrofit rows out of
   # it on the claim that the 2.0.1 corpus needs `GRADER: FORWARD`, and thirteen of them do not.
   wedge: true
   definition: The share of the clean-versus-corrupted reward gap causally attributable to the labelled
@@ -2807,9 +2807,9 @@ quantities:
   errata: E19
 
 # ---------------------------------------------------------------------------
-# The controls bank (M3 and M4).
+# The controls bank (W3.7a, M3 and M4). See SPEC-ERRATA E22.
 #
-# M3 to M8 carry `quantities: OPEN` in the catalogue, so the four control instruments every
+# M3 to M8 carry `quantities: OPEN` in the catalogue (E14), so the four control instruments every
 # other series has to ship against had nothing to declare. M5 declares the existing `study.power`
 # and M10 already owns its three, so only these two instruments needed new ids.
 #
@@ -2877,12 +2877,13 @@ quantities:
     Values above 1 happen and mean the placebo did more.
   support: OPEN
   errata: E22
-# --- Series N, Level 0: the frontier. Registered here, not by the source table. -----------------
-# Every catalogue series was scheduled except the two bodies of mathematics the source documents
-# develop in full and that need only a callable grader and a gold channel on the same n samples:
-# the frontier and the contract layer. Neither has a quantity-table row, so every field below is
-# this build's judgement from that mathematics rather than the specification's, and is marked so.
-# The build checks them against it and reports what is wrong rather than editing them.
+# --- Series N, Level 0: the frontier. Registered by the integrator, not by Appendix A. ----------
+# Part 9 gives a work package to every catalogue series except the two bodies of mathematics Part 3
+# develops in full and that need only a callable grader and a gold channel on the same n samples:
+# 3.0's frontier and 3.5.2's contract layer. Neither has an Appendix A row, so every field below is
+# this build's judgement from 3.0, 3.0.1 and 3.0.3 rather than the specification's, and is marked so.
+# W3.8 checks them against 3.0 while building and reports what is wrong rather than editing them.
+# See errata E23.
 - id: frontier.gold_vs_kl
   unit:
     as_printed: reward
@@ -2940,9 +2941,9 @@ quantities:
   - N3
   wedge: true
   definition: The extreme value index of the reward's upper tail, reported with the estimator's plot
-    over the threshold choice rather than as a point estimate at one k. Hill is reported because it
-    is what makes us comparable to the one published measurement; Pickands carries the LIGHT_TAILED
-    verdict, because Hill is exactly scale invariant
+    over the threshold choice rather than as a point estimate at one k. Hill is reported because
+    section 3.0.1 names it and because it is what makes us comparable to the one published
+    measurement; Pickands carries the LIGHT_TAILED verdict, because Hill is exactly scale invariant
     and not location invariant, and its support is positive so it can never return evidence of
     light-tailedness.
   interpretation: The LIGHT_TAILED precondition the whole tilt layer rests on, because K(lambda) is
@@ -2997,10 +2998,10 @@ quantities:
     available for forty years. The reading is exact at the stated n rather than asymptotic.
   support: null
   errata: E23
-# --- Rows requested by the modules that needed them, registered centrally. -----------------------
-# Each was proposed by the package that needed it, in a report, rather than edited into this file
-# directly. Every one is the same recorded defect: the specification
-# names a quantity in prose or in an instrument entry and the quantity table gives it no row.
+# --- Rows requested by wave 2's builders, registered by the integrator. See SPEC-ERRATA E29. -----
+# Each was proposed by the package that needed it, in a report, rather than edited into this file by
+# the builder. Every one is the same defect E10, E14, E19, E22 and E23 record: the specification
+# names a quantity in prose or in an instrument entry and Appendix A gives it no row.
 - id: grader.abstention_rate
   unit:
     as_printed: '1'
@@ -3018,8 +3019,8 @@ quantities:
     abstained set. It is not the silent-zero rate. A silent zero is the subset where a number was
     substituted for the decline, so a grader with a working abstention channel has a silent-zero
     rate of zero and an abstention rate that is not.
-  interpretation: A rollout whose grader abstained must receive no advantage. It is a first-class
-    reported quantity in its own right, not merely the subset the silent-zero rate covers.
+  interpretation: A rollout whose grader abstained must receive no advantage. Section 3.3 line 1050
+    calls this a first-class reported quantity and Appendix A registers only its subset.
   support:
   - 0.0
   - 1.0
@@ -3030,7 +3031,7 @@ quantities:
     dimension: OPEN
     per: OPEN
     scale: OPEN
-    open_reason: the quantity is named in prose and has no unit row of its own
+    open_reason: the quantity is named in section 6.6 and has no Appendix A row
   invariance_group: reward.affine
   min_access: OPEN
   rungs: 0
@@ -3040,8 +3041,8 @@ quantities:
     where different arms adopt at different steps.
   interpretation: OPEN
   support: OPEN
-  open_reason: the corrected staggered-adoption estimators are the ones to use and no work is
-    scheduled to build them. Two-way fixed effects is a weighted average of
+  open_reason: Section 6.6 line 2026 instructs that the corrected staggered-adoption estimators be
+    used and Part 9 assigns the work to no package. Two-way fixed effects is a weighted average of
     all two-by-two comparisons including late against already-treated, with weights that can be
     negative, so the naive estimator is a different quantity rather than a conservative version of
     this one. record/arms.py records the adoption step per arm and reports when two arms differ in
@@ -3203,7 +3204,7 @@ quantities:
   - 1.0
   - null
   errata: E29
-# Five rows adjudicated later, from six ids the modules computed and declined to invent.
+# Five rows adjudicated at the top of wave 5, from six ids builders computed and declined to invent.
 # Three register what B2 and B3 already compute; two split one id that could not state its own
 # invariance. The sixth, `grader.copeland_slater_disagreement`, is refused rather than deferred: the
 # statistical review measured it at 0.1813 against an achievable range over tie-breaks of
@@ -3348,7 +3349,7 @@ quantities:
   min_access: RECORD
   rungs: 1
   instrument:
-  - J6
+  - W4.6
   wedge: true
   definition: the mean squared error of a set of probability forecasts against their realised binary
     outcomes, on the half-Brier convention of one term per forecast. Void resolutions are excluded
@@ -3368,7 +3369,7 @@ quantities:
   min_access: RECORD
   rungs: 1
   instrument:
-  - J6
+  - W4.6
   wedge: true
   definition: the reliability term of the Murphy decomposition, the binned mean squared gap between
     a forecast probability and the realised frequency at that probability. Lower is better and zero
@@ -3383,7 +3384,7 @@ quantities:
   min_access: RECORD
   rungs: 1
   instrument:
-  - J6
+  - W4.6
   wedge: true
   definition: the resolution term of the Murphy decomposition, how far the binned outcome
     frequencies sit from the overall base rate. Higher is better, and it is the term that separates a
@@ -3398,7 +3399,7 @@ quantities:
   min_access: RECORD
   rungs: 1
   instrument:
-  - J6
+  - W4.6
   wedge: true
   definition: the expected loss saved per event by acting on the forecast rather than on the best
     mandatory baseline, under the forecast's own DecisionSpec. Covariant under a rescaling of the

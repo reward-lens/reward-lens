@@ -1,4 +1,4 @@
-"""The turn: one model action and the environment response to it.
+"""The turn: one model action and the environment response to it (section 2.2).
 
 The level below the trajectory and above the token. Agentic RL is hierarchical and reward attaches
 at every level, so the record has to be too: a process reward attaches here, a tool result arrives
@@ -7,7 +7,7 @@ here, and the loss mask that decides what "per token" means is defined here.
 **Two fields that look redundant and are not.** `logprobs_sampling` and `logprobs_train` are the
 same tokens scored by two different engines, and they differ. Instrument E6
 (`policy.train_infer_logprob_mismatch`) measures that difference and it is the record-level
-expression of the numerics floor: an importance ratio built from two engines that
+expression of the numerics floor in section 4.7: an importance ratio built from two engines that
 disagree by 0.4 nats is measuring the engines, not the policy. Collapsing the two fields into one
 destroys the only measurement that can tell you which one you have. So they stay separate, and a
 converter that has only one of them fills one and leaves the other `None`, which is honest and
@@ -29,11 +29,11 @@ from typing import Any, Iterable, Literal, Mapping
 from reward_lens.core.types import Span
 from reward_lens.record.tensors import TensorRef, ref_from_canonical
 
-#: The canonical schema prints four roles. ``system`` is the fifth and it is added deliberately:
-#: every framework's message list can open with a system message, and the two ways to record one
-#: without this member are to drop it (which corrupts the prompt reconstruction and every token
-#: offset after it) or to relabel it ``user`` (which corrupts the loss-mask attribution, since
-#: system tokens and user tokens are masked by different policies in several trainers).
+#: Section 2.2 prints four roles. ``system`` is the fifth and it is added deliberately: every
+#: framework's message list can open with a system message, and the two ways to record one without
+#: this member are to drop it (which corrupts the prompt reconstruction and every token offset
+#: after it) or to relabel it ``user`` (which corrupts the loss-mask attribution, since system
+#: tokens and user tokens are masked by different policies in several trainers).
 TurnRole = Literal["assistant", "tool", "environment", "user", "system"]
 
 
@@ -84,7 +84,7 @@ class ToolCall:
 
 @dataclass(frozen=True)
 class Turn:
-    """One model action plus the environment response.
+    """One model action plus the environment response (section 2.2).
 
     Five fields beyond the printed schema, each forced by something a framework already records:
 
@@ -237,7 +237,7 @@ def mask_policy_signature(turns: Iterable[Turn]) -> str:
     the same signature applied the same policy; two with different signatures did not.
 
     This returns the statistic. It does not decide whether the condition holds, because the
-    threshold belongs to the envelope and the reading is made there.
+    threshold belongs to the envelope and W2.7 owns the reading.
     """
     per_role: dict[str, set[str]] = {}
     for turn in turns:

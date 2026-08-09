@@ -1,4 +1,4 @@
-"""Compaction: where the prefix was rewritten, and what that does to every ratio.
+"""Compaction: where the prefix was rewritten, and what that does to every ratio (section 2.2).
 
 Long-horizon agents run out of context and the standard fix is to rewrite the prefix: summarise
 the first forty turns into one, drop the tool output nobody referenced again, re-render the

@@ -80,7 +80,7 @@
       ],
       "wedge": true,
       "definition": "The information coefficient varrho(k) = n(k)/t(k) with n(k) = sigma^2(k)/mu'(t(k),k)^2, per component of a composite reward. After dividing each signal by its own sensitivity mu', the commissions must be equal, so the raw weights must satisfy alpha_i proportional to mu'_i.",
-      "interpretation": "Whether the reward is mis-weighted, and if so which component is being starved: the one with the lowest alpha_i/mu'_i. The phrase \"equal compensation principle\" is Milgrom and Roberts (1992) and does not appear in Holmstrom and Milgrom (1991). The source description states the principle backwards, and on a real panel the printed rule and the correct one name opposite ends.",
+      "interpretation": "Whether the reward is mis-weighted, and if so which component is being starved: the one with the lowest alpha_i/mu'_i. The phrase \"equal compensation principle\" is Milgrom and Roberts (1992) and does not appear in Holmstrom and Milgrom (1991). Section 3.5.2 states the principle backwards and the correct direction names the opposite end on a real panel; see SPEC-ERRATA E46.",
       "support": "OPEN"
     },
     {
@@ -207,7 +207,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "reward.affine",
       "min_access": "GRADER:QUERY",
@@ -227,7 +227,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "units",
       "min_access": "derived",
@@ -247,7 +247,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "group.permutation",
       "min_access": "GRADER:REPLICATE",
@@ -343,7 +343,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "reward.null",
       "min_access": "GRADER:RECORD",
@@ -802,7 +802,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "repr.basis",
       "min_access": "GRADER:FORWARD",
@@ -955,7 +955,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "this quantity has no unit row at all, so no unit token was recorded for it."
+        "open_reason": "this quantity has no Appendix A row at all, so no unit token was printed for it. See SPEC-ERRATA E14."
       },
       "invariance_group": "none",
       "min_access": "GRADER:QUERY",
@@ -1014,7 +1014,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "composite",
@@ -1034,7 +1034,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "env source",
@@ -1073,7 +1073,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "source",
@@ -1093,7 +1093,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "this quantity has no unit row at all, so no unit token was recorded for it."
+        "open_reason": "this quantity has no Appendix A row at all, so no unit token was printed for it. See SPEC-ERRATA E14."
       },
       "invariance_group": "none",
       "min_access": "source",
@@ -1133,7 +1133,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "RECORD",
@@ -1477,7 +1477,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "repr.basis",
       "min_access": "POLICY:BACKWARD",
@@ -1497,7 +1497,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "repr.basis",
       "min_access": "POLICY:BACKWARD",
@@ -1536,7 +1536,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "this quantity has no unit row at all, so no unit token was recorded for it."
+        "open_reason": "this quantity has no Appendix A row at all, so no unit token was printed for it. See SPEC-ERRATA E14."
       },
       "invariance_group": "repr.basis",
       "min_access": "POLICY:BACKWARD",
@@ -1576,7 +1576,7 @@
         "dimension": "OPEN",
         "per": "token",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "errata": "E15",
       "invariance_group": "tokenization",
@@ -1654,7 +1654,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "RECORD",
@@ -1789,7 +1789,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "RECORD",
@@ -1942,7 +1942,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "exploit corpus",
@@ -1981,7 +1981,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "units",
       "min_access": "RECORD",
@@ -2077,7 +2077,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "units",
       "min_access": "derived",
@@ -2345,7 +2345,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "none",
       "min_access": "stored artifacts",
@@ -2422,7 +2422,7 @@
         "dimension": "OPEN",
         "per": "step",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "errata": "E15",
       "invariance_group": "units",
@@ -2443,7 +2443,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the unit is recorded as one undecomposed token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
+        "open_reason": "Appendix A prints one undecomposed unit token and no Unit body is given anywhere; this token does not decompose unambiguously into dimension/per/scale."
       },
       "invariance_group": "units",
       "min_access": "baseline+own",
@@ -2559,7 +2559,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the quantity is named in prose and has no unit row of its own"
+        "open_reason": "the quantity is named in the body and has no Appendix A row"
       },
       "invariance_group": "none",
       "min_access": "OPEN",
@@ -2569,7 +2569,7 @@
       "definition": "The discounted state-visitation structure of the policy, M(s,s') = E[sum gamma^t 1(s_t = s')].",
       "interpretation": "OPEN",
       "support": "OPEN",
-      "open_reason": "an open research target rather than a bug: the state abstraction for a language trajectory is undefined and defining it is the research content."
+      "open_reason": "ASSAY Appendix A line 2554 names it as an open research target rather than a bug: the state abstraction for a language trajectory is undefined and defining it is the research content."
     },
     {
       "id": "grader.crystallization_depth",
@@ -3227,7 +3227,7 @@
         "N3"
       ],
       "wedge": true,
-      "definition": "The extreme value index of the reward's upper tail, reported with the estimator's plot over the threshold choice rather than as a point estimate at one k. Hill is reported because it is what makes us comparable to the one published measurement; Pickands carries the LIGHT_TAILED verdict, because Hill is exactly scale invariant and not location invariant, and its support is positive so it can never return evidence of light-tailedness.",
+      "definition": "The extreme value index of the reward's upper tail, reported with the estimator's plot over the threshold choice rather than as a point estimate at one k. Hill is reported because section 3.0.1 names it and because it is what makes us comparable to the one published measurement; Pickands carries the LIGHT_TAILED verdict, because Hill is exactly scale invariant and not location invariant, and its support is positive so it can never return evidence of light-tailedness.",
       "interpretation": "The LIGHT_TAILED precondition the whole tilt layer rests on, because K(lambda) is finite only if the moment generating function exists. Strictly the condition is gamma <= 0, and an exactly Gaussian tail gives a Hill estimate near 0.196 at these thresholds, which is what the cited 0.20 is consistent with. A defensible estimate needs about 1,570 exceedances, which is 31,400 prompts at q = 0.95; below that the instrument refuses rather than reporting a number from 200 prompts.",
       "support": [
         null,
@@ -3291,7 +3291,7 @@
       ],
       "wedge": true,
       "definition": "The fraction of grader calls that declined to score, counting a leaf whose value is None with abstained set. It is not the silent-zero rate. A silent zero is the subset where a number was substituted for the decline, so a grader with a working abstention channel has a silent-zero rate of zero and an abstention rate that is not.",
-      "interpretation": "A rollout whose grader abstained must receive no advantage. It is a first-class reported quantity in its own right, not merely the subset the silent-zero rate covers.",
+      "interpretation": "A rollout whose grader abstained must receive no advantage. Section 3.3 line 1050 calls this a first-class reported quantity and Appendix A registers only its subset.",
       "support": [
         0.0,
         1.0
@@ -3305,7 +3305,7 @@
         "dimension": "OPEN",
         "per": "OPEN",
         "scale": "OPEN",
-        "open_reason": "the quantity is named in prose and has no unit row of its own"
+        "open_reason": "the quantity is named in section 6.6 and has no Appendix A row"
       },
       "invariance_group": "reward.affine",
       "min_access": "OPEN",
@@ -3315,7 +3315,7 @@
       "definition": "The average effect on the treated of an intervention introduced partway through a run, where different arms adopt at different steps.",
       "interpretation": "OPEN",
       "support": "OPEN",
-      "open_reason": "the corrected staggered-adoption estimators are the ones to use and no work is scheduled to build them. Two-way fixed effects is a weighted average of all two-by-two comparisons including late against already-treated, with weights that can be negative, so the naive estimator is a different quantity rather than a conservative version of this one. record/arms.py records the adoption step per arm and reports when two arms differ in it; no estimator exists. The group is reward.affine because under the group z-score the trained policy is unchanged by an affine rescaling of the reward, so an effect on a behavioural outcome is invariant and one on a reward-scale outcome is covariant with weight 1; E13 puts the status on the relation, so the group is right either way and the relation settles with the estimator.",
+      "open_reason": "Section 6.6 line 2026 instructs that the corrected staggered-adoption estimators be used and Part 9 assigns the work to no package. Two-way fixed effects is a weighted average of all two-by-two comparisons including late against already-treated, with weights that can be negative, so the naive estimator is a different quantity rather than a conservative version of this one. record/arms.py records the adoption step per arm and reports when two arms differ in it; no estimator exists. The group is reward.affine because under the group z-score the trained policy is unchanged by an affine rescaling of the reward, so an effect on a behavioural outcome is invariant and one on a reward-scale outcome is covariant with weight 1; E13 puts the status on the relation, so the group is right either way and the relation settles with the estimator.",
       "errata": "E29"
     },
     {
@@ -3608,7 +3608,7 @@
       "min_access": "RECORD",
       "rungs": 1,
       "instrument": [
-        "J6"
+        "W4.6"
       ],
       "wedge": true,
       "definition": "the mean squared error of a set of probability forecasts against their realised binary outcomes, on the half-Brier convention of one term per forecast. Void resolutions are excluded from the numerator and from n, and the count of them travels with the score, because scoring an unresolvable call as a miss and dropping it are different numbers and the reader has to see which was done.",
@@ -3626,7 +3626,7 @@
       "min_access": "RECORD",
       "rungs": 1,
       "instrument": [
-        "J6"
+        "W4.6"
       ],
       "wedge": true,
       "definition": "the reliability term of the Murphy decomposition, the binned mean squared gap between a forecast probability and the realised frequency at that probability. Lower is better and zero means the stated probabilities are the observed frequencies."
@@ -3643,7 +3643,7 @@
       "min_access": "RECORD",
       "rungs": 1,
       "instrument": [
-        "J6"
+        "W4.6"
       ],
       "wedge": true,
       "definition": "the resolution term of the Murphy decomposition, how far the binned outcome frequencies sit from the overall base rate. Higher is better, and it is the term that separates a forecaster who says something from one who is merely well calibrated to the climatology."
@@ -3660,7 +3660,7 @@
       "min_access": "RECORD",
       "rungs": 1,
       "instrument": [
-        "J6"
+        "W4.6"
       ],
       "wedge": true,
       "definition": "the expected loss saved per event by acting on the forecast rather than on the best mandatory baseline, under the forecast's own DecisionSpec. Covariant under a rescaling of the loss, which is why the group is units and not none.",

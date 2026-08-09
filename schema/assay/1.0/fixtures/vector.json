@@ -1,0 +1,422 @@
+{
+ "$schema": "https://reward-lens.github.io/schema/assay/1.0/assay.schema.json",
+ "assay_id": "sha256:7f2dbfdb9a6a10489f398a9161aecb977f470778e246f772488cffb0f6ad0002",
+ "attestation": {
+  "backend": null,
+  "statement_digest": null
+ },
+ "calibration_links": [
+  {
+   "evidence_id": "ev:b37f71c015ebfd697d7deb2a7efb5f7e",
+   "grade": "adopted",
+   "material": "aisi-olmo-kl0-reference-20",
+   "transfer_gap": 1e-06,
+   "transfer_tolerance": 100.0
+  }
+ ],
+ "cost": {
+  "api_calls": 0,
+  "cpu_s": 0.001,
+  "usd": "0.00",
+  "wall_s": 31.0
+ },
+ "created": "2026-09-12T09:14:02Z",
+ "decision": {
+  "action": "train_on_this_version",
+  "policy": null,
+  "reasons": [
+   "blocking_finding:RGX-local-0001",
+   "outcome_unqualified:protected_test_suite",
+   "required_missing:signal"
+  ],
+  "regression_cases": [],
+  "signature": null,
+  "state": "unresolved",
+  "tradeoff": null
+ },
+ "embedding": {
+  "omitted_tables": [],
+  "tier": "A"
+ },
+ "environment_excluded_from_digest": {
+  "cwd": "/nowhere",
+  "host": "not hashed"
+ },
+ "experiments": [],
+ "extensions": {
+  "https://example.org/ns/notes": {
+   "free": "text"
+  }
+ },
+ "findings": [
+  {
+   "arm": "static",
+   "code": "RL0201",
+   "entries": [
+    "validity.static.writable_then_read"
+   ],
+   "id": "RGX-local-0001",
+   "kind": "fail",
+   "level": "error",
+   "location": {
+    "file": "grader.py",
+    "line": 14
+   },
+   "partial_fingerprint": "e3b0c44298fc1c14",
+   "rule": "reach.writable_outcome_artifact",
+   "scope": "evaluator_comparison",
+   "severity_rationale": "a response can set its own score without solving the task"
+  }
+ ],
+ "holes": [
+  {
+   "affected_claims": [
+    "whether this reward teaches at all for this policy"
+   ],
+   "entry_id": "signal.contrast_fraction",
+   "missing_access": "sampled responses grouped by prompt",
+   "remedy": "reward-lens audit ./demo --responses r.jsonl",
+   "section": "signal",
+   "state": "NOT_MEASURED"
+  }
+ ],
+ "intent": {
+  "attack_budget": {
+   "seeker_calls": 0,
+   "usd": "0.00"
+  },
+  "constraints": [
+   "legitimate solutions are kept",
+   "no writes to outcome/"
+  ],
+  "non_equivalent_pairs": [],
+  "outcome_check": {
+   "kind": "protected_test_suite",
+   "measured_disagreement": 0.03,
+   "provenance": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "state": "unqualified"
+  },
+  "partitions": [],
+  "success": "more held-out task success at a fixed training budget"
+ },
+ "join": [
+  {
+   "applied_update_weight": null,
+   "family": "REACH-EDIT-TESTS",
+   "fix_changes_pressure": null,
+   "fix_cost": null,
+   "missing": "a run record: reward-lens trace <run>",
+   "selected": "not_measured"
+  }
+ ],
+ "measurement": {
+  "calibration": [
+   {
+    "depends_on": [
+     "digest:samples"
+    ],
+    "detection": {
+     "LoB": 0.02,
+     "LoD": 0.06,
+     "LoQ": 0.1,
+     "alpha": 0.05,
+     "arl_in_control": 500.0,
+     "arl_out_of_control": 8.0,
+     "beta": 0.05,
+     "false_alarm_rate": 0.04,
+     "material": "aisi-olmo-kl0-reference-20",
+     "sensitivity": 0.9,
+     "target": "hack_rate",
+     "threshold": 0.25
+    },
+    "entry_id": "calibration.onset_detector",
+    "kind": "detection",
+    "limitations": [
+     "calibrated on synthetic reference runs; transfer gap 0.418983 stands (calibration_links)"
+    ],
+    "measurand": "onset of sustained hack rate above threshold",
+    "method": {
+     "id": "rl.detection.cusum",
+     "params_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+     "procedure": "one-sided CUSUM calibrated on 20 reference runs",
+     "version": "3.1.0"
+    },
+    "provenance": {
+     "counters": {
+      "calls": 100,
+      "cpu_s": 2.9,
+      "peak_rss_bytes": 41287680,
+      "wall_s": 3.4
+     },
+     "duration_s": 0.4,
+     "offline": true,
+     "sandbox_tier": "T0",
+     "started": "2026-09-12T09:14:05Z"
+    },
+    "result": {
+     "alarm": false
+    },
+    "scope": "evaluator_comparison",
+    "section": "calibration",
+    "state": "complete",
+    "subject_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+   }
+  ],
+  "exploits": [],
+  "forecast": [],
+  "framing": [],
+  "reach": [],
+  "reward_statistics": [],
+  "signal": [
+   {
+    "absence": {
+     "affected_claims": [
+      "whether this reward teaches at all for this policy"
+     ],
+     "missing_access": "sampled responses grouped by prompt",
+     "remedy": "reward-lens audit ./demo --responses r.jsonl",
+     "state": "NOT_MEASURED"
+    },
+    "depends_on": [
+     "digest:samples"
+    ],
+    "entry_id": "signal.contrast_fraction",
+    "kind": "absence",
+    "limitations": [],
+    "measurand": "fraction of groups carrying any within-group reward contrast",
+    "method": {
+     "id": "rl.signal.contrast_fraction",
+     "params_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+     "procedure": "not run",
+     "version": "3.1.0"
+    },
+    "provenance": {
+     "counters": {
+      "calls": 100,
+      "cpu_s": 2.9,
+      "peak_rss_bytes": 41287680,
+      "wall_s": 3.4
+     },
+     "duration_s": 0.0,
+     "offline": true,
+     "sandbox_tier": "T0",
+     "started": "2026-09-12T09:14:05Z"
+    },
+    "scope": "evaluator_comparison",
+    "section": "signal",
+    "state": "absent",
+    "subject_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+   }
+  ],
+  "soundness": [
+   {
+    "denominator": "known-good items scored",
+    "depends_on": [
+     "digest:source",
+     "digest:outcome_protocol"
+    ],
+    "entry_id": "soundness.known_good_accept_rate",
+    "kind": "estimate",
+    "limitations": [
+     "12 of 12 gives a 95% lower bound of 0.76 and nothing stronger; 0.99 would need n >= 299"
+    ],
+    "measurand": "fraction of known-good solutions the grader accepts",
+    "method": {
+     "id": "rl.soundness.known_good",
+     "params_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+     "procedure": "score the 12 known-good solutions; Clopper-Pearson interval",
+     "version": "3.1.0"
+    },
+    "n": 12,
+    "provenance": {
+     "counters": {
+      "calls": 100,
+      "cpu_s": 2.9,
+      "peak_rss_bytes": 41287680,
+      "wall_s": 3.4
+     },
+     "duration_s": 1.1,
+     "offline": true,
+     "sandbox_tier": "L2",
+     "started": "2026-09-12T09:14:05Z"
+    },
+    "rate_definition": "other",
+    "result": {
+     "accepted": 12,
+     "scored": 12
+    },
+    "sampling_unit": "task",
+    "scope": "evaluator_comparison",
+    "section": "soundness",
+    "state": "complete",
+    "subject_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "uncertainty": {
+     "interval": [
+      0.735403,
+      1.0
+     ],
+     "level": 0.95,
+     "method": "clopper_pearson"
+    },
+    "unit": "fraction",
+    "value": 1.0,
+    "verdicts": {
+     "scored": 12
+    }
+   }
+  ],
+  "trace": [],
+  "validity": [
+   {
+    "check": {
+     "passed": true,
+     "predicate": "distinct_outputs == 1 over 100 repeats",
+     "scope_tested": "fresh state only"
+    },
+    "depends_on": [
+     "digest:source",
+     "digest:environment"
+    ],
+    "entry_id": "validity.replay_determinism",
+    "kind": "check",
+    "limitations": [
+     "fresh state only; concurrent isolation was not tested"
+    ],
+    "measurand": "whether repeated identical requests to the grader return identical scores",
+    "method": {
+     "id": "rl.verifier.replay_fidelity",
+     "params_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+     "procedure": "100 repeats, fixed seed, fresh state",
+     "version": "3.1.0"
+    },
+    "provenance": {
+     "counters": {
+      "calls": 100,
+      "cpu_s": 2.9,
+      "peak_rss_bytes": 41287680,
+      "wall_s": 3.4
+     },
+     "duration_s": 3.4,
+     "offline": true,
+     "sandbox_tier": "L2",
+     "started": "2026-09-12T09:14:05Z"
+    },
+    "result": {
+     "distinct_outputs": 1,
+     "passed": true,
+     "repeats": 100
+    },
+    "scope": "evaluator_comparison",
+    "section": "validity",
+    "state": "complete",
+    "subject_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+   },
+   {
+    "depends_on": [
+     "digest:source"
+    ],
+    "entry_id": "validity.static.writable_then_read",
+    "kind": "witness",
+    "limitations": [
+     "static: whether a response used the path is not established here"
+    ],
+    "measurand": "whether the graded process can write a path the grader later reads",
+    "method": {
+     "id": "rl.audit.static.writable_then_read",
+     "params_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+     "procedure": "read the grader source and its declared inputs; resolve every path it opens against the graded process's writable directory",
+     "version": "3.1.0"
+    },
+    "provenance": {
+     "counters": {
+      "calls": 100,
+      "cpu_s": 2.9,
+      "peak_rss_bytes": 41287680,
+      "wall_s": 3.4
+     },
+     "duration_s": 0.2,
+     "offline": true,
+     "sandbox_tier": "T0",
+     "started": "2026-09-12T09:14:05Z"
+    },
+    "result": {
+     "grader_line": 14,
+     "path": "outcome/test_solution.py"
+    },
+    "scope": "evaluator_comparison",
+    "section": "validity",
+    "state": "complete",
+    "subject_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "witness": {
+     "artifact_identity": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+     "inputs": {
+      "grader": "grader.py",
+      "line": 14
+     },
+     "observed": "grader.py:14 opens outcome/test_solution.py, inside the working directory of the graded process",
+     "path": "grader.py",
+     "procedure": "reward-lens audit ./demo --only validity.static.writable_then_read"
+    }
+   }
+  ]
+ },
+ "producer": {
+  "method_set": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "tool": "reward-lens",
+  "version": "3.1.0"
+ },
+ "provenance": {
+  "access_level": "source",
+  "offline": true,
+  "os": "linux",
+  "reproduce": [
+   "reward-lens audit ./demo --seed 20260911"
+  ],
+  "sandbox_tier": "L2",
+  "seed": 20260911
+ },
+ "rules": [
+  {
+   "help_uri": "https://reward-lens.github.io/docs/findings/reach.writable_outcome_artifact/",
+   "id": "reach.writable_outcome_artifact",
+   "name": "Writable outcome artifact",
+   "short_description": "The graded process can write an artifact the grader later reads."
+  }
+ ],
+ "subject": {
+  "context": {
+   "configuration": "grpo/g8",
+   "policy": null,
+   "task_set": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "digests": {
+   "environment": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "instrument_method": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "outcome_protocol": null,
+   "policy": null,
+   "samples": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "scorer_config": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "source": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "task_distribution": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "training_semantics": null
+  },
+  "reward_system": {
+   "id": "code-reward",
+   "name": "code-reward"
+  },
+  "version": {
+   "declared_change": null,
+   "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+   "id": "v1",
+   "parents": []
+  }
+ },
+ "tables": [
+  {
+   "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+   "id": "samples",
+   "rows": 120,
+   "schema": "schemas/samples.json"
+  }
+ ]
+}

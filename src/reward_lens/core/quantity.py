@@ -1,4 +1,4 @@
-"""Quantities and estimators are different things.
+"""Quantities and estimators are different things (section 2.5).
 
 A **quantity** is what you want to know. An **estimator** is one way to get it, at a stated access
 level, with a stated bias, at a stated cost. Conflating them is what forces a library to have one
@@ -16,8 +16,8 @@ composes into the calibration chain. And a quantity registered with no estimator
 research target rather than a bug, which is a thing the docs build should say out loud.
 
 `Unit` does real work here rather than being a label. A per-token KL compared against a
-per-sequence KL is the most common silent error in this literature, and putting `Unit` inside
-`Quantity` is what turns it into a type error instead of a plausible number.
+per-sequence KL is described in the spec as the most common silent error in this literature, and
+putting `Unit` inside `Quantity` is what turns it into a type error instead of a plausible number.
 """
 
 from __future__ import annotations
@@ -67,14 +67,14 @@ class Unit:
     dimension: str
     per: str | None = None
     scale: str | None = None
-    #: The token as printed in the registry, kept so the decomposition is checkable.
+    #: The token as printed in the spec's registry, kept so the decomposition is checkable.
     as_printed: str = ""
 
     @property
     def is_decided(self) -> bool:
         """Whether every axis has actually been decided.
 
-        24 of the 128 registry rows carry `OPEN` on all three axes, because the registry carries one
+        24 of the 128 registry rows carry `OPEN` on all three axes, because Appendix A prints one
         undecomposed token and some tokens (`tree`, `matrix`, `spectrum`, `graph`) do not decompose
         unambiguously into dimension, per and scale. That is honest, and it is why `as_printed`
         travels with every row.
@@ -304,7 +304,7 @@ def register_estimator(e: EstimatorEntry) -> EstimatorEntry:
         raise ValueError(
             f"estimator {e.impl!r} estimates {e.quantity!r}, which is not a registered quantity. "
             f"Register the quantity first, or fix the id: an instrument whose quantity is not "
-            f"registered fails at import, by design."
+            f"registered fails at import, by design (section 4.2)."
         )
     return ESTIMATORS.register(e.impl, e)  # type: ignore[no-any-return]
 
@@ -437,10 +437,10 @@ def load_quantities(path: Path | None = None) -> LoadReport:
     registered instrument gets one generated invariance property test and a placeholder group
     would manufacture a test that asserts nothing and then report it as coverage.
 
-    The group ``"none"`` is a different thing and it **is** registered. It is carried for 28
+    The group ``"none"`` is a different thing and it **is** registered. Appendix A prints it for 28
     quantities and it is a declaration, not an omission: a count of grader exceptions is not
     affine-covariant in any useful sense, and saying so is the honest answer rather than a gap.
-    The rule that "a new instrument that does not declare a group does not merge" targets
+    Appendix B's rule that "a new instrument that does not declare a group does not merge" targets
     omission; `TRIVIAL_GROUP` is what a deliberate answer of "none" resolves to, so the two are
     distinguishable in the registry instead of collapsing into each other.
     """

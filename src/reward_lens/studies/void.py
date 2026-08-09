@@ -51,7 +51,7 @@ class VoidReason(Enum):
     condition 4. Where the contrast is applied by configuration override rather than by hand, the
     symmetric failure is the override never reaching the trainer, and that one is strictly worse:
     an arm divergence announces itself, while a contrast that never applied produces a tidy null
-    that reads as a result.
+    that reads as a result. SPEC-ERRATA E24 has the reasoning.
     """
 
     #: 1. Either arm's training collapsed: a reward or entropy pathology. Fix the loop, do not read.
@@ -78,7 +78,7 @@ class VoidReason(Enum):
     INSTRUMENT_PERTURBED = "instrument_perturbed"
 
     #: 8. The declared contrast did not differ between the arms, so the comparison has no contrast.
-    #: Condition 4 with the sign flipped, and added here rather than adopted.
+    #: Condition 4 with the sign flipped, and added here rather than adopted. See SPEC-ERRATA E24.
     CONTRAST_INERT = "contrast_inert"
 
 

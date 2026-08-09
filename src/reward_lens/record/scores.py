@@ -1,7 +1,7 @@
 """The score tree: reward composition is an algebra, and removing one piece is a measurement.
 
 `Mapping[str, float]` of weights is the data model every framework ships and it cannot express five
-of the six composition primitives labs actually run: a hard override to a constant, an
+of the six composition primitives labs actually run (section 3.3): a hard override to a constant, an
 automatic loss, lexicographic gating, piecewise-linear anchoring, and a gate conditioned on the
 group rather than on the rollout. So the composition is a tree of eight node types, it is recorded
 rather than summarised, and three things fall out of having it.
@@ -34,7 +34,7 @@ additive, and `is_additive` says which case you are in. And a predicate that is 
 over recorded features has to have had its outcome recorded, because inventing it would be the
 silent zero in another costume.
 
-Two behaviours here are deliberately *not* TRL's.
+Two behaviours are deliberately *not* TRL's, and both are recorded in SPEC-ERRATA E7.
 `grpo_trainer.py` reduces partial-NaN reward rows with `nansum` (lines 2683 and 2716), which turns a
 rollout that half-failed into a smaller real number; here a `WeightedSum` with one abstaining term is
 NaN, because a total missing a term is not a smaller total. And its `nan_to_num(..., 0.0)` at line
@@ -50,7 +50,12 @@ import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Iterable, Iterator, Literal, Mapping, Sequence, Union
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy", extra="record")
 
 from reward_lens.core.evidence import register_payload
 from reward_lens.core.reading import Refusal, RefusalReason
@@ -64,7 +69,7 @@ if TYPE_CHECKING:
 
 # ---------------------------------------------------------------------------
 # Errors. None of these is a refusal: every one is a defect in the tree or in the call, not an
-# anticipated property of the data, and the refusal architecture keeps the two apart on purpose.
+# anticipated property of the data, and section 6.1 keeps the two apart on purpose.
 # ---------------------------------------------------------------------------
 
 
@@ -138,16 +143,16 @@ def _codec_safe(value: Any) -> tuple[Any, bool]:
 class GraderCallRef:
     """What one grader call left in the record: facets, latency, cost and raw output.
 
-    The composition schema prints `grader_call: GraderCall` on `Leaf`. The tap already owns a
-    `GraderCall` (`tap/contract.py`) and it is a different object with a different job: it is a
-    hot-path record holding the host's own arguments and return value **by reference**, built once
-    per call at the 185 ns its own docstring measures, and that docstring says serialising those
-    references is the drain's decision rather than the record's. This is that decision, taken once,
-    in the layer that persists things. Build one with `from_call`.
+    Section 3.3 prints `grader_call: GraderCall` on `Leaf`. The tap already owns a `GraderCall`
+    (`tap/contract.py`) and it is a different object with a different job: it is a hot-path record
+    holding the host's own arguments and return value **by reference**, built once per call at the
+    185 ns its own docstring measures, and that docstring says serialising those references is the
+    drain's decision rather than the record's. This is that decision, taken once, in the layer that
+    persists things. Build one with `from_call`.
 
-    ``facets`` is the crossed-design vocabulary: rater, occasion, rubric draw, order, seed. A5 and
-    A2 read it to separate variance components, and a grader wrapper that records no facets makes
-    the crossed G-study unavailable rather than wrong.
+    ``facets`` is the crossed-design vocabulary of section 2.5: rater, occasion, rubric draw, order,
+    seed. A5 and A2 read it to separate variance components, and a grader wrapper that records no
+    facets makes the crossed G-study unavailable rather than wrong.
     """
 
     grader: str
@@ -720,8 +725,8 @@ def is_additive(tree: "ScoreTree") -> bool:
     """True when the tree is a weighted sum of leaves and nothing else.
 
     Only then do one-at-a-time ablation deltas sum to the total, and only then does a weights dict
-    lose nothing. Measured on real compositions this is usually False, which is the argument for
-    the whole tree in one predicate.
+    lose nothing. Measured on real compositions this is usually False, which is the argument of
+    section 3.3 in one predicate.
     """
     return all(isinstance(n, (Leaf, WeightedSum)) for n in walk(tree))
 
@@ -902,8 +907,8 @@ class AbstentionCensus:
     upper bound of 1.6 on a five-leaf record: the numerator held four leaves the denominator had
     removed. Those leaves are counted in ``n_abstained_unattributed`` instead, so the reader still
     sees that nothing says which grader declined; they show up under ``by_grader['unknown']``.
-    The producer is `tap.adapters.trl`, whose ``refs.get(name)`` is None for any reward function
-    the tap did not see a call from, on the same rows where TRL wrote no score.
+    SPEC-ERRATA E50 item 5. The producer is `tap.adapters.trl`, whose ``refs.get(name)`` is None for
+    any reward function the tap did not see a call from, on the same rows where TRL wrote no score.
 
     ``n_shadowed`` counts leaves that sit under an override that bound for that rollout. The
     pipeline never used their value, so their outcome tells you nothing about the run's live grader
@@ -1034,7 +1039,7 @@ def census(
 class DeadZone:
     """One override's region, and what it cost.
 
-    ``fraction`` is `gate.deadzone_fraction`: the share of rollouts inside
+    ``fraction`` is `gate.deadzone_fraction` as section 3.3 defines it: the share of rollouts inside
     the region, where the score is the constant and the derivative with respect to task quality is
     exactly zero.
 
@@ -1277,10 +1282,11 @@ def replay_advantages(
             out = np.full_like(out, math.nan)
 
     # `clip_low` and `clip_high` are the policy-ratio clip and they are deliberately not applied
-    # here. The group-relative advantage is `(r_i - mean_j r_j) / (std_j(r_j) + eps)` with no clip
-    # term, and ratio clipping is a separate mechanism belonging to the loss: it truncates the
-    # update, not the advantage. The TRL tap writes TRL's `epsilon` and `epsilon_high` into these
-    # fields (`tap/adapters/trl.py:1066-1067`), which is correct, because that is what they are.
+    # here. Section 3.2's advantage is `(r_i - mean_j r_j) / (std_j(r_j) + eps)` with no clip term,
+    # and section 3.2's own table lists ratio clipping as a separate mechanism belonging to the
+    # loss: it truncates the update, not the advantage. The TRL tap writes TRL's `epsilon` and
+    # `epsilon_high` into these fields (`tap/adapters/trl.py:1066-1067`), which is correct, because
+    # that is what they are.
     #
     # Applying them as bounds on the advantage was wrong in a way that was invisible at the default:
     # with `epsilon = 0.2` and no `epsilon_high`, `clip_low == clip_high == 0.2`, so `maximum` then
@@ -1289,7 +1295,7 @@ def replay_advantages(
     # -1.13 to +1.30, and `counterfactual` differences two constant vectors and reports that nothing
     # moved. The estimator module documented all of this correctly and shipped `check_replay` to
     # detect it, but nothing obliged a caller to run the detector before reading the number, so the
-    # detector shipped and the wrong number stayed.
+    # detector shipped and the wrong number stayed. SPEC-ERRATA E50.
     #
     # An abstention leaves with no advantage whatever happened in between.
     out = np.where(live, out, math.nan)

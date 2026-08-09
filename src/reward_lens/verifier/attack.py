@@ -244,9 +244,14 @@ VALIDATOR_NAMES: tuple[str, ...] = (
 
 
 def _requires_libcst() -> None:
-    from reward_lens.core.extras import require_extra
+    """Check libcst is importable, and let a genuine ImportError surface as itself.
 
-    require_extra("verifier", subsystem="D8 (the attack-surface inventory)")
+    This used to call `require_extra("verifier", ...)`. Addendum A-001 moved libcst into the base
+    closure precisely so D8 lights on a base install, which made that guard refuse an instrument
+    whose dependency is present. There is no extra to name any more: if libcst is missing the
+    install is broken rather than incomplete, and an ImportError saying so is the honest error.
+    """
+    import libcst  # noqa: F401
 
 
 # ---------------------------------------------------------------------------
@@ -1279,7 +1284,7 @@ D8_CHEAPNESS_ENVELOPE = EnvelopeSpec(
 )
 
 #: The environment's source and configuration. `Access.SOURCE` exists for exactly this: reading a
-#: harness's text is neither running it nor modifying it.
+#: harness's text is neither running it nor modifying it. See SPEC-ERRATA E20.
 ACCESS_ENV_SOURCE: AccessMatrix = {Component.TASK: Access.SOURCE}
 
 #: A measured cost ratio needs the source *and* the ability to run both a solve and an attack.
@@ -1319,7 +1324,7 @@ class AttackSurfaceInventory(BaseObservable):
     faithful_to = "static taint analysis over libcst's ScopeProvider def-use edges"
     deviations = (
         "reads the harness's source and never modifies it; declared `Access.SOURCE`, added for "
-        "the D series.",
+        "the D series. See SPEC-ERRATA E20.",
         "the taint analysis is intra-procedural over the entrypoint and follows names, not "
         "values. It does not cross function boundaries, so a harness that launders untrusted "
         "input through a helper reports fewer paths than it has.",

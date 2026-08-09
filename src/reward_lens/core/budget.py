@@ -1,4 +1,4 @@
-"""The uncertainty budget and the limits of detection.
+"""The uncertainty budget and the limits of detection (section 4.7).
 
 Two things live here and they answer two different questions. The budget answers "how wrong is
 this number, and which part of the apparatus is responsible?" The limits of detection answer "is
@@ -9,8 +9,9 @@ thrown away the thing worth knowing, which is *which term dominates*. The GUM (t
 Expression of Uncertainty in Measurement, ISO/IEC 98-3) formalises the alternative: enumerate every
 contribution, state for each whether it was evaluated statistically (Type A) or by judgement
 (Type B), give each a sensitivity coefficient, and compose in quadrature. The composition is
-arithmetic and a property test asserts it. The payload is the last line of the table: **the largest
-term is almost never sampling noise**, and a budget that cannot say so is not doing its job.
+arithmetic and a property test asserts it. The payload is the last line of the table: the spec's
+observation is that **the largest term is almost never sampling noise**, and a budget that cannot
+say so is not doing its job.
 
 The Type A / Type B split is worth keeping even though both are treated identically once they are
 standard uncertainties, because the split records *how you know*. "Type B, rectangular, half-width
@@ -23,7 +24,7 @@ return a bound between LOD and LOQ, report with a budget above the LOQ.
 
 `S`, the sensitivity, is the slope of the calibration curve of reading against dose. It is not
 assumed here: `CalibrationCurve` holds the Hill parameters and computes the slope, and fitting
-those parameters over a planted dose sweep is `organisms/dose.py`'s job. The seam is
+those parameters over a planted dose sweep is `organisms/dose.py`'s job (W3.6). The seam is
 deliberate, so that an instrument with no dose sweep cannot silently invent a sensitivity of 1.
 """
 
@@ -608,7 +609,7 @@ class LimitOfDetection:
                 f"lod_k = {self.lod_k} is not a detection multiplier. It scales the blank standard "
                 f"deviation into a limit and must be positive and finite; 3.3 is the convention."
             )
-        # The three-outcome rule is the whole point of this type, and it only has
+        # The three-outcome rule of section 4.7 is the whole point of this type, and it only has
         # three outcomes while LOQ sits above LOD. Overriding the multipliers is supported and
         # sometimes right, but overriding them into the wrong order deletes the middle outcome
         # without saying so: with lod_k = 10 and loq_k = 3.3 no reading anywhere on the real line
@@ -776,7 +777,7 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
-# Incremental validity
+# Incremental validity (section 6.4)
 # ---------------------------------------------------------------------------
 
 

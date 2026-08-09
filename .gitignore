@@ -8,7 +8,8 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+/build/
+# only the root build/ is scratch; frontend/report/build/ holds the build helpers (P-RENDER premise check)
 develop-eggs/
 dist/
 downloads/
@@ -77,3 +78,12 @@ venv.bak/
 .pyre/
 .pytype/
 .fixture-scratch/
+fleet/.hooklog/
+
+# run artifacts the terminal predicate reads at HEAD (never committed: a commit would make them stale)
+fleet/gates/RESULTS*.json
+fleet/gates/logs/
+fleet/golden/RESULTS*.json
+.venv-clean/
+node_modules/
+fleet/waves/dry-runs/

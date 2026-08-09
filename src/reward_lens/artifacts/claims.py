@@ -1,4 +1,4 @@
-"""The manuscript claims checker (R-anti-self-deception).
+"""The manuscript claims checker (section 2.15.5, R-anti-self-deception).
 
 This is the structural fix for the PAPER_DISCREPANCIES failure class: v1's paper numbers disagreed
 with the CSVs (stale appendix tables, transposed rows, invented SNR values) and nobody could tell
@@ -53,15 +53,29 @@ class ClaimReport:
     results: list[ClaimResult] = field(default_factory=list)
     unresolved_refs: list[str] = field(default_factory=list)
     unbound: list["UnboundNumber"] = field(default_factory=list)
+    #: Documents citing ids from more than one run, or two ids for one observable. An evidence
+    #: store is append-only, so a second run of the same harness correctly adds a second row per
+    #: observable rather than replacing the first. That is not a defect in the store and it is a
+    #: defect in a write-up that quotes both: a page is a report of one measurement, and a sentence
+    #: citing run A beside a sentence citing run B reads as one set of numbers and is two.
+    mixed_provenance: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
-        return all(r.ok for r in self.results) and not self.unresolved_refs and not self.unbound
+        return (
+            all(r.ok for r in self.results)
+            and not self.unresolved_refs
+            and not self.unbound
+            and not self.mixed_provenance
+        )
 
     @property
     def n_failures(self) -> int:
         return (
-            sum(1 for r in self.results if not r.ok) + len(self.unresolved_refs) + len(self.unbound)
+            sum(1 for r in self.results if not r.ok)
+            + len(self.unresolved_refs)
+            + len(self.unbound)
+            + len(self.mixed_provenance)
         )
 
     def render(self) -> str:
@@ -77,6 +91,8 @@ class ClaimReport:
             lines.append(f"  [FAIL] {ref}: referenced but not in the store")
         for u in self.unbound:
             lines.append(f"  [FAIL] unbound number {u}")
+        for m in self.mixed_provenance:
+            lines.append(f"  [FAIL] {m}")
         return "\n".join(lines)
 
 
@@ -162,8 +178,49 @@ def check_text(
             continue
         if ref not in store:
             report.unresolved_refs.append(ref)
+        else:
+            tagged_ids.add(ref)
 
+    report.mixed_provenance = _provenance_conflicts(tagged_ids, store)
     return report
+
+
+def _provenance_conflicts(ids: set[str], store: EvidenceStore) -> list[str]:
+    """Whether the ids one document cites come from one run and name each observable once.
+
+    This is the check that was missing when X10's harness ran twice into the same append-only
+    store. Nothing was wrong with the store: it gained nine rows on the second run and kept the
+    first nine, which is what append-only means. What was wrong was that the only thing tying the
+    write-up to a particular run was that somebody had pasted the right ids, and nothing checked
+    it. Three of the five specs had a different hash between the two runs, so the two sets of rows
+    are not even the same measurement repeated.
+    """
+    runs: dict[str, list[str]] = {}
+    observables: dict[str, list[str]] = {}
+    for ev_id in sorted(ids):
+        if not ev_id or ev_id not in store:
+            continue
+        ev = store.get(ev_id)
+        sha = str(getattr(getattr(ev, "provenance", None), "git_sha", "") or "")
+        runs.setdefault(sha, []).append(ev_id)
+        observables.setdefault(str(getattr(ev, "observable", "")), []).append(ev_id)
+
+    problems: list[str] = []
+    if len(runs) > 1:
+        detail = "; ".join(
+            f"{sha[:12] or '(none)'}: {len(v)} ids" for sha, v in sorted(runs.items())
+        )
+        problems.append(
+            f"this document cites evidence from {len(runs)} runs ({detail}). A page reports one "
+            f"measurement; an append-only store keeps every run, so the page has to say which."
+        )
+    for observable, hits in sorted(observables.items()):
+        if len(set(hits)) > 1:
+            problems.append(
+                f"observable {observable!r} is cited at {len(set(hits))} different evidence ids "
+                f"({', '.join(sorted(set(hits)))}). Two readings of one quantity are two readings."
+            )
+    return problems
 
 
 def check_files(paths: list[str | Path], store: EvidenceStore | None = None) -> ClaimReport:
@@ -218,9 +275,9 @@ _ILLUSTRATIVE = (
 # ordinary verb**: "what this does not say is that the mass is 0.214" passed the gate with a bare
 # 0.214 in it. Found by the X7 write-up, whose own section heading tripped it.
 #
-# This is the gate `docs/content/findings.md` runs against **with no baseline at all**, so a hole
-# here is not backlog, it is the published artifact's only check. Narrowed to require a number right
-# after the word, optionally through a comma or an article, which is what the idiom looks like.
+# This is the gate `FINDINGS.md` runs against **with no baseline at all**, so a hole here is not
+# backlog, it is the published artifact's only check. Narrowed to require a number right after the
+# word, optionally through a comma or an article, which is what the idiom actually looks like.
 _ILLUSTRATIVE_SAY_RE = re.compile(r"\bsay,?\s+(?:about\s+|roughly\s+|around\s+)?[-+]?\d")
 
 _FENCE_RE = re.compile(r"```.*?```|~~~.*?~~~", re.S)
@@ -256,8 +313,8 @@ _RELEASE_RE = re.compile(
     re.I,
 )
 
-#: Cross-references. In a manuscript, "section 3.1" and "F1" are addresses rather than
-#: measurements, and a long write-up is full of them.
+#: Cross-references. "section 3.1" and "F1" are addresses, not measurements, and this document
+#: set is full of them.
 _XREF_RE = re.compile(r"(?:§|\bsections?\s+|\bpart\s+|\bappendix\s+)\s*\d+(\.\d+)*", re.I)
 
 #: Licence identifiers. "Apache-2.0" and "MPL-2.0" are names, not measurements.

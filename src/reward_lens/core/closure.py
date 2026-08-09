@@ -1,4 +1,4 @@
-"""Plan closure: prove every registered prediction is reachable before any work starts.
+"""Plan closure: prove every registered prediction is reachable before any work starts (§4.6).
 
 A frozen prediction names a metric. Something has to compute that metric. If nothing in the plan
 does, the prediction cannot be adjudicated, and the campaign that produced this library's evidence
@@ -14,8 +14,8 @@ closes when every one of those is produced by some arc whose own inputs are tran
 too, when the arc graph has no cycle, and when the declared budget covers the arcs the demands
 actually reach.
 
-**Why this raises where the rest of the library returns a value.** The rule everywhere else is that
-a refusal is a value: an instrument that cannot measure returns a `Refusal` carrying the numbers and a
+**Why this raises where the rest of the library returns a value.** §6.1 is emphatic that a refusal
+is a value: an instrument that cannot measure returns a `Refusal` carrying the numbers and a
 remedy, never an exception, because a caller who gets a refusal still has a run to look at and a
 next step to take. Plan closure is the one place where that reasoning inverts. There is no
 measurement to hand back and no partial answer to bound, because nothing has run yet. What the
@@ -92,8 +92,8 @@ class Output:
     point: the producer and the consumer are written in different modules by different people, and
     they have to be able to name the same thing without sharing an object.
 
-    The obvious alternative is `produces: frozenset[QuantityID]` beside a separate `subjects`
-    tuple. Pairing them here rather than crossing them is deliberate: an arc that
+    §4.6 prints `produces: frozenset[QuantityID]` beside a separate `subjects` tuple. Pairing them
+    here rather than crossing them is a deliberate departure, recorded in the errata: an arc that
     declares three quantities and four subjects does not produce twelve things, and reading it as
     if it did is exactly the permissive resolver that would let a plan pass closure and then fail
     at run time.
@@ -167,7 +167,7 @@ class ArcSpec:
     def subjects(self) -> tuple[SubjectRef, ...]:
         """Every subject this arc touches, on either side.
 
-        `subjects` could be a field. It is derived here instead, because a field that repeats
+        §4.6 gives `subjects` as a field. It is derived here instead, because a field that repeats
         what `produces` already says is a field that can disagree with it, and the disagreement
         would be silent.
         """
@@ -364,7 +364,7 @@ class Gap:
 class ClosureReport:
     """What the static check found, whether or not it found anything wrong.
 
-    `metric_arcs` is the field the runner wants. A run should record, per
+    `metric_arcs` is the field the runner wants. §4.6 rule 3 asks that a run record, per
     prediction, which arc was supposed to produce its metric, so that a metric which goes missing
     at run time names the arc rather than only itself. That mapping is a by-product of closing the
     plan, and `run_study(..., metric_arcs=report.metric_arcs)` is what carries it through.

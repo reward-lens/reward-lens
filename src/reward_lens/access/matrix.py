@@ -1,6 +1,7 @@
 """Resolving the access matrix from what was actually supplied, by probing rather than assuming.
 
-`Access` is a per-component flag set. This module answers the question one level down: given a record directory, a grader endpoint, a policy checkpoint and an environment source
+Section 2.3 makes `Access` a per-component flag set. This module answers the question one level
+down: given a record directory, a grader endpoint, a policy checkpoint and an environment source
 tree, which flags are actually true? The answer cannot be read off the argument list. A `--grader`
 URL is a string until something calls it, and a string that 404s is not `QUERY`.
 
@@ -17,7 +18,7 @@ What the resolver will not do is guess in the generous direction. A supplied pol
 resolves to `FORWARD` and not to `BACKWARD`, because establishing `BACKWARD` means loading the
 weights and this package imports no torch. A record's task references resolve to `TASK: RECORD` and
 not to `TASK: QUERY`, because a reference to a task is not the ability to run one. Both of those are
-narrower than an illustrative report would print and both are deliberate: `declared=` exists for a
+narrower than section 4.5's illustrative output and both are deliberate: `declared=` exists for a
 caller who knows better than the probe, and a declared flag is labelled as declared in the report
 rather than passed off as measured.
 """
@@ -59,7 +60,7 @@ def render_access(access: Access) -> str:
 class RecordFacts:
     """The handful of record properties the capability report prints and reasons about.
 
-    This deliberately does not depend on a concrete record schema: it reads a supplied object by
+    W2.1 owns the record schema and it does not exist yet, so this reads a supplied object by
     attribute name against a small list of candidates and records what it could not find in
     ``unread``. A field that could not be read is named, never defaulted to a plausible number: a
     sampling fraction that silently reads 1.0 when the record does not carry one is exactly the
@@ -137,8 +138,8 @@ def _as_count(value: Any) -> int | None:
 def record_facts(record: Any) -> RecordFacts:
     """Read a record object, a mapping, or a path into `RecordFacts`.
 
-    A path is not opened. Opening a record is the record reader's job and this module stays usable
-    without it, so a path resolves to "a record is present here" and every count lands in
+    A path is not opened. Opening a record is W2.1's reader and this module must stay usable before
+    that exists, so a path resolves to "a record is present here" and every count lands in
     ``unread``. That is honest and it still resolves `RECORD` access, which is what the report needs
     from it.
     """
@@ -598,7 +599,7 @@ class AccessResolution:
         return tuple(out)
 
 
-#: The order ACCESS RESOLVED prints components in.
+#: The order ACCESS RESOLVED prints components in, from section 4.5.
 _REPORT_ORDER = (
     Component.TASK,
     Component.GRADER,
@@ -631,8 +632,8 @@ def resolve_access(
     settle it.
 
     `TASK: RECORD` follows from the record's task references. It does not give `QUERY`: a reference
-    to a task is a pointer, not a runner, and this resolver is deliberately narrower here than an
-    illustrative report would be. Supplying an environment source tree gives `TASK: MUTATE`, because source
+    to a task is a pointer, not a runner, and section 4.5's illustrative block is more generous here
+    than this resolver is. Supplying an environment source tree gives `TASK: MUTATE`, because source
     you hold is source you can edit, and it still does not give `QUERY`, because a source tree that
     has never been stood up is not known to run.
 
@@ -757,7 +758,7 @@ def resolution_from_matrix(
 ) -> AccessResolution:
     """Wrap a bare `AccessMatrix` so the report can consume it without provenance.
 
-    Used when someone calls `capability_report` with a plain matrix rather than a resolution.
+    Used when someone calls `capability_report` with the section 4.2 signature and a plain matrix.
     The note is the same for every row, which is the truth: nothing here was resolved.
     """
     return AccessResolution(

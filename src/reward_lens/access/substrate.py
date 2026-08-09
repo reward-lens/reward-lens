@@ -1,4 +1,4 @@
-"""Classifying a grader into one of the six substrates, by walking it.
+"""Classifying a grader into one of the six substrates of section 2.3, by walking it.
 
 "A grader is anything with `score()`" is too coarse, because each substrate admits a different
 instrument family and forbids others. Only the two neural kinds have activations to read. `PROGRAM`
@@ -7,10 +7,10 @@ and it is the one that makes classification an act of walking rather than of loo
 grader is a tree of a verifier, a judge and a rubric aggregator, and its substrate is a property of
 the whole tree and of every leaf in it.
 
-So this module walks. Rather than depending on a concrete score-tree class, it depends on the
+So this module walks. It needs W2.2's `ScoreTree`, which does not exist yet, so it depends on the
 smallest structural protocol that lets a walk happen: a node has ``children`` and a ``combine``
-rule. Everything else it reads is optional and is read defensively. `ScoreNode` below is that
-contract and nothing more.
+rule. Everything else it reads is optional and is read defensively. `ScoreNode` below is the
+contract W2.2 has to satisfy and nothing more.
 
 The rule the classifier holds to is that a leaf it cannot identify is named, never guessed. Getting
 a substrate wrong is not a small error: it is what puts a white-box instrument in front of a
@@ -34,7 +34,7 @@ MAX_DEPTH = 32
 
 @runtime_checkable
 class ScoreNode(Protocol):
-    """The structural contract a score tree has to satisfy for this walk to work.
+    """The structural contract W2.2's `ScoreTree` has to satisfy for this walk to work.
 
     Two attributes are required and the rest are read only if present:
 
@@ -43,8 +43,8 @@ class ScoreNode(Protocol):
     ``combine``
         The combining rule at an internal node, as a name (``"weighted_sum"``, ``"min"``,
         ``"gate"``). `None` at a leaf. The name is not interpreted here; it is carried into the
-        report so a reader can see what composition they are looking at, and the composition
-        instruments will interpret it.
+        report so a reader can see what composition they are looking at, and section 3.3's
+        composition instruments will interpret it.
 
     Read if present, defaulted if not:
 
@@ -280,7 +280,7 @@ def classify_substrate(
 
     A tree with one live leaf is that leaf's substrate rather than `COMPOSITE`, because a
     single-child wrapper is not a composition and calling it one would put the composition
-    instruments in front of something with nothing to compose.
+    instruments of section 3.3 in front of something with nothing to compose.
 
     A tree with more than one live leaf is `COMPOSITE` even when some leaf could not be classified,
     because the composition is a fact about the tree and does not depend on identifying every leaf.

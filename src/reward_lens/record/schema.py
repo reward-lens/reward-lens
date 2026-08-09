@@ -1,4 +1,4 @@
-"""The canonical process record.
+"""The canonical process record (section 2.2).
 
 Everything in Plane B and Plane C reads this and nothing else. It is hierarchical because agentic
 RL is hierarchical and reward attaches at any level:
@@ -10,26 +10,24 @@ distillation), `Trajectory` is one rollout which may be multi-turn, `Turn` is on
 the environment response, and the token level is the per-token arrays inside a turn rather than an
 object of its own.
 
-**Requiredness follows the canonical schema exactly.** A field printed without a default has none
-here, and that is deliberate rather than austere. `Trajectory.advantage` is `float | None`, so a
-default of `None` would make "the pipeline computed no advantage" indistinguishable from "the
-converter forgot to pass it", and the whole value of this record is that the second thing is
-impossible. `make_trajectory` exists for the ergonomics, in one place, where the defaults are
-visible.
+**Requiredness follows section 2.2 exactly.** A field printed without a default has none here, and
+that is deliberate rather than austere. `Trajectory.advantage` is `float | None`, so a default of
+`None` would make "the pipeline computed no advantage" indistinguishable from "the converter
+forgot to pass it", and the whole value of this record is that the second thing is impossible.
+`make_trajectory` exists for the ergonomics, in one place, where the defaults are visible.
 
-**Three seams are typed rather than stubbed**: `ScoreTree` (`record/scores.py`),
-`Blind[LabelValue]` (`record/labels.py`) and `CouplingSpec` (`record/arms.py`). Each of those
-modules imports this one, so they are imported here under `TYPE_CHECKING` only: the annotations are
-strings, this module has no runtime dependency on them, and the fields serialise through the
-kernel's `ValueCodec`, so anything those modules define as a dataclass decorated with
-`register_payload` round-trips through the record with no change here. A `Blind` in particular must
-be a registered dataclass and must not define an unwrapping decoder, because the codec is the one
-place a blind value could be opened by accident.
+**Three seams are left open for later packages**, and they are typed rather than stubbed:
+`ScoreTree` (W2.2, `record/scores.py`), `Blind[LabelValue]` (W2.3, `record/labels.py`) and
+`CouplingSpec` (W2.4, `record/arms.py`). Until those land the names resolve to `Any` at runtime and
+the fields serialise through the kernel's `ValueCodec`, so anything those packages define as a
+dataclass decorated with `register_payload` round-trips through the record with no change here. A
+`Blind` in particular must be a registered dataclass and must not define an unwrapping decoder,
+because the codec is the one place a blind value could be opened by accident.
 
 The name `Trajectory` also exists in `reward_lens.data.schema`, where it means an agent episode for
 the receipt and narrative sciences. They are different objects. This one is the canonical record
-and the other predates it; the collision is named here rather than resolved, because renaming a
-shipped type is not this package's call.
+and the other predates it; the collision is recorded in the build report rather than resolved here,
+because renaming a shipped type is not this package's call.
 """
 
 from __future__ import annotations
@@ -48,7 +46,12 @@ from typing import (
     Sequence,
 )
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy", extra="record")
 
 from reward_lens.core.envelope import ConditionReading, RegimeCondition, RegimeReading
 from reward_lens.core.evidence import ValueCodec
@@ -79,13 +82,13 @@ from reward_lens.record.tensors import (
 )
 from reward_lens.record.turns import Turn
 
-if TYPE_CHECKING:  # annotations only; see the module docstring for the contract
+if TYPE_CHECKING:  # filled by later packages; see the module docstring for the contract
     from reward_lens.record.arms import CouplingSpec
     from reward_lens.record.labels import Blind, LabelValue
     from reward_lens.record.scores import ScoreTree
 
-#: Bumped in the same commit that changes what a written record looks like on disk. Schema
-#: versioning is not optional, and 2.0.1 shipping without it is why the evidence store's
+#: Bumped in the same commit that changes what a written record looks like on disk. Section 4.3:
+#: schema versioning is not optional, and 2.0.1 shipping without it is why the evidence store's
 #: first migration has to sniff. This one starts versioned.
 RECORD_SCHEMA_VERSION = 1
 
@@ -116,8 +119,8 @@ def encode_foreign(value: Any, sidecar_dir: Any = None) -> Any:
     Used for `Trajectory.scores`, `Trajectory.labels` and `Run.coupling`. The codec handles
     primitives, sequences, mappings, numpy arrays (spilling large ones to content-addressed
     sidecars) and any dataclass; a dataclass decorated with `register_payload` comes back as
-    itself, and an unregistered one comes back as its field dict. That is the contract the seam
-    modules have to meet, and it is one decorator.
+    itself, and an unregistered one comes back as its field dict. That is the contract the later
+    packages have to meet, and it is one decorator.
     """
     if value is None:
         return None
@@ -140,7 +143,7 @@ def decode_foreign(obj: Any, sidecar_dir: Any = None) -> Any:
 class ComponentRef:
     """What occupied one node of the loop.
 
-    The first structural fact about the loop is that the grader and the policy are the same kind of
+    Section 2.1's first structural fact is that the grader and the policy are the same kind of
     object, so they get the same reference type and an instrument that reads internals does not
     care which side of the loop it points at. ``substrate`` is what actually decides which
     instruments apply, which is why it sits here rather than being inferred from ``kind``.
@@ -232,7 +235,7 @@ class RunLineage:
 class RegimeDeclaration:
     """What the run asserts about its own regime, before anything is measured.
 
-    Two of the loop's arrows are new and both break assumptions instruments depend on.
+    Section 2.1: two of the loop's arrows are new and both break assumptions instruments depend on.
     Ling 2.6 shifts rubric weights away from saturated metrics during training. DeepSeek-V4's actor
     is its own generative reward model. ERNIE's WPSM gates a sample on group-level accuracy. None
     of those is visible from a rollout, so the only way to keep the library honest is for the run to
@@ -340,7 +343,7 @@ class SamplingCorrection:
 
 @dataclass(frozen=True)
 class RecordSamplingPolicy:
-    """What fraction of the run was recorded, and how it was chosen.
+    """What fraction of the run was recorded, and how it was chosen (section 2.2).
 
     On the Run and not implicit, because full capture is not the default and pretending otherwise
     produces silently biased statistics. The arithmetic is in `record.tensors.residual_bytes`: at
@@ -660,7 +663,7 @@ class StalenessDistribution:
 
 @dataclass(frozen=True)
 class OptimizerTelemetry:
-    """What the optimizer did on this step.
+    """What the optimizer did on this step (section 2.2).
 
     ``grad_norm_clipped`` and ``grad_norm_unclipped`` are both here and both optional, because the
     one every trainer logs is the clipped one and the one every gradient-derived quantity actually
@@ -717,7 +720,7 @@ class ProbeResult:
     ``channel`` separates three things that are usually conflated. A held-out eval measures
     generalisation. A gold-channel probe approximates the latent objective. A check standard is a
     frozen probe set whose job is not to be difficult but to be *invariant*, so any movement in it
-    is instrument drift by construction. Averaging the three together is how tooling
+    is instrument drift by construction (section 4.7). Averaging the three together is how tooling
     drift gets reported as model improvement.
     """
 
@@ -755,7 +758,7 @@ class ProbeResult:
 
 @dataclass(frozen=True)
 class InstrumentEffect:
-    """What this measurement cost the run it measured.
+    """What this measurement cost the run it measured (section 2.7).
 
     A term in the uncertainty budget, not a footnote. The fields line up with `TapBudget`'s three
     limits so a breach can name which one it broke, and `disabled` records that the tap took itself
@@ -808,7 +811,7 @@ class InstrumentEffect:
 
 @dataclass(frozen=True)
 class EstimatorSpec:
-    """How scores became advantages, exactly.
+    """How scores became advantages, exactly (section 3.2).
 
     Every field changes what a downstream number means, which is why this is a structure and not a
     family name. ``std_normalised`` with ``std_epsilon`` is the one that has already produced a
@@ -838,7 +841,7 @@ class EstimatorSpec:
     #: explicitly, and veRL's `compute_grpo_outcome_advantage` calls `torch.std`, whose default is
     #: `correction=1`. That makes 1 the near-certain answer and not a safe default, because a
     #: near-certain assumption about a denominator is exactly the shape of confident wrong number
-    #: this record exists to prevent.
+    #: this record exists to prevent. SPEC-ERRATA E50.
     std_ddof: int | None = None
     degenerate_policy: str = "unknown"
     clip_low: float | None = None
@@ -911,8 +914,20 @@ class GroupStats:
     ``degenerate`` is the neighbouring case, ``std`` at or below the estimator's epsilon, where the
     advantage is ``0 / eps`` and the group contributes noise or nothing.
 
+    ``std_ddof`` is the denominator ``std`` was computed under, 0 for the population form and 1 for
+    Bessel's correction, and it is a field rather than a convention for the same reason
+    `EstimatorSpec.std_ddof` is: the two differ by ``sqrt(K / (K - 1))``, which is 6.9% at the
+    ``K = 8`` this design runs and 41.4% at ``K = 2``, so a standard deviation stored without its
+    denominator cannot be compared with the one the trainer divided by. It is `None` exactly when
+    ``std`` is `None`, because a group with no standard deviation has no denominator to name.
+
+    It is not the same field as `EstimatorSpec.std_ddof` and the two can honestly differ.
+    `EstimatorSpec.std_ddof` records what the **trainer** divided by; this one records what **this
+    record** divided by. They agree when the caller passes the spec's value through, and when they
+    do not, having both is what lets a reader see it.
+
     ``curl_mass`` is populated only for k-wise comparison groups, where the question of whether the
-    comparison structure is a scalar potential at all is live.
+    comparison structure is a scalar potential at all is live (section 3.6).
 
     ``ranks`` is positional: entry ``j`` is the rank of trajectory ``j`` in ``Group.trajectories``,
     zero for the highest score. It has length ``k`` and carries ``None`` where the grader abstained,
@@ -929,6 +944,7 @@ class GroupStats:
     n_abstained: int = 0
     curl_mass: float | None = None
     ranks: tuple[int | None, ...] | None = None
+    std_ddof: int | None = None
 
     def __post_init__(self) -> None:
         if self.k < 0:
@@ -948,6 +964,7 @@ class GroupStats:
         std_epsilon: float,
         failure_at: float | None = None,
         curl_mass: float | None = None,
+        std_ddof: int | None = None,
     ) -> "GroupStats":
         """Compute the stats from per-trajectory scores.
 
@@ -956,6 +973,14 @@ class GroupStats:
         way the flag means the same thing as the trainer meant. ``failure_at`` is the score that
         counts as a failure; None means all-fail cannot be determined and the flag stays False,
         which is the honest reading of "we do not know what failure looks like on this task".
+
+        ``std_ddof`` is the denominator to divide by, and it comes from the same place
+        ``std_epsilon`` does: pass ``EstimatorSpec.std_ddof`` and the recorded standard deviation is
+        the one the trainer divided by. Passing nothing computes the population form, which is what
+        this function always did, and **records that it did**, so a reader of the result can tell
+        the two apart. Nothing is assumed about the trainer either way: the field says what this
+        computation used, and `EstimatorSpec.std_ddof` says what the trainer used, and
+        `replay_advantages` is where the two are required to agree.
 
         Abstentions (a `None` score, meaning the grader failed) are excluded from the mean and the
         standard deviation and counted separately. That is TRL's policy generalised, and it is the
@@ -978,9 +1003,14 @@ class GroupStats:
                 n_abstained=n_abstained,
                 curl_mass=curl_mass,
                 ranks=(None,) * len(scores),
+                std_ddof=None,
             )
         arr = np.asarray(present, dtype=float)
-        std = float(arr.std())
+        # A denominator of `n - ddof` is not defined at one surviving score with Bessel's
+        # correction, so a singleton group's standard deviation stays the population zero and says
+        # so rather than reporting a nan under a convention it could not honour.
+        ddof = 0 if std_ddof is None or arr.size <= int(std_ddof) else int(std_ddof)
+        std = float(arr.std(ddof=ddof))
         # Ranked over the survivors, then scattered back to the positions they came from, because
         # the vector is read against Group.trajectories and not against the survivors.
         dense = [int(r) for r in np.argsort(np.argsort(-arr))]
@@ -998,6 +1028,7 @@ class GroupStats:
             n_abstained=n_abstained,
             curl_mass=curl_mass,
             ranks=ranks,
+            std_ddof=ddof,
         )
 
     def __canonical__(self) -> dict[str, Any]:
@@ -1010,6 +1041,7 @@ class GroupStats:
             "n_abstained": self.n_abstained,
             "curl_mass": _finite(self.curl_mass),
             "ranks": None if self.ranks is None else list(self.ranks),
+            "std_ddof": self.std_ddof,
         }
 
     @classmethod
@@ -1021,7 +1053,7 @@ class GroupStats:
         the wrong rollout after it. Those are read back as None rather than carried: "not recorded"
         is true of such a record and the tuple is not, and there is nothing left in the canonical
         payload to recompute the alignment from. 200 of the 400 groups in
-        `tests/fixtures/grpo_run/long/` are in that state.
+        `tests/fixtures/grpo_run/long/` are in that state. SPEC-ERRATA E50 item 6.
         """
         stored = obj.get("ranks")
         ranks = None if stored is None else tuple(stored)
@@ -1036,6 +1068,9 @@ class GroupStats:
             n_abstained=obj.get("n_abstained", 0),
             curl_mass=_unfinite(obj.get("curl_mass")),
             ranks=ranks,
+            # Absent on every record written before the field existed, and "not recorded" is what
+            # is true of those. Defaulting it to 0 would turn a gap into a claim.
+            std_ddof=obj.get("std_ddof"),
         )
 
 
@@ -1061,9 +1096,81 @@ def _unfinite(x: float | str | None) -> float | None:
 # ---------------------------------------------------------------------------
 
 
+class SelectionQuantity(enum.Enum):
+    """Which per-rollout scalar a selection differential was computed on (BLK-015).
+
+    `Cov_group(A, f)` is the same arithmetic whatever scalar is in the first slot, and the three
+    candidates are numerically different objects that a reader cannot tell apart afterwards:
+
+    ``ADVANTAGE`` is `A-hat`, the group-standardised advantage the trainer formed.
+    ``APPLIED_WEIGHT`` is `a-tilde`, the per-rollout scalar the loss actually multiplied the
+    log-probability ratio by, which is what `S_applied` and `C4` are about.
+    ``REWARD`` is the raw score, before any group transform.
+    ``UNLABELLED`` is an array that arrived with no declaration. It is not a fourth quantity; it is
+    the absence of one, and it exists so that the absence has a name a refusal can print rather than
+    being indistinguishable from `ADVANTAGE` by default.
+
+    The defect this closes: the estimator's second argument was annotated `advantages: np.ndarray`,
+    a bare array with no type and no runtime check, so `a-tilde` could be passed positionally and the
+    ledger's source string would still read "recorded". "Recorded" says where the numbers came from.
+    It never said what they were.
+    """
+
+    ADVANTAGE = "advantage"
+    APPLIED_WEIGHT = "applied_weight"
+    REWARD = "reward"
+    UNLABELLED = "unlabelled"
+
+
+@dataclass(frozen=True)
+class SelectionWeights:
+    """One per-rollout scalar per rollout, with the quantity it is and where it came from.
+
+    ``values`` is one finite float or NaN per rollout, NaN where the rollout received none, which is
+    the convention the record layer already keeps. ``quantity`` says **what** the numbers are and
+    ``source`` says **where they came from**, ``"recorded"`` or ``"reconstructed"``. Both travel,
+    because either alone leaves a reader unable to audit the headline ratio.
+
+    A structure rather than an annotation on purpose. An `Annotated[np.ndarray, ...]` is erased at
+    runtime and a `NewType` is erased at runtime, and this defect is a positional argument that type
+    checking never sees, so the check has to exist when the code runs.
+    """
+
+    values: np.ndarray
+    quantity: SelectionQuantity
+    source: str = "recorded"
+
+    def __post_init__(self) -> None:
+        arr = np.asarray(self.values, dtype=np.float64).ravel()
+        object.__setattr__(self, "values", arr)
+        if not isinstance(self.quantity, SelectionQuantity):
+            raise TypeError(
+                f"quantity must be a SelectionQuantity; got {self.quantity!r}. A string here is "
+                f"how the label stops being checkable"
+            )
+        if self.source not in {"recorded", "reconstructed", "unknown"}:
+            raise ValueError(
+                f"source must be recorded, reconstructed or unknown; got {self.source!r}"
+            )
+
+    def __len__(self) -> int:
+        return int(self.values.size)
+
+    @property
+    def is_applied_weight(self) -> bool:
+        return self.quantity is SelectionQuantity.APPLIED_WEIGHT
+
+    def __canonical__(self) -> dict[str, Any]:
+        return {
+            "quantity": self.quantity.value,
+            "source": self.source,
+            "n": int(self.values.size),
+        }
+
+
 @dataclass(frozen=True)
 class Trajectory:
-    """One rollout, which may be multi-turn.
+    """One rollout, which may be multi-turn (section 2.2).
 
     Two invariants are enforced at construction rather than checked later, because both of them
     make downstream quantities undefined rather than approximate:
@@ -1086,6 +1193,15 @@ class Trajectory:
     labels: Mapping[str, "Blind[LabelValue]"]
     features: Mapping[FeatureID, float]
     capture: CaptureRef | None
+    #: `a-tilde`, the per-rollout scalar the loss actually applied, which under the `dapo`
+    #: aggregation is not the advantage and is not a tensor anywhere until BLK-004's override forms
+    #: it. `None` means the trainer did not record one, and every reader of `S_applied` has to treat
+    #: that as an absence rather than fall back to `advantage`, which is the substitution BLK-015
+    #: exists to stop. Defaulted so that a record written before the field existed still loads.
+    applied_weight: float | None = None
+    #: `"recorded"` when the trainer emitted it, `"reconstructed"` when it was recomputed. A weight
+    #: with no source is a weight nobody can audit.
+    applied_weight_source: str | None = None
 
     def __post_init__(self) -> None:
         check_tiling(self.provenance, len(self.turns), where=f"trajectory {self.id}")
@@ -1135,6 +1251,8 @@ def make_trajectory(
     scores: Any = None,
     advantage: float | None = None,
     advantage_tokens: TokenTensorRef | None = None,
+    applied_weight: float | None = None,
+    applied_weight_source: str | None = None,
     provenance: Sequence[SegmentProvenance] | None = None,
     policy_version: str = "unknown",
     engine: Engine | None = None,
@@ -1161,6 +1279,8 @@ def make_trajectory(
         scores=scores,
         advantage=advantage,
         advantage_tokens=advantage_tokens,
+        applied_weight=applied_weight,
+        applied_weight_source=applied_weight_source,
         provenance=tuple(provenance),
         compaction=tuple(compaction),
         labels=dict(labels or {}),
@@ -1171,7 +1291,7 @@ def make_trajectory(
 
 @dataclass(frozen=True)
 class Group:
-    """One prompt or task with its K rollouts. K = 1 is legal; that is distillation."""
+    """One prompt or task with its K rollouts (section 2.2). K = 1 is legal; that is distillation."""
 
     id: GroupID
     task_ref: TaskID
@@ -1186,7 +1306,7 @@ class Group:
 
 @dataclass(frozen=True)
 class Step:
-    """One optimizer update.
+    """One optimizer update (section 2.2).
 
     ``regime_measured`` is measured rather than declared, and it is separate from
     `Run.regime`, which is what the operator claimed. The pair is the point: a run that declared
@@ -1217,7 +1337,7 @@ class Step:
 
 
 class StepStream(abc.ABC):
-    """Lazy, chunked, resumable access to a run's steps.
+    """Lazy, chunked, resumable access to a run's steps (section 2.2).
 
     A 401-step run is not a list. The reason it is an abstraction rather than a tuple is the
     auditor case: reading steps 200 to 210 of a long run must not materialise the other 390, and
@@ -1282,7 +1402,7 @@ class InMemoryStepStream(StepStream):
 
 @dataclass(frozen=True)
 class Run:
-    """One instance of the loop diagram.
+    """One instance of the loop diagram (section 2.2).
 
     ``kind`` carries the variants because they are the same object with nodes removed: best-of-n is
     the diagram without the optimizer, a tilt sweep replaces the optimizer with importance
@@ -1370,7 +1490,7 @@ def _decoded_number(raw: Any) -> float:
     collapses the two states the envelope machinery is built to keep apart. It bit precisely the
     readings that hold, because 0.0 is the passing value for most conditions and the natural
     threshold for any non-negativity one. `_unfinite` was written correctly for this hazard and
-    the `or` at the call site undid it.
+    the `or` at the call site undid it. SPEC-ERRATA E50.
     """
     value = _unfinite(raw)
     return math.nan if value is None else float(value)
@@ -1419,6 +1539,8 @@ __all__ = [
     "RunLineage",
     "SamplingCorrection",
     "SamplingScheme",
+    "SelectionQuantity",
+    "SelectionWeights",
     "StalenessDistribution",
     "Step",
     "StepStream",

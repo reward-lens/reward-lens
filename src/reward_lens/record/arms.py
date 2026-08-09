@@ -21,18 +21,18 @@ pays for the whole run. Sampling noise inside a rollout decouples as soon as the
 disagree on a token, so on a training run the sampling half of the coupling buys the most early
 and decays. It never costs anything, and reporting it as if it held to the end would be wrong.
 
-**The gate.** Void condition 4 is "two arms of a controlled comparison differ in configuration
-beyond the declared contrast". `check_divergence` flattens both arms to dotted keys, diffs them
-against the declared contrast set, and returns a report. A void that says the arms
+**The gate.** Void condition 4 of section 6.2 is "two arms of a controlled comparison differ in
+configuration beyond the declared contrast". `check_divergence` flattens both arms to dotted keys,
+diffs them against the declared contrast set, and returns a report. A void that says the arms
 diverged is worth nothing. This one names the key and prints both values, so the remedy is an
 instruction: hold `optim.lr` at one value and re-run, or declare it in the contrast and re-freeze.
 The vocabulary is the one already declared in `studies/void.py`; nothing here invents a second one.
 `report.void` is a `Void(ARM_DIVERGENCE)` for a study, and `report.refusal(...)` is the same fact
-as a `Refusal(VOID)` for a measurement path, which is how an unreadable run is routed.
+as a `Refusal(VOID)` for a measurement path, which is how section 6.1 routes an unreadable run.
 
-**Staggered adoption, which this module does not solve.** There is a case where an intervention is
-introduced partway through a run: verifier A at step 1000, verifier B at step 3000, `tau` annealed
-at 5000. That is a staggered adoption design, and the estimator everyone reaches for
+**Staggered adoption, which this module does not solve.** Section 6.6 flags the case where an
+intervention is introduced partway through a run: verifier A at step 1000, verifier B at step 3000,
+`tau` annealed at 5000. That is a staggered adoption design, and the estimator everyone reaches for
 is the one shown to be broken. Two-way fixed effects is a weighted average of every 2x2 comparison
 available, including comparisons of a newly treated unit against one already treated, and those
 weights can be negative, so the estimate can carry the opposite sign to every underlying effect.
@@ -53,7 +53,12 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, NewType
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy", extra="record")
 
 from reward_lens.core.evidence import register_payload
 from reward_lens.core.reading import Refusal, RefusalReason
@@ -93,9 +98,9 @@ _VALUE_LIMIT = 72
 class ArmSpecError(ValueError):
     """An arm set that could not be built, or a comparison asked for something incoherent.
 
-    This is an exception rather than a refusal on purpose, and the line is the one the instrument
-    contract draws: a refusal is an anticipated measurement condition, and everything raised here
-    is a caller mistake found before anything ran. A contrast naming a key that is not in the base
+    This is an exception rather than a refusal on purpose, and the line is the one section 4.2
+    draws: a refusal is an anticipated measurement condition, and everything raised here is a
+    caller mistake found before anything ran. A contrast naming a key that is not in the base
     configuration is a typo, not a hard case, and a typo that returned a value would be discovered
     later as a mysterious void.
     """
@@ -206,7 +211,7 @@ def apply_overrides(config: Mapping[str, Any], overrides: Mapping[str, Any]) -> 
 @register_payload
 @dataclass(frozen=True)
 class CouplingSpec:
-    """What two arms share, declared, so that "comparable" is a checked property.
+    """What two arms share, declared, so that "comparable" is a checked property (section 6.6).
 
     ``common_random_numbers`` and ``shared_prompt_order`` are separate flags and neither gates the
     other. That is not tidiness: the half-way house is real and common. A framework will often let
@@ -596,7 +601,7 @@ class ArmSet:
         raise KeyError(f"no arm labelled {label!r}; this set has {list(self.labels)}")
 
     def sibling_run_ids(self, arm: Arm) -> tuple[RunID, ...]:
-        """The other arms' run ids, for `Run.arms`.
+        """The other arms' run ids, for `Run.arms` (section 2.2).
 
         Arms whose run has not been bound yet are left out rather than filled with a placeholder,
         so a partially launched comparison records what exists instead of what was planned.
@@ -762,7 +767,7 @@ def _nearest_key(path: str, keys: Iterable[str]) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# The arm-divergence void gate (void condition 4)
+# The arm-divergence void gate (section 6.2, condition 4)
 # ---------------------------------------------------------------------------
 
 
@@ -973,9 +978,9 @@ class ArmDivergence:
     def refusal(self, instrument: str) -> Refusal:
         """This report as a `Refusal(VOID)`, for a measurement path rather than a study.
 
-        An unreadable run is routed to `VOID`, and an instrument handed two arms that diverged,
-        or two arms that were never actually contrasted, has been handed an unreadable comparison
-        either way. The reason, the detail and the remedy are the same facts as `void`;
+        Section 6.1 routes an unreadable run to `VOID`, and an instrument handed two arms that
+        diverged, or two arms that were never actually contrasted, has been handed an unreadable
+        comparison either way. The reason, the detail and the remedy are the same facts as `void`;
         only the container differs, because a study collects `Void` objects and an instrument
         returns a `Reading`. The specific void condition is in `statistics["void_condition"]`,
         because `RefusalReason.VOID` is one member covering all eight.
@@ -1124,7 +1129,7 @@ def run_material(run: Run, *, engines: bool = False) -> dict[str, Any]:
     rate on the second one because the disk was filling.
 
     ``engines`` walks the step stream to collect the engine identities that actually served the
-    rollouts, which is the "same engine and revision" half of comparability measured rather than
+    rollouts, which is the "same engine and revision" half of section 6.6 measured rather than
     declared. It is off by default because walking a record is not free, and a record can be
     hundreds of gigabytes.
     """

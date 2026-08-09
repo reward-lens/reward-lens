@@ -1,7 +1,7 @@
 """Converting the 2.0 campaign's evidence store into a `Run` of kind ``eval``.
 
 The campaign scored thirteen reward models against fixed banks of responses. Nothing in it
-optimised a policy against a reward, so the loop diagram is missing its optimizer
+optimised a policy against a reward, so the loop diagram of section 2.1 is missing its optimizer
 and its estimator, which is precisely what ``kind="eval"`` means. Everything below follows from
 that one fact, and the places where the record has no room for what the campaign recorded are
 listed in `ConversionReport.findings` rather than papered over.
@@ -16,9 +16,8 @@ multi-turn data in the store: a ProcessBench solution is a sequence of reasoning
 its own score, so each step becomes a `Turn` carrying `Turn.step_score`.
 
 **Step index is a partition ordinal here, not an optimizer step, and that is a departure.**
-The canonical schema defines `Step` as one optimizer update. An evaluation performs zero of them,
-so the faithful record has either one step holding six hundred thousand groups or no step level at
-all.
+Section 2.2 defines `Step` as one optimizer update. An evaluation performs zero of them, so the
+faithful record has either one step holding six hundred thousand groups or no step level at all.
 Neither is usable: the first defeats `StepStream`, whose whole purpose is that reading eleven steps
 of a long run does not materialise the rest, and the second is not expressible. Steps here are the
 banks in ``created_at`` order, `OptimizerTelemetry` is all-`None` rather than all-zero, and
@@ -34,7 +33,7 @@ appended.
 
 **One Run, thirteen graders, and the tension that leaves.** `Run.components` holds one
 `ComponentRef` per node, and the campaign put thirteen reward models on the grader node, eleven of
-the twelve banks being scored by more than one of them. The schema's own answer to that is
+the twelve banks being scored by more than one of them. Section 2.2's own answer to that is
 `Run.arms`, sibling arms of a controlled comparison, which is what `campaign_arms` builds. The
 single fleet Run that `convert_campaign` returns declares a COMPOSITE grader naming the roster, and
 keeps the per-trajectory attribution in the score tree's `GraderCallRef` so nothing is lost by
@@ -92,7 +91,7 @@ from reward_lens.record.tensors import (
 from reward_lens.record.turns import Turn
 
 #: The observables that carry per-item rollout data. Everything else in the store is a derived
-#: measurement about a bank rather than a record of one, and the record has no level for those;
+#: measurement about a bank rather than a record of one, and section 2.2 has no level for those;
 #: see `ConversionReport.findings`.
 SCORE_OBSERVABLE = "campaign.scores"
 STEP_SCORE_OBSERVABLE = "campaign.prm.steps"
@@ -128,14 +127,14 @@ UNRECORDED_POLICY = "unrecorded"
 def _score_tree(name: str, value: float | None, grader: str, *, abstained: bool) -> Any:
     """One recorded score, as a `ScoreTree` leaf where `record.scores` is available.
 
-    Soft-imported rather than imported at module scope: a converter that fails outright when
-    `record.scores` cannot be imported is worse than one that records a mapping. The fallback
-    carries the same three facts, so nothing downstream loses the grader attribution; it only loses
-    the type.
+    Soft-imported rather than declared as a dependency, because W2.2 is a sibling package landing
+    in the same wave and a converter that fails to import when it is absent is worse than one that
+    records a mapping. The fallback carries the same three facts, so nothing downstream loses the
+    grader attribution; it only loses the type.
     """
     try:
         from reward_lens.record.scores import GraderCallRef, Leaf
-    except ImportError:  # pragma: no cover - fallback, unreachable in a complete install
+    except ImportError:  # pragma: no cover - exercised only before W2.2 lands
         return {"name": name, "value": value, "grader": grader, "abstained": abstained}
     return Leaf(
         name=name,
@@ -148,7 +147,7 @@ def _score_tree(name: str, value: float | None, grader: str, *, abstained: bool)
 def _blind_label(value: Any, *, key: str) -> tuple[Any, bool]:
     """Blind a held-out label, or decline to carry it and say so.
 
-    Returns the value to store and whether it was blinded. `Trajectory.labels` is typed
+    Returns the value to store and whether it was blinded. Section 2.2 types `Trajectory.labels` as
     `Mapping[str, Blind[LabelValue]]`, and the entire guarantee of that type is that a detector's
     signature cannot accept the label. Writing an oracle into that field unwrapped would hand over
     the thing the type exists to withhold, so when `record.labels` is not importable the label is
@@ -156,11 +155,11 @@ def _blind_label(value: Any, *, key: str) -> tuple[Any, bool]:
     """
     try:
         from reward_lens.record.labels import LabelQuality, blind
-    except ImportError:  # pragma: no cover - fallback, unreachable in a complete install
+    except ImportError:  # pragma: no cover - exercised only before W2.3 lands
         return None, False
     # No error rate: nobody audited ProcessBench's error-step annotations for this campaign, and
-    # `LabelQuality()` with `error_rate=None` is how that is said. Any scoring read against them
-    # is then refused, which is the correct outcome rather than an obstacle.
+    # `LabelQuality()` with `error_rate=None` is how that is said. Section 6.1 then refuses any
+    # scoring read against them, which is the correct outcome rather than an obstacle.
     return blind(value, key=key, quality=LabelQuality(method="", measured_by="ProcessBench")), True
 
 
@@ -174,8 +173,8 @@ class ConversionReport:
     """What the conversion carried, what it declined, and where the schema had no room.
 
     Every count here comes from the conversion that produced it. ``findings`` is the list this
-    package exists to produce alongside the record: each entry is a place the canonical record
-    could not hold something the campaign measured, stated as a fact about the schema
+    package exists to produce alongside the record: each entry is a place the canonical record of
+    section 2.2 could not hold something the campaign measured, stated as a fact about the schema
     rather than as a complaint about the data.
     """
 
@@ -721,8 +720,8 @@ class _StreamPlan:
 def _grader_access(store: CampaignStore) -> AccessMatrix:
     """What the campaign's recorder could reach, derived from what it recorded.
 
-    `Run.access` is "recorded at capture time and not at read time, which is the only moment it
-    is knowable". So this is the campaign's access, not the access of whoever reads
+    Section 2.2 says `Run.access` is "recorded at capture time and not at read time, which is the
+    only moment it is knowable". So this is the campaign's access, not the access of whoever reads
     the converted record, and those differ completely: the campaign ran the models and captured
     activations, and a reader holding this store can do neither. `reader_access` in
     `record.convert.instruments` is the other one, and mixing them up is the finding recorded in
@@ -745,7 +744,7 @@ def _grader_access(store: CampaignStore) -> AccessMatrix:
 def _readout_vectors(store: CampaignStore) -> dict[str, dict[str, Any]]:
     """The recorded reward directions, keyed by roster.
 
-    The record has no field for a grader's readout vector, and the shipped battery's
+    Section 2.2 gives the record no field for a grader's readout vector, and the shipped battery's
     most-used input is exactly that. They are carried in `ComponentRef.extra` as sidecar references
     rather than as arrays, so the run header stays small and a caller who wants the vector loads
     one file.
@@ -817,7 +816,7 @@ def _find_sidecar(obj: Any) -> Mapping[str, Any] | None:
 
 
 #: Where the record schema has no room for what the campaign recorded. Each of these is a fact
-#: about the schema rather than about this store, which is why they are constants and not
+#: about section 2.2 rather than about this store, which is why they are constants and not
 #: computed strings.
 SCHEMA_FINDINGS: tuple[str, ...] = (
     "Step.index is defined as one optimizer update and an evaluation performs none, so the index "
@@ -966,7 +965,7 @@ def _convert(
         components=components,
         access=_grader_access(store),
         # The campaign declared no regime conditions, and an empty declaration is the honest
-        # encoding of that. Absent is not a pass, and RegimeDeclaration.disagreements
+        # encoding of that. Section 2.2: absent is not a pass, and RegimeDeclaration.disagreements
         # over an empty declaration is empty because there was nothing to disagree with.
         regime=RegimeDeclaration(),
         steps=CampaignStepStream(plan),
@@ -1010,10 +1009,10 @@ def campaign_arms(
 ) -> dict[str, Run]:
     """One `Run` per reward model, cross-linked through `Run.arms`.
 
-    This is what the schema means by arms: eleven of the twelve banks were scored by more than one
+    This is what section 2.2 means by arms: eleven of the twelve banks were scored by more than one
     model, so the fleet is a controlled comparison whose contrast is the grader. The fleet Run that
-    `convert_campaign` returns is the same data read as one object; both exist because a caller may
-    want one Run and the schema wants thirteen.
+    `convert_campaign` returns is the same data read as one object; both exist because the
+    acceptance clause names one Run and the schema wants thirteen.
     """
     store = CampaignStore(path, sidecar_dirs=sidecar_dirs)
     store.assert_no_blind_payloads()

@@ -1,29 +1,24 @@
-# setuptools 77 is the floor because of `license` below: the SPDX form of that field, and
-# `license-files` beside it, arrived in 77.0.0. An older backend would read a bare string as a
-# free-text licence name and drop the file list, so the floor is load-bearing rather than tidiness.
+# hatchling rather than setuptools, and not `uv_build`. D-58 gives the reason in one line: the
+# frontend bundle is produced by a build hook inside `uv build`, and `uv_build` is pure Python only
+# by its own documentation, so it cannot run one. The floor is 1.27 because PEP 639's `license`
+# expression and `license-files` are read from that version; an older backend drops the file list.
 [build-system]
-requires = ["setuptools>=77.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
 
 [project]
 name = "reward-lens"
-version = "3.0.0"
-description = "Measurement instruments for reward models and RL runs, where a reading is evidence or a refusal"
-# The long description is the project page on PyPI, and it is the README verbatim. Nothing
-# generates it and nothing trims it, so what a reader sees on PyPI is what a reader sees on the
-# repository front page. `Description-Content-Type` follows from the .md suffix.
+version = "3.1.0"
+description = "Audit a reward system, trace what it teaches, and write the result down as a record anyone can check"
 readme = "README.md"
-# PEP 639. The SPDX expression and the file list replace `license = {file = "LICENSE"}` and the
-# `License :: OSI Approved :: MIT License` classifier, both of which setuptools now deprecates with
-# a removal date of 2027-02-18 and both of which emitted a warning on every build. The classifier
-# is gone rather than kept alongside: setuptools rejects a build that carries both forms.
 license = "MIT"
 license-files = ["LICENSE"]
-# Open at the top on purpose. The interpreters in the classifiers are the ones CI runs, which is a
-# statement about what is tested rather than about what is permitted. An upper bound here is not
-# free: a resolver on a newer interpreter walks back through every release looking for one that
-# says yes, and then reports the oldest version it found rather than the incompatibility.
-requires-python = ">=3.10"
+# 3.11, raised from 3.10. October 2026 is both 3.10's end of life and the month 3.15 ships, so the
+# floor moves before the release rather than during the month people are already off it. Open at
+# the top on purpose: an upper bound makes a resolver on a newer interpreter walk back through
+# every release looking for one that says yes, and then report the oldest it found rather than the
+# incompatibility.
+requires-python = ">=3.11"
 authors = [
     {name = "Mohammed Suhail B Nadaf"},
 ]
@@ -35,51 +30,106 @@ keywords = [
     "alignment",
     "evaluation",
     "measurement",
-    "mechanistic-interpretability",
-    "sparse-autoencoder",
+    "reward-design",
 ]
 classifiers = [
-    # 4 rather than the 3 that stood through 2.x. The kernel, the record schema and the refusal
-    # vocabulary are what a downstream caller builds against, they are covered by the suite that
-    # runs on all three interpreters, and 3.0.0 is where they stopped moving. Phase 6 of the
-    # catalogue is still open, which is why this is not 5.
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    # Not decoration. It is the machine-readable half of `py.typed`, and it is what tells a reader
-    # searching PyPI that `Blind[T]` means something in their checkout too.
     "Typing :: Typed",
 ]
-# The core installs with no compiled dependency. Most of the instrument catalogue needs a record
-# and a callable grader and nothing else, and forcing torch on someone who wants a grader card is
-# what the old dependency list did. Every entry below is imported somewhere in the torch-free half
-# of the package; nothing is declared on the strength of a plan.
+# The base closure, and it is a measured object rather than a list of things that seemed useful.
+# `uvx` downloads every line below on each cold invocation, so what is here is what the
+# install-in-seconds claim costs. D-58's rule: nothing numeric, nothing that renders, nothing that
+# talks to a network. What `uv pip list` prints in a clean venv is the count that binds, and
+# `tests/packaging/CLOSURE.md` is where that measurement is written down.
 dependencies = [
-    "numpy>=1.24.0",
-    "scipy>=1.10.0",
-    "pandas>=2.0.0",          # core/store.py frame(), artifacts/atlas.py
-    "scikit-learn>=1.3.0",    # stats/roc.py, geometry/frame.py, concepts/probes.py
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "typer>=0.9.0",
-    "rich>=13.0.0",
+    # D-30. The CLI is click, and rich is imported lazily inside the human formatter only, because
+    # `rich.console` alone is 57 ms of the 79 ms typer spends before it knows whether it will
+    # render anything.
+    "click>=8.5",
+    # Config files, and libcst's own dependency, so it is free twice over.
+    "pyyaml>=6.0",
+    # 2.13 is the floor because the record's models use the strict-mode behaviour it settled.
+    "pydantic>=2.13",
+    # Schema validation in Rust. The pure-Python `jsonschema` is a dev dependency used to
+    # cross-check this one, not a runtime fallback: two validators that disagree is a bug we want
+    # to see in CI rather than a difference users discover.
+    "jsonschema-rs>=0.29",
+    # D-10. RFC 8785 JCS is the canonical byte form every digest in the record is taken over.
+    "rfc8785>=0.1.4",
+    # Addendum A-001, and the one entry here that is not obvious. `verifier.attack.attack_surface`
+    # (D8) is a libcst taint analysis and `verifier.mutate` (D2) is a libcst transform; D-63 says
+    # the first hour runs with no extras, so both have to light on a base install. libcst's only
+    # dependency is pyyaml, which is already above, so the closure grows by exactly one
+    # distribution. Reversible in one line if the principal decides the two instruments may refuse
+    # by name on a base install instead.
+    "libcst>=1.9",
+    # Addendum A-002. `verifier.coverage.trace_corpus` (D1) imports the `coverage` distribution to
+    # get branch arcs per rollout, and D-63 says the first hour runs with no extras, so
+    # `measure_coverage` has to reach a Reading on the base closure. Measured on this platform: the
+    # cp311 manylinux wheel is 249.8 KiB, it adds no distribution beyond itself, and a cold
+    # `import coverage` costs 152 to 185 ms. The alternative was a second tracer on `sys.settrace`
+    # and `sys.monitoring`, which would replace a tracer whose semantics the inherited tests pin to
+    # save one distribution. See tests/packaging/CLOSURE.md.
+    "coverage>=7.15.0",
 ]
 
 [project.optional-dependencies]
-# Ceilings are not decoration. A transformers 4.51.x rename of `torch_dtype` to `dtype` broke this
-# project once, from a floor with no ceiling, on an unattended run.
+# Reading a record written as columnar scalars. Used when present rather than required: the writer
+# defaults to JSON Lines and the manifest records which container was used, so the reader
+# dispatches on the file rather than on the environment. Any machine running TRL already has it.
+trace = ["pyarrow>=15.0"]
+# Judge providers. Deliberately empty until the packet that needs one declares it: nothing under
+# `src/` imports an HTTP client today, and the v3 file's own rule was that every entry is imported
+# somewhere and nothing is declared on the strength of a plan. The name exists now so the error
+# that points at it is installable rather than a dead end, which is the failure `core/extras.py`
+# was written to end.
+judge = []
+# Reward models and the training-side tap. The ceilings are not decoration: a transformers 4.51.x
+# rename of `torch_dtype` to `dtype` broke this project once, from a floor with no ceiling, on an
+# unattended run.
+train = [
+    "torch>=2.1.0,<3.0",
+    "transformers>=4.36.0,<6.0",
+    "trl>=1.9,<2.0",
+    "accelerate>=0.25.0",
+    "safetensors>=0.4.0",
+]
+# Signing beyond the Ed25519 the base already does.
+sigstore = ["sigstore>=3.0"]
+
+# --- carried from v3, because the inherited instrument code still needs them -------------------
+# The verifier series needs no GPU and no model. Two pins are load-bearing: mutmut has no
+# package-level public API so the import path is private and moves, and crosshair's *CLI message
+# strings* are parsed ("error:", "Confirmed over all paths.", "Not confirmed."), so a patch bump
+# can silently turn a refutation into "no contract found", which reads as a clean grader.
+# numpy is here rather than in the base closure because exactly one module in the series needs it,
+# `verifier/sensitivity.py`, and D-58 puts numeric packages behind an extra.
+verifier = [
+    "numpy>=1.24.0",
+    "coverage>=7.15.0",
+    "cosmic-ray>=8.4.0",
+    "mutmut>=3.6.0,<4.0",
+    "hypothesis>=6.100.0",
+    "SALib>=1.5.0",
+    "crosshair-tool>=0.0.109,<0.1",
+]
 white-box = [
     "torch>=2.1.0,<3.0",
     "transformers>=4.36.0,<6.0",
     "accelerate>=0.25.0",
     "safetensors>=0.4.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "scikit-learn>=1.3.0",
     "tqdm>=4.65.0",
 ]
 organisms = [
@@ -87,120 +137,110 @@ organisms = [
     "peft>=0.7.0",
     "datasets>=2.16.0",
 ]
-sampling = ["vllm>=0.6.0"]
-# Columnar scalars and safetensors tensor shards for the record. Both are compiled, so neither is
-# in base: a record store is written by whoever ran the training and read by whoever is auditing
-# it, and the auditor is exactly the person most likely to be on a base install. The writer
-# defaults to JSON Lines and .npy, which need nothing beyond numpy, and the manifest records which
-# container was used so the reader dispatches on the file rather than on the environment.
+viz = ["matplotlib>=3.7.0", "seaborn>=0.13.0", "pandas>=2.0.0"]
+# Tensor shards and the numeric side of the record store.
 record = [
     "pyarrow>=15.0",
     "safetensors>=0.4.0",
+    "numpy>=1.24.0",
 ]
-# Ceilings added late. This stanza violated the policy stated a few lines below it: `sae-lens`
-# carried a floor of 3.0.0 with no ceiling and is now at 6.47.1, three majors past it, and
-# `circuit-tracer` was unconstrained entirely. A floor with no ceiling on a package that has taken
-# three major versions is how this project was broken once already, by a `torch_dtype` to `dtype`
-# rename in transformers 4.51.x.
-dict = ["sae-lens>=3.0.0,<7.0", "circuit-tracer>=0.1.0"]
-# The verifier series needs no GPU and no model. Two pins are load-bearing: mutmut has no
-# package-level public API so the import path is private and moves, and devinterp's zarr floor
-# resolves to a version where the class it imports has been removed.
-verifier = [
-    "coverage>=7.15.0",
-    "cosmic-ray>=8.4.0",
-    "mutmut>=3.6.0,<4.0",
-    "hypothesis>=6.100.0",
-    "SALib>=1.5.0",
-    # A ceiling on a 0.0.x package whose *CLI message strings* are parsed ("error:",
-    # "Confirmed over all paths.", "Not confirmed."). A patch bump can silently turn a refutation
-    # into "no contract found", which reads as a clean grader.
-    "crosshair-tool>=0.0.109,<0.1",
-    "libcst>=1.9.0",
+# D-58's forbidden clause, and the defect it names: the v3 `all` omitted `record`, so an `[all]`
+# install could not read a parquet. Every extra above appears here, and a test reads the list back
+# out of the built wheel's metadata rather than out of this file.
+all = [
+    "reward-lens[trace]",
+    "reward-lens[judge]",
+    "reward-lens[train]",
+    "reward-lens[sigstore]",
+    "reward-lens[verifier]",
+    "reward-lens[white-box]",
+    "reward-lens[organisms]",
+    "reward-lens[viz]",
+    "reward-lens[record]",
 ]
-# D5 rung 2 only, coverage-guided fuzzing. Deliberately NOT in [verifier]: atheris builds against a
-# specific clang toolchain and fails to install on many systems, so folding it in would make
-# `pip install reward-lens[verifier]` fail for everyone in order to enable one rung of one
-# instrument. Rung 1 raises a typed error naming this extra, and the false-positive catalogue
-# carries `coverage_guided_available=False` with the reason, so a rung-1 result cannot be read as
-# a rung-2 one.
-fuzz = ["atheris>=2.3.0"]
-# The floor is 1.9.2 rather than 0.12.0 because the adapter uses the `reward_kwargs` channel
-# (`trainer_state`, `log_extra`, `log_metric`) that is the supported integration channel, and it
-# re-locates its targets by content in that version. The ceiling is the policy stated above.
-trl = ["reward-lens[white-box]", "trl>=1.9.2,<2.0"]
-# veRL is read through a record rather than imported; the adapter is import-guarded, so there is
-# deliberately no runtime dependency here. The extra exists because the error message names it.
-verl = []
-# Same shape as veRL and for a sharper reason: the `verifiers` converter imports the framework
-# nowhere at all. It reads every input through one accessor that takes a mapping or an object, so a
-# live `State` and a JSONL row written by `vf-eval` both convert with `verifiers` uninstalled. That
-# is what lets the converter read the 697 published rollouts it was tested against. The extra was
-# named alongside `trl` and `verl` and only the other two were declared.
-verifiers = []
-viz = ["matplotlib>=3.7.0", "seaborn>=0.13.0"]
+
+# PEP 735. Development tooling is a group rather than an extra because a group is never published:
+# `pip install reward-lens[dev]` was a way to ship the test runner to users, and D-58 closes it.
+[dependency-groups]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
-    # Exactly the version .github/workflows/tests.yml installs, and exact rather than a floor
-    # because a formatter's output is the contract rather than an implementation detail. The old
-    # `ruff>=0.1.0` resolved to 0.16.1 while the lint job ran 0.15.20, and the two disagree on ten
-    # files in this tree: a developer who ran `ruff format` from a [dev] install produced a diff
-    # the gate would then reject, which is the state in which people stop running the formatter.
-    # Raise this and the pin in tests.yml together, in one commit, or not at all.
+    "hypothesis>=6.100.0",
+    "hypothesis-jsonschema>=0.23",
+    # The render suite's tier B writes Parquet blocks through pyarrow and has no skip for its
+    # absence, because a skip would hide the tier rather than report it. So `uv sync --group dev`
+    # has to install the writer or `tests/render` is red on a clean checkout. Same floor as the
+    # `record` and `trace` extras; this group is never published, so the base closure is untouched.
+    "pyarrow>=15.0",
+    # The pure-Python validator, kept as the cross-check against jsonschema-rs rather than as a
+    # fallback. See the note on the base dependency.
+    "jsonschema>=4.21",
+    # Exact rather than a floor because a formatter's output is the contract rather than an
+    # implementation detail. Raise this and the pin in the lint workflow together, in one commit,
+    # or not at all.
     "ruff==0.15.20",
     "mypy>=1.7.0",
-    "hypothesis>=6.100.0",
 ]
-all = ["reward-lens[white-box,organisms,verifier,viz,dev]"]
 
+# D-04 and D-05: one distribution, one import name, two console names for one entry point. The
+# maintainer surface is `reward-lens-commons` (D-19) and it is not declared here yet.
+# `reward-lens-claims` is gone: appendix C maps it to `reward-lens-commons claims`, one
+# implementation rather than two with one name.
 [project.scripts]
-reward-lens = "reward_lens.operate.cli:main"
-reward-lens-claims = "reward_lens.artifacts.claims:main"
+reward-lens = "reward_lens.cli.main:main"
+rlens = "reward_lens.cli.main:main"
 
-# The project lives on the reward-lens organisation and the documentation is built by
-# .github/workflows/docs.yml and served from GitHub Pages. Both of these pointed at a personal
-# fork and at a Read the Docs site that was never built; a URL on a PyPI page that 404s is worse
-# than no URL, because it reads as an abandoned project rather than a missing link.
 [project.urls]
 Homepage = "https://github.com/reward-lens/reward-lens"
 Documentation = "https://reward-lens.github.io"
 Changelog = "https://github.com/reward-lens/reward-lens/blob/main/CHANGELOG.md"
 Issues = "https://github.com/reward-lens/reward-lens/issues"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/reward_lens"]
+exclude = ["/reproducibility/**", "/development-snapshots/**"]
 
-# The catalogue travels with the wheel: the registry loads it at import, so a wheel without it
-# has an empty registry and every instrument fails the "quantity not registered" check.
-[tool.setuptools.package-data]
-# py.typed is what makes the annotations real for anyone downstream. Without it a
-# type checker treats the installed package as untyped and resolves every name in
-# it to Any, which silently makes `Blind[T]` unenforceable at exactly the boundary
-# it exists to guard.
-"reward_lens" = ["spec/*.json", "py.typed"]
+# The schema lives at the repository root because it is a published artifact that tools other than
+# this library read, and it ships inside the import package because an installed distribution has
+# no repository root to look in. Both statements are true at once, which is what a force-include
+# is for.
+[tool.hatch.build.targets.wheel.force-include]
+"schema" = "reward_lens/schema"
+
+# The hook that builds the report bundle. See hatch_build.py for the three states and which one
+# fails.
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/reward_lens",
+    "/schema",
+    "/frontend",
+    "/tests",
+    "/hatch_build.py",
+    "/README.md",
+    "/LICENSE",
+]
+exclude = ["/reproducibility/**", "/development-snapshots/**"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
-# `ruff format` owns code layout, including wrapping long lines. With the
-# formatter as the source of truth for line length, E501 would only fire on
-# things the formatter deliberately leaves alone — long string literals, URLs,
-# and comments — so enforcing it on top of the formatter is pure noise.
+# `ruff format` owns code layout, including wrapping long lines. With the formatter as the source
+# of truth for line length, E501 would only fire on things it deliberately leaves alone: long
+# string literals, URLs and comments. Enforcing it on top of the formatter is pure noise.
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# Test modules deliberately import fixtures/symbols for their side effects and
-# re-exercise imports inside test bodies; don't flag those as unused.
 "tests/*" = ["F811"]
-# The white-box subsystems call require_extra() before their own imports, on
-# purpose: the guard exists to replace `ModuleNotFoundError: No module named
-# 'torch'` with a message naming the extra that installs it, and it can only do
-# that if it runs first. E402 is exactly the rule that says an import must not
-# follow a statement, so it fires on every import below the guard.
+# The white-box subsystems call require_extra() before their own imports, on purpose: the guard
+# exists to replace `ModuleNotFoundError: No module named 'torch'` with a message naming the extra
+# that installs it, and it can only do that if it runs first. E402 is exactly the rule that says an
+# import must not follow a statement.
 "src/reward_lens/attribution/__init__.py" = ["E402"]
 "src/reward_lens/concepts/__init__.py" = ["E402"]
 "src/reward_lens/dynamics/__init__.py" = ["E402"]
@@ -211,26 +251,22 @@ ignore = ["E501"]
 "src/reward_lens/organisms/__init__.py" = ["E402"]
 "src/reward_lens/runtime/__init__.py" = ["E402"]
 "src/reward_lens/signals/__init__.py" = ["E402"]
-# Same rule, first time on a module rather than a package `__init__`. `sae.py` sits behind the
-# `[dict]` extra, so its `require_extra` guard now runs above ten torch imports.
 "src/reward_lens/sae.py" = ["E402"]
+# Vendored real subjects, exempt for a reason that is not style. `math_equivalence.py` is MATH's
+# own `is_equiv`, checked in verbatim as the thing X1 and the D series measure. Its three bare
+# `except:` handlers are not a defect in this repository, they are the finding: instrument B4
+# exists to count exactly that pattern. Reformatting a vendored subject destroys the measurement.
+"experiments/x1_release/subjects/*.py" = ["E722", "E402", "F841"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v --tb=short"
-# Put the repo root on sys.path so the sciences under the top-level `studies/`
-# import the same way under any invocation. `pytest tests/` (the console
-# script) does not add the root to sys.path the way `python -m pytest` does.
+addopts = "--tb=short"
 pythonpath = ["."]
 markers = [
     "whitebox: needs the [white-box] extra (torch). Deselected on a base install.",
 ]
 
 [tool.mypy]
-# 3.12 rather than the 3.10 floor in requires-python: numpy's bundled stubs use
-# `type` statements, which mypy rejects outright when told to target 3.10, and it
-# stops before checking anything of ours. Runtime compatibility with 3.10 is
-# covered by the test matrix, which runs the suite on all three versions.
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true

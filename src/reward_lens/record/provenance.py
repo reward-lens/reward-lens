@@ -1,4 +1,4 @@
-"""Segment provenance: which policy generated which part of a trajectory.
+"""Segment provenance: which policy generated which part of a trajectory (section 2.2).
 
 A trajectory does not have a generating policy. It has several. Kimi K3 partial rollouts resume a
 trajectory under a policy several optimizer steps newer than the one that started it, so the turns
@@ -27,9 +27,8 @@ from reward_lens.record.tensors import Engine
 #: staleness number is a difference between two of these.
 PolicyVersionID = NewType("PolicyVersionID", str)
 
-#: `Engine.id`. The canonical schema types `SegmentProvenance.engine` as this; the field holds the
-#: `Engine` structure so the components survive, and `Engine.id` is this string. See
-#: `record.tensors`.
+#: `Engine.id`. Section 2.2 types `SegmentProvenance.engine` as this; the field holds the `Engine`
+#: structure so the components survive, and `Engine.id` is this string. See `record.tensors`.
 EngineID = NewType("EngineID", str)
 
 
@@ -90,8 +89,9 @@ class SegmentProvenance:
     """A trajectory does not have A generating policy. It has several.
 
     ``turn_range`` is half-open, ``[start, end)``, matching `core.types.Span`. The convention is
-    stated explicitly because the two readings differ by exactly one turn at every boundary, which
-    is the kind of off-by-one that produces a plausible wrong number rather than an error.
+    stated because section 2.2 does not state one and the two readings differ by exactly one turn
+    at every boundary, which is the kind of off-by-one that produces a plausible wrong number
+    rather than an error.
 
     ``staleness_steps`` is how many optimizer steps behind the current policy this segment's
     generating policy was at generation time. Zero is on-policy. It is an int and not a float

@@ -1,18 +1,18 @@
-"""The Instrument protocol, the measurement Context, and the gate-enforcing runner.
+"""The Instrument protocol, the measurement Context, and the gate-enforcing runner (section 4.2).
 
 An instrument is a functional of a reward signal's internals on structured data (I1). Every one
 declares what capability it requires (R3), how its value transforms under the gauge group
 (``gauge_status``), and which formal theory object it instantiates (``faithful_to``) with an
 explicit list of any departures (``deviations``). Those last two fields are the structural fix
 for operationalization drift (liability 2): an instrument that computes a coverage statistic while
-claiming Wang-Huang's distortion index must either match the theory object it names or list the
-deviation, and the deviation then surfaces on every card that consumes it.
+claiming Wang-Huang's distortion index must either match Appendix A or list the deviation, and the
+deviation then surfaces on every card that consumes it.
 
 The runner is where gates 1 and 2 are enforced before Evidence is returned, so no downstream code
-can bypass them. This is a frozen interface: the whole battery and the index library
+can bypass them. This is a frozen interface (section 4.6): the whole battery and the index library
 compile against it.
 
-**The retype.** 2.0.1's `Observable` declares six things and returns `Evidence`.
+**The retype (section 4.2).** 2.0.1's `Observable` declares six things and returns `Evidence`.
 `Instrument` declares twelve and returns `Reading`, which is `Evidence | Refusal`. The six new
 declarations are the ones the validity engine consults: the quantity being estimated, the access
 it needs, the substrates and phases it applies to, the validity envelope, the invariance group, and
@@ -22,9 +22,10 @@ defaults, and `lint_instrument` reports what is still undeclared rather than fai
 
 That last point is the whole design of the retype. Twenty-nine shipped observables and indices
 cannot declare a quantity, an envelope and a baseline set in the same commit that introduces the
-fields, so the fields arrive with honest placeholders and a lint function that names every gap. An
-instrument that cannot pass lint does not merge; an instrument that has not been retrofitted yet is
-visibly unretrofitted rather than silently wrong.
+fields, so the fields arrive with honest placeholders and a lint function that names every gap.
+Filling them is W1.5, and the test that asserts zero findings is what closes it. An instrument that
+cannot pass lint does not merge; an instrument that has not been retrofitted yet is visibly
+unretrofitted rather than silently wrong.
 """
 
 from __future__ import annotations
@@ -122,7 +123,7 @@ class Context:
     stats: dict[str, Any] = field(default_factory=dict)
     _observable: "Observable | None" = None
 
-    # -- what preflight consults. All optional, so every 2.0.1 call site that
+    # -- what preflight consults (section 4.2). All optional, so every 2.0.1 call site that
     # -- constructs a Context with a signal and a view keeps working unchanged.
     #: What the analyst can reach, per component. Absent means preflight cannot check access and
     #: says so rather than assuming the access is there.
@@ -180,10 +181,11 @@ class Context:
         `make_evidence`, never set here directly.
 
         ``quantity`` is read off the Observable rather than passed, because the instrument already
-        declares it and a second place to say it is a second place to say it differently. Until this
-        forwarded it, every reading in every store carried ``quantity=""`` while its instrument
-        declared one, so the unit-mismatch machinery had nothing to key on and a per-token reading
-        could be ranked against a per-sequence one without anything noticing.
+        declares it under section 4.2 and a second place to say it is a second place to say it
+        differently. Until this forwarded it, every reading in every store carried ``quantity=""``
+        while its instrument declared one, so the unit-mismatch machinery had nothing to key on and
+        a per-token reading could be ranked against a per-sequence one without anything noticing.
+        Two wave-3 packages reported it independently. SPEC-ERRATA E35.
 
         ``reference`` is forwarded for the same reason and with a sharper consequence: a reading
         taken against an uncertified reference material is capped at CALIBRATED by `compute_trust`,
@@ -191,9 +193,10 @@ class Context:
         into the content id, so this is not patchable after a row is written.
 
         ``incremental`` is the third of the same shape and it was missed when the first two were
-        fixed. An incremental-validity record is mandatory on every white-box reading,
-        `make_evidence` has taken one since it was written, and nothing could supply it through this
-        path, so the mandatory field was unreachable rather than merely unset.
+        fixed. Section 6.4 makes an incremental-validity record mandatory on every white-box
+        reading, `make_evidence` has taken one since it was written, and nothing could supply it
+        through this path, so the mandatory field was unreachable rather than merely unset. Found by
+        W3.7b while building the instrument whose entire subject is that record. SPEC-ERRATA E44.
         """
         obs = self._observable
         name = obs.name if obs else "anonymous"
@@ -240,22 +243,22 @@ class Context:
 
 @runtime_checkable
 class Observable(Protocol):
-    """A measurement. The narrow protocol, kept.
+    """A measurement (section 2.8.1). The narrow protocol, kept.
 
     ``capabilities`` is what the signal must offer; ``gauge_status`` is how the value transforms
-    under the gauge group; ``faithful_to`` names the theory object it instantiates (or None), and
-    ``deviations`` lists explicit departures from it. ``measure`` computes the Evidence,
+    under the gauge group; ``faithful_to`` names the Appendix A theory object it instantiates (or
+    None), and ``deviations`` lists explicit departures from it. ``measure`` computes the Evidence,
     calling ``ctx.emit`` to build it so gates 1 and 3 are applied centrally.
 
-    The capability field is named ``capabilities`` and not ``requires``, because ``requires`` names
-    the access matrix. This Protocol kept the 2.0.1 spelling after the rename landed everywhere
-    else, which made `BaseObservable` structurally fail to satisfy the Protocol it is the base for:
-    `requires` is an `AccessMatrix` there and a `Capability` here, so every conformant instrument
-    that called `run(self, ctx)` was a type error mypy reported and nobody could fix from the
-    instrument side.
+    The capability field is named ``capabilities`` and not ``requires``, because section 4.2 gives
+    ``requires`` to the access matrix. This Protocol kept the 2.0.1 spelling after E16 renamed it
+    everywhere else, which made `BaseObservable` structurally fail to satisfy the Protocol it is
+    the base for: `requires` is an `AccessMatrix` there and a `Capability` here, so every
+    conformant instrument that called `run(self, ctx)` was a type error mypy reported and nobody
+    could fix from the instrument side. SPEC-ERRATA E31.
 
-    Every `Instrument` is an `Observable`. The reverse holds once the six extra declarations are
-    filled in, which is what `lint_instrument` checks.
+    Every `Instrument` is an `Observable`. The reverse holds once the six declarations of section
+    4.2 are filled in, which is what `lint_instrument` checks.
     """
 
     name: str
@@ -270,7 +273,7 @@ class Observable(Protocol):
 
 @dataclass(frozen=True)
 class PreflightResult:
-    """What an instrument can do here, before it does any of it.
+    """What an instrument can do here, before it does any of it (section 4.2).
 
     Separating this from ``estimate`` is what makes the capability report producible with no GPU
     work, and the capability report is the product for most users. So this method computes nothing:
@@ -312,7 +315,7 @@ class PreflightResult:
 
 @runtime_checkable
 class Instrument(Protocol):
-    """The twelve declarations and the two methods every instrument implements.
+    """The twelve declarations and the two methods of section 4.2, verbatim.
 
     The six beyond `Observable` are what the validity engine consults, and each closes a specific
     way of producing a confident wrong number:
@@ -349,11 +352,11 @@ class Instrument(Protocol):
 def declared_capabilities(inst: Any) -> Capability:
     """What the signal must offer.
 
-    `requires` names the access matrix, and 2.0.1 gave the same name to the capability flags. Both
-    concepts survive, so one had to move: `requires` is the access matrix and the capability
-    declaration is `capabilities`.
+    Section 4.2 gives `requires` to the access matrix, and 2.0.1 gave the same name to the
+    capability flags. Both concepts survive, so one had to move: `requires` is the access matrix and
+    the capability declaration is `capabilities`. SPEC-ERRATA E16.
 
-    This began as a shim reading both spellings through the retrofit. The retrofit is closed,
+    This began as a shim reading both spellings through the W1.5 retrofit. The retrofit is closed,
     so it **raises** on the old spelling instead. Deleting it outright was the other option and it
     is worse: with no check, a `requires` holding a `Capability` would be ignored and the inherited
     `capabilities` default read in its place, which is a capability gate silently removed. That is
@@ -364,7 +367,7 @@ def declared_capabilities(inst: Any) -> Capability:
     if isinstance(legacy, Capability):
         raise CapabilityError(
             f"{getattr(inst, 'name', type(inst).__name__)!r} declares `requires` as a Capability. "
-            f"`requires` names the access matrix; the capability flags are now "
+            f"Section 4.2 gives `requires` to the access matrix; the capability flags are now "
             f"`capabilities`. Rename the declaration. This raises rather than falling back, "
             f"because falling back would read the inherited `capabilities` default instead and "
             f"silently drop the gate this declaration exists to set."
@@ -374,7 +377,7 @@ def declared_capabilities(inst: Any) -> Capability:
 
 
 def declared_access(inst: Any) -> AccessMatrix:
-    """What the analyst must be able to reach, per component: the `requires` access matrix."""
+    """What the analyst must be able to reach, per component. Section 4.2's `requires`."""
     req = getattr(inst, "requires", None)
     return req if isinstance(req, Mapping) else {}
 
@@ -402,7 +405,7 @@ def capability_name(caps: Capability) -> str:
 
 
 def run(observable: Observable, ctx: Context) -> Evidence:
-    """Run an Observable under the gates.
+    """Run an Observable under the gates (section 2.8.1).
 
     Enforces R3 (the signal must declare the required capability) and gate 2 (a covariant
     cross-signal comparison requires a frame) before delegating to ``measure``. Gates 1 and 3 are
@@ -411,10 +414,10 @@ def run(observable: Observable, ctx: Context) -> Evidence:
     """
     needed = declared_capabilities(observable)
     if ctx.signal is None:
-        # A PROGRAM-substrate instrument has no network to point at, and forcing one into
-        # `RewardSignal` is what previous versions got wrong. An instrument that needs no
-        # capability runs; one that needs a capability from a signal that is not there is refused
-        # rather than crashed.
+        # A PROGRAM-substrate instrument has no network to point at, and section 3.9's whole
+        # argument is that forcing one into `RewardSignal` is what previous versions got wrong. An
+        # instrument that needs no capability runs; one that needs a capability from a signal that
+        # is not there is refused rather than crashed.
         if needed and needed != Capability.NONE:
             raise CapabilityError(
                 f"observable '{observable.name}' requires {needed!r} and the context carries no "
@@ -441,7 +444,7 @@ def run(observable: Observable, ctx: Context) -> Evidence:
         ctx._observable = None
 
 
-#: What an undeclared envelope is, before one is filled in. It is not `UNCONDITIONAL`: claiming
+#: What an undeclared envelope is, before W1.5 fills one in. It is not `UNCONDITIONAL`: claiming
 #: an instrument holds in every regime is a positive claim, and "nobody has looked yet" is a
 #: different thing that `lint_instrument` reports by name.
 UNDECLARED_ENVELOPE: EnvelopeSpec | None = None
@@ -457,24 +460,25 @@ class BaseObservable:
     silently not take effect. Any object satisfying the protocol works; the battery and the index
     library use this base for uniformity.
 
-    The six extra declarations arrive here with placeholders rather than plausible defaults,
+    The six section-4.2 declarations arrive here with placeholders rather than plausible defaults,
     because a plausible default is indistinguishable from a decision. ``quantity`` is empty rather
     than guessed, ``envelope`` is None rather than unconditional, and ``baselines`` is empty rather
-    than populated with something that sounds reasonable. `lint_instrument` names each gap.
+    than populated with something that sounds reasonable. `lint_instrument` names each gap, and
+    W1.5 closes them.
     """
 
     name: str = "observable"
     version: str = "1.0"
-    #: What the *signal* must offer. 2.0.1 called this `requires`; that name now belongs to the
-    #: access matrix instead, so the capability declaration is renamed. See `declared_capabilities`.
+    #: What the *signal* must offer. 2.0.1 called this `requires`; section 4.2 gives that name to
+    #: the access matrix instead, so the capability declaration is renamed. See `declared_capabilities`.
     capabilities: Capability = Capability.SCORES
     gauge_status: GaugeStatus = GaugeStatus.INVARIANT
     faithful_to: str | None = None
     deviations: tuple[str, ...] = ()
 
-    # -- the six extra declarations, undeclared until an instrument fills them in
+    # -- the six declarations of section 4.2, undeclared until W1.5 fills them in
     quantity: QuantityID = ""
-    #: What the *analyst* must be able to reach, per component: the access matrix.
+    #: What the *analyst* must be able to reach, per component. Section 4.2's `requires`.
     requires: AccessMatrix = {}
     substrates: frozenset[Substrate] = frozenset()
     phases: frozenset[Phase] = frozenset()
@@ -490,7 +494,8 @@ class BaseObservable:
     #: The mapping form was supported and documented by `resolve_relation` from the start and this
     #: annotation forbade it, so the form the kernel implements was the form the type rejected.
     #: Three shipped instruments recorded a second true, checkable relation in a comment instead of
-    #: declaring it, and each of those is a generated invariance test that never ran.
+    #: declaring it, and each of those is a generated invariance test that never ran. SPEC-ERRATA
+    #: E55.
     invariance_relation: Relation | Mapping[InvarianceGroupID, Relation] | None = None
     baselines: tuple[str, ...] = ()
     rung: int = 0
@@ -498,7 +503,7 @@ class BaseObservable:
     def measure(self, ctx: Context) -> Evidence:  # pragma: no cover - abstract
         raise NotImplementedError
 
-    # -- the two methods ---------------------------------------------------
+    # -- the two methods of section 4.2 ------------------------------------
 
     def preflight(self, ctx: Context) -> PreflightResult:
         """Access, substrate, phase, envelope and limits, with no compute.
@@ -603,7 +608,7 @@ class BaseObservable:
             )
             named = ", ".join(v.condition.name for v in violations)
 
-            # The three violation behaviours are not interchangeable, and collapsing
+            # Section 2.4's three violation behaviours are not interchangeable, and collapsing
             # them to `refuse` throws away the two cases where an answer still exists.
             if self.envelope.on_violation == "bound":
                 notes.append(
@@ -613,7 +618,7 @@ class BaseObservable:
                 )
                 bound_used = self.envelope.bound_estimator
             elif self.envelope.on_violation == "downgrade":
-                # The quantity stays defined and its trust drops. The worked case: a
+                # The quantity stays defined and its trust drops. Section 2.4's worked case: a
                 # before/after comparison outside STATIONARY_GRADER is still computable and is now
                 # EXPLORATORY rather than REGISTERED, with the condition recorded.
                 notes.append(
@@ -677,10 +682,12 @@ class BaseObservable:
         `run` is the 2.0.1 ``Observable`` entry point, it is typed ``-> Evidence``, and it raises
         `CapabilityError` when the signal does not offer what the instrument declared. That is the
         right shape for a caller who asked for a measurement and made a programming error. It is the
-        wrong shape here, because this method is typed as returning a `Reading` and a refusal is a
-        value with a remedy and never an exception, and a missing capability is exactly an
-        anticipated condition: it is the commonest thing a capability report exists to tell you
-        about in advance.
+        wrong shape here, because §4.2 types this method as returning a `Reading` and §6.1 says a
+        refusal is a value with a remedy and never an exception, and a missing capability is exactly
+        an anticipated condition: it is the commonest thing a capability report exists to tell you
+        about in advance. W2.6 found this by having to work around it in its own sweep harness to
+        satisfy an acceptance clause reading "Evidence or a Refusal, none an exception". SPEC-ERRATA
+        E27.
         """
         pre = self.preflight(ctx)
         if not pre.ok and pre.refusal is not None:
@@ -709,8 +716,8 @@ class BaseObservable:
 
         The two cases want different advice and the difference is not the missing flags, which are
         the same either way. With no signal at all the likely error is a declaration rather than a
-        setup: a PROGRAM-substrate instrument has no network to point at, and forcing one into
-        `RewardSignal` is what previous versions got wrong.
+        setup: a PROGRAM-substrate instrument has no network to point at, and section 3.9's argument
+        is that forcing one into `RewardSignal` is what previous versions got wrong.
         """
         names = ", ".join(
             sorted(c.name for c in Capability if c is not Capability.NONE and c & missing)
@@ -741,7 +748,7 @@ class InstrumentLintFinding:
 
 
 def lint_instrument(inst: Any) -> list[InstrumentLintFinding]:
-    """The instrument lint rules, as findings rather than as an import-time failure.
+    """The section 4.2 lint rules, as findings rather than as an import-time failure.
 
     Four rules. An instrument whose quantity is not registered fails; an instrument with an empty
     ``baselines`` tuple fails; an instrument with no envelope fails; an instrument with no
@@ -751,8 +758,8 @@ def lint_instrument(inst: Any) -> list[InstrumentLintFinding]:
     does not need checking here.
 
     Returning findings rather than raising is what makes the retype possible in one commit: the
-    twenty-nine shipped observables are visibly unretrofitted rather than silently wrong, and a test
-    asserting an empty list is what closes the gap.
+    twenty-nine shipped observables are visibly unretrofitted rather than silently wrong, and the
+    W1.5 test asserting an empty list is what closes the gap.
     """
     from reward_lens.core.quantity import QUANTITIES
 
@@ -807,7 +814,7 @@ def lint_instrument(inst: Any) -> list[InstrumentLintFinding]:
                 name,
                 "invariance",
                 "declares no invariance group, so it gets no generated property test",
-                "name one of the seven invariance groups, or `none` if no group acts on it. "
+                "name one of the seven groups of Appendix B, or `none` if no group acts on it. "
                 "`none` is an answer; a blank is not",
             )
         )
@@ -816,8 +823,7 @@ def lint_instrument(inst: Any) -> list[InstrumentLintFinding]:
 
 
 #: What makes a reading white-box: it opened the network. Reading activations, gradients, or their
-#: second order are the three, and any one of them puts the incremental-validity obligation on the
-#: reading.
+#: second order are the three, and any one of them puts section 6.4's obligation on the reading.
 WHITE_BOX = Capability.ACTIVATIONS | Capability.GRADIENTS | Capability.HVP
 
 
@@ -829,11 +835,11 @@ def is_white_box(inst: Any) -> bool:
 def lint_reading(reading: Any, instrument: Any) -> list[InstrumentLintFinding]:
     """Lint rule four: a white-box reading with no `IncrementalValidity` fails.
 
-    This is the fourth of the lint rules and it is the last one to become enforceable, for a reason
-    worth recording: it is a rule about a *reading*, not about an instrument, so it cannot be a
-    fifth check inside `lint_instrument`, which only ever sees the declaration. And until `policy/`
-    landed there was no white-box reading anywhere in the library to enforce it against, so it
-    stayed implementable and unenforced.
+    This is the fourth of the section 4.2 rules and it is the last one to become enforceable, for a
+    reason worth recording: it is a rule about a *reading*, not about an instrument, so it cannot be
+    a fifth check inside `lint_instrument`, which only ever sees the declaration. And until W5.1
+    landed `policy/` there was no white-box reading anywhere in the library to enforce it against,
+    so the rule was implementable and unenforced through four waves.
 
     Why it is a rule at all: the bar for a white-box method is **decorrelation plus signal, not
     superiority**. A method ten points worse than the best black-box baseline and uncorrelated with
@@ -871,10 +877,10 @@ __all__ = [
     "WHITE_BOX",
     "BaseObservable",
     "CalibrationProvider",
+    "capability_name",
     "Context",
     "is_white_box",
     "lint_reading",
-    "capability_name",
     "declared_access",
     "declared_capabilities",
     "Instrument",

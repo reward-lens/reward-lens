@@ -1,4 +1,4 @@
-"""Reference materials, and the chain that makes a production reading mean something.
+"""Reference materials, and the chain that makes a production reading mean something (section 2.8).
 
 Every prior version of this project assumed the answer key was right. It is not, and this module is
 the fix.
@@ -62,7 +62,7 @@ class MatrixDescription:
     matrices is what `mismatch_with` is for.
 
     The textbook fix is standard addition: dose the graded structure into the *target* system
-    rather than a separate clean one, which removes the mismatch by construction.
+    rather than a separate clean one, which removes the mismatch by construction. That is W6.6.
     """
 
     system: str
@@ -268,7 +268,7 @@ class ReferenceMaterial:
 # The chain
 # ---------------------------------------------------------------------------
 
-#: The three rungs of the calibration chain, cheapest last.
+#: The three rungs of section 2.8's chain, cheapest last.
 ChainLevel = Literal["primary", "reference_method", "working_method"]
 
 
@@ -276,14 +276,14 @@ ChainLevel = Literal["primary", "reference_method", "working_method"]
 class Transfer:
     """The disagreement between two rungs of the calibration chain, published as a quantity.
 
-    This is `t₂₁` and `t₃₂` of the chain, and the reason the type exists is that the library's
+    This is `t₂₁` and `t₃₂` of section 2.8, and the reason the type exists is that the library's
     worst-looking published result, a maximum absolute AUC difference of 0.419 against a registered
     0.15, is a transfer coefficient. Publishing it as a caveat was the mistake; publishing it as a
     quantity with a method is the service.
 
-    **Correction: 0.419 is not the planted-to-real coefficient it was described as here.**
-    Recomputing it from its own parent row (`campaign.organism.scorecard`, reproducing
-    0.41898333 to 1e-9 before saying anything) shows both arms are planted: `cpu_auc` is a CPU
+    **Corrected at wave 6: 0.419 is not the planted-to-real coefficient it was described as here.**
+    X3 recomputed it from its own parent row (`campaign.organism.scorecard`, reproducing
+    0.41898333 to 1e-9 before saying anything) and both arms are planted: `cpu_auc` is a CPU
     rehearsal and `real_auc` is **the same planted organism** scored by a real reward model, over
     one organism family at three doses. `n_natural_corpora = 0`. So 0.419 is a
     **simulation-to-real-model** transfer, and the planted-to-real coefficient this docstring
@@ -298,8 +298,8 @@ class Transfer:
     organism design is not yet a measurement**, and both are published for that reason.
 
     A transfer also falls out for free anywhere two rungs of an estimator ladder both ran on the
-    same data: the difference between the cheap rung and the expensive one is the cheap rung's
-    transfer uncertainty, and nobody publishes it.
+    same data, which is M11: the difference between the cheap rung and the expensive one is the
+    cheap rung's transfer uncertainty, and nobody publishes it.
     """
 
     from_level: ChainLevel
@@ -323,8 +323,8 @@ class Transfer:
     def name(self) -> str:
         """`t32` or `t21`, named by the pair of rungs rather than by the declaration order.
 
-        The chain runs downward, primary to working, and names the transfers `t32` and `t21`:
-        the higher rung first, always. Deriving the name from declaration direction instead
+        Section 2.8 draws the chain downward, primary to working, and names the transfers `t32` and
+        `t21`: the higher rung first, always. Deriving the name from declaration direction instead
         gave the same physical transfer two names, `t32` when written one way and `t23` when written
         the other, and a budget with both spellings would have double-counted it.
         """
@@ -356,7 +356,7 @@ class CalibrationChain:
 
     The composition every production reading needs and none currently carries. `u₁` is the working
     method's own uncertainty, the transfers are what each step of the chain costs, `u_CRM` is the
-    reference's certificate, and `u_instrument` is the substrate noise floor.
+    reference's certificate, and `u_instrument` is the substrate noise floor of section 4.7.
 
     An uncertified reference does not make this un-composable: the chain still reports, with
     `u_CRM` named as the missing term and the trust capped. What it must not do is quietly drop the
@@ -414,7 +414,7 @@ class CalibrationChain:
                     value=self.u_instrument,
                     kind="B",
                     dof=self.dof_instrument,
-                    note="substrate noise floor",
+                    note="substrate noise floor, section 4.7",
                 )
             )
         return UncertaintyBudget(
@@ -465,7 +465,7 @@ def ladder_disagreement(
     n: int | None = None,
     method: str = "",
 ) -> Transfer:
-    """In one call: two rungs disagreeing on the same data is the cheap rung's transfer term.
+    """M11 in one call: two rungs disagreeing on the same data is the cheap rung's transfer term.
 
     This falls out of the estimator ladder for free and nobody publishes it, so the only work is
     remembering to record it. Making it one call is what makes it get recorded.

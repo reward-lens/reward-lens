@@ -1,14 +1,14 @@
 """Identity types, enums, and addressing primitives for the kernel.
 
-Everything comparable across runs gets a stable, content-derived id. Ids are
+Everything comparable across runs gets a stable, content-derived id (section 2.1.1). Ids are
 BLAKE2b-128 digests over canonical serializations, carried with human-readable prefixes so a
 glance at a string tells you what kind of thing it names. Content derivation is what lets the
 evidence store be a DAG: two runs that computed the same thing from the same inputs land on the
 same id, and a derived quantity can point at the leaf measurements it consumed.
 
 The enums here are load-bearing policy, not decoration. `Capability` is the declared contract
-that replaces v1's duck-typed `hasattr` discovery. `TrustLevel` is the ladder the three
-gates climb; it is an `IntEnum` so "the highest applicable rung" is a max and card
+that replaces v1's duck-typed `hasattr` discovery (R3). `TrustLevel` is the ladder the three
+gates climb (section 1.3); it is an `IntEnum` so "the highest applicable rung" is a max and card
 rendering can sort by it. `GaugeStatus` is the typing that makes a raw-coordinate cross-model
 number impossible to mistake for an invariant one (I3, gate 2).
 """
@@ -26,7 +26,7 @@ from typing import Any, Literal, NewType
 # Content-derived identity
 # ---------------------------------------------------------------------------
 
-_HASH_BYTES = 16  # 128-bit digest
+_HASH_BYTES = 16  # 128-bit digest, per section 2.1.1
 
 
 def canonical_bytes(obj: Any) -> bytes:
@@ -81,7 +81,7 @@ def hash_bytes(data: bytes, prefix: str) -> str:
 
 # Stable identifier NewTypes. These are ``str`` at runtime; the NewType is documentation and a
 # mypy guard so a DatasetID is never accidentally passed where a ModelFP is expected.
-ModelFP = NewType("ModelFP", str)  # "mfp:..."   weights+config+tokenizer hash
+ModelFP = NewType("ModelFP", str)  # "mfp:..."   weights+config+tokenizer hash (section 2.2.5)
 DatasetID = NewType("DatasetID", str)  # "ds:..."    dataset card hash (content + builder version)
 DirectionID = NewType("DirectionID", str)  # "dir:..." persisted direction/probe hash
 FrameID = NewType("FrameID", str)  # "frame:..." gauge frame hash
@@ -96,15 +96,15 @@ OrganismID = NewType("OrganismID", str)  # "org:..."
 
 
 class Capability(enum.Flag):
-    """Declared capabilities of a reward signal.
+    """Declared capabilities of a reward signal (R3, section 2.3.2).
 
     Instruments declare `capabilities: Capability`; the runner checks compatibility before any
     GPU work and fails with a precise message. This replaces v1's `hasattr(adapter, ...)`
     duck typing, where a missing method surfaced as a deep AttributeError or, worse, a
     silently skipped code path.
 
-    The field was called `requires` until that name was needed for the access matrix. Both
-    concepts survive, so one of them had to move.
+    The field was called `requires` until the ASSAY build, when section 4.2 gave that name to
+    the access matrix. Both concepts survive, so one of them had to move; see SPEC-ERRATA E16.
     """
 
     NONE = 0
@@ -127,7 +127,7 @@ class Capability(enum.Flag):
 
 
 class TrustLevel(enum.IntEnum):
-    """The trust ladder the three gates compute.
+    """The trust ladder the three gates compute (section 1.3).
 
     Ordered so that comparisons and ``max`` express "the highest applicable rung". The level
     is never set by a caller; it is computed from whether the Evidence carries a calibration
@@ -171,7 +171,7 @@ SitePoint = Literal["resid_pre", "resid_post", "attn_out", "mlp_out", "head_out"
 
 @dataclass(frozen=True, order=True)
 class Site:
-    """A location in a network.
+    """A location in a network (section 2.1.1).
 
     ``layer`` indexes the transformer block; ``point`` names the read/write surface within it;
     ``head`` selects an attention head where ``point == "head_out"`` and is None otherwise. The
@@ -193,7 +193,7 @@ class Site:
 
 @dataclass(frozen=True)
 class Span:
-    """A typed token interval ``[start, end)``.
+    """A typed token interval ``[start, end)`` (section 2.1.1, extended in section 2.4).
 
     The ``kind`` tag is what makes span-level patching and attribution meaningful: a receipt
     span, an error step, a critique sentence, a verdict token. Core defines the primitive; the
@@ -224,7 +224,7 @@ class Span:
 
 @dataclass(frozen=True)
 class SubjectRef:
-    """The subject of a measurement.
+    """The subject of a measurement (section 2.1.2).
 
     Names the signal(s) by fingerprint, the dataset, the readout, the frame (for covariant
     quantities), and any interventions applied, by fingerprint. Recording intervention
@@ -251,7 +251,7 @@ class SubjectRef:
 
 
 # ---------------------------------------------------------------------------
-# The four typing dimensions
+# The four typing dimensions (section 2.3)
 # ---------------------------------------------------------------------------
 #
 # Which instrument applies is decided by four independent things, and all four belong in the type
@@ -280,12 +280,12 @@ class Access(enum.IntFlag):
     Ordered so that ``BACKWARD > FORWARD > QUERY > RECORD`` as a containment claim, and MUTATE and
     CONTROL are orthogonal to that ladder rather than above it.
 
-    ``SOURCE`` is the second member that earns its place, and it is not on the ladder either. The
-    catalogue asks for "Access source" on D1, D2 and D9, and none of the other seven flags says it:
+    ``SOURCE`` is the second member that earns its place, and it is not on the ladder either.
+    Section 5.D prints "Access source" for D1, D2 and D9, and none of the other seven flags says it:
     ``FORWARD`` means run it and read activations, which a program does not have, and ``MUTATE``
     means modify it, which reading does not. A verifier's source code, control-flow graph and test
     suite are the substrate the entire D series measures, so without this flag ten of the eighty-five
-    catalogued instruments cannot declare what they need.
+    catalogued instruments cannot declare what they need. See SPEC-ERRATA E20.
 
     The member that earns its place is ``REPLICATE``, and it does **not** follow from ``QUERY``. A
     hosted judge with a fixed internal seed is callable and not facet-varyable, and without facet
@@ -312,7 +312,7 @@ class Access(enum.IntFlag):
 #: What an analyst can reach, per component. Absent means `Access.NONE`.
 AccessMatrix = Mapping[Component, Access]
 
-#: The containment ladder: `BACKWARD > FORWARD > QUERY > RECORD`. Holding a rung
+#: The containment ladder of section 2.3: `BACKWARD > FORWARD > QUERY > RECORD`. Holding a rung
 #: implies holding every rung below it, because you cannot differentiate through a model you cannot
 #: run, and running it produces a value you could have logged.
 #:
@@ -326,7 +326,7 @@ _LADDER: tuple["Access", ...] = (Access.RECORD, Access.QUERY, Access.FORWARD, Ac
 def expand_access(access: "Access") -> "Access":
     """Add every rung the containment ladder implies.
 
-    `Access` is an `IntFlag` with independent bits, so the containment ordering is not
+    `Access` is an `IntFlag` with independent bits, so the ordering section 2.3 asserts is not
     something the type gives for free: without this, `have BACKWARD, need RECORD` is False, which
     is wrong and was wrong until it was measured. Expansion happens at comparison time rather than
     at construction so a capability report can still say "you have QUERY" rather than reciting
@@ -400,7 +400,7 @@ class Substrate(enum.Enum):
     COMPOSITE = enum.auto()  # a ScoreTree over any of the above
 
 
-#: The four access profiles, as concrete matrices. Profile A alone is a shippable
+#: The four access profiles of section 2.3, as concrete matrices. Profile A alone is a shippable
 #: product, which is why the wedge is defined by what it can reach.
 PROFILE_MARKETPLACE_BUYER: AccessMatrix = {
     Component.TASK: Access.QUERY,

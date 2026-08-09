@@ -218,7 +218,7 @@ class MetamorphicRelation:
         return KIND_ASSERTION[self.kind]
 
 
-# -- rung 0: the fixed relation set, for graders that read source --------------------------------
+# -- rung 0: the fixed relation set of section 5.D, for graders that read source -----------------
 
 
 def looks_like_source(text: str) -> bool:
@@ -614,7 +614,7 @@ def answer_text_relations(on: str = "response") -> tuple[MetamorphicRelation, ..
 
 
 def identity_relation(on: str = "response") -> MetamorphicRelation:
-    """The declared baseline for D3: the identity transformation.
+    """The declared baseline: section 5.D gives D3's baseline as the identity transformation.
 
     It is computed rather than assumed. The identity rewrite appends and then removes a marker, so
     it produces a string equal to its input and the transformation reports itself inapplicable;

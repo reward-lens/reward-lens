@@ -1,6 +1,6 @@
-"""Running instruments against a converted `Run`, with one guarantee to keep.
+"""Running instruments against a converted `Run`, which is what W2.6's acceptance clause asks for.
 
-The guarantee: *every record-only instrument returns Evidence or a Refusal against it, none an
+The clause: *every record-only instrument returns Evidence or a Refusal against it, none an
 exception.* Three things stand between an instrument and that guarantee, and only the first is the
 instrument's own doing.
 
@@ -9,16 +9,16 @@ checks the instrument's declared `capabilities` against the signal's and raises 
 either way: with no signal, because there is nothing to check against, and with a signal that
 declares less than the instrument needs. So `BaseObservable.estimate`, whose own docstring says
 "Evidence or Refusal. Never a bare float, never a silent degradation", raises on the capability
-dimension. That is the one place in the instrument contract where the refusal architecture is not
+dimension. That is the one place in the section 4.2 contract where the refusal architecture is not
 honoured, and it is closed here by checking the capability before calling `estimate` and returning
 `Refusal(ACCESS_INSUFFICIENT)`. Anticipating a declared condition is not the same as catching a
-broad exception.
+broad exception; the exact upstream patch is in this package's build report.
 
-**What the record holds is not what the recorder could reach.** `Run.access` is what was reachable
-at capture time, and `BaseObservable.preflight` reads whatever is in `Context.access` as what the
-analyst can reach now. Those are different matrices and the campaign is the case that separates
-them: it ran forward passes and captured activations, and nobody holding the converted store can do
-either. `reader_access` builds the second one.
+**What the record holds is not what the recorder could reach.** Section 2.2 defines `Run.access` as
+what was reachable at capture time, and `BaseObservable.preflight` reads whatever is in
+`Context.access` as what the analyst can reach now. Those are different matrices and the campaign is
+the case that separates them: it ran forward passes and captured activations, and nobody holding the
+converted store can do either. `reader_access` builds the second one.
 
 **A capability on a signal and a capability in a record mean different things.** A signal with
 `ACTIVATIONS` can produce them on demand; a record either already holds them or never will.
@@ -98,8 +98,8 @@ def capabilities_in_record(run: Run, *, steps: int | None = None) -> tuple[Capab
     bounded answer says how bounded it is.
 
     `LINEAR_READOUT` is read off `ComponentRef.extra["readout_vectors"]`, which is where the
-    converter puts the campaign's recorded reward directions because the record has no field for
-    them.
+    converter puts the campaign's recorded reward directions because section 2.2 gives the record
+    no field for them.
     """
     caps = Capability.NONE
     grader = run.component(Component.GRADER)
@@ -282,7 +282,7 @@ class InstrumentOutcome:
     """What one instrument did when pointed at the record.
 
     ``kind`` is one of ``evidence``, ``note``, ``refusal``, ``exception``. The last one is the
-    failure the guarantee is about and it carries the exception so a test failure names the
+    failure the acceptance clause is about and it carries the exception so a test failure names the
     instrument and the traceback rather than a count.
     """
 
@@ -308,7 +308,7 @@ class InstrumentOutcome:
 
 @dataclass
 class SweepReport:
-    """Every instrument's outcome, and the counts the guarantee is stated in."""
+    """Every instrument's outcome, and the counts the acceptance clause is stated in."""
 
     outcomes: tuple[InstrumentOutcome, ...] = ()
     record_only: tuple[str, ...] = ()
@@ -365,8 +365,8 @@ def _is_note(reading: Any) -> bool:
     """An Evidence whose value is only a note is a non-answer wearing a measurement.
 
     Twelve of the shipped instruments return one when their injected input is absent, measured by
-    running all thirty-eight with every capability and every access granted. That case is a
-    `Refusal` with a remedy; classifying it here keeps the count from counting
+    running all thirty-eight with every capability and every access granted. Section 6.1 says that
+    case is a `Refusal` with a remedy; classifying it here keeps the acceptance count from counting
     a "none injected" string as a reading.
     """
     return (
@@ -517,12 +517,12 @@ def _observable_classes() -> Iterable[tuple[str, type]]:
 def _declares_a_name(cls: type) -> bool:
     """Whether this class named itself, which is how an instrument is told from a base class.
 
-    `BaseObservable.name` is the placeholder ``"observable"`` and the instrument contract requires
-    `name` on every instrument, so a class that never set one has not declared itself to be one.
-    That is the only structural signal available: `ControlInstrument` is an abstract base whose
-    `estimate` is fully implemented and whose `compute` raises `NotImplementedError`, so it
-    satisfies the `runtime_checkable` `Instrument` protocol and a discovery sweep picks it up as a
-    real instrument unless something like this excludes it.
+    `BaseObservable.name` is the placeholder ``"observable"`` and section 4.2 requires `name` on
+    every instrument, so a class that never set one has not declared itself to be one. That is the
+    only structural signal available: `ControlInstrument` is an abstract base whose `estimate` is
+    fully implemented and whose `compute` raises `NotImplementedError`, so it satisfies the
+    `runtime_checkable` `Instrument` protocol and a discovery sweep picks it up as a real
+    instrument unless something like this excludes it.
     """
     from reward_lens.measure.base import BaseObservable
 
@@ -570,9 +570,9 @@ def unnamed_bases() -> tuple[str, ...]:
 def access_declaration_findings(instruments: Sequence[Any]) -> tuple[str, ...]:
     """Instruments that carry an access matrix under a name `declared_access` does not read.
 
-    The instrument contract and `declared_access` both say `requires`. Four of the control
-    instruments declare `access` instead, so their access matrix is never checked by any preflight
-    and the refusal it would produce never fires. Reported rather than fixed: those files belong to
+    Section 4.2 and `declared_access` both say `requires`. Four of the W3.7a control instruments
+    declare `access` instead, so their access matrix is never checked by any preflight and the
+    refusal it would produce never fires. Reported rather than fixed: those files belong to
     another package.
     """
     out: list[str] = []
@@ -584,8 +584,8 @@ def access_declaration_findings(instruments: Sequence[Any]) -> tuple[str, ...]:
             value = getattr(instrument, alias, None)
             if isinstance(value, Mapping) and value:
                 out.append(
-                    f"{name} declares its access matrix as `{alias}`; the instrument contract "
-                    f"and `declared_access` read `requires`, so preflight never checks it"
+                    f"{name} declares its access matrix as `{alias}`; section 4.2 and "
+                    f"`declared_access` read `requires`, so preflight never checks it"
                 )
                 break
     return tuple(out)

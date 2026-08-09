@@ -1,10 +1,10 @@
-"""The evidence store.
+"""The evidence store (section 2.1.2).
 
 Append-only, file-backed, trivially inspectable. Envelopes are JSON Lines in ``evidence.jsonl``;
 bulk arrays are content-addressed ``.npy`` sidecars under ``payloads/``. There is no database
 server; the files are the interface, so the store is diffable and a human can read it. Cards,
 the Atlas, papers, and safety cases are views over this store and never compute fresh numbers,
-which is what guarantees a card and a paper cite identical values (I5).
+which is what guarantees a card and a paper cite identical values (I5, liability 4).
 
 The store is a DAG: a derived Evidence names its parents in provenance, and the store refuses to
 append a derived Evidence whose parents it cannot resolve (I5). That refusal is the mechanism

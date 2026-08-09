@@ -37,8 +37,8 @@ a power of two: SALib emits a `UserWarning` when it is not and then returns numb
 is easy to lose under a pytest filter, so this module refuses a non-power-of-two `N` at
 construction and names the next one up.
 
-**Kill condition:** D4 has none, and that is right. A sensitivity profile is a description of a
-function; there is no result that would make the decomposition wrong.
+**Kill condition:** section 5.D gives D4 no kill condition, and that is right. A sensitivity
+profile is a description of a function; there is no result that would make the decomposition wrong.
 What can be wrong is the reading of it, so the profile carries the interaction mass and the
 one-at-a-time comparison rather than a single headline number.
 """
@@ -47,9 +47,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy", extra="verifier")
 
 from reward_lens.core.budget import BudgetTerm, UncertaintyBudget
 from reward_lens.core.envelope import EnvelopeSpec, RegimeCondition
@@ -99,7 +104,7 @@ class RubricInput:
 
 
 #: A grader whose score is a function of named numeric inputs. This is `GRADER:QUERY` plus the
-#: ability to choose the inputs, which is what makes factorial sampling possible.
+#: ability to choose the inputs, which section 5.D calls factorial sampling.
 RubricScorer = Callable[[Mapping[str, float]], float]
 
 
@@ -121,9 +126,9 @@ def _next_power_of_two(n: int) -> int:
 class ContractSensitivity:
     """One component's sensitivity, in the form the equal-compensation check consumes.
 
-    The equal-compensation `μ'_i` is the derivative of signal `i`'s mean with respect to effort
-    spent on task `i`. The Sobol' design already evaluates the grader on a space-filling sample of
-    its inputs, so the slope is an ordinary least-squares coefficient over evaluations that have
+    Section 3.5.2's `μ'_i` is the derivative of signal `i`'s mean with respect to effort spent on
+    task `i`. The Sobol' design already evaluates the grader on a space-filling sample of its
+    inputs, so the slope is an ordinary least-squares coefficient over evaluations that have
     already been paid for. Because a Sobol' design draws inputs independently, the partial slope
     computed here and the marginal slope coincide in expectation, which is stated rather than
     assumed because it stops holding the moment somebody supplies a correlated design.
@@ -431,7 +436,7 @@ def one_at_a_time(
 def dose_response_slopes(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """`(slope, stderr)` per input: ordinary least squares of the score on the inputs.
 
-    This is the equal-compensation `μ'_i`. Fitted with an intercept and all inputs at once, so each
+    This is `μ'_i` from section 3.5.2. Fitted with an intercept and all inputs at once, so each
     coefficient is a partial derivative holding the others fixed, which is what the contract-theory
     definition asks for. Under a Sobol' design the inputs are independent, so the partial and the
     marginal slope agree; under a correlated design supplied by a caller they would not, and the

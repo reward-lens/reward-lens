@@ -1,6 +1,6 @@
 """Writing a record: partitioned scalar tables, a content-addressed tensor store, a manifest.
 
-The storage contract asks for Parquet partitioned by ``run_id/step_range`` for the scalars and
+Section 4.3 asks for Parquet partitioned by ``run_id/step_range`` for the scalars and
 content-addressed shards plus a JSON manifest for the tensors. That is what this writes, with one
 deliberate change to the default and the reason recorded here rather than in a commit message.
 

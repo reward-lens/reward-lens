@@ -1,0 +1,566 @@
+{
+ "missing_schema_url": {
+  "rule": "the record carries the profile URL in $schema (D-09)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [],
+  "schema_path": [
+   "required"
+  ],
+  "model_loc": [
+   "$schema"
+  ]
+ },
+ "digest_not_lowercase_hex": {
+  "rule": "digests are sha256:<64 lowercase hex> (D-10)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "subject",
+   "version",
+   "digest"
+  ],
+  "schema_path": [
+   "$defs",
+   "digest",
+   "pattern"
+  ],
+  "model_loc": [
+   "subject",
+   "version",
+   "digest"
+  ]
+ },
+ "money_as_number": {
+  "rule": "money is a two-place decimal string (D-10)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "cost",
+   "usd"
+  ],
+  "schema_path": [
+   "$defs",
+   "money",
+   "type"
+  ],
+  "model_loc": [
+   "cost",
+   "usd"
+  ]
+ },
+ "timestamp_not_utc_z": {
+  "rule": "timestamps are RFC 3339 UTC with Z (D-10)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "created"
+  ],
+  "schema_path": [
+   "$defs",
+   "timestamp",
+   "pattern"
+  ],
+  "model_loc": [
+   "created"
+  ]
+ },
+ "unknown_top_level_field": {
+  "rule": "no field outside the schema except namespaced extensions (D-64)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [],
+  "schema_path": [
+   "additionalProperties"
+  ],
+  "model_loc": [
+   "score"
+  ]
+ },
+ "extension_not_namespaced": {
+  "rule": "extensions live under namespaced keys (section 6.5)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "extensions"
+  ],
+  "schema_path": [
+   "properties",
+   "extensions",
+   "propertyNames",
+   "pattern"
+  ],
+  "model_loc": [
+   "extensions",
+   "notes",
+   "[key]"
+  ]
+ },
+ "scope_not_in_ladder": {
+  "rule": "six scope labels only (D-12)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "validity",
+   "0",
+   "scope"
+  ],
+  "schema_path": [
+   "$defs",
+   "scope",
+   "enum"
+  ],
+  "model_loc": [
+   "measurement",
+   "validity",
+   "0",
+   "scope"
+  ]
+ },
+ "decision_state_unknown": {
+  "rule": "three decision states only (D-13)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "decision",
+   "state"
+  ],
+  "schema_path": [
+   "properties",
+   "decision",
+   "properties",
+   "state",
+   "enum"
+  ],
+  "model_loc": [
+   "decision",
+   "state"
+  ]
+ },
+ "qualified_without_policy": {
+  "rule": "qualification requires a named policy and action (D-13)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "decision",
+   "policy"
+  ],
+  "schema_path": [
+   "properties",
+   "decision",
+   "allOf",
+   "0",
+   "then",
+   "properties",
+   "policy",
+   "type"
+  ],
+  "model_loc": [
+   "decision"
+  ]
+ },
+ "tradeoff_collapsed": {
+  "rule": "a tradeoff is unresolved, never a verdict (D-13)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "decision",
+   "state"
+  ],
+  "schema_path": [
+   "properties",
+   "decision",
+   "allOf",
+   "2",
+   "then",
+   "properties",
+   "state",
+   "const"
+  ],
+  "model_loc": [
+   "decision"
+  ]
+ },
+ "witness_without_observed": {
+  "rule": "a witness carries inputs, procedure and observed output (D-11)",
+  "caught_by": "schema",
+  "refusal": "EntryKindEvidenceMissing",
+  "code": "RL0602",
+  "instance_path": [
+   "measurement",
+   "validity",
+   "1",
+   "witness"
+  ],
+  "schema_path": [
+   "$defs",
+   "entry",
+   "properties",
+   "witness",
+   "required"
+  ],
+  "model_loc": [
+   "measurement",
+   "validity",
+   "1",
+   "witness",
+   "observed"
+  ]
+ },
+ "estimate_without_interval": {
+  "rule": "an estimate carries value, unit, n, sampling unit, interval and method (D-11, D-17)",
+  "caught_by": "schema",
+  "refusal": "EntryKindEvidenceMissing",
+  "code": "RL0602",
+  "instance_path": [
+   "measurement",
+   "soundness",
+   "0"
+  ],
+  "schema_path": [
+   "$defs",
+   "entry",
+   "allOf",
+   "2",
+   "then",
+   "required"
+  ],
+  "model_loc": [
+   "measurement",
+   "soundness",
+   "0"
+  ]
+ },
+ "estimate_wald_interval": {
+  "rule": "never a Wald interval (D-17)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "soundness",
+   "0",
+   "uncertainty",
+   "method"
+  ],
+  "schema_path": [
+   "$defs",
+   "uncertainty",
+   "properties",
+   "method",
+   "enum"
+  ],
+  "model_loc": [
+   "measurement",
+   "soundness",
+   "0",
+   "uncertainty",
+   "method"
+  ]
+ },
+ "absence_with_result": {
+  "rule": "an absence is the only kind with no result, and it has one here (D-11)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "signal",
+   "0"
+  ],
+  "schema_path": [
+   "$defs",
+   "entry",
+   "allOf",
+   "4",
+   "then",
+   "not"
+  ],
+  "model_loc": [
+   "measurement",
+   "signal",
+   "0"
+  ]
+ },
+ "absence_state_complete": {
+  "rule": "an absence entry has state absent (D-18)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "signal",
+   "0",
+   "state"
+  ],
+  "schema_path": [
+   "$defs",
+   "entry",
+   "allOf",
+   "4",
+   "then",
+   "properties",
+   "state",
+   "const"
+  ],
+  "model_loc": [
+   "measurement",
+   "signal",
+   "0"
+  ]
+ },
+ "hole_as_inconclusive": {
+  "rule": "holes are NOT_MEASURED, COULD_NOT_CHECK or REFUSED, never inconclusive (D-18)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "holes",
+   "0",
+   "state"
+  ],
+  "schema_path": [
+   "$defs",
+   "hole_state",
+   "enum"
+  ],
+  "model_loc": [
+   "holes",
+   "0",
+   "state"
+  ]
+ },
+ "detection_without_limits": {
+  "rule": "a qualified detection carries LoB, LoD, alpha, beta, sensitivity and false-alarm evidence (D-11)",
+  "caught_by": "schema",
+  "refusal": "EntryKindEvidenceMissing",
+  "code": "RL0602",
+  "instance_path": [
+   "measurement",
+   "calibration",
+   "0",
+   "detection"
+  ],
+  "schema_path": [
+   "$defs",
+   "entry",
+   "allOf",
+   "5",
+   "then",
+   "properties",
+   "detection",
+   "required"
+  ],
+  "model_loc": [
+   "measurement",
+   "calibration",
+   "0"
+  ]
+ },
+ "finding_bad_level": {
+  "rule": "finding levels are SARIF none, note, warning, error (D-14)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "findings",
+   "0",
+   "level"
+  ],
+  "schema_path": [
+   "$defs",
+   "finding",
+   "properties",
+   "level",
+   "enum"
+  ],
+  "model_loc": [
+   "findings",
+   "0",
+   "level"
+  ]
+ },
+ "finding_without_entries": {
+  "rule": "a finding rests on at least one entry (D-14)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "findings",
+   "0",
+   "entries"
+  ],
+  "schema_path": [
+   "$defs",
+   "finding",
+   "properties",
+   "entries",
+   "minItems"
+  ],
+  "model_loc": [
+   "findings",
+   "0",
+   "entries"
+  ]
+ },
+ "sandbox_tier_unknown": {
+  "rule": "the tier is a D-37 label that held (D-37)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "provenance",
+   "sandbox_tier"
+  ],
+  "schema_path": [
+   "$defs",
+   "sandbox_tier",
+   "pattern"
+  ],
+  "model_loc": [
+   "provenance",
+   "sandbox_tier"
+  ]
+ },
+ "inline_rows_over_cap": {
+  "rule": "an entry never inlines more rows than x-max-inline-rows (D-16)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "tables",
+   "0",
+   "inline_rows"
+  ],
+  "schema_path": [
+   "properties",
+   "tables",
+   "items",
+   "properties",
+   "inline_rows",
+   "maxItems"
+  ],
+  "model_loc": [
+   "tables",
+   "0",
+   "inline_rows"
+  ]
+ },
+ "entry_id_wrong_section_prefix": {
+  "rule": "entry ids are section-prefixed (section 6.3)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "validity",
+   "0",
+   "entry_id"
+  ],
+  "schema_path": [
+   "$defs",
+   "entry_id",
+   "pattern"
+  ],
+  "model_loc": [
+   "measurement",
+   "validity",
+   "0",
+   "entry_id"
+  ]
+ },
+ "number_not_quantised": {
+  "rule": "every number is quantised to its declared x-scale; 0.1234567 exceeds scale 4 (D-10)",
+  "caught_by": "quantiser",
+  "refusal": "NumberNotQuantised",
+  "code": "RL0603",
+  "field": "intent.outcome_check.measured_disagreement"
+ },
+ "reason_code_unknown": {
+  "rule": "decision reasons are typed (D-13)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "decision",
+   "reasons",
+   "0"
+  ],
+  "schema_path": [
+   "properties",
+   "decision",
+   "properties",
+   "reasons",
+   "items",
+   "pattern"
+  ],
+  "model_loc": [
+   "decision",
+   "reasons",
+   "0"
+  ]
+ },
+ "uncertainty_interval_under_stated_absence": {
+  "rule": "an uncertainty whose method is the stated absence of an interval carries no interval; endpoints are never invented to fill the field (D-75, rule 9)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "soundness",
+   "0",
+   "uncertainty"
+  ],
+  "schema_path": [
+   "$defs",
+   "uncertainty",
+   "allOf",
+   "0",
+   "then",
+   "not"
+  ],
+  "model_loc": [
+   "measurement",
+   "soundness",
+   "0",
+   "uncertainty"
+  ]
+ },
+ "uncertainty_missing_interval_under_wilson": {
+  "rule": "every method other than the stated absence carries the interval it produced (D-17, rule 1)",
+  "caught_by": "schema",
+  "refusal": "RecordInvalid",
+  "code": "RL0604",
+  "instance_path": [
+   "measurement",
+   "soundness",
+   "0",
+   "uncertainty"
+  ],
+  "schema_path": [
+   "$defs",
+   "uncertainty",
+   "allOf",
+   "0",
+   "else",
+   "required"
+  ],
+  "model_loc": [
+   "measurement",
+   "soundness",
+   "0",
+   "uncertainty"
+  ]
+ }
+}

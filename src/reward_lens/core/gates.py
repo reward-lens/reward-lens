@@ -1,4 +1,4 @@
-"""The three gates, as runtime policy.
+"""The three gates, as runtime policy (section 1.3, R5).
 
 The gates convert the corpus's epistemology from prose into mechanism. They are implemented
 once, here, and applied everywhere Evidence is produced or compared. Gates never silently block
@@ -24,7 +24,7 @@ from reward_lens.core.types import FrameID, GaugeStatus, TrustLevel
 
 
 class SupportsTrustCap(Protocol):
-    """Anything that caps the trust of a reading derived from it.
+    """Anything that caps the trust of a reading derived from it (section 2.8).
 
     `ReferenceMaterial` and `CalibrationChain` implement this. Structural rather than nominal so
     `gates` does not import `reference`, which would pull the budget machinery into the module
@@ -66,7 +66,7 @@ def compute_trust(
     adjudicated: bool = False,
     reference: "SupportsTrustCap | None" = None,
 ) -> TrustLevel:
-    """Compute the trust level of an Evidence from the gate inputs.
+    """Compute the trust level of an Evidence from the gate inputs (section 1.3).
 
     The trust level is never set by a caller. It is derived from three facts the gates
     establish: whether a calibration reference is present (gate 1), whether the run happened
@@ -83,7 +83,7 @@ def compute_trust(
     passes ``adjudicated=True`` without the other two gets the highest rung the facts actually
     support, never ADJUDICATED on the strength of the flag alone.
 
-    **The reference cap.** A reading calibrated against a reference material whose
+    **The reference cap (section 2.8).** A reading calibrated against a reference material whose
     own uncertainty was never characterised cannot climb past `CALIBRATED`, whatever else is true
     of it. `u_homogeneity is None` is not a missing field: it means nobody checked whether two
     plants with different seeds give the same answer, and the Model Organism Lottery says they do

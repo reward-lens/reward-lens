@@ -12,8 +12,8 @@ whether a record exists, whether it is still being written, whether something in
 attached to a live loop, and whether all that is on hand is a served artifact. The signature is the
 enforcement, which is why it is worth stating in the docstring.
 
-What phase decides is whether a reading can still change a decision. An `IN_RUN` reading of a run
-that is already finished is not wrong, it is late.
+What phase decides is whether a reading can still change a decision, which is what section 3.5
+prices. An `IN_RUN` reading of a run that is already finished is not wrong, it is late.
 """
 
 from __future__ import annotations

@@ -1,65 +1,64 @@
 # The instrument catalogue, merged and machine-readable.
 #
-# One record per instrument, merging the instrument entries, the quantity table and the invariance
-# table of the two source documents. The registry loads this; the lint reads it; the docs build
-# renders it. Any future disagreement between the two prose documents is a diff against this file
-# rather than an argument.
+# One record per instrument, merging ASSAY Part 5, ASSAY Appendix A, ASSAY Appendix B and CALIPER
+# Part 5. The registry loads this; the lint reads it; the docs build renders it. Any future
+# disagreement between the two prose documents is a diff against this file rather than an argument.
 #
 # COUNTS, RECOUNTED, and this header is a statement about the file rather than about its history.
-# The quantity table's prose says "126 quantities, of which 68 are in the wedge" and instructs the
+# ASSAY Appendix A's prose says "126 quantities, of which 68 are in the wedge" and instructs the
 # reader to recount if a row is edited. Three errata edited rows and nobody recounted, so the
 # previous version of this header still described the file as it stood before them.
 #
 # 95 instrument records across 14 series: A(7) B(6) C(9) D(10) E(6) F(6) G(5) H(5) I(7) J(6) K(4)
-# L(5) M(11) N(8). 85 come from the source instrument entries; N1 to N4, and N5 to N8 which are the
-# contract layer, are here because no source entry carries them; J6 and C9 were added with the
-# packages that built them. The previous version of this header said 89 and gave C(8) J(5) N(4),
-# which was the file before those six rows. That is the third time a pinned count in this project
-# has been left behind by an edit to the rows it counts, so: every count here is derived from the
-# rows below it, and if you edit a row, recount in the same edit.
+# L(5) M(11) N(8). 85 are ASSAY Part 5; N1 to N4 are SPEC-ERRATA E23; N5 to N8 are the contract
+# layer of ASSAY 3.5.2, which Part 9 assigns no work package and which SPEC-ERRATA E56 records;
+# J6 and C9 were added with the packages that built them. The previous version of this header said
+# 89 and gave C(8) J(5) N(4), which was the file before those six rows. That is the third time a
+# pinned count in this project has been left behind by an edit to the rows it counts, after
+# SPEC-ERRATA E10 and E14, so: every count here is derived from the rows below it, and if you edit a
+# row, recount in the same edit.
 #
-# 51 carry the wedge marker. The source instrument entries print [W] on 28 of their 85 and the four
-# N records make 32, which is the number this header used to give before the fourteen described
-# next. Fourteen were flipped: the instrument entry declines the marker on them and the quantity
-# table marks every one of their quantities, and the quantity table is the one that carries the
-# legend defining the marker (computable from a record plus a callable grader, no GPU, no policy
-# access). N5 to N8 and C9 carry it from their own quantity rows. D9, D10 and M2 stay out because
-# the legend does not say whether source access, task queries and an in-run tap are inside the
-# wedge, and that is a maintainer decision.
+# 51 carry the wedge marker. ASSAY Part 5 prints [W] on 28 of its 85 and the four N records make 32,
+# which is the number this header used to give before the fourteen described next. Fourteen were
+# flipped: Part 5 declines the marker on them and Appendix A marks every one of their quantities,
+# and Appendix A is the document that carries the legend defining the marker (line 2423: computable
+# from a record plus a callable grader, no GPU, no policy access). N5 to N8 and C9 carry it from
+# their own quantity rows. D9, D10 and M2 stay out because the legend does not say whether source
+# access, task queries and an in-run tap are inside the wedge, and that is a maintainer decision.
 #
 # OPEN means the field is genuinely absent from both source documents, and carries an open_reason
 # where one is stated. It is not a blank and it is not a guess. An instrument whose envelope
-# conditions are OPEN cannot pass the envelope lint rule until someone fills them, which is the
+# conditions are OPEN cannot pass the lint rule of ASSAY 2.4 until someone fills them, which is the
 # correct state for it to be in and is why the marker is preserved rather than papered over.
 #
 # `status` is a statement about the code, not about the source documents, and it has exactly three
-# values. It was wrong on 89 of 95 rows and has since been corrected.
+# values. It was wrong on 89 of 95 rows until wave 7; see SPEC-ERRATA E58.
 #
 #   built    an instrument exists in the installed tree declaring one of this row's quantities, and
 #            it passes `lint_instrument`. 86 rows.
-#   planned  the work is scheduled and has not run, so no such instrument exists.
-#            4 rows, all of them Phase 6: K1, K2, K3, K4. Phase 6 is written-and-priced-and-not-run
-#            by design, so a row here can acquire a module without acquiring a reading, and when it
-#            does it moves to `built` on the rule above with nothing left recording that it has
-#            never run. H2, H3 and I4 are the rows that
-#            make that gap concrete: all three acquired a module and none of them has
+#   planned  a work package is scheduled and has not run, so no such instrument exists. 4 rows, all
+#            of them Phase 6: K1, K2, K3, K4. Phase 6 is written-and-priced-and-not-run by design,
+#            so a row here can acquire a module without acquiring a reading, and when it does it
+#            moves to `built` on the rule above while its `work_package` and BUILD_STATE's package
+#            table are the only record that nothing has ever run. H2, H3 and I4 are the rows that
+#            make that gap concrete: all three acquired a module during wave 7 and none of them has
 #            produced a reading. A fourth value distinguishing "shipped, never executed" from both
 #            of these is a maintainer's call and would be the honest fix. This block is the count
 #            most likely to be stale, because the Phase 6 modules landed while it was being written;
 #            `tests/acceptance/test_w7_catalogue_status.py` fails with the row names when it is.
-#   OPEN     an open research target with no estimator and nothing scheduled: G4, G5, I6, I7, M6.
-#            Distinct from `planned` in the way an OPEN field is distinct from a blank. 5 rows.
+#   OPEN     an open research target with no estimator and no scheduled package: G4, G5, I6, I7, M6.
+#            Distinct from `planned` in the way ASSAY 2.4's OPEN is distinct from a blank. 5 rows.
 #
 # `tests/acceptance/test_w7_catalogue_status.py` enumerates the registry against this field in both
 # directions and names the rows that disagree. That test is what stops this field going stale again,
-# which it did once, silently, over a long stretch of the build.
+# which it did once, silently, across five waves.
 instruments:
 - id: A1
   name: Effective group size
   headline: How many independent gradient-relevant observations a group of K rollouts actually gives you.
   quantities:
   - grader.effective_group_size
-  # Added with the correction that stopped multiplying it in. A1 measures the shape
+  # Added at wave 6 with the correction that stopped multiplying it in. A1 measures the shape
   # factor and reports it beside the reading rather than inside it, so it is a quantity this
   # instrument claims and not an open research target.
   - run.group_shape_factor
@@ -100,12 +99,11 @@ instruments:
     access: as rung 2, with ≥2 raters
     bias: Unbiased; this is the term that governs co-directional gradients
     cost: n·r·o calls, r ≥ 2
-  # Amended: the earlier source document's A1 entry declares `group.permutation` invariance
-  # alongside `reward.affine`, and permuting the members of a group cannot change how many
-  # independent observations the group gives you. The later document compressed a nine-field entry
-  # into one line and the group list is the field that lost a member; it kept `group.permutation`
-  # on A2 and B1, which are neighbours with the same argument. Without it there is no generated
-  # test that A1's
+  # Amended: CALIPER A1 (line 1402) declares `group.permutation` invariance alongside
+  # `reward.affine`, and permuting the members of a group cannot change how many independent
+  # observations the group gives you. ASSAY compressed a nine-field entry into one line and the
+  # group list is the field that lost a member; it kept `group.permutation` on A2 and B1, which
+  # are neighbours with the same argument. Without it there is no generated test that A1's
   # reading is order-independent, which is the check that catches a position bias in the
   # group-forming code.
   invariance_group: '`reward.affine`, `group.permutation`'
@@ -119,6 +117,15 @@ instruments:
     and only r0 ships.
   wedge: true
   status: built
+  caliper_ancestor: A1
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1624
+    - 1625
+    caliper:
+    - 1397
+    - 1408
 - id: A2
   name: Variance components and gauge R&R
   headline: Facet decomposition of `Var(r)`.
@@ -126,8 +133,8 @@ instruments:
   - grader.variance_components
   - grader.grr_percent
   - grader.ndc
-  # Amended: A2 measures its own crossing precondition, which is what makes DESIGN_CROSSED
-  # an envelope condition rather than a hard precondition.
+  # Amended wave 5: A2 measures its own crossing precondition, which is what makes DESIGN_CROSSED
+  # an envelope condition rather than a hard precondition. SPEC-ERRATA E49.
   - grader.design_balance
   says: '"44% of your score variance is which judge you drew. %GRR = 61%, ndc = 2. This gauge cannot resolve
     two adjacent models."'
@@ -142,7 +149,7 @@ instruments:
   phases:
   - PRE_RUN
   envelope_requires:
-  # Amended: the source entry prints "fully crossed design; `MASK_STABLE`" and the merge read the
+  # Amended: ASSAY line 1628 prints "fully crossed design; `MASK_STABLE`" and the merge read the
   # segment as a list of RegimeCondition names, so the first clause was dropped. A variance-components
   # estimator on a design that is not fully crossed is a different estimator with a different bias,
   # and the record no longer said the design has to be crossed. `DESIGN_CROSSED` does not exist in
@@ -156,53 +163,53 @@ instruments:
   - rung: 0
     estimator: two-facet nested
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: fully crossed item × rater × occasion
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: plus rubric facet
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: plus finite-universe correction `(1 − n_i/N_i)` for fixed facets
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
-  # Amended: both documents give A2 the same two groups; the earlier one adds that the
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
+  # Amended: both documents give A2 the same two groups; CALIPER (line 1415) adds that the
   # `reward.affine` relation is covariant and gives the exponent. An unqualified declaration
   # makes the generated test assert equality, so a covariant instrument that says nothing
   # passes an invariance test it should fail. The weight is 2.
   invariance_group: '`reward.affine` (covariant: components scale with the square of the affine
-    parameter), `group.permutation`'
+    parameter, CALIPER line 1415), `group.permutation`'
   baselines:
   - a single-draw point estimate, to show what it hides
   prior_art: '`%GRR = 100·σ_GRR/σ_total`, `ndc = 1.41·(σ_part/σ_GRR)`, thresholds `%GRR ≤ 30%` and `ndc
@@ -212,6 +219,15 @@ instruments:
   kill_condition: if `ndc ≥ 5` on every grader tested, the gauge is adequate and the instrument is a formality.
   wedge: true
   status: built
+  caliper_ancestor: A2
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1627
+    - 1628
+    caliper:
+    - 1409
+    - 1419
 - id: A3
   name: Attenuation factor
   headline: How much grader error shrinks the selection signal.
@@ -229,27 +245,27 @@ instruments:
   - rung: 0
     estimator: '`√(σ²_true/(σ²_true+σ²_err))` from A2'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: the errors-in-variables correction `β_corr = (C_obs − C_err)⁻¹S` with `C_err` from within-prompt
       rollout variance
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
-  # Amended: as A1. The earlier document's A3 entry declares invariance under `reward.affine` and
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
+  # Amended: as A1. CALIPER A3 (line 1425) declares invariance under `reward.affine` and
   # `group.permutation`, and an attenuation ratio does not depend on the order of the group.
   invariance_group: '`reward.affine`, `group.permutation`'
   baselines:
@@ -260,6 +276,15 @@ instruments:
   kill_condition: if the correction never changes a feature ranking, report it once and stop.
   wedge: true
   status: built
+  caliper_ancestor: A3
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1630
+    - 1631
+    caliper:
+    - 1420
+    - 1429
 - id: A4
   name: Blackwell order and deficiency
   headline: Rank graders by informativeness rather than accuracy.
@@ -271,59 +296,60 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    `SCALAR_REPRESENTABLE` is explicitly not required here. The Blackwell order is over channels
-    rather than scores, so a grader with curl mass above the bound is still orderable and this
-    instrument is the one that says so.
+    ASSAY line 1634 prints "Env `SCALAR_REPRESENTABLE` not required", a negation the merge read
+    as a requirement. The Blackwell order is over channels rather than scores (CALIPER A4 line
+    1435), so a grader with curl mass above the bound is still orderable and this instrument is
+    the one that says so.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: pairwise accuracy (the wrong thing, shown for contrast)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: garbling LP
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: Le Cam deficiency
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: group-ranking regret at the real K
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
-  # Amended: as A1. The earlier document's A4 entry declares both groups and states why the affine
-  # one holds by construction, which is the same sentence that decides this record's envelope.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
+  # Amended: as A1. CALIPER A4 (line 1435) declares both groups and states why the affine one
+  # holds by construction, which is the same sentence that decides this record's envelope.
   invariance_group: '`reward.affine` (invariant by construction: the order is over channels
-    rather than scores), `group.permutation`'
+    rather than scores, CALIPER line 1435), `group.permutation`'
   baselines:
   - RewardBench-style accuracy
   prior_art: 'accuracy correlates 0.22–0.38 with downstream RLHF performance against 0.92–0.96 for a rationale-based
@@ -332,6 +358,15 @@ instruments:
   kill_condition: if the Blackwell order and accuracy rank identically on ten graders.
   wedge: false
   status: built
+  caliper_ancestor: A4
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1633
+    - 1634
+    caliper:
+    - 1430
+    - 1440
 - id: A5
   name: 'Decision study: optimal allocation'
   headline: Where the next dollar goes.
@@ -347,25 +382,25 @@ instruments:
   - rung: 0
     estimator: equal split
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: closed-form `σ²(δ; n,K,m,s)` minimisation
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`units`'
   baselines:
   - current allocation
@@ -376,6 +411,15 @@ instruments:
   kill_condition: if the optimum is always the current practice.
   wedge: false
   status: built
+  caliper_ancestor: A5
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1636
+    - 1637
+    caliper:
+    - 1441
+    - 1453
 - id: A6
   name: Grader stochasticity profile
   headline: The grader as a distribution, not a number.
@@ -395,42 +439,42 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    No regime condition applies: a stochasticity profile of a grader holds in any regime.
+    ASSAY line 1640 prints `Env none`. A stochasticity profile of a grader holds in any regime.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: repeat variance
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: per-facet attribution
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: flip-rate at the pair level
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`group.permutation`'
   baselines:
   - assume determinism, and show the error that induces
@@ -440,6 +484,15 @@ instruments:
     head and is the honest scope limit.
   wedge: true
   status: built
+  caliper_ancestor: B3
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1639
+    - 1640
+    caliper:
+    - 1474
+    - 1487
 - id: A7
   name: Environment flakiness
   headline: Score variance attributable to the environment, not the model.
@@ -454,43 +507,43 @@ instruments:
   - PRE_RUN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    The determinism claim is under test here rather than assumed; the claim is the reading rather
-    than a precondition.
+    ASSAY line 1643 prints "determinism claim under test"; the claim is the reading rather than a
+    precondition.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: N replays, report the range
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: occasion facet in the A2 design
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: attribute to sandbox, network, timeout, ordering
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`group.permutation`'
   baselines:
   - the single-run number that would otherwise be reported
@@ -499,6 +552,13 @@ instruments:
   kill_condition: if flakiness is under 1 point on ten environments.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.2
+  source_lines:
+    assay:
+    - 1642
+    - 1643
+    caliper: null
 - id: B1
   name: Curl mass and the harmonic split
   headline: How much preference structure no scalar can carry, and how much of that is fixable.
@@ -516,59 +576,59 @@ instruments:
   - PRE_RUN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    At least 11 replications per pair are needed for the nulls, which is a sample-size requirement
-    and therefore a refusal with a stated n rather than a regime condition. E23 settles that
-    distinction for N3 and it holds here.
+    ASSAY line 1650 prints "at least 11 replications per pair for the nulls", which is a
+    sample-size requirement and therefore a refusal with a stated n rather than a regime
+    condition. E23 settles that distinction for N3 and it holds here.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: curl mass from a single pass
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: with Null C split-half
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: with Nulls A, D, E
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
-  # Amended: the earlier document's B1 entry adds a reporting obligation to the same two groups. It
-  # is not a group in the invariance table, so it rides as the parenthetical rather than as a new id.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
+  # Amended: CALIPER B1 (line 1459) adds a reporting obligation to the same two groups. It is
+  # not a group in Appendix B's table, so it rides as the parenthetical rather than as a new id.
   invariance_group: '`reward.affine`, `group.permutation` (not invariant under a change of the
-    comparison design, which must be reported)'
+    comparison design, which must be reported: CALIPER line 1459)'
   baselines:
   - >-
     the transitive baseline, MANDATORY and reported on every reading. A comparison recorded as a bare
     win is a sign and not a margin, so a transitive ±1 tournament on `K_n` already carries curl mass
     exactly `(n-2)/(3n)`, which is 5/21 at seven items. A curl mass without this floor beside it is
     uninterpretable, and the campaign's 0.214 sits on the floor to fifteen significant figures with
-    zero cyclic triples in the corpus.
+    zero cyclic triples in the corpus. SPEC-ERRATA E32.
   - a Bradley-Terry fit's residual
   - the random-profile null, by simulation through the identical pipeline. The `(5/6)|E|` constant
-    given in the source description is unsourced and could not be derived or reproduced, so it is
-    not used and not quoted.
+    printed in §3.6 is unsourced and could not be derived or reproduced, so it is not used and not
+    quoted. SPEC-ERRATA E33.
   - a transitive-plus-measured-flip-rate simulation
   prior_art: HodgeRank (Jiang, Lim, Yao, Ye 2011) is the method and it is 15 years old; the *application
     to a reward loop* is empty. The opposing "cycles are noise" paper assumes rather than shows it and
@@ -578,6 +638,15 @@ instruments:
     case 0.214 is measurement error and the instrument reports a noise level instead.
   wedge: true
   status: built
+  caliper_ancestor: B1
+  work_package: W3.3
+  source_lines:
+    assay:
+    - 1649
+    - 1650
+    caliper:
+    - 1454
+    - 1463
 - id: B2
   name: Afriat efficiency index
   headline: Rationalizability, from revealed-preference theory.
@@ -597,53 +666,53 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    No regime condition applies to this reading.
+    ASSAY line 1653 prints `Env none`.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: GARP violation count
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: Afriat index by bisection
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: Houtman-Maks (largest rationalizable subset)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: money-pump index
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine`'
   baselines:
   - the curl mass, as a different measure of the same failure
@@ -655,6 +724,13 @@ instruments:
     report one.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.3
+  source_lines:
+    assay:
+    - 1652
+    - 1653
+    caliper: null
 - id: B3
   name: Composition tree and counterfactual composition
   headline: What the reward is actually made of, and what it would be without a piece.
@@ -662,12 +738,12 @@ instruments:
   - grader.composition
   - grader.counterfactual_score
   # The reading that measures whether the declared `reward.null` invariance actually holds.
-  # `measure/composition/composition.py:508` had computed it for some time and it had no id.
+  # `measure/composition/composition.py:508` has computed it since wave 3 and it had no id.
   - grader.null_reach
   says: '"Removing the length override changes 8% of advantages by more than one standard deviation, and
     reverses the sign for 31 of 512 rollouts."'
   access_min: >-
-    GRADER:RECORD with per-leaf scores, and ESTIMATOR:RECORD. The second is easy to miss. The
+    GRADER:RECORD with per-leaf scores, and ESTIMATOR:RECORD. Part 5 prints only the first. The
     reading is a counterfactual *advantage* rather than a counterfactual score, which is the only
     reading consistent with the declared `reward.null` group, and replaying an advantage needs the
     recorded estimator spec: `record/scores.py:1473` calls `replay_advantages(before, g.estimator)`
@@ -678,32 +754,32 @@ instruments:
   - POST_RUN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    "Leaves recorded, not just the total" is a record-completeness requirement rather than a regime
-    condition.
+    ASSAY line 1656 prints "leaves recorded, not just the total", which is a record-completeness
+    requirement rather than a regime condition.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: re-evaluate the tree with a node disabled on recorded leaves (free)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: re-score with a modified tree (needs QUERY)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.null`'
   baselines:
   - the deployed composition
@@ -713,6 +789,13 @@ instruments:
     than an instrument.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.3
+  source_lines:
+    assay:
+    - 1655
+    - 1656
+    caliper: null
 - id: B4
   name: Silent-zero and abstention rate
   headline: How often the grader failed and returned a real number anyway.
@@ -731,31 +814,31 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    No regime condition applies: it is a defect census and holds in any regime.
+    ASSAY line 1659 prints `Env none`. It is a defect census and holds in any regime.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: count exceptions if logged
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: instrument the wrapper and count directly
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: none
   baselines:
   - assume zero and show the difference
@@ -767,6 +850,15 @@ instruments:
     zero because people fix it.
   wedge: true
   status: built
+  caliper_ancestor: D8
+  work_package: W3.3
+  source_lines:
+    assay:
+    - 1658
+    - 1659
+    caliper:
+    - 1594
+    - 1612
 - id: B5
   name: Scalar-representability bound
   headline: The worst-case number that carries the convergence theorem.
@@ -779,7 +871,7 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    `SCALAR_REPRESENTABLE` is under test here rather than required. B5 measures the distance from
+    ASSAY line 1662 prints "Env `SCALAR_REPRESENTABLE` under test". B5 measures the distance from
     scalar representability, so the condition is this instrument's output rather than its
     precondition.
   envelope_measured_by: OPEN
@@ -787,25 +879,25 @@ instruments:
   - rung: 0
     estimator: the `O(n²)` column-mean sandwich
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: the `O(n³)` triple scan; **do not** solve the LP
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine`'
   baselines:
   - B1's curl mass, always reported beside it
@@ -816,6 +908,13 @@ instruments:
   kill_condition: if the sandwich is too loose to be informative at K = 4 to 16.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W3.3
+  source_lines:
+    assay:
+    - 1661
+    - 1662
+    caliper: null
 - id: B6
   name: Tournament solution and comparison-graph connectivity
   headline: OPEN
@@ -835,36 +934,36 @@ instruments:
   - rung: 0
     estimator: Condorcet check and Copeland (polynomial)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: Smith set
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: Copeland-versus-Slater disagreement rate
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`group.permutation`'
   baselines:
   - assume a total order exists
@@ -873,14 +972,20 @@ instruments:
     preference-dataset efficiency is governed by the comparison graph''s algebraic connectivity, which
     is a directly actionable annotation-budget design quantity and is unused.'
   kill_condition: if Condorcet cycles are under 1% at real group sizes.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.3
+  source_lines:
+    assay:
+    - 1664
+    - 1665
+    caliper: null
 - id: C1
   name: The susceptibility triple
   headline: '`S`, `β`, and `Gβ`, always together.'
@@ -902,47 +1007,47 @@ instruments:
   - rung: 0
     estimator: '`S` alone'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: '`β = C⁻¹S` with the conditioning `n_D`'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: realised heritability from a step window
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: '`G = JF⁻¹Jᵀ` and the full `Δz = ηGβ`'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine`, `repr.basis`'
   baselines:
   - the raw `χ` the shipped library reports
@@ -954,6 +1059,15 @@ instruments:
     and inert. This test is free and should run in week one.
   wedge: false
   status: built
+  caliper_ancestor: C1
+  work_package: W5.3
+  source_lines:
+    assay:
+    - 1673
+    - 1674
+    caliper:
+    - 1488
+    - 1497
 - id: C2
   name: Heritability and autonomy
   headline: Which features can move at all, and what moves with them.
@@ -975,36 +1089,36 @@ instruments:
   - rung: 0
     estimator: realised `ĥ²` by regression across steps
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: '`G` diagonal only'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: full `G`, `e(β)`, `c(β)`, `a(β)`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`policy.reparam` (Fisher-metric quantities are invariant; `‖Δθ‖` is not)'
   baselines:
   - '`S` ranking without the filter'
@@ -1015,6 +1129,15 @@ instruments:
     and `C` was fine all along.
   wedge: false
   status: built
+  caliper_ancestor: C2
+  work_package: W5.3
+  source_lines:
+    assay:
+    - 1676
+    - 1677
+    caliper:
+    - 1498
+    - 1504
 - id: C3
   name: Instrument recovery AUC
   headline: The head-to-head nobody publishes.
@@ -1022,37 +1145,38 @@ instruments:
   - instrument.recovery_auc
   says: '"Against the same planted key: DiffMean 0.81, SAE 0.62, logit lens 0.55, scaffolded black-box
     prompting 0.84. Our method is third."'
-  access_min: ORGANISM:MUTATE, a certified reference
+  access_min: ORGANISM:MUTATE, a certified reference (§5.L)
   substrates: OPEN
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    "`REFERENCE_UNCERTIFIED` must not fire" names a RefusalReason rather than a RegimeCondition.
-    The instrument refuses on an uncertified reference and has no regime precondition.
+    ASSAY line 1680 prints "`REFERENCE_UNCERTIFIED` must not fire", which names a RefusalReason
+    rather than a RegimeCondition. The instrument refuses on an uncertified reference and has no
+    regime precondition.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: one method
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: a panel including at least one black-box method and one dumb baseline
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`repr.basis`'
   baselines:
   - string match
@@ -1064,6 +1188,15 @@ instruments:
   kill_condition: nothing; a bad number here is the point.
   wedge: false
   status: built
+  caliper_ancestor: C3
+  work_package: W5.5
+  source_lines:
+    assay:
+    - 1679
+    - 1680
+    caliper:
+    - 1505
+    - 1509
 - id: C4
   name: Erasure, with the head-to-head that is now mandatory
   headline: OPEN
@@ -1085,25 +1218,25 @@ instruments:
   - rung: 0
     estimator: single dose
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: dose sweep with `EC50`, `E_max`, `n` and a therapeutic index `TI = TD50/ED50`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`repr.basis`'
   baselines:
   - '"One Bias After Another" (2603.03291) on the same Skywork-Reward-V2 fleet with the same DiffMean-plus-null-space
@@ -1116,6 +1249,15 @@ instruments:
     measurement.
   wedge: false
   status: built
+  caliper_ancestor: C4
+  work_package: W5.5
+  source_lines:
+    assay:
+    - 1682
+    - 1683
+    caliper:
+    - 1526
+    - 1549
 - id: C5
   name: Acute versus chronic intervention
   headline: Ablate and keep training.
@@ -1134,25 +1276,25 @@ instruments:
   - rung: 0
     estimator: acute only (what everyone does)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: acute plus chronic
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`repr.basis`'
   baselines:
   - no-ablation arm
@@ -1163,6 +1305,15 @@ instruments:
   kill_condition: if acute and chronic agree everywhere, the distinction is not operative here.
   wedge: false
   status: built
+  caliper_ancestor: C6
+  work_package: W5.5
+  source_lines:
+    assay:
+    - 1685
+    - 1686
+    caliper:
+    - 1519
+    - 1525
 - id: C6
   name: Rescue
   headline: Put it back and check the behaviour returns.
@@ -1179,14 +1330,14 @@ instruments:
   - rung: 0
     estimator: re-inject the exact removed activation
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`repr.basis`'
   baselines:
   - a norm-matched random re-injection
@@ -1196,6 +1347,15 @@ instruments:
   kill_condition: nothing; it is a control, not a finding.
   wedge: false
   status: built
+  caliper_ancestor: C5
+  work_package: W5.5
+  source_lines:
+    assay:
+    - 1688
+    - 1689
+    caliper:
+    - 1510
+    - 1518
 - id: C7
   name: Double dissociation
   headline: Necessity is not sufficiency.
@@ -1217,6 +1377,13 @@ instruments:
   kill_condition: n/a.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W5.5
+  source_lines:
+    assay:
+    - 1691
+    - 1692
+    caliper: null
 - id: C8
   name: Jacobian-corrected verdict direction
   headline: OPEN
@@ -1237,25 +1404,25 @@ instruments:
   - rung: 0
     estimator: naive `W_U[Yes] − W_U[No]` (what the shipped library used)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: '`(W_U J_ℓ)[Yes] − (W_U J_ℓ)[No]`'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`repr.basis`, `tokenization`'
   baselines:
   - the naive form, always reported beside r1
@@ -1270,6 +1437,13 @@ instruments:
   kill_condition: if the four controls show the mean moves while the mode is fixed.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W5.5
+  source_lines:
+    assay:
+    - 1694
+    - 1695
+    caliper: null
 - id: D1
   name: Decision coverage
   headline: What fraction of the verifier's logic any rollout has ever exercised.
@@ -1289,36 +1463,36 @@ instruments:
   - rung: 0
     estimator: statement coverage
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: branch/decision coverage
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: path coverage on the hot subset
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: none
   baselines:
   - coverage of a random rollout sample of the same size
@@ -1327,6 +1501,15 @@ instruments:
   kill_condition: if coverage is above 95% on every real verifier.
   wedge: true
   status: built
+  caliper_ancestor: D1
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1709
+    - 1710
+    caliper:
+    - 1550
+    - 1556
 - id: D2
   name: Surviving mutants
   headline: Would the verifier notice if it were wrong?
@@ -1344,36 +1527,36 @@ instruments:
   - rung: 0
     estimator: operator-level mutation on the scoring function
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: whole-module
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: mutants ranked by how many rollouts change score
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - a random source edit that should be caught
@@ -1383,6 +1566,15 @@ instruments:
   kill_condition: if mutation score is above 95% on real verifiers.
   wedge: true
   status: built
+  caliper_ancestor: D2
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1712
+    - 1713
+    caliper:
+    - 1557
+    - 1563
 - id: D3
   name: Metamorphic violations
   headline: Relations the grader should respect and does not.
@@ -1399,36 +1591,36 @@ instruments:
     estimator: a fixed relation set (whitespace, variable renaming, comment insertion, statement reordering
       where semantics-preserving)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: domain-specific relations
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: learned relations
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - identity transformation
@@ -1437,6 +1629,15 @@ instruments:
   kill_condition: if violations are under 0.1% everywhere.
   wedge: true
   status: built
+  caliper_ancestor: D3
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1715
+    - 1716
+    caliper:
+    - 1564
+    - 1571
 - id: D4
   name: Sensitivity indices
   headline: Which inputs actually move the score.
@@ -1453,50 +1654,58 @@ instruments:
   - rung: 0
     estimator: one-at-a-time (biased, shown for contrast)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: Sobol first-order `S1`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: total-effect `S_Ti` with bootstrap CIs
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine`'
   baselines:
   - equal weighting
   prior_art: '`SALib` 1.5.2, MIT, `N·(2D+2)` samples with second order. Directly connects to the contract
     layer: `S_Ti` is a measurement of `μ''_i`, the sensitivity the equal-compensation check needs.'
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: D4
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1718
+    - 1719
+    caliper:
+    - 1572
+    - 1578
 - id: D5
   name: False-positive fuzzing
   headline: Where the verifier accepts a wrong answer.
@@ -1514,47 +1723,47 @@ instruments:
   - rung: 0
     estimator: replay known exploit families
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: '`hypothesis`-driven search'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: coverage-guided fuzzing with `atheris`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: symbolic execution where tractable
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - a random-mutation baseline
@@ -1565,6 +1774,17 @@ instruments:
     the search is too weak.
   wedge: true
   status: built
+  caliper_ancestor: D5
+  work_package:
+  - W3.4
+  - W6.4
+  source_lines:
+    assay:
+    - 1721
+    - 1722
+    caliper:
+    - 1579
+    - 1585
 - id: D6
   name: Exploit-family coverage
   headline: How much of the exploit space you have found.
@@ -1582,36 +1802,36 @@ instruments:
   - rung: 0
     estimator: '`f₁/n` and `f₁²/(2f₂)`'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: plus Crow-AMSAA `β`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: plus Chao1
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - the raw count of families found
@@ -1621,6 +1841,15 @@ instruments:
   kill_condition: nothing; it is arithmetic on a log.
   wedge: true
   status: built
+  caliper_ancestor: D6
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1724
+    - 1725
+    caliper:
+    - 1586
+    - 1593
 - id: D7
   name: The grader card
   headline: The composite artifact and the wedge product.
@@ -1642,6 +1871,15 @@ instruments:
   kill_condition: if nobody reads one.
   wedge: true
   status: built
+  caliper_ancestor: D7
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1727
+    - 1728
+    caliper:
+    - 1613
+    - 1628
 - id: D8
   name: Attack surface
   headline: What the harness exposes.
@@ -1660,36 +1898,36 @@ instruments:
     estimator: a static inventory (what can the harness read and write, which credentials are reachable,
       what does the scoring code trust)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: a formal task-boundary definition
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: a measured cost ratio
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - the assumption that the sandbox holds
@@ -1700,6 +1938,13 @@ instruments:
   kill_condition: if attack cheapness does not predict realised cheat rate across twenty environments.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1730
+    - 1731
+    caliper: null
 - id: D9
   name: Static structure
   headline: The verifier's shape, extracted.
@@ -1717,42 +1962,49 @@ instruments:
   - rung: 0
     estimator: '`ast` walk'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: control-flow graph
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: taint/dataflow
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines: OPEN
   prior_art: '`scalpel`, `libcst` and the standard library. Feeds D1 and D2.'
   kill_condition: n/a.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1733
+    - 1734
+    caliper: null
 - id: D10
   name: Determinism and replay fidelity
   headline: OPEN
@@ -1769,10 +2021,17 @@ instruments:
   invariance_group: OPEN
   baselines: OPEN
   prior_art: if a record cannot be replayed to the same score, no post-hoc analysis of that task means
-    anything, and nobody checks. Feeds `RecomputeRef`.
+    anything, and nobody checks. Feeds `RecomputeRef` (§2.2.1).
   kill_condition: if replay fidelity is 100% everywhere.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W3.4
+  source_lines:
+    assay:
+    - 1736
+    - 1737
+    caliper: null
 - id: E1
   name: Estimator specification, recorded
   headline: What transform actually ran.
@@ -1793,6 +2052,13 @@ instruments:
   kill_condition: n/a.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.5
+  source_lines:
+    assay:
+    - 1743
+    - 1744
+    caliper: null
 - id: E2
   name: Degenerate and all-fail group fraction
   headline: OPEN
@@ -1810,25 +2076,25 @@ instruments:
   - rung: 0
     estimator: count
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: attribute to task difficulty and grader saturation
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine`'
   baselines:
   - the nominal group size K
@@ -1837,6 +2103,15 @@ instruments:
   kill_condition: n/a.
   wedge: true
   status: built
+  caliper_ancestor: F4
+  work_package: W3.5
+  source_lines:
+    assay:
+    - 1746
+    - 1747
+    caliper:
+    - 1710
+    - 1716
 - id: E3
   name: Signal-versus-noise share of the gradient, and its attribution
   headline: OPEN
@@ -1855,36 +2130,36 @@ instruments:
   - rung: 0
     estimator: read veRL's `variance_proxy/proxy3_pure_noise`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: attribute the share using A2's variance components
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: carry correlated grader error into an effective group size
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - the raw fraction with no attribution
@@ -1897,6 +2172,13 @@ instruments:
   kill_condition: if the attribution never separates grader from sampling on real data.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.5
+  source_lines:
+    assay:
+    - 1749
+    - 1750
+    caliper: null
 - id: E4
   name: Amplifier safety
   headline: Is this reward component safe to add?
@@ -1915,48 +2197,54 @@ instruments:
   - rung: 0
     estimator: the variance ratio between all-fail and mixed groups
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: the variance trajectory over training
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: a predicted collapse step
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine` (and note the point: the *normalised* advantage is invariant to rescaling,
     which is why magnitude is the wrong diagnostic)'
   baselines:
   - the component's absolute magnitude, which is what people currently look at and which is uninformative
   prior_art: the ALFWorld collapse study supplies the mechanism, the 50-to-700x amplification measurement,
     and the intervention ladder (dense z-scored 0%; remove std normalisation 51.6%; auxiliary CE channel
-    69.3%; **shuffled-gold placebo 76.0%**). **This is the single most actionable instrument in the
-    catalogue**
+    69.3%; **shuffled-gold placebo 76.0%**). **This is the single most actionable instrument in Part 5**
     and it answers the most common practitioner complaint directly.
   kill_condition: if amplifier safety does not predict collapse on three held-out runs.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.5
+  source_lines:
+    assay:
+    - 1752
+    - 1753
+    caliper: null
 - id: E5
   name: Clip and mask accounting
   headline: OPEN
@@ -1975,14 +2263,20 @@ instruments:
   prior_art: clip fraction is logged; nobody propagates its effect into the quantities derived from the
     gradient norm.
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.5
+  source_lines:
+    assay:
+    - 1755
+    - 1756
+    caliper: null
 - id: E6
   name: Train-inference logprob mismatch
   headline: OPEN
@@ -1999,17 +2293,23 @@ instruments:
   invariance_group: OPEN
   baselines: OPEN
   prior_art: this is an instrument, not a footnote, and it is the record-level expression of the numerics
-    floor.
+    floor in §4.7.
   kill_condition: if the mismatch is below the numerics floor everywhere, which would be good news and
     worth publishing.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.5
+  source_lines:
+    assay:
+    - 1758
+    - 1759
+    caliper: null
 - id: F1
   name: The selection term and the residual
   headline: OPEN
@@ -2030,14 +2330,14 @@ instruments:
   - rung: 0
     estimator: the pair, per feature per step
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`reward.affine`, `units`'
   baselines:
   - a random feature
@@ -2048,6 +2348,15 @@ instruments:
     picture explains nothing and Level 1 collapses to Level 2.
   wedge: true
   status: built
+  caliper_ancestor: F1
+  work_package: W4.3
+  source_lines:
+    assay:
+    - 1765
+    - 1766
+    caliper:
+    - 1686
+    - 1693
 - id: F2
   name: The selection-explained fraction Λ
   headline: The cheapest strong diagnostic here.
@@ -2066,14 +2375,14 @@ instruments:
     estimator: the `R²` of `Δz` regressed on `η·Cov(A,f)` across steps, with the OLS slope reported as
       `η_eff`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`units`'
   baselines:
   - a permuted-step null
@@ -2083,6 +2392,15 @@ instruments:
   kill_condition: nothing; a low Λ is itself the finding.
   wedge: true
   status: built
+  caliper_ancestor: F2
+  work_package: W4.3
+  source_lines:
+    assay:
+    - 1768
+    - 1769
+    caliper:
+    - 1694
+    - 1702
 - id: F3
   name: 'The cost book: KL budget and efficiency'
   headline: OPEN
@@ -2099,12 +2417,12 @@ instruments:
   phases: OPEN
   envelope_requires:
   - LINEAR_RESPONSE
-  # Amended: the earlier document's G1 entry states that this instrument "inherits E1's visibility
-  # limit: once the run's reward level exceeds what the importance-weighted reference can resolve at
-  # the declared floor, this returns a bound rather than a value". The later document compressed the
-  # Horizon field away without deciding against it, and the instrument that measures the limit was
-  # built afterwards. `EnvelopeSpec` already carries the machinery for the statement, in
-  # `on_violation: "bound"` with a named estimator.
+  # Amended: CALIPER G1 (line 1761) states that this instrument "inherits E1's visibility limit: once
+  # the run's reward level exceeds what the importance-weighted reference can resolve at the declared
+  # floor, this returns a bound rather than a value". ASSAY compressed the Horizon field away without
+  # deciding against it, and E23 then built the instrument that measures the limit. `EnvelopeSpec`
+  # already carries the machinery for the statement, in `on_violation: "bound"` with a named
+  # estimator.
   - ESS_ADEQUATE
   # The mapping form, because the two conditions are in different states. N2 measures ESS adequacy and
   # reports it as `frontier.visibility_horizon`; nobody has said how `LINEAR_RESPONSE` is measured
@@ -2118,47 +2436,47 @@ instruments:
   - rung: 0
     estimator: '`D_t` alone (already logged everywhere)'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: '`KL_min` and efficiency'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: the eigenbasis decomposition
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: Shapley allocation to named features with the projection residual reported
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`policy.reparam`, `units` (nats, per-sequence)'
   baselines:
   - the total KL with no decomposition
@@ -2170,6 +2488,15 @@ instruments:
     natural-gradient approximation has failed, and either way the book does not balance.
   wedge: true
   status: built
+  caliper_ancestor: G1
+  work_package: W4.4
+  source_lines:
+    assay:
+    - 1771
+    - 1772
+    caliper:
+    - 1755
+    - 1765
 - id: F4
   name: The reconciliation residual, budgeted
   headline: OPEN
@@ -2186,36 +2513,36 @@ instruments:
   - rung: 0
     estimator: the residual alone
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
-    estimator: the GUM itemisation
+    estimator: the GUM itemisation of §3.1.5
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: the closure test
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`units`'
   baselines:
   - the residual reported as unexplained
@@ -2226,6 +2553,13 @@ instruments:
     and that is the result.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W5.6
+  source_lines:
+    assay:
+    - 1774
+    - 1775
+    caliper: null
 - id: F5
   name: The selection covector and spectrum
   headline: OPEN
@@ -2246,60 +2580,69 @@ instruments:
   - rung: 0
     estimator: the score-function `s_ℓ`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: the second-moment `M_ℓ` eigendecomposition
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: the whitened generalised problem `M_ℓ v = μ G_ℓ v`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 3
     estimator: the differentiable-surrogate `∂r/∂h_ℓ` where it exists
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`repr.basis` (covariant; needs a shared frame for comparison)'
   baselines:
   - a random direction of matched norm
   - a coherent irrelevant semantic direction
   - the vanilla logit lens
   - string matching
-  prior_art: the score-function variance is **the largest technical risk in this design** and F5 does
-    not get built until the spike returns a go. Report stable rank and participation ratio, never
-    numerical rank.
+  prior_art: the score-function variance is **the largest technical risk in this document** and F5 does
+    not get built until the spike in §9 returns a go. Report stable rank and participation ratio, never
+    numerical rank (§3.7).
   kill_condition: 'the variance spike: if `K = 64` is still too noisy with all variance reduction applied,
     F5 reduces to the differentiable-surrogate case and the plan changes here.'
   wedge: false
   status: built
+  caliper_ancestor: F6
+  work_package: W5.2
+  source_lines:
+    assay:
+    - 1777
+    - 1778
+    caliper:
+    - 1741
+    - 1754
 - id: F6
   name: Realised versus predicted response, the Lande slope
   headline: OPEN
@@ -2321,6 +2664,15 @@ instruments:
   kill_condition: slope near zero retires Level 1.
   wedge: false
   status: built
+  caliper_ancestor: F3
+  work_package: W5.6
+  source_lines:
+    assay:
+    - 1780
+    - 1781
+    caliper:
+    - 1703
+    - 1709
 - id: G1
   name: The credit measure
   headline: OPEN
@@ -2339,25 +2691,25 @@ instruments:
   - rung: 0
     estimator: consume SkyRL's `dump_data_batch` where it exists
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: compute in the tap
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`tokenization` (a per-token quantity must declare its normalisation)'
   baselines:
   - uniform attribution over tokens
@@ -2367,6 +2719,15 @@ instruments:
     the one place this design has to write real numerical code.
   wedge: false
   status: built
+  caliper_ancestor: F5
+  work_package: W5.4
+  source_lines:
+    assay:
+    - 1787
+    - 1788
+    caliper:
+    - 1717
+    - 1740
 - id: G2
   name: Turn and tool-call disintegration
   headline: The agentic form.
@@ -2390,6 +2751,13 @@ instruments:
   kill_condition: n/a.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W5.4
+  source_lines:
+    assay:
+    - 1790
+    - 1791
+    caliper: null
 - id: G3
   name: The implicit process reward model, extracted
   headline: OPEN
@@ -2410,6 +2778,13 @@ instruments:
   kill_condition: if the induced function is constant.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W5.4
+  source_lines:
+    assay:
+    - 1793
+    - 1794
+    caliper: null
 - id: G4
   name: Localiser scoring, done validly
   headline: OPEN
@@ -2422,7 +2797,8 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    "`LABEL_QUALITY_UNKNOWN` must not fire" names a RefusalReason rather than a RegimeCondition.
+    ASSAY line 1797 prints "`LABEL_QUALITY_UNKNOWN` must not fire", which names a RefusalReason
+    rather than a RegimeCondition.
   envelope_measured_by: OPEN
   ladder: OPEN
   invariance_group: OPEN
@@ -2436,6 +2812,13 @@ instruments:
   kill_condition: n/a; this instrument exists to stop a bad practice.
   wedge: false
   status: OPEN
+  caliper_ancestor: null
+  work_package: OPEN
+  source_lines:
+    assay:
+    - 1796
+    - 1797
+    caliper: null
 - id: G5
   name: Successor representation
   headline: OPEN
@@ -2457,6 +2840,13 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: OPEN
+  caliper_ancestor: null
+  work_package: OPEN
+  source_lines:
+    assay:
+    - 1799
+    - 1800
+    caliper: null
 - id: H1
   name: Adiabaticity number
   headline: Is this run quasi-static?
@@ -2474,25 +2864,25 @@ instruments:
   - rung: 0
     estimator: '`τ_relax` from the early AR(1) coefficient (free)'
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: perturb-and-hold
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`units`'
   baselines:
   - assume quasi-static, which is what everyone does
@@ -2500,6 +2890,15 @@ instruments:
   kill_condition: if `Ad ≪ 1` on every real run.
   wedge: true
   status: built
+  caliper_ancestor: G2
+  work_package: ['W4.8', 'W6.2']
+  source_lines:
+    assay:
+    - 1806
+    - 1807
+    caliper:
+    - 1766
+    - 1774
 - id: H2
   name: The two-run rate test
   headline: The decisive, cheap experiment.
@@ -2522,6 +2921,15 @@ instruments:
   kill_condition: this is the kill test.
   wedge: false
   status: built
+  caliper_ancestor: G3
+  work_package: W6.1
+  source_lines:
+    assay:
+    - 1809
+    - 1810
+    caliper:
+    - 1775
+    - 1781
 - id: H3
   name: Rate-extrapolated hysteresis
   headline: OPEN
@@ -2542,6 +2950,15 @@ instruments:
   kill_condition: if the extrapolated area is zero.
   wedge: false
   status: built
+  caliper_ancestor: G4
+  work_package: W6.2
+  source_lines:
+    assay:
+    - 1812
+    - 1813
+    caliper:
+    - 1782
+    - 1788
 - id: H4
   name: Relaxation time and the transition window
   headline: OPEN
@@ -2558,16 +2975,29 @@ instruments:
   invariance_group: OPEN
   baselines: OPEN
   prior_art: '**this is the unit convention, and defining it is free.** Lead time is currently reported
-    four incommensurable ways. Every forecast is scored in these units.'
+    four incommensurable ways. Every forecast in Part 7 is scored in these units.'
   kill_condition: n/a.
   wedge: false
   status: built
+  caliper_ancestor:
+  - G2
+  - G5
+  work_package: W4.8
+  source_lines:
+    assay:
+    - 1815
+    - 1816
+    caliper:
+    - - 1766
+      - 1774
+    - - 1789
+      - 1799
 - id: H5
   name: Regime reading
   headline: The whole envelope, measured per step.
   quantities:
   - run.regime
-  says: the twelve regime conditions with their statistics and thresholds.
+  says: the twelve conditions of §2.4 with their statistics and thresholds.
   access_min: RECORD
   substrates: OPEN
   phases: OPEN
@@ -2578,14 +3008,20 @@ instruments:
   baselines: OPEN
   prior_art: consulted by every preflight; it is the mechanism, not a finding.
   kill_condition: OPEN
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W2.7
+  source_lines:
+    assay:
+    - 1818
+    - 1819
+    caliper: null
 - id: I1
   name: Density discontinuity at a reward gate
   headline: McCrary as a hacking detector.
@@ -2595,42 +3031,42 @@ instruments:
     the running variable."'
   access_min: RECORD with the gate's running variable
   # Amended: these two were transcribed as OPEN, which this file defines as "genuinely absent from
-  # both source documents". The source entry prints `Sub/Ph any hard threshold`, which is present and
+  # both source documents". ASSAY line 1826 prints `Sub/Ph any hard threshold`, which is present and
   # unparseable, and that is a different thing. It is the only one of the eleven `Sub/Ph` segments
-  # the source prints that was dropped. An OPEN that means "we could not parse this" is indistinguishable
+  # ASSAY prints that was dropped. An OPEN that means "we could not parse this" is indistinguishable
   # from an OPEN that means "neither document says", and `substrates` alone carries 75 of the second
   # kind.
   substrates: OPEN
-  substrates_open_reason: the phrase "any hard threshold" is an applicability condition rather than
-    a Substrate member. The instrument applies wherever a reward gate has a hard cutoff, on any
-    substrate.
+  substrates_open_reason: ASSAY line 1826 prints "Sub/Ph any hard threshold", which names an
+    applicability condition rather than a Substrate member. The instrument applies wherever a
+    reward gate has a hard cutoff, on any substrate.
   phases: OPEN
-  phases_open_reason: as substrates; no phase is stated.
+  phases_open_reason: as substrates; ASSAY line 1826 states no phase.
   envelope_requires: OPEN
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: the McCrary density test
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: with robust bias correction
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`units`'
   baselines:
   - a smooth-density null
@@ -2641,6 +3077,15 @@ instruments:
   kill_condition: if no real pipeline has a hard gate, which is false.
   wedge: true
   status: built
+  caliper_ancestor: H1
+  work_package: W4.5
+  source_lines:
+    assay:
+    - 1825
+    - 1826
+    caliper:
+    - 1800
+    - 1807
 - id: I2
   name: Bunching elasticity
   headline: How hard the policy is pushing on the gate.
@@ -2657,25 +3102,25 @@ instruments:
   - rung: 0
     estimator: excess mass `b = B/h_0(c)`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: Saez elasticity
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - a placebo cutoff
@@ -2683,6 +3128,15 @@ instruments:
   kill_condition: if the elasticity does not respond when the gate is synthetically moved.
   wedge: true
   status: built
+  caliper_ancestor: H2
+  work_package: W4.5
+  source_lines:
+    assay:
+    - 1828
+    - 1829
+    caliper:
+    - 1808
+    - 1814
 - id: I3
   name: Gradient dead-zone fraction
   headline: OPEN
@@ -2698,17 +3152,25 @@ instruments:
   ladder: OPEN
   invariance_group: OPEN
   baselines: OPEN
-  prior_art: the override mechanism, with the two mandatory controls (contrast against a graded
+  prior_art: the override mechanism of §3.3, with the two mandatory controls (contrast against a graded
     penalty, and fix the decode length separately from the training budget).
   kill_condition: if the graded-penalty control shows the same verification suppression.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: H3
+  work_package: W4.5
+  source_lines:
+    assay:
+    - 1831
+    - 1832
+    caliper:
+    - 1815
+    - 1826
 - id: I4
   name: Monitor degradation under pressure
   headline: The figure of merit nobody uses.
@@ -2727,37 +3189,37 @@ instruments:
   - rung: 0
     estimator: pre/post AUROC
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: the full curve against steps
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: separating *evasion* (hacks look less suspicious) from *degradation* (the monitor loses
       discrimination)
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - a monitor not being optimised against, run in parallel
@@ -2772,6 +3234,15 @@ instruments:
   kill_condition: if the ranking by degradation curve matches the ranking by static AUROC across ten monitors.
   wedge: false
   status: built
+  caliper_ancestor: I4
+  work_package: W6.5
+  source_lines:
+    assay:
+    - 1834
+    - 1835
+    caliper:
+    - 1852
+    - 1863
 - id: I5
   name: The derivative of within-group reward variance
   headline: OPEN
@@ -2788,14 +3259,14 @@ instruments:
   - rung: 0
     estimator: the derivative with an ARL-designed CUSUM
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - the *level* of variance, which is known not to be predictive
@@ -2807,6 +3278,13 @@ instruments:
   kill_condition: if it does not beat the gradient-norm peak.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W4.5
+  source_lines:
+    assay:
+    - 1837
+    - 1838
+    caliper: null
 - id: I6
   name: Obfuscation pressure on the monitored channel
   headline: OPEN
@@ -2829,6 +3307,13 @@ instruments:
   kill_condition: if the KL sweep shows no faithfulness effect.
   wedge: false
   status: OPEN
+  caliper_ancestor: null
+  work_package: OPEN
+  source_lines:
+    assay:
+    - 1840
+    - 1841
+    caliper: null
 - id: I7
   name: Exploit transfer graph
   headline: OPEN
@@ -2848,6 +3333,13 @@ instruments:
   kill_condition: if transfer is near zero, which would be good news about suite diversity.
   wedge: false
   status: OPEN
+  caliper_ancestor: null
+  work_package: OPEN
+  source_lines:
+    assay:
+    - 1843
+    - 1844
+    caliper: null
 - id: J1
   name: E-values and confidence sequences
   headline: Peek freely.
@@ -2865,36 +3357,36 @@ instruments:
   - rung: 0
     estimator: Hoeffding by α-spending `δ_n = 6δ/(π²n²)`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: polynomial stitching
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: betting with the ONS schedule
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: '`units`'
   baselines:
   - a fixed-sample interval, and report how often it would have been wrong under continuous peeking
@@ -2906,14 +3398,22 @@ instruments:
     **Vendor `cif.py`.** It is simultaneously a competitor for the epistemics lane and the exact upgrade
     this layer needs.
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: I1
+  work_package: W4.7
+  source_lines:
+    assay:
+    - 1850
+    - 1851
+    caliper:
+    - 1827
+    - 1836
 - id: J2
   name: ARL-designed alarms
   headline: OPEN
@@ -2931,57 +3431,65 @@ instruments:
   - rung: 0
     estimator: CUSUM with a derived `h`
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: EWMA
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: MEWMA on the multivariate channel
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
-  # Amended: J2 inherited nothing when the earlier document's I1 entry split into J1 and J2, because
-  # the later entry prints no Grp segment. `lint_catalogue` currently resolves the group from J2's
-  # quantities, which both carry `units`, so nothing fails; the declaration should say so rather
-  # than relying on the fallback. The earlier document's normalised-statistics sentence applies to
-  # the ARL-designed alarm at least as much as it applies to J1.
-  invariance_group: '`units` (an earlier description declares `reward.affine` invariance on
-    normalised statistics and requires it be declared otherwise; no group is stated for J2)'
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
+  # Amended: J2 inherited nothing when CALIPER I1 split into J1 and J2, because ASSAY line 1854
+  # prints no Grp segment. `lint_catalogue` currently resolves the group from J2's quantities,
+  # which both carry `units`, so nothing fails; the declaration should say so rather than
+  # relying on the fallback. CALIPER's normalised-statistics sentence applies to the ARL-designed
+  # alarm at least as much as it applies to J1.
+  invariance_group: '`units` (CALIPER I1, line 1832, declares `reward.affine` invariance on
+    normalised statistics and requires it be declared otherwise; ASSAY prints no Grp for J2)'
   baselines:
   - the shipped ad hoc `k_sds = 0.5, h_sds = 5.0` with no derivation
   - a fixed threshold
-  prior_art: 'Page 1954, Lorden 1971, Siegmund''s ARL approximation. CHERRL (arXiv:2606.04923) states the gap outright: "No
+  prior_art: 'Page 1954, Lorden 1971, Siegmund''s ARL approximation. CHERRL states the gap outright: "No
     automated monitor detects onset from a deployed judge-blind signal in rubric-based RL reward hacking."'
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: I1
+  work_package: W4.7
+  source_lines:
+    assay:
+    - 1853
+    - 1854
+    caliper:
+    - 1827
+    - 1836
 - id: J3
   name: Conjunction detectors
   headline: OPEN
@@ -3002,14 +3510,20 @@ instruments:
     by 15 to 30 steps. Compose with e-values, which multiply legally under arbitrary dependence, so e-BH
     gives FDR control over a per-feature ledger of alarms.'
   kill_condition: if a single channel matches the conjunction's operating characteristic.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W4.7
+  source_lines:
+    assay:
+    - 1856
+    - 1857
+    caliper: null
 - id: J4
   name: Operating point from an asymmetric loss
   headline: OPEN
@@ -3035,6 +3549,19 @@ instruments:
   kill_condition: n/a.
   wedge: false
   status: built
+  caliper_ancestor:
+  - I2
+  - K9
+  work_package: W4.7
+  source_lines:
+    assay:
+    - 1859
+    - 1860
+    caliper:
+    - - 1837
+      - 1843
+    - - 1941
+      - 1954
 - id: J5
   name: Check standard
   headline: OPEN
@@ -3051,16 +3578,22 @@ instruments:
   invariance_group: OPEN
   baselines: OPEN
   prior_art: a check standard is chosen for *stability*, not difficulty, which is subtly and importantly
-    different from a held-out eval. Pair with the isochronous design.
+    different from a held-out eval. Pair with the isochronous design of §4.7.
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W4.7
+  source_lines:
+    assay:
+    - 1862
+    - 1863
+    caliper: null
 - id: K1
   name: The distillation gap
   headline: Kill risk number one.
@@ -3088,12 +3621,21 @@ instruments:
     ships and the whole in-run layer is for the lab's internal use only.
   wedge: false
   status: planned
+  caliper_ancestor: J1
+  work_package: W6.3
+  source_lines:
+    assay:
+    - 1869
+    - 1870
+    caliper:
+    - 1864
+    - 1871
 - id: K2
   name: Planted-to-real transfer coefficient
   headline: OPEN
   quantities:
   - calibration.transfer_t32
-  # Corrected. This row said 0.419 was the planted-to-real coefficient. It is not: X3
+  # Corrected at wave 6. This row said 0.419 was the planted-to-real coefficient. It is not: X3
   # recomputed it from its own parent row, reproducing 0.41898333 to 1e-9 before saying anything,
   # and found both arms are planted (a CPU rehearsal against the same planted organism scored by a
   # real reward model, one family, three doses, n_natural_corpora = 0). So 0.419 is a
@@ -3109,42 +3651,43 @@ instruments:
   phases: OPEN
   envelope_requires: []
   envelope_unconditional_justification: >-
-    "`REFERENCE_UNCERTIFIED` must not fire" names a RefusalReason rather than a RegimeCondition.
+    ASSAY line 1873 prints "`REFERENCE_UNCERTIFIED` must not fire", which names a RefusalReason
+    rather than a RegimeCondition.
   envelope_measured_by: OPEN
   ladder:
   - rung: 0
     estimator: the raw gap
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: with standard addition into the target
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: with a Pearl-Bareinboim selection diagram stating which quantities may legally cross
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - the organism-only number, which is what everyone reports
@@ -3155,6 +3698,15 @@ instruments:
     right and the fix works, which is the good outcome.
   wedge: false
   status: planned
+  caliper_ancestor: K2
+  work_package: W6.6
+  source_lines:
+    assay:
+    - 1872
+    - 1873
+    caliper:
+    - 1893
+    - 1900
 - id: K3
   name: Shelf life of a readout
   headline: OPEN
@@ -3177,6 +3729,15 @@ instruments:
   kill_condition: n/a.
   wedge: false
   status: planned
+  caliper_ancestor: I4
+  work_package: W6.8
+  source_lines:
+    assay:
+    - 1875
+    - 1876
+    caliper:
+    - 1852
+    - 1863
 - id: K4
   name: Sparsity under staleness
   headline: OPEN
@@ -3202,6 +3763,15 @@ instruments:
   kill_condition: n/a; both outcomes are results.
   wedge: false
   status: planned
+  caliper_ancestor: J2
+  work_package: W6.7
+  source_lines:
+    assay:
+    - 1878
+    - 1879
+    caliper:
+    - 1872
+    - 1884
 - id: L1
   name: Reference-material certificate
   headline: OPEN
@@ -3220,36 +3790,36 @@ instruments:
   - rung: 0
     estimator: characterisation only
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: plus homogeneity across seeds
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: plus stability under continued training
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - a single-seed plant with a nominal dose, which is current practice everywhere
@@ -3262,6 +3832,13 @@ instruments:
     and this is one measurement, once.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.6
+  source_lines:
+    assay:
+    - 1887
+    - 1888
+    caliper: null
 - id: L2
   name: Label error rate and the ceiling it implies
   headline: OPEN
@@ -3279,36 +3856,36 @@ instruments:
   - rung: 0
     estimator: a hand-audited sample with a Wilson interval
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 1
     estimator: IRT-based mislabel surfacing
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   - rung: 2
     estimator: a two-rater agreement design
     access: OPEN
-    access_open_reason: not stated per rung; the per-rung access column is unfilled for every
-      rung of this row.
+    access_open_reason: not stated per rung in Part 5; the per-rung access column exists only in the 2.5
+      worked example (lines 531-536)
     bias: OPEN
-    bias_open_reason: not stated per rung; EstimatorEntry.bias is unfilled for every rung of
-      this row.
+    bias_open_reason: not stated per rung in Part 5; EstimatorEntry.bias (2.5 line 524) is unfilled for
+      this rung
     cost: OPEN
-    cost_open_reason: not stated per rung; EstimatorEntry.cost is unfilled for every rung of
-      this row.
+    cost_open_reason: not stated per rung in Part 5; EstimatorEntry.cost (2.5 line 525) is unfilled for
+      this rung
   invariance_group: OPEN
   baselines:
   - assume the labels are right
@@ -3320,6 +3897,13 @@ instruments:
   kill_condition: n/a.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.6
+  source_lines:
+    assay:
+    - 1890
+    - 1891
+    caliper: null
 - id: L3
   name: Two-sided verifier error
   headline: OPEN
@@ -3343,14 +3927,20 @@ instruments:
     and an XGBoost on AppWorld gets 0.953, at 1.19 ms against roughly 4,000 ms. **Ship the TF-IDF baseline
     as a mandatory comparator for any transcript-level detector.**'
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.6
+  source_lines:
+    assay:
+    - 1893
+    - 1894
+    caliper: null
 - id: L4
   name: The distributed-tell question, which is a free white-box experiment
   headline: OPEN
@@ -3373,6 +3963,13 @@ instruments:
   kill_condition: n/a.
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W3.6
+  source_lines:
+    assay:
+    - 1896
+    - 1897
+    caliper: null
 - id: L5
   name: Position-stratified null for localisation
   headline: OPEN
@@ -3393,17 +3990,23 @@ instruments:
     start and end of trajectories, and a grader whose own position sensitivity was uncontrolled would
     produce exactly a below-chance AUC against a uniform prior. **Run this before citing 0.2821 again.**
   kill_condition: n/a.
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.6
+  source_lines:
+    assay:
+    - 1899
+    - 1900
+    caliper: null
 - id: M1
   name: Substrate noise floor, LOD and LOQ
-  headline: Consulted by every preflight, cached per configuration.
+  headline: §4.7. Consulted by every preflight, cached per configuration.
   quantities:
   - intervention.ec50
   - substrate.noise_floor
@@ -3422,6 +4025,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: K1
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1906
+    - 1906
+    caliper:
+    - 1885
+    - 1892
 - id: M2
   name: Instrument effect
   headline: The overhead this measurement imposed, per step, as a term in the uncertainty budget. **No
@@ -3442,6 +4054,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: K3
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1908
+    - 1908
+    caliper:
+    - 1901
+    - 1907
 - id: M3
   name: Dumb-baseline bank
   headline: 'String match, length, TF-IDF, n-gram diversity, a scaffolded black-box prompt, the gradient-norm
@@ -3450,7 +4071,8 @@ instruments:
     probe detects the hack, and the detection is empty."'
   quantities:
   # Filled from the installed source, which is rung 2 of the ladder and beats a document.
-  # `measure/controls/baselines.py:79` declares this id and lints clean.
+  # `measure/controls/baselines.py:79` declares this id and lints clean; SPEC-ERRATA E22 registered
+  # the row.
   - baseline.best_score
   says: OPEN
   access_min: OPEN
@@ -3465,6 +4087,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: K4
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1910
+    - 1910
+    caliper:
+    - 1908
+    - 1915
 - id: M4
   name: Semantic placebo
   headline: A coherent but irrelevant direction, not a random Gaussian one. Mandatory on every steering
@@ -3486,6 +4117,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: K5
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1912
+    - 1912
+    caliper:
+    - 1916
+    - 1921
 - id: M5
   name: Matched positive control
   headline: A null without an identically-powered positive control is indistinguishable from an underpowered
@@ -3496,8 +4136,8 @@ instruments:
   # `measure/controls/matched.py:449` declares `study.power` deliberately, with the argument at
   # :428: the reading is the control's realised detection at the claim's own design, which is the
   # same quantity M10 computes before the run, estimated at a higher rung by measurement rather than
-  # by a calculation. It lints clean. A second id would make two ladders for one quantity, which the
-  # registry forbids, so `control.matched_positive` is not registered.
+  # by a calculation. It lints clean. A second id would make two ladders for one quantity, which is
+  # E14's rule, so `control.matched_positive` is not registered.
   - study.power
   says: OPEN
   access_min: OPEN
@@ -3512,13 +4152,22 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: K6
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1914
+    - 1914
+    caliper:
+    - 1922
+    - 1927
 - id: M6
   name: Reasoning-stripped ablation
   headline: For anything that reads text, because a leading detector drops from AUC 0.9467 to 0.6213 once
     natural-language reasoning is removed from its input, and reviewers will run this if we do not.
   # Still OPEN, and it is the one M-series gap that is real. No instrument in the tree is
-  # `faithful_to = "M6"`, so nothing has computed a stripped-text delta and nobody is in a position
-  # to choose the id. The earlier document's K7 entry carries `ablation.text_stripped_delta` at unit
+  # `faithful_to = "M6"`, so nothing has computed a stripped-text delta and there is no builder to
+  # choose the id. CALIPER K7 (Appendix A line 2523) carries `ablation.text_stripped_delta` at unit
   # "metric delta" and access `Q`, which is evidence for the unit and the access and not for the
   # definition. Registering a row whose definition nobody can write would be the defect this file
   # exists to prevent.
@@ -3536,6 +4185,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: OPEN
+  caliper_ancestor: K7
+  work_package: OPEN
+  source_lines:
+    assay:
+    - 1916
+    - 1916
+    caliper:
+    - 1928
+    - 1933
 - id: M7
   name: Uncertainty budget
   headline: The GUM table, lint-enforced to compose, with the largest term named. It is almost never sampling
@@ -3543,8 +4201,8 @@ instruments:
   # Deliberately OPEN, and correctly so. `measure/meta/gum.py` declares no class-level quantity and
   # says why in its `deviations`: a combined standard uncertainty is in the units of its reading, so
   # a budget has no measurand separate from the one it is a budget for. `self.quantity` is the
-  # subject's, per instance, and the instrument lints clean once it has a subject. The earlier
-  # document's `reading.uncertainty_budget` for K8 is therefore not registered.
+  # subject's, per instance, and the instrument lints clean once it has a subject. CALIPER K8's
+  # `reading.uncertainty_budget` is therefore not registered.
   quantities: OPEN
   says: OPEN
   access_min: OPEN
@@ -3559,6 +4217,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: K8
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1918
+    - 1918
+    caliper:
+    - 1934
+    - 1940
 - id: M8
   name: Interlaboratory comparison
   headline: HuggingFace against vLLM, eager against compiled, two seeds, two precisions. Report `s_L`
@@ -3579,9 +4246,16 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: null
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1920
+    - 1920
+    caliper: null
 - id: M9
   name: Incremental validity
-  headline: Required on every white-box reading.
+  headline: §6.4. Required on every white-box reading.
   quantities:
   - instrument.incremental_validity
   - instrument.error_correlation
@@ -3598,6 +4272,15 @@ instruments:
   kill_condition: OPEN
   wedge: false
   status: built
+  caliper_ancestor: I3
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1922
+    - 1922
+    caliper:
+    - 1844
+    - 1851
 - id: M10
   name: Power and minimum detectable effect
   headline: 'Before the run, not after. Three of five standard power calculators are roughly 2x wrong
@@ -3621,14 +4304,20 @@ instruments:
   baselines: OPEN
   prior_art: OPEN
   kill_condition: OPEN
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1924
+    - 1924
+    caliper: null
 - id: M11
   name: Rung disagreement, published
   headline: When two rungs of the same ladder disagree on the same data, that difference is the cheap
@@ -3647,20 +4336,26 @@ instruments:
   baselines: OPEN
   prior_art: OPEN
   kill_condition: OPEN
-  # Amended: the instrument entry prints no [W] here and the quantity table marks every one of its
-  # quantities [W]. The quantity table carries the legend that defines the marker (a record plus a
-  # callable grader, no GPU, no policy access) and the instrument entry carries no definition, so
-  # the quantity table decides it.
+  # Amended: Part 5 prints no [W] on this entry and Appendix A marks every one of its quantities
+  # [W]. Appendix A carries the legend that defines the marker (line 2423: a record plus a callable
+  # grader, no GPU, no policy access) and Part 5 carries no definition, so Appendix A decides it.
   # The flag's one consumer is `access/report.py`'s NotBuilt rows, which exist to tell a reader what
   # runs today with no GPU, and this record's own `access_min` says this one does.
   wedge: true
   status: built
-# --- Series N, Level 0: the frontier. Added here, not from the source entries. ------------------
-# The source documents develop the frontier mathematics in full but give it no instrument entry,
-# which is an omission rather than a deferral: it is pure wedge, and needs only a
-# callable grader and a gold channel on the same n base-policy rollouts. The four records below were
-# written from that mathematics. Fields that a source instrument entry would have supplied
-# are decisions rather than transcriptions and are marked so.
+  caliper_ancestor: null
+  work_package: W3.7
+  source_lines:
+    assay:
+    - 1926
+    - 1926
+    caliper: null
+# --- Series N, Level 0: the frontier. Added by the build brief, not by Part 5. ------------------
+# Part 9 assigns a work package to every series in Part 5 and none to 3.0, which is a Part 9
+# omission rather than a deferral: 3.0 is developed in full, is pure wedge, and needs only a
+# callable grader and a gold channel on the same n base-policy rollouts. The four records below are
+# the integrator's, written from 3.0, 3.0.1, 3.0.2 and 3.0.3. Fields that Part 5 would have supplied
+# are decisions rather than transcriptions and are marked so. See errata E23.
 - id: N1
   name: The reward-versus-gold frontier
   headline: The whole frontier is estimable before any optimisation is run, from n base-policy
@@ -3699,22 +4394,36 @@ instruments:
     citation, because it is a bisection and Newton solver for the same turning point consuming the
     same data, and the two turning-point estimates are reported side by side.
   - the untilted base-policy gold mean at lambda = 0
-  # Amended: the earlier document's E1 baseline is a linear extrapolation from the first two
+  # Amended: CALIPER E1's own baseline (line 1636) is a linear extrapolation from the first two
   # points. It is the null under which the curve has no shape at all, and it costs two points.
   - a linear extrapolation from the first two points of the sweep, which is the null under which the
-    curve has no shape
+    curve has no shape (CALIPER E1, line 1636)
   prior_art: The Goodhart turning point is occupied. arXiv 2506.19248 (NeurIPS 2025 Spotlight)
     defines the identical tilt, names the hacking threshold, proves the true-reward curve is monotone
     or has a single interior extremum, and ships the solver. The closed-form cumulant expression is a
     convenience over their root-finder, not a new result. What survives is the horizon (N2), the
     concomitant framing (N4) and the surrogate conditions (N4).
   kill_condition: 'if HedgeTune and the cumulant estimate agree within their intervals on every
-    grader tested, report HedgeTune and drop the second estimator. There is a stronger kill, for the
-    layer rather than for the estimator: if the predicted turn does not match
+    grader tested, report HedgeTune and drop the second estimator. CALIPER E1 (line 1638) states the
+    stronger kill, for the layer rather than for the estimator: if the predicted turn does not match
     the realised turn on any open model where both are measurable, at any horizon, Level 0 is
     descriptive rather than predictive.'
   wedge: true
   status: built
+  # Amended: E23 wrote these four records from ASSAY §3.0 and recorded that no source text carries
+  # these fields. No ASSAY source text does. CALIPER §5.E does, and the mapping is by quantity id
+  # rather than by inference: N1 and N2 both carry CALIPER E1's own `frontier.gold_vs_kl` and
+  # `frontier.visibility_horizon` unchanged. A reader diffing the two documents would otherwise find
+  # CALIPER §5.E has no successor and conclude the frontier series was dropped.
+  caliper_ancestor: E1
+  work_package: W3.8
+  source_lines:
+    assay:
+    - 742
+    - 789
+    caliper:
+    - 1629
+    - 1639
 - id: N2
   name: The visibility horizon
   headline: Where a tilt extrapolation goes blind, which nobody states.
@@ -3757,6 +4466,19 @@ instruments:
     a formality rather than an instrument and it collapses into N1's reporting range.
   wedge: true
   status: built
+  # Amended: see N1. CALIPER E1 line 1635 gives the horizon as "`ESS(lambda)` below a declared
+  # floor" and calls it the instrument that defines the horizon concept for the rest of the library.
+  # E23 built that field into a whole instrument, which is a promotion rather than a loss, and this
+  # is where it came from.
+  caliper_ancestor: E1
+  work_package: W3.8
+  source_lines:
+    assay:
+    - 754
+    - 770
+    caliper:
+    - 1629
+    - 1639
 - id: N3
   name: Reward tail index
   headline: The precondition the whole tilt layer rests on, measured rather than assumed.
@@ -3799,6 +4521,19 @@ instruments:
     card instead of a row.
   wedge: true
   status: built
+  # Amended: see N1. CALIPER E3 (line 1647) is the grader tail index and its Ladder line (1651)
+  # already describes this record's own rung structure: the library ships a Hill and
+  # peaks-over-threshold implementation with a bootstrap interval on the shape, and what E3 adds is
+  # the fragility protocol.
+  caliper_ancestor: E3
+  work_package: W3.8
+  source_lines:
+    assay:
+    - 766
+    - 769
+    caliper:
+    - 1647
+    - 1654
 - id: J6
   name: The forecast calibration ledger
   headline: The score of the library's own forecasts, in public, with the honest starting position
@@ -3853,6 +4588,8 @@ instruments:
     self-assessment rather than a ledger.
   wedge: true
   status: built
+  caliper_ancestor: OPEN
+  work_package: W4.6
 - id: C9
   name: Policy readout recoverability
   headline: What a linear readout of the policy's own residual stream recovers, against the
@@ -3897,6 +4634,8 @@ instruments:
     not, and the instrument reports that rather than the field assuming otherwise.
   wedge: false
   status: built
+  caliper_ancestor: OPEN
+  work_package: W5.1
 - id: N4
   name: Surrogate conditions and the concomitant of best-of-n
   headline: Falsifiable conditions on the proxy beat a predicted turning point, and best-of-n
@@ -3919,7 +4658,7 @@ instruments:
   envelope_requires:
   - STATIONARY_GRADER
   # Amended: this mapping carried a prose sentence where the type wants a QuantityID, which is the
-  # same defect corrected on N1 to N3 that did not reach here. An envelope naming it could not be
+  # same defect E26 corrected on N1 to N3 and did not reach here. An envelope naming it could not be
   # lifted into code: `EnvelopeSpec.__post_init__` resolves every `measured_by` id against the
   # registry and rejects one that names no row. The id is the kernel's own default for this
   # condition, `measure/rate/regime.py:104`, so there is one condition, one measuring quantity and
@@ -3951,13 +4690,29 @@ instruments:
     reading ships.
   wedge: true
   status: built
-# N5 to N8 were written into this file from the contract-layer mathematics and the quantity registry
-# rather than from the four instruments that had already shipped, and eight fields disagreed with
-# the code as a result. Rewritten against `measure/decision/` and
-# `tests/acceptance/test_w4_decision.py`, with `measure/decision/quantities.py::CATALOGUE_RECORDS`
-# as the module's own proposed record: that structure exists so the row and the object it describes
-# cannot drift, and it was not consulted the first time. Every number below is reproduced from the
-# acceptance file's real subject, three open reward models over 1,327 RM-Bench prompts.
+  # Amended: see N1. Two ancestors, in the form H4 already uses. CALIPER E4 (line 1655) is the
+  # surrogate-endpoint criteria and E2 (line 1640) is best-of-n as an exact finite-n problem; this
+  # record's two quantities descend one from each.
+  caliper_ancestor:
+  - E4
+  - E2
+  work_package: W3.8
+  source_lines:
+    assay:
+    - 771
+    - 789
+    caliper:
+    - - 1655
+      - 1663
+    - - 1640
+      - 1646
+# N5 to N8 were written into this file from ASSAY §3.5.2 and the quantity registry rather than from
+# the four instruments that had already shipped, and eight fields disagreed with the code as a
+# result. Rewritten against `measure/decision/` and `tests/acceptance/test_w4_decision.py`, with
+# `measure/decision/quantities.py::CATALOGUE_RECORDS` as the builder's own proposed record: that
+# structure exists so the row and the object it describes cannot drift, and it was not consulted the
+# first time. Every number below is reproduced from the acceptance file's real subject, three open
+# reward models over 1,327 RM-Bench prompts.
 - id: N5
   name: Optimal component weights
   headline: Nobody sets a reward component's weight from that component's measured noise, and the
@@ -3967,7 +4722,7 @@ instruments:
   # Was: '"Component 3 carries weight 0.41 and its measured noise says 0.12. The unmeasurable-task
   # correction takes the measurable component's optimal weight to exactly zero."' Two problems. The
   # numbers were illustrative where measured ones exist, and the second sentence states the
-  # zero-weight theorem without the condition a later review found missing: exactly zero
+  # zero-weight theorem without the condition SPEC-ERRATA E47 item 1 found missing: exactly zero
   # needs the two tasks to be equally valuable. With unequal values the Schur complement is still
   # zero, the formula returns `B_1 - B_2`, and there is no interior optimum at all.
   says: '"skywork-v2-qwen3-8b keeps 0.141 of the weight its value alone would buy it, and armorm
@@ -3997,7 +4752,7 @@ instruments:
     STATIONARY_GRADER: monitor.check_standard_drift
   # Was a two-rung ladder whose rung 0 was the diagonal form. The shipped instrument declares
   # `rung = 1` and solves the general form once; the diagonal and unmeasurable-task expressions are
-  # special cases checked against it rather than cheaper estimators of it. Here is why the
+  # special cases checked against it rather than cheaper estimators of it. E47 item 2 is why the
   # diagonal form is not a rung: it is stated at `M = I` and is not scale free, so on raw
   # reward-model scores it is a units error rather than an approximation.
   ladder:
@@ -4034,13 +4789,19 @@ instruments:
     a restatement of B'.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.9
+  source_lines:
+    assay:
+    - 1091
+    - 1129
+    caliper: null
 - id: N6
   name: The equal-compensation table
   headline: Which component of a composite reward the policy is being paid least to work on.
   quantities:
   - reward.equal_compensation_ratio
-  # This row is where the inverted commission rule had survived into the operative catalogue. It
-  # read: '"After
+  # This row is where SPEC-ERRATA E46 had survived into the operative catalogue. It read: '"After
   # dividing by each signal's own sensitivity, the commissions are 0.31, 0.29 and 0.08. The third
   # component is starved..."' Dividing by mu' is the printed rule and it is the reciprocal of the
   # derivation. A commission is alpha_i mu'_i, so it is a multiplication, and the starved component
@@ -4071,7 +4832,7 @@ instruments:
   envelope_measured_by:
     STATIONARY_GRADER: monitor.check_standard_drift
   # Was `rung 0: alpha_i / mu'_i` and `rung 2: mu' from D4's Sobol total-effect index`. The first is
-  # the inverted rule written into the ladder of the instrument that exists to correct it. The
+  # E46's inverted rule written into the ladder of the instrument that exists to correct it. The
   # second is not built. The shipped instrument declares `rung = 0` with a stated sensitivity and
   # rung 1 with a measured sweep, and refuses with RECORD_INCOMPLETE when the run carries neither.
   ladder:
@@ -4094,15 +4855,22 @@ instruments:
     this table under mu' = 1
   - equal weights, which is what the table would say if the composite had not been tuned
   prior_art: The phrase "equal compensation principle" is Milgrom and Roberts (1992) and does not
-    appear in Holmstrom and Milgrom (1991). The source description states the principle backwards,
-    and on the real panel the printed rule and the correct one name opposite ends.
-    `EqualCompensation.deviations` carries the printed rule verbatim so a reader can see which of
-    the two they have.
+    appear in Holmstrom and Milgrom (1991). SPEC-ERRATA E46 records that ASSAY §3.5.2 states the
+    principle backwards, and on the real panel the printed rule and the correct one name opposite
+    ends. `EqualCompensation.deviations` carries the printed rule verbatim so a reader holding the
+    specification can see which of the two they have.
   kill_condition: if the commission ratio is within a few percent of 1 for every component of every
     real composite tested, composites are already equal-compensating and the table is a formality.
     It does not fire here; the spread is 0.033.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.9
+  source_lines:
+    assay:
+    - 1091
+    - 1129
+    caliper: null
 - id: N7
   name: The sorting cutoff
   headline: Do not put a noisy judge and a crisp unit test in the same weighted sum, with the
@@ -4110,10 +4878,9 @@ instruments:
   # `SortingCutoff` also reports `reward.information_coefficient`, which is the quantity the sort
   # orders components by and the units the cutoff is printed in. It is not registered in
   # `spec/QUANTITIES.yaml`, so it cannot be named here: a catalogue row naming an unregistered
-  # quantity is the same defect in reverse as an instrument declaring an unregistered one. The
-  # registration is still outstanding;
-  # `measure/decision/quantities.py::INFORMATION_COEFFICIENT` is the proposed row and has
-  # been carried by the shipped module for some time.
+  # quantity is the shape of SPEC-ERRATA E56 in reverse. The registration is a request in the wave-7
+  # report; `measure/decision/quantities.py::INFORMATION_COEFFICIENT` is the proposed row and has
+  # been carried by the shipped module since wave 4.
   quantities:
   - reward.sorting_cutoff
   says: '"Split at rho = 0.183: armorm in one stage, tulu-rm and skywork-v2-qwen3-8b in another.
@@ -4139,7 +4906,7 @@ instruments:
   envelope_measured_by:
     STATIONARY_GRADER: monitor.check_standard_drift
   # Was `rung 0: sort components by the information coefficient and locate the cutoff`. That is the
-  # sorting theorem's own claim taken on trust, and here is why it cannot be: with
+  # sorting theorem's own claim taken on trust, and SPEC-ERRATA E47 item 3 is why it cannot be: with
   # unequal component values an interval partition in rho fails to attain the optimum in 79 of 200
   # random instances at two groups. The shipped instrument enumerates every partition, computes the
   # interval scan beside it, and records which search produced the answer. On the real subject the
@@ -4172,6 +4939,13 @@ instruments:
     splitting never pays and the instrument reports a cutoff nobody should act on.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.9
+  source_lines:
+    assay:
+    - 1091
+    - 1129
+    caliper: null
 - id: N8
   name: Noise and angle, per component
   headline: Every reward component needs at least two numbers, a noise and an angle, and no RLHF
@@ -4229,9 +5003,16 @@ instruments:
     identified one-to-one with the components, so M is diagonal by construction and every distortion
     is exactly zero; the off-diagonal path is exercised on a constructed M that is labelled
     synthetic. Recorded rather than hidden, and it is also why the noise half must be divided by the
-    squared sensitivity: the diagonal weight formula is not scale free, and on this panel the three
-    components' raw noise variances differ by a factor of 74,890, which is
+    squared sensitivity: SPEC-ERRATA E47 found the diagonal weight formula is not scale free, and on
+    this panel the three components' raw noise variances differ by a factor of 74,890, which is
     almost entirely the scale each model emits on, while their effort-equivalent noise differs by
     80, which is the real difference.
   wedge: true
   status: built
+  caliper_ancestor: null
+  work_package: W3.9
+  source_lines:
+    assay:
+    - 1091
+    - 1129
+    caliper: null

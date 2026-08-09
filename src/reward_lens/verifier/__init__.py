@@ -18,13 +18,12 @@ This module holds what the ten instruments share: the corpus and verifier protoc
 subject that lets a `Context` describe a piece of code rather than a network, and the sensitivity
 flag that keeps a surviving-mutant list out of a rendered card unless somebody asks for it.
 
-**On the corpus protocol.** This series does not depend on `record/`. It needs a verifier's source
-and a corpus of scored rollouts, and nothing else, so `Rollout` and `RolloutCorpus` below are a
-deliberately small local protocol rather than an import: an adapter from a `record.Run` is a dozen
-lines, and keeping the dependency out means these ten instruments run on a corpus that never went
-through the record at all. The assumption is written down rather than implied: a rollout is an id, a
-mapping of keyword arguments the verifier is called with, and optionally the score the record says
-it produced.
+**On the corpus protocol.** `record/` is being built in parallel and does not exist yet. The
+verifier series does not need it: it needs a verifier's source and a corpus of scored rollouts, and
+that is why the series lands in wave 1. `Rollout` and `RolloutCorpus` below are a deliberately
+small local protocol, sized so that a `record.Run` adapter is a dozen lines when `record/` lands.
+The assumption is written down rather than implied: a rollout is an id, a mapping of keyword
+arguments the verifier is called with, and optionally the score the record says it produced.
 """
 
 from __future__ import annotations
@@ -36,11 +35,17 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, Callable, Iterator, Mapping, Protocol, Sequence, cast
 
-from reward_lens.core.extras import require_extra
 from reward_lens.core.quantity import QUANTITIES, load_quantities
 from reward_lens.core.types import Access, AccessMatrix, Capability, Component, content_hash
 
-require_extra("verifier", subsystem="the verifier series (D1 to D10)")
+# Correction C-004. There used to be a `require_extra("verifier", ...)` here, at package
+# scope, so `import reward_lens.verifier.coverage` on a base install raised
+# `ExtraRequiredError` before a single line of D1 ran. That gate was wrong in both directions:
+# it refused the three instruments the wave-1 audit is built on, which need nothing from the
+# extra, and it let the modules that genuinely do need it (mutate, fuzz, sensitivity, growth)
+# rely on someone else's guard rather than carrying their own. The guard now applies per
+# module, at the top of each module that cannot work without the extra, which is where a
+# reader looks for it and where it stays correct when the module list changes.
 
 
 # ---------------------------------------------------------------------------
@@ -252,11 +257,11 @@ class ProgramSubject:
     """A grader that is a program, shaped so a `Context` can carry it.
 
     `measure.base.Context` types its subject as a `RewardSignal` and reads `.meta.fingerprint` and
-    `.caps` off it. A program satisfies neither the protocol nor the spirit of it, and forcing one
-    into `RewardSignal` is what previous versions of this library got wrong. So this is not a
-    `RewardSignal` and does not pretend to be: it declares `Capability.SCORES`, which is true (a
-    grader returns scores) and is the only capability a program has, and it fingerprints the
-    source rather than a checkpoint.
+    `.caps` off it. A program satisfies neither the protocol nor the spirit of it, and section 3.9
+    is explicit that forcing one into `RewardSignal` is what previous versions got wrong. So this
+    is not a `RewardSignal` and does not pretend to be: it declares `Capability.SCORES`, which is
+    true (a grader returns scores) and is the only capability a program has, and it fingerprints
+    the source rather than a checkpoint.
 
     The friction is real and it is the kernel's, not this series': every PROGRAM-substrate
     instrument needs this shim until `Context` accepts a subject that is not a network.
@@ -276,10 +281,11 @@ class ProgramSubject:
 
 #: What "GRADER source" costs in the access vocabulary.
 #:
-#: D1, D2 and D9 need source access, and `Access` used to have no member that said so. The nearest
-#: was `MUTATE` ("modify it: patch, ablate, edit, plant, recompile"), which overclaims: D1 and D9
-#: read the code and never touch it. `Access.SOURCE` was added for exactly this and is off the
-#: containment ladder, because reading a program's text neither follows from nor implies running it.
+#: Section 5.D prints "Access source" for D1, D2 and D9, and until the ASSAY build `Access` had no
+#: member that said it. The nearest was `MUTATE` ("modify it: patch, ablate, edit, plant,
+#: recompile"), which overclaims: D1 and D9 read the code and never touch it. `Access.SOURCE` was
+#: added for exactly this and is off the containment ladder, because reading a program's text
+#: neither follows from nor implies running it. See SPEC-ERRATA E20.
 SOURCE_ACCESS: Access = Access.SOURCE
 
 #: D1: the grader's source plus a record of rollouts.
@@ -523,6 +529,18 @@ __all__ = [
     "replay_corpus",
     "replay_fidelity",
     "stationary_grader_reading",
+    # The instrument modules themselves, so that a full path such as
+    # ``reward_lens.verifier.mutate`` is a public path rather than a reach into a private one.
+    # Nine modules for nine instruments, D1 to D6 and D8 to D10. There is no D7.
+    "attack",  # D8
+    "coverage",  # D1
+    "fuzz",  # D5
+    "growth",  # D6
+    "metamorphic",  # D3
+    "mutate",  # D2
+    "replay",  # D10
+    "sensitivity",  # D4
+    "static",  # D9
 ]
 
 # Imported last on purpose. The instrument modules import the corpus and subject types from this

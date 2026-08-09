@@ -1,4 +1,4 @@
-"""Evidence: the universal measurement return type.
+"""Evidence: the universal measurement return type (R1, section 2.1.2).
 
 Every measurement API in the kernel returns ``Evidence[T]``, never a bare float. The Evidence
 carries the typed value, its uncertainty, its gauge status, its calibration reference, its
@@ -18,13 +18,20 @@ from __future__ import annotations
 import base64
 import enum
 import importlib
+import math
 import os
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import datetime, timezone
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-import numpy as np
+from reward_lens.core.extras import lazy_module
+
+if TYPE_CHECKING:  # the real module for a type checker; a proxy at runtime (D-58)
+    import numpy as np
+else:  # numpy is not in the base closure; see reward_lens.core.extras.lazy_module
+    np = lazy_module("numpy")
 
 from reward_lens.core.budget import IncrementalValidity, LimitOfDetection, UncertaintyBudget
 from reward_lens.core.envelope import RegimeReading
@@ -47,10 +54,10 @@ _INLINE_ARRAY_MAX = 64
 
 @dataclass(frozen=True)
 class Uncertainty:
-    """The uncertainty of a measurement.
+    """The uncertainty of a measurement (section 2.1.2).
 
-    ``n`` is the nominal row count; ``n_effective`` is the lineage-aware effective sample size,
-    which, on a dataset of clones, is far smaller than ``n`` and is the
+    ``n`` is the nominal row count; ``n_effective`` is the lineage-aware effective sample size
+    (section 2.10.1) which, on a dataset of clones, is far smaller than ``n`` and is the
     structural death of v1's fake-n failure class. ``seed_spread`` is the cross-seed standard
     deviation where a quantity is measured over multiple seeds. ``method`` names how the
     interval was produced ("bootstrap-bca", "analytic", "conformal", and crucially
@@ -64,13 +71,14 @@ class Uncertainty:
     n_effective: float | None = None
     seed_spread: float | None = None
     method: str = "none"
-    #: The GUM table this interval summarises, where one was built.
+    #: The GUM table this interval summarises, where one was built (section 4.7).
     #:
-    #: The budget carries alongside the interval rather than replacing it, because an interval and
-    #: a table answer different questions and both get asked: a plot wants the interval, and a card
-    #: wants to know which term dominates. Replacing the type outright would also have rewritten
-    #: every row in every existing store for no gain, since the interval is recoverable from the
-    #: table and not the other way round.
+    #: Section 4.2 replaces this whole field with an `UncertaintyBudget`. It is carried alongside
+    #: rather than instead, because an interval and a table answer different questions and both get
+    #: asked: a plot wants the interval, and a card wants to know which term dominates. Replacing
+    #: the type outright would also have rewritten every row in every existing store for no gain,
+    #: since the interval is recoverable from the table and not the other way round. Recorded in
+    #: SPEC-ERRATA as a deliberate departure.
     budget: "UncertaintyBudget | None" = None
 
     @classmethod
@@ -123,16 +131,20 @@ class Uncertainty:
 
 
 def _num(x: float | None) -> float | str | None:
-    """JSON cannot represent NaN/Inf portably; encode them as tagged strings."""
+    """JSON cannot represent NaN/Inf portably; encode them as tagged strings.
+
+    The three tests were `np.isnan`, `np.isposinf` and `np.isneginf`, which made every float the
+    record writes demand numpy. The branch they sit in has already established that `x` is a
+    Python float, and on a Python float `math.isnan` and `math.isinf` are the same predicates, so
+    the stdlib does it exactly and the base closure keeps its Readings.
+    """
     if x is None:
         return None
     if isinstance(x, float):
-        if np.isnan(x):
+        if math.isnan(x):
             return "__nan__"
-        if np.isposinf(x):
-            return "__inf__"
-        if np.isneginf(x):
-            return "__-inf__"
+        if math.isinf(x):
+            return "__inf__" if x > 0 else "__-inf__"
     return float(x)
 
 
@@ -167,7 +179,7 @@ class PayloadTypeUnregistered(TypeError):
     """A stored payload names a dataclass nothing has registered.
 
     Raised rather than degraded, because the degraded result is a plain dict holding the payload's
-    fields and that is indistinguishable from a legitimate mapping value. `Blind[T]` is the
+    fields and that is indistinguishable from a legitimate mapping value. `Blind[T]` (W2.3) is the
     case that makes it unacceptable: its whole guarantee is that a held-out label cannot reach a
     detector, and a `Blind` decoding to a dict hands over the label with the wrapper removed.
     """
@@ -190,19 +202,27 @@ class ValueCodec:
         self.strict = strict
 
     def encode(self, value: Any, sidecar_dir: Any = None) -> Any:
+        # A numpy value cannot exist in a process that has not imported numpy, so these three
+        # `isinstance` tests are only meaningful once numpy is in `sys.modules`. Asking
+        # `sys.modules` rather than the lazy proxy is what lets the codec run on the base closure,
+        # where touching the proxy would raise ExtraRequiredError for a type check that could only
+        # ever have answered False. Where numpy is present the behaviour is unchanged, including
+        # the branch order.
+        numpy = sys.modules.get("numpy")
         if value is None or isinstance(value, (bool, int, str)):
             return value
         if isinstance(value, float):
             return _num(value)
-        if isinstance(value, np.floating):
-            return _num(float(value))
-        if isinstance(value, np.integer):
-            return int(value)
+        if numpy is not None:
+            if isinstance(value, numpy.floating):
+                return _num(float(value))
+            if isinstance(value, numpy.integer):
+                return int(value)
         if isinstance(value, (list, tuple)):
             return {"__seq__": [self.encode(v, sidecar_dir) for v in value]}
         if isinstance(value, dict):
             return {"__map__": {str(k): self.encode(v, sidecar_dir) for k, v in value.items()}}
-        if isinstance(value, np.ndarray):
+        if numpy is not None and isinstance(value, numpy.ndarray):
             return self._encode_array(value, sidecar_dir)
         if isinstance(value, enum.Enum):
             # By name rather than by value, because a member's name is the stable identity and its
@@ -342,7 +362,7 @@ _CODEC = ValueCodec()
 
 @dataclass(frozen=True)
 class Evidence(Generic[T]):
-    """The universal typed measurement return value.
+    """The universal typed measurement return value (section 2.1.2).
 
     Construct via `make_evidence`, which computes the content-derived id and the gate-computed
     trust level. The trust level is not a constructor argument on purpose: it is a function of
@@ -366,28 +386,28 @@ class Evidence(Generic[T]):
     #: them different ids and break every parent reference in a store on the first migration.
     schema_version: int = SCHEMA_VERSION
 
-    # -- the 3.0 envelope. Every one is optional, so a 2.0.1 envelope on disk reads
+    # -- the section 4.2 envelope. Every one is optional, so a 2.0.1 envelope on disk reads
     # -- without migration and a reading that has not been retrofitted is visibly bare.
 
     #: Which registered quantity this estimates. Empty means the instrument has not been
     #: retrofitted; `lint_instrument` reports that.
     quantity: str = ""
-    #: The substrate's disagreement with itself when this was measured. Absent means no floor was
-    #: characterised, which is why the value cannot be checked against one.
+    #: The substrate's disagreement with itself when this was measured (section 4.7). Absent means
+    #: no floor was characterised, which is why the value cannot be checked against one.
     lod: "LimitOfDetection | None" = None
-    #: What was true about the run when this was measured. Absent means the envelope was never
-    #: checked, which is different from checked and passed.
+    #: What was true about the run when this was measured (section 2.4). Absent means the envelope
+    #: was never checked, which is different from checked and passed.
     regime: "RegimeReading | None" = None
-    #: The reference material this was calibrated against. Its certificate is what
+    #: The reference material this was calibrated against (section 2.8). Its certificate is what
     #: caps the trust level.
     reference: str | None = None
     #: The dumb baselines this reading beat, or did not. Mandatory by lint: a claim with no
     #: baseline is not a claim.
     baselines: Mapping[str, float] = field(default_factory=dict)
-    #: What a white-box reading adds over the best black-box method. Lint requires
+    #: What a white-box reading adds over the best black-box method (section 6.4). Lint requires
     #: it on white-box readings, because the bar is decorrelation plus signal, not superiority.
     incremental: "IncrementalValidity | None" = None
-    #: **The third clock**, and it is not derivable from the other two. A checkpoint
+    #: **The third clock** (section 7.2), and it is not derivable from the other two. A checkpoint
     #: produced at step 200 has run position 200 and information time equal to whenever it became
     #: available to the forecaster, and those differ whenever anyone reanalyses an archive. The
     #: forecast barrier reads this field and nothing else. Defaults to `created_at`, which is right
@@ -486,7 +506,7 @@ def make_evidence(
         "trust": int(trust),
         "provenance": prov.__canonical__(),
     }
-    # The 3.0 additions go into the id under one key that is omitted entirely when none is
+    # The section 4.2 additions go into the id under one key that is omitted entirely when none is
     # set, so every id already written stays byte-identical and no parent reference breaks.
     #
     # What is in here and what is not is a real distinction rather than an implementation detail.

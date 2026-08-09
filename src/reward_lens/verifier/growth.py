@@ -66,7 +66,7 @@ fine, because families accumulate strictly more slowly than finds do.
 
 Kill condition, from the catalogue: **nothing; it is arithmetic on a log.** That is the honest
 entry and it is also the one to be careful with, because an instrument nothing can kill is an
-instrument nothing constrains. An earlier version of this catalogue did name one, and it is worth
+instrument nothing constrains. CALIPER, this catalogue's ancestor, did name one, and it is worth
 keeping in view as the practical failure: if `f1` is zero on every real log, every family having
 been seen at least twice, then the estimator is undefined in practice and the log is telling you
 the search stopped finding new things a while ago.
@@ -469,7 +469,7 @@ class CrowFit:
     r_squared: float
     fit_on: str
     #: The Crow maximum-likelihood exponent `m / sum(log(T/t_i))`, computed as a cross-check.
-    #: Log-log least squares is what this instrument reports; the MLE is what MIL-HDBK-189 and
+    #: Log-log least squares is what the work package specifies; the MLE is what MIL-HDBK-189 and
     #: every reliability text actually use, because the cumulative points a Duane plot regresses
     #: are not independent. Where the two disagree materially, the least-squares number is the one
     #: to distrust.
@@ -522,8 +522,9 @@ class CrowFit:
         # Poisson process, where beta is exactly 1, this interval contains the truth in 0.401 /
         # 0.308 / 0.219 of runs at 8 / 12 / 25 finds against a nominal 0.95, and it declares the
         # blacklist *converging* in 0.462 / 0.533 / 0.574 of those runs where a one-sided 2.5%
-        # claim should. The caveat was once carried on `ExploitCoverage.render` only, and
-        # `ReliabilityGrowth` is the instrument whose entire quantity is beta.
+        # claim should. SPEC-ERRATA E42 recorded this as handled at the reading; it was handled on
+        # `ExploitCoverage.render` only, and `ReliabilityGrowth` is the instrument whose entire
+        # quantity is beta.
         lines.append(
             "    that interval is narrower than its own level: on a process with beta exactly 1 "
             "it contains the truth in 0.22 to 0.40 of runs at 8 to 25 finds against a nominal "
@@ -664,7 +665,7 @@ def crow_amsaa(
     # log(1) = 0 and is filtered out, so the sum runs to n-1 while the MLE's numerator stays n.
     # This used to report `len(ratios) / sum`, which is the MLE in the first case and one short of
     # it in the second, and `total_effort` defaults to None so the second is the path most logs
-    # take.
+    # take. SPEC-ERRATA E42.
     mle: float | None = None
     unbiased: float | None = None
     horizon = total_effort if total_effort is not None else float(ts[-1])
@@ -1106,7 +1107,7 @@ class ReliabilityGrowth(_LogObservable):
     rung = 1
     deviations = (
         _LOG_DEVIATION,
-        "beta is fitted by least squares on the log-log plot, which is the Duane convention. The "
+        "beta is fitted by least squares on the log-log plot as the work package specifies. The "
         "points are cumulative and therefore not independent, so the fitted interval is narrower "
         "than the truth; the Crow maximum-likelihood exponent is computed alongside as the "
         "cross-check and is on the reading.",
