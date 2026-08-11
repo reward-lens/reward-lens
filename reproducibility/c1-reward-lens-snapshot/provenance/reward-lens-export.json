@@ -1,0 +1,3178 @@
+{
+  "schema_version": 1,
+  "historical_source_pin": "607774d19f79140234260da712a18487eca5b45c",
+  "logical_source": "historical-c1-library",
+  "exported_dependency_path": "reproducibility/c1-reward-lens-snapshot",
+  "actual_export_date": "2026-09-23T21:41:58.428255+00:00",
+  "runtime_source_status": "Selected package source and package data are byte-identical to the historical Git blobs listed here, before any documented export amendment.",
+  "scope": "All historical src/reward_lens files except the independent X8 dossier analysis, plus license/build metadata. Selected runtime files retain exact historical bytes; this is bounded C1 dependency preservation, not whole-tree identity or GPU validation.",
+  "files": [
+    {
+      "relative_path": "LICENSE",
+      "git_blob": "c27e73a19c61c7e91e27aee1150c0e87914104cf",
+      "sha256": "5f0ec614381a7841add9b2ba97ea0d7a1f6a05099c2c641bab46531c8cd6155f",
+      "size": 1081,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "pyproject.toml",
+      "git_blob": "4ab49a530bc6e9150afc54726acaaf3a04e58ea5",
+      "sha256": "3c7c7403a38b422a38c3c994e31f0fb011249f4ecc45ae1aec72440cb5620ead",
+      "size": 12855,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/__init__.py",
+      "git_blob": "80ab6239c27441af0c69701b926fa45c16e1c77f",
+      "sha256": "f6d0bf53d0dd3e5117907f81a12e519614d4cf418d901700d284b1e0a7bf92c2",
+      "size": 4826,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/access/__init__.py",
+      "git_blob": "910abf2c1fc75315b6e36baac298eeae646fe311",
+      "sha256": "bb9efaa575bdcc5557cb83fe2fe60e8a20067b1335db408a3685d3bc27778510",
+      "size": 2921,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/access/estimators.py",
+      "git_blob": "5f3d010fba5df017f9aea6a20bfcb63390f79150",
+      "sha256": "988f12c7748721a8d6ae072a54db47eeb2c9324f4688ce2e7b40bb7cdd09490d",
+      "size": 6903,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/access/matrix.py",
+      "git_blob": "f70ef79d58566e902f28de3a609ba304c971b6b6",
+      "sha256": "de0d9bcde87729e5a26979390e323135e27b6a0a8434b4cda8f01554592210e8",
+      "size": 30146,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/access/phase.py",
+      "git_blob": "4cb626a49afa4fd3d3bd92629c94fa52fcb4ab13",
+      "sha256": "02866248a06f609f317aba60d5fadfdc838f82bf8a9bb73da31211b082c487e6",
+      "size": 4123,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/access/report.py",
+      "git_blob": "96dd6f036f9caa6c13109b8477c3db4a6e1d410f",
+      "sha256": "cd4b3685a32bf321c05df1ce515149adb61f93b8d500ac86775fcb66e4ab79f7",
+      "size": 54426,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/access/substrate.py",
+      "git_blob": "b72974c33b20a0b6e570603598cedd21c7017d5c",
+      "sha256": "3c49f6c3cf6862b095bc9fa6836a6323941296c3e7d42a25afe116a7c43fe273",
+      "size": 15879,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/__init__.py",
+      "git_blob": "df094c12743c92ad95068520b18c13b94f2b496f",
+      "sha256": "c4bccfac29837e7a46d87f54e45a2475a82855e0387462959cd46a13b0e9c74e",
+      "size": 2650,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/atlas.py",
+      "git_blob": "fc4dbe981bbfce5e59714bad9ae3d3319ae951e6",
+      "sha256": "a89957d5eb104f2f36ce84adc99cc05901b301fe1c1a780a9285452d5d93542e",
+      "size": 27437,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/card.py",
+      "git_blob": "49eba09b9a3c16e623f5da0c901e14e3a5add37f",
+      "sha256": "f1364ee17ecf9eae5a16b200f0aa7eb6e1e8aea3fb6477a52eb564c325d0abbd",
+      "size": 6634,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/claims.py",
+      "git_blob": "5020973bb32be9d80448b736ab493cf8c8567c33",
+      "sha256": "8639b75090632d5b65ec8a58b2a11235ae4a464f548cf421f3318c76cbd235f4",
+      "size": 22020,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/safety_case.py",
+      "git_blob": "e22e6c8377eaef7a0598303c5d551619d9885a10",
+      "sha256": "2f5f1154fd04fc6322dc16c656e3dd5e317ec426f3c23be1747f40075bfdf40f",
+      "size": 14116,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/sealed.py",
+      "git_blob": "d31c51625c6014bf085bb09e5d63593ff0288ab0",
+      "sha256": "957039d7c62bb397b0770b5e95410ef6cc251ad3eb9aeb1cd23c69f9cd957f0b",
+      "size": 16842,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/artifacts/site.py",
+      "git_blob": "e72bc67a1995d44629305ebc7528e6ca8b2c5eda",
+      "sha256": "4c0217b583232739927e9527efd65d47804c0745a9c7ade3664fb6dc9738654e",
+      "size": 8859,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/attribution/__init__.py",
+      "git_blob": "2d754b491d390410b7648f84e6bdf2c4bf3b5277",
+      "sha256": "2a40fd660a088f0b1f057d99612d759bdaad5399acc2329417dd1f8056d0b922",
+      "size": 1059,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/attribution/dla.py",
+      "git_blob": "edd05a4551403f93b315f35faa77602d62539d07",
+      "sha256": "efb4fa590bc83a2cca1f8b9700730f098c61b2327874a5615e05c16aaa9723af",
+      "size": 5425,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/concepts/__init__.py",
+      "git_blob": "e71b30b2abf49fdfd14b229a69a2c4a1839d1cd7",
+      "sha256": "3a23a010938bc45e00157347653341dfbc10ccdf747ac4f1e1d234bf9317a256",
+      "size": 4110,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/concepts/banks.py",
+      "git_blob": "0b3ff1af48236e82e881192955ab8521be9eaf67",
+      "sha256": "0e1feee817908813bcc5e48e3172160c47d111b34811d9e6c0e5e93c9b210826",
+      "size": 16918,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/concepts/beliefs.py",
+      "git_blob": "a0aa3daf05e9e51ea8e9fb31b578b2eaba866c2b",
+      "sha256": "fbe5415d25760bcdadba725ea80acd96ba5dc59323ef4fd80c00a72ef9ff3a94",
+      "size": 11568,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/concepts/diff_dict.py",
+      "git_blob": "362fb8a2a084c60cb3b0989711d1cfa0b26cc0eb",
+      "sha256": "511cc5cde5e5844b5708a25e3eea92cb4b1091f0d7b0e63ebc431dc5170c7d64",
+      "size": 18347,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/concepts/probes.py",
+      "git_blob": "4725a2291e73efc35135259a976178e95d775782",
+      "sha256": "004c6aaa46a9122a0cec47f9dffb2c1ca868badb1d19b6827f7f1bfacdf8290a",
+      "size": 40126,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/concepts/vectors.py",
+      "git_blob": "3a8774199b29d629cacc9620d2a6fe5c8cbb7750",
+      "sha256": "13ed86fa85020008827112efbfb6c55be5fd3a88dee471b52658afdfd16a2ba7",
+      "size": 3466,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/__init__.py",
+      "git_blob": "17b5fc7435aa893189bda4e8d115ecf04521ef1b",
+      "sha256": "c5ff2f6efbff68202841ed3121d590cd1af616f10554d6bde68c23bf49b0e357",
+      "size": 7605,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/budget.py",
+      "git_blob": "1693a4d7d54625fd5f761b6f7c77644a04e4e3f2",
+      "sha256": "605f1178cd37202a6809b6b406072cec48a0b445d4dfceca9f95bd59dc572c0d",
+      "size": 39388,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/closure.py",
+      "git_blob": "788a1bc7a4259bf015ea4920fd92c5ac4f8d5b64",
+      "sha256": "33c758b6561ca50ee2fcb90c9cac4a2639178c7bf9bec17c941b99232dea7bf6",
+      "size": 30710,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/config.py",
+      "git_blob": "143e7681e82c5f8f0fbe44eafda5c68fe83518b1",
+      "sha256": "f70ececd11c5110b01dcaf2e898ed2de493bdcef9c2c1576118cf3a896dd839e",
+      "size": 2459,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/envelope.py",
+      "git_blob": "db845a9bde8b56d5f8dce31748eaf9fab7878230",
+      "sha256": "6728f400221a4a6673fb1eacf1a667b9d8665eb847514097eed0c1df7fcc17d3",
+      "size": 14156,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/errors.py",
+      "git_blob": "b6a925e881e43af201d7f40cf4386677f88d7470",
+      "sha256": "386831f05bb37f042f1577df3f61d36645ff59bf37f283d7701f9414e4272811",
+      "size": 3398,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/evidence.py",
+      "git_blob": "61e9cec2b079c756067bf621c48bead5b41ba5ad",
+      "sha256": "6e7d6165e2ac3b89a1e6d571fd71904e3288063d923cdbb49f64c900fcd4004e",
+      "size": 26734,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/extras.py",
+      "git_blob": "03406506d9801d44df53e47f3bb1fc99ef5f011b",
+      "sha256": "a3d7ab0de878965e7dcc9cf2a519d28eebf148e3c1f9f2e9ba429d9c0bb0c10a",
+      "size": 4580,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/features.py",
+      "git_blob": "e325818f937e464b1fa1c561aeac56984aad9bd6",
+      "sha256": "a51c648c8cb1ccd77398582623ff8d48657180a126b9ab81da469fa0579a3a43",
+      "size": 2318,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/gates.py",
+      "git_blob": "2e20ad8f8bfd7f3d40ae2d87f5de09ada68829a3",
+      "sha256": "0dde318b1edcb197308eee1e8f85197ed4502d1b22c9f696abde910cb09ef355",
+      "size": 6471,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/invariance.py",
+      "git_blob": "eda8ba4a8a213650e0f00538baf0901d20b8c7d8",
+      "sha256": "6f4b06c26d1579526e4f705b7f7763fd77cfac246d453c708d14c232ea0ac8ba",
+      "size": 37672,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/migrations/__init__.py",
+      "git_blob": "1f3058c89b8ca3a38860c8eec3c64e64a792e98c",
+      "sha256": "4863f132d9ab9db59100a41bae4f485ba5e9b7f2aa43f1c81a0c147a6737c917",
+      "size": 5676,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/provenance.py",
+      "git_blob": "4e04447bc2041640e35f85e051651224fce6b6dd",
+      "sha256": "a672d022ce87d92a5156dd25e2ac6122db909d18ea15721170f784c375946c92",
+      "size": 4862,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/quantity.py",
+      "git_blob": "0be9fd2dbae8b399fbc1fa6b4280739a997d1122",
+      "sha256": "0322cd91444b1fdb1d5556b60caee56386ed894f9dd3294389221fd571331ee0",
+      "size": 19357,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/reading.py",
+      "git_blob": "85faf87c830760bd4ad24d5c2cc7e6d2c8768c5f",
+      "sha256": "1e52f79776a5df4a7f5416759265ce5f9ba974bb43203d132b3c516515b35f9e",
+      "size": 17662,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/reference.py",
+      "git_blob": "e44c77da63ce0020e6d9a6d521e724ed67fd24ef",
+      "sha256": "3a6fb43a0f77a4b361ff332f6f3b89af3eaaa40fac04cf2401c86c72a4f348d9",
+      "size": 23235,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/registry.py",
+      "git_blob": "9461fd65ff6ff9ea1e408120cd7fd9a57fdd8588",
+      "sha256": "e9b3524e73f7bf698bdb5791b44cb7eb41dab359cd2977df18c62efb0bbdb71e",
+      "size": 4148,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/store.py",
+      "git_blob": "aaf543e43bd479a69620f50a00f5706f52684a81",
+      "sha256": "2373d84ed990d910737555a8ebe68755e351b84c9e5ac8efa06ff3b9d0d7f2ef",
+      "size": 23144,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/core/types.py",
+      "git_blob": "fea5e6300a2c1cc28a91622b4120fe1c1d8dfc27",
+      "sha256": "3a5106c249e507e10982f7b2032192e73bd6305edcb6314efc1b954a4d13d19a",
+      "size": 18936,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/__init__.py",
+      "git_blob": "3ac0e7f2008570e416168969d6b66398f8cdf568",
+      "sha256": "d6b0319e8512d73efd8f4a525d76fc7f52cb0faf9589075c862b4f4d88cc2ef9",
+      "size": 3521,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/align.py",
+      "git_blob": "0604b2f0d2ac7004b7c17a6547744560c14c8351",
+      "sha256": "49bd06350fc51373730dc9dcf37c01d82ef0094409d872774194bd2a556f6f8f",
+      "size": 14115,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/builtin/__init__.py",
+      "git_blob": "c44b35451dbe9d2a33e32b5938e7075a5cbfb1e3",
+      "sha256": "a25955a1e07d541f5ea8dec97963544201fc4ed7d0974e6ded978743b1e54271",
+      "size": 1399,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/builtin/diagnostic_seeds.py",
+      "git_blob": "7a2738066c4856c71ac529cb8780a8a0d8001b7f",
+      "sha256": "6cc0f82ec0f64ebd06ac9780670f07d23c42ba1947315063d9f98780c29ee1d0",
+      "size": 30377,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/builtin/diagnostic_v3.py",
+      "git_blob": "486fc367be6eaa624f749284c705f6add7c6f6c0",
+      "sha256": "ae79d18a8bed5025dc1cfc99c64864af1392bac67adea18ffec75963867a3690",
+      "size": 26483,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/corruptions.py",
+      "git_blob": "df8cc347315fa00e362fe0f5d7cd3659b2363400",
+      "sha256": "5415ecfcc815e03d2fb83c2785d1b1fbc6959ef9bc93c8754df1b93951b486c6",
+      "size": 19339,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/lineage.py",
+      "git_blob": "3815427561883080cdd9349daa355f20c9d9f358",
+      "sha256": "311dc08256ec8563c124e6b2f992ac92e39be43c8cfac56528b0c312910c2e51",
+      "size": 8029,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/registry.py",
+      "git_blob": "e01ac463a485422956157f732a38cee98ebe6cc4",
+      "sha256": "ed1972ea7a90b710a93025171a5ad2d646222e1ca45a32688491bf4172f67126",
+      "size": 11447,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/schema.py",
+      "git_blob": "79c655fde2ba8e2154f65c66b28be333da5dba7c",
+      "sha256": "805f3b585fdfde906a1829f5f8ac10526a4825118b5a0510bcc05551aee868d0",
+      "size": 19196,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/data/spans.py",
+      "git_blob": "09e4a7f75c31264f89328d87dc198d361ef161cb",
+      "sha256": "62dfb3614867fe3da6ef076852fc3f63fd4f3af1cd7d15ad255bb2a9d0ad515d",
+      "size": 10527,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/dynamics/__init__.py",
+      "git_blob": "9713a3ca10dc3a8bbd41d9ed0a650fd0485ca7ef",
+      "sha256": "11449987642a6455f29664b236c8471989e2b8b1aad28a86f009d0ad32bb92d7",
+      "size": 3268,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/dynamics/adapter_io.py",
+      "git_blob": "d45e27f3d1143b2c7133b1ffbb3ac40c5dcac6a0",
+      "sha256": "25adf05a12a554388b3cdb1a2606d59613d4f75b8876ca4a68a2b8db3ca4fd67",
+      "size": 5603,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/dynamics/checkpoints.py",
+      "git_blob": "9f2181485f5379a2ad6cada938c716fce373569d",
+      "sha256": "aa72537a38233abb5eb7714e9e1b4a591aa7cf613cb6f74a3b0f9637e0efa621",
+      "size": 29830,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/dynamics/curves.py",
+      "git_blob": "176fd72646990b7f24147c999d0104fa12536f3a",
+      "sha256": "c477fad1aadbf4bf8777d759707759e689e5e3a57e456b0be60f71c7662b558a",
+      "size": 30542,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/dynamics/devinterp.py",
+      "git_blob": "c880e7761c59460d3c7466ee9affba16dfad03ec",
+      "sha256": "f2a84b7bbe8603d396542fd17651df7773dec370595285d63a3221c7ce9cd84c",
+      "size": 5167,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/dynamics/sweep.py",
+      "git_blob": "05fd262150f414d495d85bf42d91d5bf178c563c",
+      "sha256": "ffbe9ad4bbe85b71e09e1664b9cf29e90abf3c0d379ead9e104c199524c3d3ab",
+      "size": 11320,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/experiments/__init__.py",
+      "git_blob": "9ecee5ce3750f3230fd6f4dcde7f7d5e605e3ea7",
+      "sha256": "6e7c2ecc89d14acc6dbf51430dc32c243cf0a388c89b2ed83e03ddd823fbe21a",
+      "size": 797,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/__init__.py",
+      "git_blob": "3fa0fa4bd5456933901edcdc6939d16617b56605",
+      "sha256": "24bd20ba4f472e0518f44bd9d91cb921680db5d2c78a5aaea00e2b9ae7819102",
+      "size": 5663,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/barrier.py",
+      "git_blob": "9c242694dda2c2eac830a81104cd7dfe79c51b01",
+      "sha256": "5c82887f1254f099b0f97bd88463cd92649f1752ea016f589a4b736d3b1eed21",
+      "size": 14086,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/baselines.py",
+      "git_blob": "28d6aa6322f07fe02b2e7b27e3fa919932adf638",
+      "sha256": "2416e617849722ec3ebf799b4ebfa84949e3edcb23adf3e31641a2043651bab2",
+      "size": 24447,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/campaign.py",
+      "git_blob": "90b8f9509f0927370269413de9f4e459312e4c26",
+      "sha256": "2f4687460dcbd1e76d2029e256826accc839bc46933260817e594d71f9f52d48",
+      "size": 28089,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/corpus.py",
+      "git_blob": "741b3e0cb0b851438a1bff8ca8d847fffdd021a9",
+      "sha256": "6fc8589dffeb59d050011d7a69b548db8e4287e7178f3e39829e362c029aa53e",
+      "size": 18389,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/ledger.py",
+      "git_blob": "59ee94290a6aab5223d98ae820c29cc95b97617f",
+      "sha256": "10a213ae5f16394d4022f5e9d09ea24ca1bf0c38427614ba9462de8212f7facb",
+      "size": 31887,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/resolve.py",
+      "git_blob": "632b76cd3aa8e6542a1eaf5995c50b53da12610b",
+      "sha256": "b53ba0c9b2f57e46ac2827c70acf973e1cca5fc5ee73ef9a1ca3e5f720874a69",
+      "size": 10053,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/schema.py",
+      "git_blob": "a7594e7a0fcc8405d8a2d4dcdaf6ce991b4d5e4d",
+      "sha256": "47b5b18feac07df2ca54dd6fe924fc398b1ef83186bccc1c2d6e52ee7e158aaa",
+      "size": 34897,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/forecast/score.py",
+      "git_blob": "83754880d7128b397a952ac11976ff1f95072034",
+      "sha256": "84f82beee3822c71c6613b614444f3f355ad1721481174ecb5662f56a38c4fa7",
+      "size": 30060,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/__init__.py",
+      "git_blob": "55005a3745b0cc61b7db30bcb2230eddd9874d71",
+      "sha256": "d2abbc8b105c0a866ccd4a18de415839c8425f4c0ff621b0ab4b712418d3ef04",
+      "size": 3892,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/canonical.py",
+      "git_blob": "ef54269d1cb262c929bc77b0b869fbee987c6d87",
+      "sha256": "677ec6424d31c248fae0fac47cd6eb8983f53c3dbbb74ccb1b5af3b5cfe0273a",
+      "size": 12451,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/drift.py",
+      "git_blob": "3b0491ecd4f5810c213dc1db01f172fdb5d6671c",
+      "sha256": "632d013df28a1dad376d9e38839338e8b453af5ebe8e244a643d4740d689a6c4",
+      "size": 19187,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/frame.py",
+      "git_blob": "5aa09b8e24f9831909a93aed0dc68c6f2812beaa",
+      "sha256": "fe036254aa9601b3d8733ca3c43da15831df47dbe7eb7793df7d88dfa4692eab",
+      "size": 17078,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/hessian.py",
+      "git_blob": "346a8a8f6012c9e7c68043098f59b4b0f3f3b281",
+      "sha256": "e29d63ae451e1fead318968330b3a422a4bc2c4c8582b3a95c5e9a8105561a3e",
+      "size": 23756,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/skew.py",
+      "git_blob": "babf1688e04dde3a5b7e8f6481553d78f6a95d6f",
+      "sha256": "f7ea3b7c67752e206df1fd9855f34b0d3daaa20f60e994cc6401c2c46e8ca1ac",
+      "size": 9113,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/geometry/subspace.py",
+      "git_blob": "d62be274bebb28c0173986dc2e76545c3d78534f",
+      "sha256": "67c383a0ff63a6db93e39f79df2b387dd2e0a271416393d7a06569292ff29311",
+      "size": 16028,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/__init__.py",
+      "git_blob": "230c304035fd7a6d85025ac8c4ddf88c459ba671",
+      "sha256": "4f0b6d2991b408adb9b837d13fb816290100e0c24fc8195437c4c1a9f5735470",
+      "size": 4464,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/ablate.py",
+      "git_blob": "53992a111f985e7a3627737e8cdcb7989efffeb1",
+      "sha256": "789c52033927d0193f92580842a307ac1f406cf235f84da9bf71059983dbacf6",
+      "size": 6988,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/base.py",
+      "git_blob": "4d8fff4933c5b6ddc8db0d70faf7fd32531c7932",
+      "sha256": "520e3d2150335f93f4ee051a0806e17c82cf373c947fb9ee2383d3ea5eea9c8a",
+      "size": 4700,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/certify.py",
+      "git_blob": "0d0c5129962400d386930e67c3d875908cd8aeea",
+      "sha256": "6aa8f67a8ca2f20828c615d61bf8fa2f8d464aa4dd06bdd3006adc304dc80063",
+      "size": 19346,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/edit.py",
+      "git_blob": "74a9b3cccd8c6e79db4b06f9a30ace7dde08bbac",
+      "sha256": "4c1ce0ed051714f446e99c0184deaa96afb96cff85eda09bb276fbfb3f6ee786",
+      "size": 8183,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/erase.py",
+      "git_blob": "622ca71357ab01d04ebe1eebe7e321c8a28594ac",
+      "sha256": "c08f6e798f2242ff05f7c0b41781a14d6725f1b1cba9c318ac34b5cccf9c1bf3",
+      "size": 15338,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/patch.py",
+      "git_blob": "159442151d7184ff15f705f9af033f52b397f7cf",
+      "sha256": "3563049cbd3478a01af62e1fcdd51925940e49eb333fedc52f32d4e096255ed0",
+      "size": 12154,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/rescue.py",
+      "git_blob": "316a4ce6beae12b609e303ac0dd35e2e9a1a9570",
+      "sha256": "289be6a2902a7ae99a8b25c2cb8e90ed887f3f0b847ce2676bbd8fc2b8d69dd6",
+      "size": 30900,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/interventions/steer.py",
+      "git_blob": "ab8fca016d0c8d4d769068680d45e92b3109cfe7",
+      "sha256": "2d27ed811f76432e1722554debde16634b59c18404a2c46c614adb4975a6e88b",
+      "size": 5949,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/__init__.py",
+      "git_blob": "224ff2da8073ae06fa34ed71e4b9a30b387c85b8",
+      "sha256": "398d7021e480c27bbd67344ae63f6b20fbb8c775d15f9c2659554e13c638fd02",
+      "size": 3042,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/anneal.py",
+      "git_blob": "dd7d2e63c8af312b1c6d9404c27d93bfc79c2335",
+      "sha256": "3dbab65799f40780dedda0bb7b78bbf2b667769e9488de595d3d02aa59a64c46",
+      "size": 9493,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/bon.py",
+      "git_blob": "6fff45fcceb24e9b5f0fb56b4e625c58b7023288",
+      "sha256": "d3ff032442be41eb7209a6b62c27842a77df47c1f92e5b31f1567e1983c44e6c",
+      "size": 9397,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/integrations/__init__.py",
+      "git_blob": "36a9d5992579d15f6f4be1248bdcd0495bae178d",
+      "sha256": "60c85954ca9857072c4ab6e52bfc4a0e18d2fce35c07eeec04d9ad988caf6518",
+      "size": 1808,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/integrations/base.py",
+      "git_blob": "a8704602b5112fb84c93e74a72de950b107c38b3",
+      "sha256": "e794dd13f53aaa6bf492e52b603db7d7686aa9c035b57f05d4afb7620101b9d7",
+      "size": 9465,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/integrations/openrlhf.py",
+      "git_blob": "9f755ccc2134e81de7d7b490bc1b98120795cd0c",
+      "sha256": "2c35dc69f44a85b4fb212feee106d98fdf4d2bc43b58a67f4f12e2ce181ab461",
+      "size": 3048,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/integrations/trl.py",
+      "git_blob": "46586b99d4e62089a5ec60f160e205c4a624d2b1",
+      "sha256": "f588b30cddf4a8d5163b8df20b3d62b4dbea488465eb94be7d36f5f0501f6fb5",
+      "size": 3670,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/integrations/verl.py",
+      "git_blob": "b2a06001972403f2920d692c377adf8d564362c1",
+      "sha256": "76078d940288d076cb7fa397d1f647f6f3420e0f5519d7a7ea585f0e4c139a28",
+      "size": 2973,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/recorder.py",
+      "git_blob": "4f0a372a27658800c660316407172cf6f6cf19eb",
+      "sha256": "24651ddd90ce94fb7cc2ac738807d8a9023d55654b638d4f378ae5d7d1d11f6c",
+      "size": 24814,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/loops/tilt.py",
+      "git_blob": "ea0de603ba4a8f96ca99697bff683dbd09004451",
+      "sha256": "7ef7aee2364b171ed9c2ec32c63029c2187ac7341859837b7d3ce5840f356489",
+      "size": 13829,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/__init__.py",
+      "git_blob": "ee39bcc4c1e0059e35f46e8e984ef543555a072d",
+      "sha256": "3b97c2d9141cbc5117d555dea605a378ce6ec6cb64cc208f37c34d565c649396",
+      "size": 1509,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/base.py",
+      "git_blob": "da01866c0f832cc2e4295b10e21a2aff3239a77c",
+      "sha256": "749a186e6c148e7e336fc261ff10e0ff977ae144cafa829245d2419b4948084f",
+      "size": 41781,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/__init__.py",
+      "git_blob": "62947bf0e7f93b8fe9baab22dbfbf15abc38a81e",
+      "sha256": "49ead384d42fa7658a3b3b91089c9343342dc6e18bd04a33a43f261a6a1b5e22",
+      "size": 2769,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/_common.py",
+      "git_blob": "13b98db2f6a7b6ffe7ed7719a5fff79fe8eb6d38",
+      "sha256": "e70187438bbd18dfb7827271a4fca67addccd6e08905993a398414cdbd7d9272",
+      "size": 8395,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/bias.py",
+      "git_blob": "4de551a57128b8b0e5caeb0ed4fa38b89293faa9",
+      "sha256": "e3d1fc18c59e40a76665809666f072a6251904d682841504cac7f738ac381051",
+      "size": 6081,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/circuit.py",
+      "git_blob": "58b0a4ed4bab2613255b26de52331e829d610342",
+      "sha256": "fef59e30a5757a8c3a059826a1f348a4f82a93109a8822be30474524d700ed14",
+      "size": 6577,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/concept.py",
+      "git_blob": "13cf51081a4456b06e09edc5693ecebc1fb20e5d",
+      "sha256": "56019d3bfecc79838dbe66ed19e354bb4522733300fe832c6ba99fddbd14ecc6",
+      "size": 7853,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/conflict.py",
+      "git_blob": "cd2ed81d703d5fe3f72501d7a035ec53afea1a0a",
+      "sha256": "452b757c3817fc872c80f65811074c76568eb34a39f2f5921904fa88cf880795",
+      "size": 6390,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/dla.py",
+      "git_blob": "8227bbd19e9cacf16daee0f3075ea39f273c0b97",
+      "sha256": "5379de220d973081b724c57055b6c617aeca36c5d4d9c976d6e64965acd1af61",
+      "size": 8152,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/eparity.py",
+      "git_blob": "76ef4bb55084bb37f2f7c563475d6a56d2bfae6b",
+      "sha256": "a1f29bc2cb916bb9d1dc35e2521f8a93688834c580498128b7c8547a1109404a",
+      "size": 4093,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/feature.py",
+      "git_blob": "8b9691d36594065faedc8a731762d328c4db0435",
+      "sha256": "9acb941528998609ca4acd4f872594aa14b8ad20aa234e08def5631f3357fdbf",
+      "size": 9935,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/geometry.py",
+      "git_blob": "edcce0c7871d54c9e22d2c699a87c7096d75371d",
+      "sha256": "03f13d2d6f1dec11547c6e25b11ad7ad14a700d169079c04aa113190972e7e7a",
+      "size": 7023,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/lens.py",
+      "git_blob": "16fded9dea26b83b7d329e429ecd02c4929cc1f8",
+      "sha256": "ad2ab5ad23c2285063d590a0ca3ee7574583831a28ba5ce242cf7dbf4a7ca3ee",
+      "size": 9567,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/patch.py",
+      "git_blob": "7f5c14e893aea959dc2356f884ca269a0a91f9e3",
+      "sha256": "37615e22d54d882342dba93f39414de49dc96551dc972adcfc119cee4be2d4bf",
+      "size": 9375,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/path.py",
+      "git_blob": "f832d8036b6623fd244fbaf23bb734177a88b908",
+      "sha256": "608fb3c8c45177c2d6c986f1feca69fab48fdd7f85d9bdc85b4615e2eded8f1d",
+      "size": 8323,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/battery/snr.py",
+      "git_blob": "be2d89bff6ef938712597bb76f19d28753ae01e7",
+      "sha256": "72729c5a61aa72aa4dec1d71cf2dbd87810528ba0d379d82742e37d3e2de6698",
+      "size": 5678,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/card/__init__.py",
+      "git_blob": "508270c3ccf247a31337c62eade29d98a84cbefc",
+      "sha256": "0fdf0f104b597de1b5555a21fcc999e5f0ec54a01764c34cfa8d83855370fd58",
+      "size": 2799,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/card/card.py",
+      "git_blob": "4148050e7a34494bae3e0f8d690a9838a152da7a",
+      "sha256": "12e7017b209aa84aff3d009397ac940588ebf9ed94dd4393b8a0d5a2a77e9804",
+      "size": 53866,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/card/fields.py",
+      "git_blob": "8476670feb794dfeb32500050000e83f4667ac23",
+      "sha256": "91ea4cccb8d87f6effacf473131810495eeb19304a74004f966f7dce17acfc80",
+      "size": 21205,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/__init__.py",
+      "git_blob": "0a1e665e1fb641242e6945c54282c5af7d7dfe76",
+      "sha256": "e5a2ca545677a96c52bdda239e30d1b7058f7ef8e75e415e8689e6e69c1c7dc4",
+      "size": 7033,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/abstention.py",
+      "git_blob": "5ad1bbf1b02098910047cbd3f5926e2e80c2a8d2",
+      "sha256": "2b99e831dd71f28a82ed30d43596fac4585cd915aaddead5874fec87c124e7fa",
+      "size": 30292,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/composition.py",
+      "git_blob": "f3739bb2171a8e184732b46c3e53cfdb630f1396",
+      "sha256": "1a62aa917d09f30ff6a87d1d848d7d0a4285660b933cfab78ac5ba4a5df40386",
+      "size": 59355,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/hodge.py",
+      "git_blob": "c6af3119e1a1931d4811f95212d6830fbaea3bd2",
+      "sha256": "79b4a336667bdc3579f7e57cde4510f7125fc8eefeaf6273d5a4b16d061d54a1",
+      "size": 38491,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/nulls.py",
+      "git_blob": "a7bd6d56ef9cb5274795a389b483166a7b70f481",
+      "sha256": "434808a61175f529a9be4a94b3630ef970e6cc3693dc90b4d637ba5c419e2505",
+      "size": 53955,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/revealed.py",
+      "git_blob": "cfcb33abb8b4df34e43df294a71f865ae0fde1f5",
+      "sha256": "e046aa1caa920fd2b2e441d1c2a1224086d9c92fea99271c24da16dfc840158a",
+      "size": 68796,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/sepnorm.py",
+      "git_blob": "497ffed4992300d647043b2c19291cf2b752e7e3",
+      "sha256": "3059adb73ae065963ef107824edd214aa48fd5ff53fac9f626f474f35194be1e",
+      "size": 18120,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/composition/tournament.py",
+      "git_blob": "cd3da036d3bc2d96272dc9e8d0d647e9ec92e382",
+      "sha256": "4778366e10bee38a79ab6aaddf063939979dcebf5de98a2ca35f0fc20326d710",
+      "size": 51414,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/__init__.py",
+      "git_blob": "1725586177c2e1555f70c15ebdae625e7de05172",
+      "sha256": "98245efaa8da4229a4e3e085c21e13e94ab4d044bc4888b4ecdf3df50ad6efab",
+      "size": 3983,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/_base.py",
+      "git_blob": "3c46600698933845aabdfe60cbb1ade9da21f2ec",
+      "sha256": "f172c5695e0dece4d7e545d07755e5035c9e5cfb8809d8f6b785f6f2ca9aba2a",
+      "size": 5094,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/baselines.py",
+      "git_blob": "0ff59575c3c6cb9a17fda75b11052ea3ceea44fc",
+      "sha256": "4283a601521365343091848b8c306690a45e2664434e0365928620073edc1795",
+      "size": 6379,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/matched.py",
+      "git_blob": "bb655369010ca823803ae2e78061b99de47758e3",
+      "sha256": "67e366f7f3798bdbb5b37743bf15a94cf2a928ba495fa3d36cd582d952778fc9",
+      "size": 21734,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/placebo.py",
+      "git_blob": "6c27d4839f3ea03f1a455be732cffdf47a5f6a16",
+      "sha256": "02a152f94f094eac54c01e3e40ef92d2e449322edd71ee4d7b0b224aa3adc8f1",
+      "size": 26332,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/power.py",
+      "git_blob": "5ff52805a9a8f0e9e717ae74d66b079fef357534",
+      "sha256": "088c33dceeb8df04d0876f9c768e6922a34c7036ac80381d9944cc219727bec3",
+      "size": 16840,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/controls/quantities.py",
+      "git_blob": "c0f96370cb82dc61584960adc50742ac33f3f7e6",
+      "sha256": "4d9da8bab070f3772697e473694662ab09efb7ad1adae30e9ecdb7ddb8b2223f",
+      "size": 7435,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/__init__.py",
+      "git_blob": "ea6b2c357d04de0fa40320a8422c4f73fc059153",
+      "sha256": "fd34d4954357717b4c1edd8a423ad2b4c3df23fff1d10cdcd4feae284c66bed3",
+      "size": 7871,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/_base.py",
+      "git_blob": "66f13acd85edbded0c1d93de8ebb66e266f0767d",
+      "sha256": "bfaf2036f979dcea4ae0fec716bdd7cf98c827e128a2b36ccb4050a583378708",
+      "size": 8100,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/assumptions.py",
+      "git_blob": "21ab02f67a1caff2d1a61be4fd846831a9b4671c",
+      "sha256": "3e502c106d27e0c28e630b061bb2a3a5cd99354a1c12f169c5a69996d6d73668",
+      "size": 11203,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/compensation.py",
+      "git_blob": "f7e7e360826c0dbfa5a382d26790bad7f46a688a",
+      "sha256": "dbc694a21104df7f8deabaa2e4a2936f9182cb165765dff86b73c716205f7535",
+      "size": 17434,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/geometry.py",
+      "git_blob": "494f98d133cc97c878c5060404cd3c8c77a6b757",
+      "sha256": "53ebcd0a35086685084e1fd8a92ecc29f1ba891b13b2f5f069762246bca0720a",
+      "size": 22647,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/parameters.py",
+      "git_blob": "8863d7b615750b66829095c56cb6743ec70a3d66",
+      "sha256": "5fe0631e6c72e075195b1484e3b9989ad101aa838b8a2bd5ecb38d6f1be2eccf",
+      "size": 29183,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/quantities.py",
+      "git_blob": "61281f25097d793ceee661cd496ba10296ecf696",
+      "sha256": "4d954394a770dc619fb3f5e7314e659b1fa13847dd9a434aa2fc5c4cdeb0d680",
+      "size": 26418,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/sorting.py",
+      "git_blob": "6501c64aaf8cc753c0eeb5412e96c81679dfe423",
+      "sha256": "45c4371bf7dc2ed228519432a900142c757cebc7638f85a837298f7158ad4cdb",
+      "size": 32252,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/decision/weights.py",
+      "git_blob": "e03b3b7489bfc595956b182e223752741923ce44",
+      "sha256": "7cbc5aa2468e37557638963379bf97d40082da902a1e66eb6c682492a4c0640e",
+      "size": 38129,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/efficiency/__init__.py",
+      "git_blob": "0809158911d94ff718fb8f55be873026d9dd2161",
+      "sha256": "f5c31cb5ea0a14f17bc29122aa7c94b1fb544582d6227b17161897300b33bf8b",
+      "size": 2136,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/efficiency/cost.py",
+      "git_blob": "14fcadd73158428e8dc6a28767ac534bd9ef4edb",
+      "sha256": "5122b748f50d7594419b52b0f34c3508019d29f3877a3660ed6db96ca22fceaa",
+      "size": 48396,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/efficiency/metric.py",
+      "git_blob": "ec138e9bebc7917e6e6791f5e4906ea9e936f19c",
+      "sha256": "0d1560e499cf1b91801a0bbd924614a8eacbd9b1bf0afef1124b40c08f9774f1",
+      "size": 33533,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/efficiency/scores.py",
+      "git_blob": "4f96649263044854867c33524b035a492546a86f",
+      "sha256": "c2f9984b7991f4c27daa93b58a30a2c3d0be388f98bf67fbd41b4f224300cb08",
+      "size": 6821,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/__init__.py",
+      "git_blob": "a3879b59b1c22f3136b424413a14fe8e841ce7f1",
+      "sha256": "ed5b1be2f1e57be9f80c7a7d5993a4c6b6b80b2953df4366eb1b6f47d712931d",
+      "size": 11931,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/_base.py",
+      "git_blob": "e07b29034a2824e538f8075a811c89d1b38b46a8",
+      "sha256": "17edb32fcb2d631b6651ba4a89a3c5ff6e6d2a8caca465b48054cade96e170f8",
+      "size": 4983,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/amplifier.py",
+      "git_blob": "b6b0c7707c2a5f0413f74ba0eba25e9a88224216",
+      "sha256": "1a934bc63cbf7ad31bd447b33af0cb20cf738ab44dd56b20a9331db31e4896e7",
+      "size": 46448,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/clip.py",
+      "git_blob": "dc5265cf9fe7553e58098c2f370821affcaa9f73",
+      "sha256": "111f79830c13e4f533b125f3d8126f7c7ffed924d40be09f71e5c056861576e6",
+      "size": 18755,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/groups.py",
+      "git_blob": "f792d511dc5f917ffe8f7830aeaccbe318d56bfb",
+      "sha256": "33bdfbc5317d1fb28209248e529cf1e4f1a16a1b112429ded9bdbe43b9415843",
+      "size": 24911,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/mismatch.py",
+      "git_blob": "ac1528261203aea4f4dbcf892915d7e664c0d18f",
+      "sha256": "fe987be3787373ecf03e3e4b3bf874f5495e7a7c484d029d6bac2b3a8488469a",
+      "size": 25754,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/noise.py",
+      "git_blob": "7ca47e535792a4f5ca024111b2279ba62ae69299",
+      "sha256": "fcd031c9650ffda87fc64563a89d47c5e06e03b1788ada87a704d6adb08af9ac",
+      "size": 39371,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/spec.py",
+      "git_blob": "da210efc6c55d84bf185984077560f5472c628db",
+      "sha256": "f6466bc6e71672561f915a2e0dde91e40d122504cb173b2d94e2b4496246baf5",
+      "size": 28563,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/estimator/units.py",
+      "git_blob": "a2e59d13109a7ecfb8c585ae9ae59ac0439f7b02",
+      "sha256": "c21c79f6fae32bc1200aac7a536468f96ce76f69131b4e1c360ff7ca00c4b9f8",
+      "size": 3404,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/__init__.py",
+      "git_blob": "29f118d605422239b488a93b8ea68703bff9a542",
+      "sha256": "5cc6a71f41f730ee74ac4e24fc81f4e81f07cc268ad9d6047e0820eadd71592b",
+      "size": 4951,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/_base.py",
+      "git_blob": "cc14d93d86119cef57ea6beaa5361753466d9900",
+      "sha256": "76fe75c274880791b95aac800d01d0f05aa98f6f67079fc63c5a3df1cb89e96f",
+      "size": 4515,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/covector.py",
+      "git_blob": "0d40a4df6507b4b6f20a157e48b54855add34b24",
+      "sha256": "cbbc6bda59692b222ff163e858c64eecfd00a689366566b3e74a7ef1f0479a70",
+      "size": 64595,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/curve.py",
+      "git_blob": "cc9b0618e75e3d330a0f5c8bfa53f27d95ee276e",
+      "sha256": "efe883bc8db496db36b25d1d989e1f472398e9a4414ac3e7bd8371501075ccee",
+      "size": 24124,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/horizon.py",
+      "git_blob": "cb51f4611e9d1df94e04f822143d749a834c0b14",
+      "sha256": "7065c0610e0d0b35f7beef6a4734df6a06387e8acb7f566b7d063a08c5fa0f78",
+      "size": 13669,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/potential.py",
+      "git_blob": "579eaf2e0205a95bd0416016fa5c60d140982d40",
+      "sha256": "8e9a397542c2e0f9950dd80ff2a53b559419e287a4f4540107df10846bb3649e",
+      "size": 18512,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/surrogate.py",
+      "git_blob": "d57866e388683238cf771dc34d1c4703765f7f7b",
+      "sha256": "128f582475a9b92fa0021845c6022ec86c40395810e5c0894937e417660dff30",
+      "size": 47486,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/frontier/tails.py",
+      "git_blob": "ff1ed0a61a8c9b4d10fff3e67e359e792d87692f",
+      "sha256": "d633e621122b24a2aaaa50a91392eda5cb5eac12230304456d07a7eb909c3c19",
+      "size": 22611,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/__init__.py",
+      "git_blob": "007d93ec7b41beda4f39c27866a3c45d55e4cb17",
+      "sha256": "e3f3787b54b868b41f07834be49e2e78ac07206194c87a1715e130a3f1c18d35",
+      "size": 6393,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/_support.py",
+      "git_blob": "74f8ba4466ab7cc4e18f750738955dd62ab469de",
+      "sha256": "16f90e5d7b33de2f61c627ddc2dea97d63b15c6158f5da32f3b51daa253f5b51",
+      "size": 26233,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/chi.py",
+      "git_blob": "df1ff3bc9adf5a2b6ff28df5ca02142cf42b4431",
+      "sha256": "3e7ef4cc716f8b13ae0a01bfc83bcda786a02b806e7efd7f9ffdcca1483339f8",
+      "size": 52152,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/coherence.py",
+      "git_blob": "ee5882fe3261f3b7a2c264a8f1d7b642d3108c8d",
+      "sha256": "a6216378ef8e232006a883b7f54175c616c44a4555aed349d2b8925e5ebe0e1d",
+      "size": 11636,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/contested.py",
+      "git_blob": "a8d7ace44eedc1efebf0d7cb55727699c7f9984f",
+      "sha256": "581245fcdd2a446c2ae55988d5ece3eb1017ac47ccfc6e58bd1139f6f19772b2",
+      "size": 8758,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/coverage_disparity.py",
+      "git_blob": "c5acb6d0a4442dcc63f2ba348ef69270081bdd13",
+      "sha256": "70199c406d13c66adb013f6b8928f0a24e2495d61c9d55163516c9afee1d438e",
+      "size": 6971,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/dark_reward.py",
+      "git_blob": "febad49102f1218b9355ce7dbfed78ffa0366577",
+      "sha256": "cbd8dbdfa7ea152767e47831c1de960953435a46470e65037bc8d381bbc12552",
+      "size": 7082,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/distortion.py",
+      "git_blob": "c642ead10b8ac5aa216cf21a888f9ffab716749c",
+      "sha256": "4bf31d2df0c8d020823cba2236388aca94b58d102793ab5243ca89ac72e9a8b8",
+      "size": 8473,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/eval_awareness.py",
+      "git_blob": "0b64ee3dc806330e9ba6c9e713f2fcef103cc224",
+      "sha256": "8e428202341e447a23102992731b5ac49661efb3fe66040c2bf898754c223d8d",
+      "size": 13238,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/heritability.py",
+      "git_blob": "b5e92fbd42d54458cd86c6d940fb72f036dd3976",
+      "sha256": "c623729fb968e48ce46e9fb5226f8fc07e595230f3bb6152bd05c18d1ff527cf",
+      "size": 46213,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/interp_coverage.py",
+      "git_blob": "192551bcc61b906c9f301be5ebf53f3300318a5b",
+      "sha256": "f230b1cd5a9ec5e8654c0373cfaf3b42f14f8365087e54b25c3eb7788b136c2a",
+      "size": 7482,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/kui.py",
+      "git_blob": "1f14bbd40afc8fe897e709f011a4fd6e5e16d922",
+      "sha256": "935538fdcb99bc2b7659dcfafa14bc3f29062d22405f34dd65d989b2cbc6f5f9",
+      "size": 11723,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/legibility.py",
+      "git_blob": "412aab8de93417c64214f02abee73bf098b23a1d",
+      "sha256": "4b8e775c47e8b023579c53c6602d7b02413bdc901776dd32284511140af1ebb7",
+      "size": 9811,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/receipt_reliance.py",
+      "git_blob": "6034b64be93f7bc452f69237d83db9b959cef04a",
+      "sha256": "12d6205ccd602be38e48be2570591cb4874e57ff08c3a5767d888bddfba61a0a",
+      "size": 6486,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/skepticism.py",
+      "git_blob": "2b0746d4f8f96a9892ce39a087ab74a4f65444e1",
+      "sha256": "41eb58c9fdc295f5ad75477ac97d7ece6167c01a5b029bea86ed4ba07b2bd4ed",
+      "size": 7734,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/snr.py",
+      "git_blob": "2b24bb87d6b2f495c0edd4907e3aa99e5b2612a3",
+      "sha256": "fe148fad0740eef8267c8ae94b1e4fd320235094270955a4545bada57de2cb8d",
+      "size": 7142,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/style_share.py",
+      "git_blob": "669cef28d42785a4115e155361bc19a87ceb27ef",
+      "sha256": "15b72b5480e11ed5566cb961919d2d2eba2b367da2ecc70bd4189203bfc1c39d",
+      "size": 8233,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/tail.py",
+      "git_blob": "ef60bfc7b2841b9449644c2e5a90c681964d768e",
+      "sha256": "fb95a33c61ebd2160f2dc66111cfff0f7b09eb23e5e77fcb6a824fb0c389a79e",
+      "size": 12513,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/teacher_compatibility.py",
+      "git_blob": "8346ae5d911c945b0c32445ea654134afcb53cd5",
+      "sha256": "48b35c45726ae2d1295aaa95410db8f9bd5ef5e86ab82365cb9a7ad49ab5feea",
+      "size": 10939,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/vce.py",
+      "git_blob": "046760fde481c17f42fdf8321ced2d7419522b05",
+      "sha256": "488d4c991f78fc396b60716354bcc423dfe492d682c92ac2c28db009c217c1ea",
+      "size": 9414,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/indices/verification_score.py",
+      "git_blob": "8be55933597ca059b4b7e61c04a08320a306ca90",
+      "sha256": "acca10847105e14d7dec19f6463a76bb0f7c28f9ef7675d9a6ae5af6804681ea",
+      "size": 6860,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/__init__.py",
+      "git_blob": "bdf5a05e837ae1ba9078350fdfa20a6a6478c74b",
+      "sha256": "f8047656003f5e952a3667ba0335a19a7f6405a441b7a87bedc1708e7435eb99",
+      "size": 5197,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/_common.py",
+      "git_blob": "b197c87082533183f1e4c43f39c95bde843dd72b",
+      "sha256": "8c12fab105d9309473942c93bd17483399a4f6839bccc03bd6b81e66f9c631a6",
+      "size": 16808,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/error_rate.py",
+      "git_blob": "0959346eb3c05333cd8be18a87a42740464e0977",
+      "sha256": "c49b1341c9bb3162fc76bf2a78b078e36839fa878d60078f4b1fab8162e64cf4",
+      "size": 36923,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/locality.py",
+      "git_blob": "2eec27a1fab99d8ac62516834694c99d8ef469af",
+      "sha256": "1e2b347d33d71ccef3f77452f566c8c9b2cbaff60246bda01c0f96d7855c9af2",
+      "size": 20504,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/position.py",
+      "git_blob": "d38a1c5da31773dbe9303f0a2f296327ce3e9875",
+      "sha256": "baf9c4887d42e12dc02513c2ccb5cbbedf80e2a611e208ca4cd0060f99f94c56",
+      "size": 35066,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/reference.py",
+      "git_blob": "c7880fe5126bb97c171b3d1c8e404d818f7c1ff5",
+      "sha256": "dec0df9a1e8909aecb047d26df7f0c2c2063061904ca4e277b7e198e574086f8",
+      "size": 48672,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/labels/verifier_error.py",
+      "git_blob": "03ccab3cb8caed76fe4815f1fab190fd3b99e21d",
+      "sha256": "8b60707c53e224fe96ff9afd11d086596deff62d745e4313ce24d7bbe2b2338d",
+      "size": 18100,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/__init__.py",
+      "git_blob": "0250858f93d9494c3dfacd0e1940b4f9725ab494",
+      "sha256": "f1e25df90631949919721b6da46b86a6d22716e160e9be986ef5a2de2b5a4bcd",
+      "size": 7028,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/explained.py",
+      "git_blob": "becc694491ca59bf9463b75ee8fce50a1cb46ac8",
+      "sha256": "545ba41aba40ef846af116b0f750e067c828998052213de4498e9e59143a9051",
+      "size": 28259,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/features.py",
+      "git_blob": "0a3dfdf76f423216f0dcaf54e17527e97e7a9071",
+      "sha256": "0b7c58effd8abfec4460b5be6b042e8f9b65e0b6abecb52ea13f5d1f7d258486",
+      "size": 9086,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/imported.py",
+      "git_blob": "34f34bef38888bee7bf5bfa0e984f48755351b0f",
+      "sha256": "136305b8372dd0b1ade0c6eacee11bd8c51effd9f2681953341eb3ccd2123f88",
+      "size": 48698,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/labelled.py",
+      "git_blob": "b3840cc4e597fcc04bec98c37bc29acc11100c04",
+      "sha256": "ac6b0884c0c0704dd733a6f1b50cba29c160bc7217976cd9dc7948a444839c0c",
+      "size": 24234,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/nulls.py",
+      "git_blob": "b4be7f45437d1b5a8664aaa64c7e81d8139a4437",
+      "sha256": "91b50601a7e7396928555a80304c2d81c1816b8cd71b2c208b194abde0681993",
+      "size": 7852,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/prediction.py",
+      "git_blob": "a3be2a452b2f6a8916ef6794b946180c529cd31b",
+      "sha256": "9d7455185ad941b684bf35bed7dc14915802e542845f860f4c0b4303b5fe732d",
+      "size": 29287,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/price.py",
+      "git_blob": "bb3cdae9e7e3b422b9a6d0b14f0adf5ea961a8a2",
+      "sha256": "4f51ad5c2dd5e53782745d21ba305efff5856862b7f87d298214da40f090cd81",
+      "size": 71006,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/reconstruct.py",
+      "git_blob": "d18ad65c1b04412c0d635a8956754ac2d1a07adb",
+      "sha256": "f704364d50fef49a6bf894ad6fe320b258110910fd32523667868f9781c02ba4",
+      "size": 40035,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/ledger/trainer_log.py",
+      "git_blob": "d7c098d915c77baba1ffc291d0e316c6bd5e19d3",
+      "sha256": "ae6209e4989d8c6e19d217f0d55e5b9c6df05d89f563b2cd4d8fd56588c90881",
+      "size": 10509,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/__init__.py",
+      "git_blob": "cf7252cde29dab2df1554dd9041b3795415085f3",
+      "sha256": "df2e653ea9cb452c6e4dd4825d6b462a4b75d9d782f7eac425391cc17aee67e7",
+      "size": 7983,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/_base.py",
+      "git_blob": "db46b79773dda508b5e793d9003c840622331979",
+      "sha256": "3540b967e466ec32180d386ef1d35f2668310a41817c8418da5bb11f204392a5",
+      "size": 2765,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/effect.py",
+      "git_blob": "3dfe8c29b5c0cc3cef9e95639d1350a45241c746",
+      "sha256": "d0607d4d884406fd20e5e1969e4e33fa9dabf647280f485bbe7f7b3bca55f619",
+      "size": 20449,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/floor.py",
+      "git_blob": "8040b08920f8a3739e295db829945688deadc928",
+      "sha256": "9fe329e5587234570382a043579ca87043d623a8008fa22a32e76a4c955a85cb",
+      "size": 29617,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/gum.py",
+      "git_blob": "927b11d95d120e2b9fcb47ad75172cf90a728f6c",
+      "sha256": "5631fb64c0a9906d049fc823a7e1f020952caa438c71f52ed4618103ab059079",
+      "size": 21201,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/incremental.py",
+      "git_blob": "f451ccbace94ccf37633e07252737e28dd3409a4",
+      "sha256": "e8536468ec2174166e17235541e25873763619fa2e86f6a5bbe59da439e995e8",
+      "size": 22111,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/interlab.py",
+      "git_blob": "ed0dd10924e9d997beba88cb7a24ccbe8c43a29b",
+      "sha256": "3458706d65777ce5452fc80ef371defe4525561549556006cd5a3d0cedf89b5d",
+      "size": 27139,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/quantities.py",
+      "git_blob": "15256fdae56b02df6f35c783063904def5d826ff",
+      "sha256": "9ae18690fb253c4116510b7aba25a7e3c444fda4604ea52100cad8eb450567e8",
+      "size": 14169,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/meta/rungs.py",
+      "git_blob": "4dda4e5b7e97503ed89de61326e0cdb23d5cd03b",
+      "sha256": "944dee57df6e67ae3f7faace0cb0a83c1a6e17c0deabb4efb66f6fdb1ddddca1",
+      "size": 25176,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/__init__.py",
+      "git_blob": "f2ede278907d92432ae83d61b7fbe505d7e0bea4",
+      "sha256": "8c4c8869033f85eafaa3c62d38f5c16622475b15b64d34180ede04cc2fb8ccaa",
+      "size": 692,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/allocation.py",
+      "git_blob": "4d3e280dbb334597db396fbb7af03ada80640424",
+      "sha256": "a68f3beb717562816e5f3669ffa35fa6f98704f720a9b86bf25e94b4c585bbc2",
+      "size": 33984,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/attenuation.py",
+      "git_blob": "ae17811289bb27ccf80c9274896698f2c9d590e2",
+      "sha256": "5c84d8e5384e1b34e0a053e68080c46ad7e59bff4e2df1fb1b6ab667d0448f0f",
+      "size": 40376,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/blackwell.py",
+      "git_blob": "7098d4faa5dcae12445404c9b2f2bc1149b9b812",
+      "sha256": "cacddbc349f37016c2233c30a985bc447301b79f41d009e9f4339944a2ddee07",
+      "size": 41580,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/distribution.py",
+      "git_blob": "227f691cdb4537f384982f1e1e704e6d7b96a026",
+      "sha256": "bc4cf608de511d07fd948887646299cd0c30bed94304d4927cb1d063b4604472",
+      "size": 39077,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/flakiness.py",
+      "git_blob": "60d9ac06d4287af3496f00bf688b58f0ee844c0c",
+      "sha256": "269217ae3776b91f14dbdd46614aac38c6bc837e89b990860a8714b3a0fa523d",
+      "size": 28412,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/grr.py",
+      "git_blob": "0dff2d9d32c85e6dfed197f33ca36248d0c13380",
+      "sha256": "68d84bc61766b225c30933e6a11a957a2603b60344a53604ac3d03581f898b09",
+      "size": 28514,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/gstudy.py",
+      "git_blob": "cda3038ad788f307f24188afa92c7ca2365d2c8d",
+      "sha256": "ef397999423e887d4f159a086c02e2cffba4494b16613643e13110a554fe985a",
+      "size": 56926,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/metrology/stochasticity.py",
+      "git_blob": "d7a2e54eaeae3f57e27b9fab56ec7cf793256d4a",
+      "sha256": "b0be92a41f0c26a9f9bf90a1d745a0d4cc813ed02179cc78d9ea8379a1895ec4",
+      "size": 33175,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/__init__.py",
+      "git_blob": "ae83b6ea8d1dcd9aa48dcaf2705d3729d4867fb2",
+      "sha256": "942d295dcd7f45974809bf1d690e1a4965c69d5bf87ab64e54355a0dcce6d116",
+      "size": 5887,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/adiabaticity.py",
+      "git_blob": "379460d7e6c3f75aeed35ddda21f1c1ec87c299f",
+      "sha256": "69f7dcf1b4671ca24b33f5ce21a479cb0586650ed6bef8ce54ef83f07e391c45",
+      "size": 46718,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/collapse.py",
+      "git_blob": "0dd4fe5c2cae555a31827c75d2e2fed93d614036",
+      "sha256": "133b35694fcf806427fe6ba63d123dc6abca1f64ddd13f3ece6a9e07f5b77f01",
+      "size": 35876,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/hysteresis.py",
+      "git_blob": "02d2a5d6a1e23bbbff664ec18aff11bf9ce08682",
+      "sha256": "7e376f61e6d6639fb979b774444fc87a60b64b00d8b04b87d2b6495f493e0cb1",
+      "size": 32128,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/perturb.py",
+      "git_blob": "51a1b9a0079bb51828a9f6848612df73fb6b1e84",
+      "sha256": "a366861ce697e69093bbf65fcbb0910a634201272526ed2fa3ee55f9d4a404f2",
+      "size": 38178,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/regime.py",
+      "git_blob": "218e05643027d3b7df4ca644d465ad69f9eba22b",
+      "sha256": "3bb8d52f6ed98d2f484c25ddf3404641cb3662492ffeb5c832565059fc4b0a9b",
+      "size": 89332,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/transition.py",
+      "git_blob": "a9f78d3b637cd6fa4f3b7cd763ba7c57012ceb4c",
+      "sha256": "acaf49f494b3247d1f3fd44bc0539e0d1840af9075d9cee85fc77df2879df9a7",
+      "size": 50262,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/rate/warning.py",
+      "git_blob": "95516439a3eb995964d8930f128dd343127c846a",
+      "sha256": "9d2b1e6e248b3f5479a22a2b82e8eee4c3e677de5915e75a983c35ea2769254b",
+      "size": 37540,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/__init__.py",
+      "git_blob": "8e35fc3fa3db8755aa8045c0757c39b8d536f57b",
+      "sha256": "92e28478b7e5d12d3a385f4c0f4f7e632dd1ece0c4d3e89a1e7527b75f955ae7",
+      "size": 3761,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/books.py",
+      "git_blob": "8b2626ffe7afae6e1e760f5f00f94276fdec30b5",
+      "sha256": "02ee685d2b6f992f4efca38df4437ae81315ca1f6b706cf606bddca90764435e",
+      "size": 28118,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/closure.py",
+      "git_blob": "5d6a8c7930dcf07abfe835e5c09bae56ef71e518",
+      "sha256": "b1d2be20d54f452eef52f1fa681d80fa98bf6703d0c5dba5b51634a9a0ae0fab",
+      "size": 12338,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/facts.py",
+      "git_blob": "04ea584ef29bed6c7f838196ce85773eaafd0021",
+      "sha256": "59eb734b2189ca1784915bb139592209300c44065b9ef145d152bea828627179",
+      "size": 10770,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/instruments.py",
+      "git_blob": "dadbcf133bf982fd11ef9bc76516d5d028c0c3be",
+      "sha256": "48327fba5b051c41fcf5f2537d0278531a40afa45c3130ed714e8da153387a75",
+      "size": 27593,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/lande.py",
+      "git_blob": "30dec174546752dc014428c2a42613f385fbd2a6",
+      "sha256": "485651983d5d44e32508c8edb570f24b0fe69d91178aaa4619e8701f0a30410b",
+      "size": 14941,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/prediction.py",
+      "git_blob": "57e14de227aed4d396718037416a0802d90c94f2",
+      "sha256": "ac098eece0beb2ae001962658b98f827c9997ebb71d5c60e6cb4ec63248e3294",
+      "size": 19526,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/reconcile/residual.py",
+      "git_blob": "c52bb0af88d89bc5651879f784d2aaed0199eaa3",
+      "sha256": "d45387016bd488566836db51cc7181b5373746d50915bff46cf1c3ae57e3c58c",
+      "size": 21299,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/__init__.py",
+      "git_blob": "1cde3f52dc5c90f9d799188588372d85eafcf3dc",
+      "sha256": "5afbcac8fee6cd5bbf4e9ef59a017aa4bc055db5e9d6763372a79b3c2046cf57",
+      "size": 4216,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/_common.py",
+      "git_blob": "662bb5bbf8b7e2a7c6fbd9d4bcbe953a905de62b",
+      "sha256": "73cb07b149625e29c2d9df8b129327c37b8d77fafdff04325065c85ed78f8025",
+      "size": 6951,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/controls.py",
+      "git_blob": "b99e2cf34c6189fb289dc26053b802c7393181c6",
+      "sha256": "4cd1358bf9d22d61fe9ed45a11b380a860a6614eca902b845d3f1bac7eccceb9",
+      "size": 31922,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/erasure.py",
+      "git_blob": "033aa407ee2b4625f1e64fb7e26c8aadb7bcdbbb",
+      "sha256": "0d171ba9230b08175ed7b79f2ab9731baecd5ed9e7a7071314f0bfcd89ed8666",
+      "size": 28584,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/recovery.py",
+      "git_blob": "c802d2baa7fb1938d9d8a3035234cf0c5258687d",
+      "sha256": "93f20e3b51ebe625e73769842658f098696780a220fa4db6a049b05f71a860a0",
+      "size": 22268,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/table.py",
+      "git_blob": "560bfbf728ba8fc09eb2f16d677453a98a7fc509",
+      "sha256": "a2e6d5b0764daa5a35c5a3b358cbbde9e22c45b3b8e8482d802aa1cad5c22727",
+      "size": 12761,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/transport.py",
+      "git_blob": "5ade25c621442344d1b648457b2d00507173abaa",
+      "sha256": "64729b07b8689968a9b02432400bb831691402e4ae0cc283767d6afd9171d36d",
+      "size": 13441,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/selection/verdict.py",
+      "git_blob": "c1a199b0886cde62cf9821ae12f676d22e418aa4",
+      "sha256": "37a93770b7e1f3b776f2c93d650bd90044a3dd09e9333173519740f16b0d9bc1",
+      "size": 26837,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/__init__.py",
+      "git_blob": "6251f25af60370a02f936533d8ca3dd834e03922",
+      "sha256": "8b100db7827a2745c33cd38a037cc23191f3d773b2fe0708b0261d04c6bbb552",
+      "size": 6168,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/_base.py",
+      "git_blob": "1c16eaa452f0fb99b6ac932b5e2f2cf9e6886fbc",
+      "sha256": "281d7fcb09d3a1f6fd6cb44e99bdbe388b1fdc481d36eb807d82056b54312066",
+      "size": 11331,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/bunching.py",
+      "git_blob": "48a4e277db53e1c9e38720220672559583b6392b",
+      "sha256": "1b12cd34eddd4732df6de18648767aca760c7ef254a60901b29403f25b8e5558",
+      "size": 42807,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/deadzone.py",
+      "git_blob": "2784d42e600f2598cfb8e2b065116efbc716a26e",
+      "sha256": "f1c6e4936f18354cda978d5983ab0d5770fc205b38ae4f4130c4026e9ee305ae",
+      "size": 20321,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/density.py",
+      "git_blob": "5ec2a0aa631d72e322b45e15e2aeb909f4fe1e2e",
+      "sha256": "98d5dbc289a354e3093039ccdb106acf3806e8892505d6db0478a8c45f2d1e62",
+      "size": 42050,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/gates.py",
+      "git_blob": "71ce210d8ebd0e28c37280dddad84e4292f0b243",
+      "sha256": "569ffdce78854bdeb44a3b5271c01cf8e276d970172e0e0ff2e27a28cae59482",
+      "size": 22651,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/richards.py",
+      "git_blob": "c4f8a7609e8383b4332c385bcb5b5b5fee53204b",
+      "sha256": "45a2f6bf6f9042a8dfaaa4846bca2e0bcae2b1d81a3e5a8dbb663611bb6a84ce",
+      "size": 18377,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/units.py",
+      "git_blob": "14d5a1331ef856b2cefccc8e58bb0b0bc867a1f7",
+      "sha256": "75c23828f97c433b97f9f5c1922cc911daf96adab8102658fa78966f6e31dcd8",
+      "size": 3882,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/measure/threshold/variance.py",
+      "git_blob": "5d6dcfcd7d6ae5f646052ed17ec13641f0983935",
+      "sha256": "ded3b6de8372bf71759c81172ac2ff36082a2fa0d4c2bbdb0fdf26dd9f396ec2",
+      "size": 44123,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/model.py",
+      "git_blob": "bc5d9595708ab650b92b081f21b9c214ffd909fe",
+      "sha256": "aa72e575cee7baac15f7a150760962cc415470bac7d8168060e09b18af5ce5cb",
+      "size": 55028,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/model_adapters/__init__.py",
+      "git_blob": "22918ef86dcb2d039e585e89a6323efe4519e795",
+      "sha256": "1bf8a5f0adf7bd36647502b6d0e90766dd9fea9748bbba5efeae4eb136a374f9",
+      "size": 31113,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/__init__.py",
+      "git_blob": "b23a1cb4ad81d7a330d1141ea48a52115e76b218",
+      "sha256": "3c4499574a5ff7a61715578851f6c8bd4533c7c53a2f6f01b9d490c9c0e02a9c",
+      "size": 8172,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/_base.py",
+      "git_blob": "4f0adb4d2dc02d15081eb6a1ff968e734079d65f",
+      "sha256": "1ab0e07dc96eaf6613c591fe8c2b64c27ebba1979d440ea295f569d3121d258e",
+      "size": 19428,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/_vendor/__init__.py",
+      "git_blob": "79e3d981d53db072537a85ce74a1f956cbb9ae33",
+      "sha256": "dd2ddedf839f7c57bca8186403746988a78174d496d502e4ab9a910612ff5413",
+      "size": 792,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/_vendor/cif.py",
+      "git_blob": "f10d0932da3d994fc85a7b2163e203bdfcce31c4",
+      "sha256": "9515a67222046d79470895a6f5ca1c842dfa478ef8b5079e00faa12331cee54b",
+      "size": 16755,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/arl.py",
+      "git_blob": "57bebb7b9dcbf04672a02cdc47bf087901832c54",
+      "sha256": "f5e569e63748a5ebd51a33c06c75801a2f481165445f49e0b1026d71a1cfe65e",
+      "size": 17369,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/check_standard.py",
+      "git_blob": "71076017bf375db5e7be284ce1081a1e7156dc62",
+      "sha256": "735b880ef3f4da6a73d6c085b6b4a06f238f839e774009a0585b3c7fb2360e87",
+      "size": 19052,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/conjunction.py",
+      "git_blob": "b33fba63b1bb5e5bd464165769d4b4ce01bd420b",
+      "sha256": "4f61549407649db08a20bd7ad192496cb739efb2516f962161db3fab705dabfb",
+      "size": 36172,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/cusum.py",
+      "git_blob": "f7330255869ae264d8bab90fa39966acd85ab212",
+      "sha256": "4a888ede3e209b4f1464eed551974a6140a887cff4158864095f7c771513ef75",
+      "size": 45519,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/eprocess.py",
+      "git_blob": "7d1d6650a38e6fc5e63ad4efdcc315a15fdbdc58",
+      "sha256": "5569a344c9a925986bafc2bc9ffd0b1461f37cafd3f8e4d66d5c703360fe0727",
+      "size": 26123,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/ewma.py",
+      "git_blob": "f9608a9470f3d9c5b088c05b996acb18f38704e6",
+      "sha256": "cd00a0b593c8e42e6beb6ddaa6c780b53d842100fa8fbf3ed83b59e830af0256",
+      "size": 7312,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/monitor/operating_point.py",
+      "git_blob": "3c515b51fb4445b0c00126835d710e9d65439fa1",
+      "sha256": "6636cc02b517b7024c8416cdccbc6c6d1300707b8d8be0fa8944d08958c15ea2",
+      "size": 19575,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/operate/__init__.py",
+      "git_blob": "10e9bc0b3bb71ecbd1fe4c660ae6b4d2b0187cb3",
+      "sha256": "b1c7d47b39ab446cfe535a71f24c659968eefe89e0bc9eac2c0e78c42c2cc7b7",
+      "size": 746,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/operate/cli.py",
+      "git_blob": "cf530f7540edbea4a104530895d177717762515a",
+      "sha256": "2e27ee2884fa32e8bec8051f50cbbdedd2c25ad513cfa8ae6c56b360eb550c4b",
+      "size": 18028,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/operate/mcp.py",
+      "git_blob": "26d38c7a88503b3aa1e0767c8db141c1bb41d9ba",
+      "sha256": "e8252962f7f8f5750fd8a81bafc2809d30ce313f4e5a629200b4e78b5f985863",
+      "size": 8215,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/oracles/__init__.py",
+      "git_blob": "11b802f5bdbbcdd47395c00d6957d90e89b85124",
+      "sha256": "a423f5caffe1f45bc28081a6a9cda0c872b50feace045ecdf7b066c50a73e6da",
+      "size": 397,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/oracles/base.py",
+      "git_blob": "12d302a1408293e04ccdc13509585ad47af816de",
+      "sha256": "6b6f42231aa707ce0104a17b739fe8ea303ed4e33b696c027a0436b680859576",
+      "size": 6265,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/__init__.py",
+      "git_blob": "a09445c85b9380731f88b6075360788820e8317e",
+      "sha256": "5bf5abccefc9d6897548e6aede7b00403d633fbff06894be0144b827bc43816b",
+      "size": 5861,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/_data_compat.py",
+      "git_blob": "32ee20e764cfeabbe1420c0799a3f417650e4c86",
+      "sha256": "f5409ceba2e0cd5bfebdd41fa5c7b02508a732620f3d908646a867958689f548",
+      "size": 7893,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/_features.py",
+      "git_blob": "dc050dcf97a84089b15cafc487ca7752d7c1967c",
+      "sha256": "9f2f91a2fd2240f69e7ff5f9f0c980db4c1ecc4dc281af22171743aa7c3a1e18",
+      "size": 7597,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/_tiny.py",
+      "git_blob": "66978b061766bb1449c10a8951fce4de513aa671",
+      "sha256": "55587a894eec3ba1b66387b167b458478889006387fa5d2244c2c432bf93367c",
+      "size": 3867,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/chain.py",
+      "git_blob": "3f453b0a9c9d1d41539c985634f41229baf622be",
+      "sha256": "fc86c5d7ae38481b33a068fed17e1e0f0413a3c13ba568a885cded7276565219",
+      "size": 13823,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/dose.py",
+      "git_blob": "c8f77e69998676d697fd6c1674a5b52714cbe7f4",
+      "sha256": "52a02cb69417da3aa70d7cfce80703b614ec9e8d8477ecf8ed07dc11f717de2f",
+      "size": 29829,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/foundry.py",
+      "git_blob": "adf781525c5500b74e8dfa0aa76eefd254bcdd66",
+      "sha256": "3d8300f9c29d108a824c8333fd2bbf2c6529842577922ef347d75ada023fbfdf",
+      "size": 49849,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/game.py",
+      "git_blob": "0fbc29e0041cc360f3556c79705ed6f5ddbc6993",
+      "sha256": "3ff6fb52385233606159520d6e35ffa9484699e70c87c0688d00689787907f73",
+      "size": 4504,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/gate.py",
+      "git_blob": "3679254faf4d49866ff96c4787e5a6545069593b",
+      "sha256": "1edf0122922a7b62f1f8d82c7a23b5f88395efae8a89ee5f039106ac8f68fdea",
+      "size": 3671,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/micro.py",
+      "git_blob": "6bccbd8c29c0048f26f17c22f77ff45d4fa69979",
+      "sha256": "84660355e5de1d19452d0950de8eefb379a190a9d82982f68683e81e14518552",
+      "size": 10955,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/scorecard.py",
+      "git_blob": "cdd19e21aed8cb9c8c7b4d171650cd2768d21dbf",
+      "sha256": "55ae0cfcbb8afe51f8419bba708dc5c2f0a3158184e4b7882efad4f544c594d1",
+      "size": 13704,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/spec.py",
+      "git_blob": "486b18ac2255e9690bda6d3f0eaa97c45a964e7f",
+      "sha256": "22e71bf8fa49e85dace39d8e81aac2ca022f8c0441fa5350281756ecdad9a4d2",
+      "size": 9303,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/standard_addition.py",
+      "git_blob": "4e11aea04d9df60178b4c350ec2007defa3ef20b",
+      "sha256": "2cf57793cd7a2341fdfde91a22eb41186477913dc009cf9f39c0c3645eff0e5a",
+      "size": 26368,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/train.py",
+      "git_blob": "c300128de242fe05946f4608ebad2ef938dfd395",
+      "sha256": "5bc19f231baa92628052fb4483123c8246fddaadc7b9a9c8343579de0faf964c",
+      "size": 12295,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/transport.py",
+      "git_blob": "032e7fb97e592a4bf9e2c4ddd6ed8e149abf2695",
+      "sha256": "e84244f46aa7b2dd61912dda51c783d79b4ac0b840e92ed5697619885655b536",
+      "size": 22030,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/verify.py",
+      "git_blob": "fd2214f9858898b822500edfd4ec2db5ec2cca2d",
+      "sha256": "66ee532ade89dd560082699a2c5fdc9625ac62beb9eb0bf448bebc689a0056b8",
+      "size": 4847,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/organisms/zoo.py",
+      "git_blob": "159a6961190f30cd5c2de2b45d6a518f46a8b370",
+      "sha256": "a527a5f4a547a212e1acb6deaea792b7a98811313b22c9afd94d4ac2173f8406",
+      "size": 2116,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/__init__.py",
+      "git_blob": "6b93b003c762d70a8e6018b85fe8cebcf5ce1b3b",
+      "sha256": "19643f525e9792810592be867cbcab925ae8a5014a8ed26c0abfe95e80f39606",
+      "size": 3551,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/arch.py",
+      "git_blob": "b924a18d0f05328ad066532b3a19143628e87835",
+      "sha256": "dd8802770a9dd1d082cc5943b57e3153a5d6143d7c56fb99115605086ac0ee7f",
+      "size": 14906,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/base.py",
+      "git_blob": "4259079bbb6b03eb04fefcc5171c415553a5bb3f",
+      "sha256": "9c0acaaa1e9f120d63316bde5cddc2789894a296081309f922c80874b17dc7bb",
+      "size": 18146,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/credit.py",
+      "git_blob": "1d52c3f3e83cadd81cb74751b70a03357d7a240d",
+      "sha256": "165190160da1a1642305701d25e5b187a7268056a8cb19890aae599b111ba6ba",
+      "size": 109792,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/hf.py",
+      "git_blob": "7d004d61199b93a5b28ebaafa88787b2eaf1842c",
+      "sha256": "5911279e5376269d8d58cb3e6db039a85c4f4af83068f2a4938a5453724bccf7",
+      "size": 51088,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/quantities.py",
+      "git_blob": "9bcfb7863a320eeea2738b8e03e7e57f9a891388",
+      "sha256": "e371cbc73a7be18cce2544991c19fe43992089576c928e6112c5c11db3b5291f",
+      "size": 8217,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/recoverability.py",
+      "git_blob": "98fedf9d6dedf4c563f394884515e0211b4d2a3e",
+      "sha256": "99d2e1cce963d1474fdf20a49961cfc855be3f14782a74a6df20b85b03251373",
+      "size": 18165,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/selection.py",
+      "git_blob": "a96434f1bf0f1b5923a4a98709af10471a00c083",
+      "sha256": "8acae8db2ea4476e27aed5bbdc4500461a040e39680e70fa160f79387e441012",
+      "size": 25517,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/sglang.py",
+      "git_blob": "e1cb37e9a550834ce88a33dbe211f1ca16ca87be",
+      "sha256": "bb6644c7db16adc1c46b62c516f0ffb68bbd873068b980db4e9e54977b068a77",
+      "size": 3439,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/policy/vllm.py",
+      "git_blob": "4025a3d73dc6fa00a385fa083a151a091390ad40",
+      "sha256": "ade691caa97ed77066ad8215f80613c6e956666fd9dedc59ca813053d6596e0b",
+      "size": 9445,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/py.typed",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/__init__.py",
+      "git_blob": "dfbcc4eaa2c579701e5cd5fad0dc216bc6e5c691",
+      "sha256": "e26581c2126671bd40a89f2c942f7b1ce47952f3aedb1f4b073eb15a55b8c1ae",
+      "size": 8800,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/arms.py",
+      "git_blob": "a22bbeeeac86ec61573ed3c745a1737022430c49",
+      "sha256": "89ed8dbc47f71a4c528868244365bf9e5548ae325aa79997f94f2526a99fa269",
+      "size": 55729,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/compaction.py",
+      "git_blob": "d135838276625eab7bda4cea58cdf20692d3a16c",
+      "sha256": "08a19c7f832ebf3acb113443e830bd13e9f840ef4f90e1766b2ff1be99941dfc",
+      "size": 7516,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/contract.py",
+      "git_blob": "4d4ea33ebe0fa0c6b35652b74a0a36397e50e14e",
+      "sha256": "bcb5c9d22a19df24e18b5ed322ab917ca100d7a0f3dab0083ce754c6a5c08062",
+      "size": 16294,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/convert/__init__.py",
+      "git_blob": "fb9a56f3009a6a2197cc7ea0b208f0545f42081e",
+      "sha256": "dc1f176fe7c4a2aa2ec62dfa0d5bd545e4e15210bae660608be1462437987495",
+      "size": 4110,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/convert/campaign.py",
+      "git_blob": "7dd55f82e0ba63fab416b062566482bd3063c2cf",
+      "sha256": "53cabda4dc5b2c62ec8d90536acdc7b6aa5342badb596f90fc2a8f87af516a18",
+      "size": 44480,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/convert/inspect_eval.py",
+      "git_blob": "3a6afead19aa7bc8bdc3bd76f4e337f3b088c6c2",
+      "sha256": "882f9a90062c672f65e55f8e0bafae5c4b65acaa95f8a1249ad0789dac28fccb",
+      "size": 19502,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/convert/instruments.py",
+      "git_blob": "b16fc32e1c596f36169fc4ad5270b93993e958cd",
+      "sha256": "e7d03bec2ce0bfbb5aad09a847107cf6ad5777203b6a9232bf89a80fa78f7592",
+      "size": 26034,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/convert/readjudicate.py",
+      "git_blob": "973c2e27f145b2f3206484eaa678bc66fb3396b1",
+      "sha256": "c73760cfe024df16d569a2dabb00b1f68f655e4203c8e9d5045c1e7280825cc3",
+      "size": 16311,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/convert/store.py",
+      "git_blob": "b9dd4844e2171808775e55992b05ca3cd9e69686",
+      "sha256": "b6815b873f8bac2fdd87f6e4794d231522ecd3c4dcdc84e07e13d38a469bee5d",
+      "size": 15997,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/exposure.py",
+      "git_blob": "f6df4c4b85e4626cf45e590ad0adb50eb3341950",
+      "sha256": "4f293354e56b7104ca9d1c558fc527bf78c812f155bfb8daaff04c3013026d70",
+      "size": 11855,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/hardware.py",
+      "git_blob": "3637cba2ad3ea547ba0c03148c9d2a9f4255b75d",
+      "sha256": "19adfea79e25b072dabd0cd3889ea06dc835b7934a72dd861a2e3aab7b85c695",
+      "size": 13045,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/labels.py",
+      "git_blob": "297ad6cabff7202f81ee907c5ac69d5a1dfb3d31",
+      "sha256": "951413f89ca3753f9bbfb5c3a1a4081e711510846d99997c435646cd41fc773c",
+      "size": 42029,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/provenance.py",
+      "git_blob": "9d4997e32b17bcc42705101f141c84d9cb6ee1d1",
+      "sha256": "6899c5adbc19f74c239025c66140aeb7318c65d1c36b780baedefd90780f503b",
+      "size": 13367,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/reader.py",
+      "git_blob": "0c040e4d618499e29e5d55aee88e1d2b69bbea81",
+      "sha256": "9dffa3c17a5e2c2917568324e50970f5084e27f7e10bb8f3bee9ada8aea41950",
+      "size": 17179,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/schema.py",
+      "git_blob": "759d95944d874d88c27ea6608d28f93c59135320",
+      "sha256": "1187b960fc9c160ae242cae2f2400677c4f2e60112f1a433c1633f5d68526cc9",
+      "size": 65891,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/scores.py",
+      "git_blob": "4628552d1841f97a73dba85ccd105e6deeae1da4",
+      "sha256": "ab62540715fc7fab27017448a9bdb612f9e0e342db82a5cec061b5ad30a7f0a5",
+      "size": 70185,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/tensors.py",
+      "git_blob": "555111a102ab5583182b86a03f457c14bb7dc6a1",
+      "sha256": "e85e95e44e6aa63a54df5f5347a36ebf2232c5c73362522c18d0e770bc27cc77",
+      "size": 32324,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/turns.py",
+      "git_blob": "f6a3285e2cba5f1c7dcdd652d2a376a9a4d185ba",
+      "sha256": "710bf77a0c035f94d521aa7ad2db598861f43d9373316516723b400d272faeff",
+      "size": 13366,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/record/writer.py",
+      "git_blob": "fc68d8dc7dae6b41d9cb8c1220b3650d9abe7717",
+      "sha256": "11a6dbf8a62c4203a5743e12ac27b82be2bb4618fec18d50788eefea7fbeb3f8",
+      "size": 17963,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/__init__.py",
+      "git_blob": "b0bf2d910827e6be37939ead232480a03eba2d2b",
+      "sha256": "5077b4e7aaf90c5bf45f947a43e84403b452335c13d2704abb5c88b2027a08dc",
+      "size": 2486,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/backend.py",
+      "git_blob": "289d9eeb9e2a0b5e287870cc0ee719ffa5c54fb0",
+      "sha256": "c5d31572f225ba9e6a057535b207ec8e79b61ee47afe7607b181d16e2dea504f",
+      "size": 6637,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/fingerprint.py",
+      "git_blob": "3de0c1b9e18543f06cc725f4312bacc09149abac",
+      "sha256": "1ac09066bbe64c03bab014299c6b586d7dcf6b512fcdccdab86750d6dc855ef2",
+      "size": 21223,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/hf.py",
+      "git_blob": "753a91d33517e64b84a082b385b149d5490e6227",
+      "sha256": "609e10bc79ed595ab1ff0a738369fa6d1d881b0543875ccb17969bcb9873dc39",
+      "size": 23476,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/hooks.py",
+      "git_blob": "4fdb314b1a31be0745cc02cdc5ce5e894560a03f",
+      "sha256": "23c67ef9c83ff085723f4e4113baeada0b0a600a7ad28956520700cf78166053",
+      "size": 15350,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/precision.py",
+      "git_blob": "53b1958826956ce5a33a8f04057eafc4e3f45e99",
+      "sha256": "141d2d78c1a9b9df2d8030b0c52caae53f58d37433e77c454f5e230f2d978abc",
+      "size": 10478,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/sampling.py",
+      "git_blob": "bc7fde407523146a4a4bed49af8bfaddba0c30bc",
+      "sha256": "ee04f37b9762016070c4c5bd5e31afd7c49d535d42a8aa202841ed46983bee76",
+      "size": 6615,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/runtime/store.py",
+      "git_blob": "e479fe84b542d8821a5dceb103b7f564a6252fe7",
+      "sha256": "f062fbd37e5c4ccf833de1c184c51329e05e2074f7c269f907f41451861ea5da",
+      "size": 22946,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/sae.py",
+      "git_blob": "14ac115b26a049c1b03ec2c803e0e03908c68710",
+      "sha256": "e21b2927aff67378e953d571f398a3f9b19a16017b261f752f20e85799c9ba7c",
+      "size": 22224,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/__init__.py",
+      "git_blob": "b4010eff8ffc83a4cd73543a8474e89000c5d0ce",
+      "sha256": "c137f0da0a18f920e8b1fbc0400bd225f4f9970512c4faf880f3eacb1b36db54",
+      "size": 3456,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/_common.py",
+      "git_blob": "003efe2b7794db251408d31be25abb1b6a36fa0f",
+      "sha256": "7f61332192743fdc67a4f2c3b35cc40f29c7e3169175be5a034617451df365c4",
+      "size": 27676,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/adapters.py",
+      "git_blob": "1b38f82b2905f22cde1e386a9d8a7ba0aef181f3",
+      "sha256": "b2bc02225e4dfdb2b44c96cec95d64e1a41022924e99d914407a9d1d0cce1641",
+      "size": 28338,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/base.py",
+      "git_blob": "f8e386c34280672b1b2ef48a8ab97ec447d66f2c",
+      "sha256": "f301aa263a3a81205b8d21ba5aff77270aadab6a47cbee27ae696d9736298467",
+      "size": 10929,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/classifier.py",
+      "git_blob": "8ba74be62efd086d00f88e10e3ac2cbe9add430c",
+      "sha256": "2413110817abed3e896c76a34850b66fb31ee948bd86f75c28a173656dcc0fb9",
+      "size": 20207,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/conformance.py",
+      "git_blob": "99bec565919c770de4616e1eee40efd34fd5cd3a",
+      "sha256": "2b62eb371d7bf8284671fad38a7ae7749b6e112afaa5717624cebaab0466909f",
+      "size": 10501,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/conformance_adapters.py",
+      "git_blob": "219d8f86e71d8c359de937400ee17b6162d52f06",
+      "sha256": "15143139d5b697a98cb4c1d85b5c77ba5d0f9a01c22b9d32a12364eb88ef965a",
+      "size": 10560,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/dense.py",
+      "git_blob": "5d7d08996bcd8aba4fc0b64c183d626353190591",
+      "sha256": "1c359276441853532a03f1ce1996c721c71d3188fb73269e0fde0bbd195099db",
+      "size": 6424,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/ensemble.py",
+      "git_blob": "c60d4146d5c36600b09e8e96f94b6a1e45ef1b83",
+      "sha256": "42756e868e5c68d2624f5bbce8a9698f78314302e4ee6d08c10e480aff484786",
+      "size": 15654,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/implicit.py",
+      "git_blob": "e60b29033a134c22e9859ff784af9d466cc8772f",
+      "sha256": "9bf5978bee5564a857e8776e8445637518d3b3f2868e24d115bd1b3fa8a4b491",
+      "size": 13711,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/judge.py",
+      "git_blob": "4774fe68d3fe7438ff0d66e621ba9a19c28ad3f8",
+      "sha256": "3812b57f7e4fb3911755024fb1234fa04c41bed6328266fda1aff21d494dd195",
+      "size": 18820,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/loaders.py",
+      "git_blob": "07de3c9e5d5a8aabd0de41db7631ba84a6bbe79b",
+      "sha256": "3a0c87e4517f0dad4579d453c4133f1d82fef1876a113651aa72dded2ea9c702",
+      "size": 18688,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/process.py",
+      "git_blob": "04479b8e3b38cbcf594595344d08d56ecae0a5bc",
+      "sha256": "bd841fe98846b3c9ac45b0b0022575d5f64f382a8eababcd4b6dc62a193b7b46",
+      "size": 15002,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/rubric.py",
+      "git_blob": "46162cd6557b38af7d08e504d85c4ade21e3c9b1",
+      "sha256": "220a511d4d7d899026009ffad97e6c4026f3da38ddcf09469aabada7abef99df",
+      "size": 9644,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/signals/trajectory.py",
+      "git_blob": "0ed9966b3509b2e4e6a3bd56b86fcf6a6b799c1a",
+      "sha256": "0c64eb7b8b9929a32d263c17af11965c964285565e33b9644840c7df7646a5ef",
+      "size": 9058,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/spec/CATALOGUE.json",
+      "git_blob": "8e1d76ac14c6316bffd8066c4198322f66229730",
+      "sha256": "3ae330f28d47a2043849dac2ca2d4d66d8d6891e2ff8bd3cc7444bf1d4e9803e",
+      "size": 215927,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/spec/QUANTITIES.json",
+      "git_blob": "56abb3123573f1668c78a36c94e2f85f55828f27",
+      "sha256": "b8a488dbd3450394d32fc6579cc0554e39e6fec3a72d5db23182dfa7fb2f02e8",
+      "size": 115203,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/__init__.py",
+      "git_blob": "9def3ec9e8840dd7f72cfd4bf29a8539f1d20798",
+      "sha256": "90e309debcd34320e94a39f427b73afa6d8d6c2b01ff7589b57578615d84c9f6",
+      "size": 4680,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/baselines/__init__.py",
+      "git_blob": "fbda37361244b81468813834852890c05f59ac58",
+      "sha256": "b26c4bd6cf14e4fbc6a15af2bf0985cb2da127208b34beda3ba3d356e0fb0cff",
+      "size": 8762,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/baselines/base.py",
+      "git_blob": "1a605b52759334a8426836876d757c2034b63c22",
+      "sha256": "ceea25c353d4a4d1d83171050d2dba7539e85383169f595a21ead11a2eee0f0b",
+      "size": 28689,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/baselines/series.py",
+      "git_blob": "604aa9a90df6d535d8bd3d4f12c7275092ffcb32",
+      "sha256": "ab14f6e1663aa3682133528399a4745a7c9101890e996fde244b4b355e4d9c33",
+      "size": 4708,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/baselines/text.py",
+      "git_blob": "9bf962a97010e876f26831ca843402d282f87058",
+      "sha256": "60c7596047099190dffd0089384dea646b2f57591a12840955ef1774a3d63aeb",
+      "size": 20607,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/changepoint.py",
+      "git_blob": "577231c14c0dfa98c2f2a14e8bd901b186a8ec9e",
+      "sha256": "64e74d823fe4775f5349a2f50567e2913172c9a503f831651997442e5074fde4",
+      "size": 6512,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/effects.py",
+      "git_blob": "f3a231aa9d2acabef30ed84154f3e6203b371418",
+      "sha256": "15349c32493da62f8e8c0a3c73dc598bb95c28fe87c257392bbddff1399cfd95",
+      "size": 19138,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/ess.py",
+      "git_blob": "fdcb0afbbd0e6da9621e5fd24516425d29f5d9ab",
+      "sha256": "a1fc94e977d32baa67bbdbb9d7bd92b1587bd574fe8b3fff28b3c4711088fe52",
+      "size": 12072,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/gtheory.py",
+      "git_blob": "85e8be67dc63883d92fb9fe620a3d06e67934cb8",
+      "sha256": "3f4a4b75a33609d0edf895eeebca586953fc6d5f99eb90c6762b25e7d7842373",
+      "size": 46880,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/meta.py",
+      "git_blob": "d826aa17ce9975ec4c77c58d7881c908319664ab",
+      "sha256": "94e9f45b5b4120040fde7205055e56f48526033cb27820608ee16d17dfe15c4e",
+      "size": 59265,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/mi.py",
+      "git_blob": "788bfabaa2e9f30b000b020ce13d0e2671ac5153",
+      "sha256": "6e8477eb5e5babe76e6bc0e5f2d8d61fd8bbbfa47ab0795a9489551184c97fff",
+      "size": 14665,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/multiplicity.py",
+      "git_blob": "992d889aa898347037588d2592991c9861b6d209",
+      "sha256": "39122b778669a6ed6eae2f30472ee3a0ec2d4efe9ff5c050b4d581e632481162",
+      "size": 5314,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/nulls.py",
+      "git_blob": "4543eeb4e533445fa97c6582bd287af59028f71e",
+      "sha256": "2e409ed50c2804cc7883be133ab6f97693b41a420690500918eb3583b9784153",
+      "size": 9116,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/power.py",
+      "git_blob": "4b763bc657d5462f0d7e1c3c3e30352a2ba7c2e5",
+      "sha256": "30aa981eb1e7cb077c66b552870eee6a44837653523d68aad7134a93c76413ca",
+      "size": 38761,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/roc.py",
+      "git_blob": "c8841292d2b514488b9154b1fee4d6fbc0e9b383",
+      "sha256": "43c7884ae44644bd6e5fdf8700a8f1acfc7d8c3c54fc7f6288cc817d14b2f1a9",
+      "size": 10241,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/sequential.py",
+      "git_blob": "a51aa15b5a44bbf66303e7e267596d15b5bd8017",
+      "sha256": "542692e48d3f0c349dc2bb702cb79cd55376ae08a9558ee8214a3a85187507ca",
+      "size": 22449,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/stats/variance.py",
+      "git_blob": "fb553a8cbf6bbd36e7fe62840bf3c06b495aa449",
+      "sha256": "0a2fc37232c9e583553120d76b2312422202b8d2cdbccd79a7010fc2d3dd33de",
+      "size": 32399,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/__init__.py",
+      "git_blob": "cbc64ceb92afa2dfd4e48a63a41885056d6f368d",
+      "sha256": "3392d98c12e13bcbd18446147b564962c7ab3bb54880631611445ece663b4ef5",
+      "size": 1891,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/freeze.py",
+      "git_blob": "d0a28eb22cf19b3035ea345b246d53fa3636a12a",
+      "sha256": "2d8e761db5880b2815d30d73151852878487bcaa18a06366075f8d8b1f8d240b",
+      "size": 2508,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/meta_analysis.py",
+      "git_blob": "b631151c1377b6989a3a39ab690286f89c66c2e7",
+      "sha256": "e7ddc607a3f3527227bff06005b0fd7364ae8a00206c1971d8442e62d0e5dad7",
+      "size": 41789,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/plan.py",
+      "git_blob": "7bb5e383cafebeb65880327c8ff668b64b22df20",
+      "sha256": "3eec191aadaa7d60f76831c899f9959da9d92acbb6b1082c8884d03153f8eed3",
+      "size": 10824,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/report.py",
+      "git_blob": "626e5b2851e98355b7547568d1b75d4bf7e89b24",
+      "sha256": "59c894c8f043f76a3a61facf764e42b64ce81b9e2e276da2c8c6122c946393c0",
+      "size": 4863,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/runner.py",
+      "git_blob": "ebd48e14bd186ea3bc577d34841f41d764bea76d",
+      "sha256": "1f9b6919ad2784421a688be769f54e10dcaec3a5a5d69487aad7b06d20a212ac",
+      "size": 8789,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/scoreboard.py",
+      "git_blob": "03dc605e6b0d72bcebcaeda501bcf6c8954f870b",
+      "sha256": "75fc1d997a1e74c787d89c92d49043d78895ebb1ab506e55a3f1cccb539aad16",
+      "size": 6538,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/spec.py",
+      "git_blob": "9aee967ee9b8b0342b01a8f65a77766817bdc6ad",
+      "sha256": "2cba8df2aa28eb81c844ea370d7bab2727e0d9601fd3fd691cb226a82164afb3",
+      "size": 7225,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/void.py",
+      "git_blob": "85b67c89d2a9bb67f7c200e3bc5bb162a0294f2c",
+      "sha256": "bdc2d5fb706212dd1dee2cb13025a94b92ede1b78b52da3ca6f1c2caceaec97f",
+      "size": 7819,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/__init__.py",
+      "git_blob": "5409e6a29d068a065f969afe6c7395204b6a83ba",
+      "sha256": "92cbe4020f66278e1f5ca2691cf05652ad38d65c9fc70ae9c8e61d373755752e",
+      "size": 4967,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/_base.py",
+      "git_blob": "b90cf576ae04f022deba02e07e8b1197d709261e",
+      "sha256": "9153f59d151b38dc01afa197330a64a4e7264addc53d41991ff7826f10c174e8",
+      "size": 14666,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/behaviour.py",
+      "git_blob": "75986f43808ea5e30fbfde5a8a279a82bb310636",
+      "sha256": "0667ed1fa1724dd320a50bc52ac8380ed846f2c2e17fad9a3940919f101b4b91",
+      "size": 29612,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/degradation.py",
+      "git_blob": "8a9a35472b08e17182b9ef50b313c74ec49cec64",
+      "sha256": "feb3304a261f12b9668b9947ac9a3db337984100cdd753f8c5ef3946c8bd56f8",
+      "size": 54988,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/planted.py",
+      "git_blob": "6085a3a9d00fa496c50a746ab88aa5d9c7debc92",
+      "sha256": "2ca5f5bf435e948613fc09f0ad56f5f0fcf3af4cd9bafc411fb507d1aaaf7373",
+      "size": 10621,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/price.py",
+      "git_blob": "5c87a34e471c4a0cc9bbf90c650bebedcc66a2f5",
+      "sha256": "c6e633459189a63b45b1003d7900febe4622ef0943f6ceb1cc4e03b0b316a607",
+      "size": 11182,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/runbook.py",
+      "git_blob": "b2c92f6261d677ba4756dd5e7ef7ba70a17c3080",
+      "sha256": "650a6250ecf95b7be968aaf18a98e944e16274b595b0de419d1fb64a4136e523",
+      "size": 11830,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/studies/w6_monitor/study.py",
+      "git_blob": "2cf1bacd8230a789d7e0927c5c5757a67ed1b108",
+      "sha256": "37606e06179af60f4729ecf6a54875198b7e53069345e767b618cd9e7457b5e9",
+      "size": 29633,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/__init__.py",
+      "git_blob": "0ea3062c38e5c6ceed99ab537d2146d671bde3f7",
+      "sha256": "4e10a5301b4b171cb2bb69a868ba923d1c3d731f90f135b5f6e94397997f2413",
+      "size": 3815,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/adapters/__init__.py",
+      "git_blob": "4c77d7bc60e9df6caf23b61046b22a1007e13b66",
+      "sha256": "767b385e08011c006ba161d1b43a03048c999d6dfb705db960d9653e3cd9ab50",
+      "size": 3216,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/adapters/trl.py",
+      "git_blob": "d37f9e51b49436efb6c4aff4669d6707c0388bb9",
+      "sha256": "00f08853cf8a76b528db3f5057572ba8a7e9f3885a92eeb2ae43442ae2ae1b0c",
+      "size": 84429,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/adapters/trl_contract.py",
+      "git_blob": "96514622e2a88b657414abe6d297bc8cccc10eb1",
+      "sha256": "66e1c4e9bd86dfe48f003d78198842075110fb62deb93f4e92956aeadf1fe613",
+      "size": 11932,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/adapters/trl_signature.py",
+      "git_blob": "bda8cf27b9e831ca4d52a163783626d8342ba404",
+      "sha256": "7f2e93f66122fb1d99e1c5b72fba063f70a5815e7b197a4f2024f9fc78f558bd",
+      "size": 8237,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/adapters/verifiers.py",
+      "git_blob": "ccbe26bcaceae5687511be5bfed0edbf09e8f533",
+      "sha256": "a9e0035f50532fc38cd9a504760b959de602e5986f6109a889c2f905b3b2dfe8",
+      "size": 75439,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/contract.py",
+      "git_blob": "3f443c5428ac1dbb0d2e53ce5e0ff7067bbaa793",
+      "sha256": "f3da813b9239b967d764159ea61d8e6d4719995ba73830a6acec88c91cf23fdb",
+      "size": 31216,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/grader_wrap.py",
+      "git_blob": "748cf496038317a4e702da9c0adc8375d6e05ef1",
+      "sha256": "b5d97d36db327f24c7dbc58674cf262c157e8c859b4cde80b686750a66c5e126",
+      "size": 32529,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/tap/ring.py",
+      "git_blob": "a932be1fff0dbf7925c37501644d293b32b8719f",
+      "sha256": "34693fac1276943ee22fc5f97a4a3dbd601981afb2c0f7dc265f56a05fd79100",
+      "size": 11864,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/__init__.py",
+      "git_blob": "8fe8e9b451895218131d8ad633f4689b8464c185",
+      "sha256": "99c4ade04a816b0a09cc1e6a941f997794e4220bcd7ac1431953e3586720d52e",
+      "size": 23942,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/attack.py",
+      "git_blob": "74efe5883119c07d40bf34ace224b2a4aa4cf861",
+      "sha256": "bee5fc620492a91194075a005fdebd3a2e5829b196d94ac48484fbdcc59e8ec1",
+      "size": 63226,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/coverage.py",
+      "git_blob": "46db2ac3642b15d1ef605834b28194b9cef736de",
+      "sha256": "ba9427e0bfab9374b72f53d2981473635d8f18311eea4c01612e8c9b5e541376",
+      "size": 24930,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/fuzz.py",
+      "git_blob": "206952aaed36b6ffe4c5296a850c0346a657b98c",
+      "sha256": "5daa0cea15125fecbe28e64a4300c4bef69513ae4be5e0d111ff285e0938415b",
+      "size": 49652,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/growth.py",
+      "git_blob": "53b259fd4f0b5aef3fa87e3e3e368bcd9919fbb4",
+      "sha256": "19a7702206625731e6beda2e84d6a9ff193e2adfb896dec68d44831081f48739",
+      "size": 57005,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/metamorphic.py",
+      "git_blob": "880e759d307b2eabb9cbe4d4bbefd21402d5cd43",
+      "sha256": "64cefdde1031c7d495dd9fb6706b27b75de83ef1962dcfd6875d715970ed6a2d",
+      "size": 47619,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/mutate.py",
+      "git_blob": "b03f1bd9f67bbd7e4cc135c82e4a82717630bc68",
+      "sha256": "8b9ddb91041df869ef0a2e41ec349e6c78d4e6d397a81620d70439c1842c7619",
+      "size": 37009,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/replay.py",
+      "git_blob": "4cc131fa092d6a5fb5c4385532bdb0672524a6f8",
+      "sha256": "557273f66d1c52075d65cca5d032f499b991927ad709785d11c398390017781b",
+      "size": 28843,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/sensitivity.py",
+      "git_blob": "b1e769bdbce8183c9e614f54f6d30d667fc9fc19",
+      "sha256": "3d91cbbcc5e601e35f816f22406668c9daa526303b7350becc81550696a730ff",
+      "size": 31513,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    },
+    {
+      "relative_path": "src/reward_lens/verifier/static.py",
+      "git_blob": "63d62e6bba3b6e4a11d19803c4b034b141a59fc2",
+      "sha256": "be1afc6d23823f06d7b6e7162ddd10f5d5dab2342cae75e111baa8c6ea141870",
+      "size": 42550,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data"
+    }
+  ],
+  "transformations": [
+    {
+      "path": "README.md",
+      "change": "New historical-dependency explanation; original project README is not copied."
+    },
+    {
+      "path": "src/reward_lens/experiments/x8_leaderboard_meta.py",
+      "change": "Excluded independent private-dossier analysis; selected runtime code is unchanged",
+      "compatibility_evidence": "Static search found no incoming reference in selected runtime package or C1 source/tests; experiments/__init__.py exports no modules. Dynamic CPU import coverage pending."
+    }
+  ],
+  "public_export_pin_recorded_in": "GRPO Reward Trace provenance after product history is finalized",
+  "excluded_files": [
+    {
+      "relative_path": "src/reward_lens/experiments/x8_leaderboard_meta.py",
+      "git_blob": "e5b38aeddd4bf330d9f501d864a32a8726058d1b",
+      "sha256": "f893bb85a4ad57fd0735155081e092e9e1084c2e9a7d7453b8ae940a0090593d",
+      "size": 62963,
+      "license": "MIT; retained historical LICENSE",
+      "transformation": "none for runtime source and package data",
+      "reason": "Independent X8 meta-analysis requires a private dossier default path and is outside the C1 runtime execution surface. No other selected package or C1 source references this module; experiments/__init__.py has an empty export list."
+    }
+  ]
+}
