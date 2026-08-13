@@ -1,6 +1,6 @@
 """Unit tests for `reward_lens.access`: the resolvers under the capability report.
 
-The clauses live in `tests/acceptance/test_w1_6_access.py`. These are the smaller checks
+The acceptance clauses live in `tests/acceptance/test_w1_6_access.py`. These are the smaller checks
 that keep the three resolvers honest one at a time, and most of them exist because the resolver
 could plausibly have been written the other way: a probe that assumed rather than called, a walk
 that counted a disabled branch, a phase that read the access matrix.
@@ -34,8 +34,8 @@ from reward_lens.access.report import (
     _condition_status,
     _leaves_matching,
     _natural,
-    _status_word,
     _substrate_remedy,
+    _work_package,
     load_instrument_catalogue,
 )
 from reward_lens.core.envelope import ConditionReading, RegimeCondition, RegimeReading
@@ -377,7 +377,7 @@ def test_a_supplied_leaf_classifier_is_used():
 
 
 def test_a_leaf_instrument_is_pointed_at_the_leaf_rather_than_told_it_will_never_apply():
-    """COMPOSITE admits the other substrates on its leaves, so this is not a dead end."""
+    """Section 2.3: COMPOSITE admits the other substrates on its leaves, so this is not a dead end."""
     tree = Node(
         "root",
         combine="weighted_sum",
@@ -410,7 +410,7 @@ def test_a_non_composite_grader_has_no_leaves_to_be_pointed_at():
 
 
 def test_phase_does_not_take_an_access_matrix():
-    """Phase is not derivable from access, and the signature is the enforcement."""
+    """Section 2.3: phase is not derivable from access, and the signature is the enforcement."""
     params = set(inspect.signature(resolve_phase).parameters)
     assert "access" not in params
     assert params == {"record", "live", "artifact_only", "declared"}
@@ -457,7 +457,7 @@ def test_a_phase_nobody_supplied_renders_as_unresolved():
 
 
 def test_the_open_string_normalises_to_nothing_rather_than_to_four_characters():
-    """E14: iterating the bare string OPEN yields 'O', 'P', 'E', 'N'."""
+    """SPEC-ERRATA E14: iterating the bare string OPEN yields 'O', 'P', 'E', 'N'."""
     assert _as_names("OPEN") == ()
     assert _as_names(None) == ()
     assert _as_names(["a", "b"]) == ("a", "b")
@@ -465,12 +465,12 @@ def test_the_open_string_normalises_to_nothing_rather_than_to_four_characters():
 
 def test_the_catalogue_loads_every_instrument():
     rows = load_instrument_catalogue()
-    # 85 catalogue rows, plus the four of series N that the registry carries no quantity for.
-    # See E23.
+    # 85 in Part 5, plus the four of series N that Part 9 assigns no work package and Appendix A
+    # registers no quantity for. See SPEC-ERRATA E23.
     assert len(rows) == 95
     assert all(isinstance(r, CatalogueInstrument) for r in rows)
     a1 = next(r for r in rows if r.id == "A1")
-    # A1 claims two quantities. The correction that stopped multiplying Kish's shape
+    # A1 claims two quantities since wave 6. The correction that stopped multiplying Kish's shape
     # factor into the effective size did not delete the shape factor, it separated it: A1 still
     # measures it and now reports it beside the reading under its own id, because it is a property
     # of the reward distribution rather than of the grader.
@@ -478,12 +478,9 @@ def test_the_catalogue_loads_every_instrument():
     assert RegimeCondition.GROUP_NONDEGENERATE in a1.envelope_requires
 
 
-def test_a_row_with_no_status_reads_as_open_rather_than_as_blank():
-    """`status` is the schedule signal, and it has to carry the absent case too."""
-    assert _status_word("built") == "built"
-    assert _status_word(" planned ") == "planned"
-    assert _status_word("") == "OPEN"
-    assert _status_word("OPEN") == "OPEN"
+def test_the_one_instrument_scheduled_across_two_packages_joins_rather_than_reprs():
+    assert _work_package(["W3.4", "W6.4"]) == "W3.4/W6.4"
+    assert _work_package("OPEN") == ""
 
 
 def test_instrument_ids_sort_numerically():
