@@ -1,18 +1,18 @@
-"""Controlled stimulus builders: error planting with generator edit scripts.
+"""Controlled stimulus builders: error planting with generator edit scripts (section 2.4.4).
 
-This is the one home for controlled stimulus construction. Each builder returns a
+This is the one home for controlled stimulus construction (R2). Each builder returns a
 lineage-complete item together with the exact character-level edit script it applied, so token
 alignment (`data.align`) is exact by construction rather than re-inferred. That coupling is the
 whole point: an error-localization or receipt-reliance measurement is only as trustworthy as the
 alignment beneath it, and an alignment built from the generator's own edits cannot drift.
 
-What is built fully here is the mechanical family: planting an error at a known step of a math or
-code solution by swapping a number or negating an operator, the three receipt-falsification arms on
-a trajectory, and the deterministic paraphrase battery. What is deliberately stubbed is the
-family that needs an oracle to preserve a confound (style-matched or confidence-matched rewrites,
-oracle-authored quadruples, judge tournaments): those need oracle provenance stamping, and their
-stubs raise `NotImplementedError` naming exactly what they need. A stub here never masquerades as a
-finished builder.
+What is built here is the mechanical family, and only that: planting an error at a known step of a
+math or code solution by swapping a number or negating an operator, the three receipt-falsification
+arms on a trajectory, and the deterministic paraphrase battery. The family that needs an oracle to
+preserve a confound (style-matched or confidence-matched rewrites, the 2x2 agree/disagree by
+correct/incorrect cells, judge tournaments) is absent from this module rather than stubbed in it. It
+needs the oracle provenance stamping (R10) that no milestone here provides, and a name that raises
+reads from the outside like a builder; the builders arrive with the oracle layer or not at all.
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ from reward_lens.core.errors import DataError
 from reward_lens.data.align import CharEdit, align, apply_edits
 from reward_lens.data.lineage import make_lineage
 from reward_lens.data.schema import (
-    Pair,
     Trajectory,
     TrajStep,
     trajectory_content,
@@ -154,13 +153,13 @@ def corrupt_step(
     *,
     tokenizer: Tokenizer | None = None,
 ) -> tuple[str, list[CharEdit], Span]:
-    """Plant a mechanical error at step ``k`` of a math or code solution.
+    """Plant a mechanical error at step ``k`` of a math or code solution (section 2.4.4).
 
     Returns ``(corrupted_text, edit_script, error_span)`` where ``error_span`` is a token span (kind
     ``error``) over the *corrupted* text marking the planted mistake, and ``edit_script`` is the exact
     character-level edits (over the *clean* text) that produced it. Feed that script to
     `data.align.align` to get an exact clean/corrupted alignment, which is what makes error
-    localization exact.
+    localization exact (section 2.4.3).
 
     ``k`` is a zero-based step index; it raises `DataError` if out of range. Fully implemented modes:
 
@@ -168,9 +167,9 @@ def corrupt_step(
       token-count-preserving).
     - ``"negate"`` flips the step's first arithmetic operator.
 
-    TODO: length/style/confidence-*matched* control variants that keep everything but
+    TODO(M8+): length/style/confidence-*matched* control variants that keep everything but
     correctness fixed generally need an oracle rewrite (they cannot be produced by a purely
-    mechanical edit) and are not built here; they need oracle provenance stamping.
+    mechanical edit) and are not built here; they will land with oracle provenance stamping (R10).
     Requesting an unimplemented mode raises with that note rather than silently degrading.
     """
     steps = _split_steps(solution)
@@ -186,7 +185,7 @@ def corrupt_step(
         raise DataError(
             f"corrupt_step: mode {mode!r} is not a mechanical mode. "
             f"Built modes: {sorted(_MECHANICAL_MODES)}. Style/confidence-matched and other "
-            "oracle-assisted control variants are not implemented."
+            "oracle-assisted control variants are not yet implemented (TODO M8+, R10)."
         )
     edit = edit_fn(solution, step_start, step_end)
     corrupted = apply_edits(solution, [edit])
@@ -284,7 +283,7 @@ def _find_step_with(steps: tuple[TrajStep, ...], attr: str) -> int:
 def receipt_edits(
     traj: Trajectory, *, tokenizer: Tokenizer | None = None
 ) -> dict[str, dict[str, Any]]:
-    """Build the three receipt-manipulation arms of a trajectory (the N1 stimulus).
+    """Build the three receipt-manipulation arms of a trajectory (section 2.4.4, N1/L6).
 
     Returns a dict keyed by arm name, each value ``{"trajectory": Trajectory, "edit_script":
     [CharEdit], "step_index": int}``:
@@ -379,13 +378,14 @@ _PARAPHRASE_SUFFIXES = (
 
 
 def paraphrase_battery(prompt: str, k: int) -> list[str]:
-    """Return up to ``k`` deterministic surface paraphrases of ``prompt``.
+    """Return up to ``k`` deterministic surface paraphrases of ``prompt`` (section 2.4.4).
 
     Element 0 is always the untouched prompt. The rest are distinct prefix/suffix rewrites drawn from
     the E16 template space in a fixed order, so the battery is reproducible across runs. If ``k``
     exceeds the number of distinct variants the templates can produce, the full distinct set is
     returned (fewer than ``k``) rather than fabricating near-duplicates; the caller sees the honest
-    count. Style- or register-shifting paraphrases that need an oracle are out of scope here.
+    count. Style- or register-shifting paraphrases that need an oracle are out of scope here (TODO
+    M8+, R10).
     """
     if k <= 0:
         return []
@@ -402,57 +402,8 @@ def paraphrase_battery(prompt: str, k: int) -> list[str]:
     return out
 
 
-# ---------------------------------------------------------------------------
-# Oracle-assisted builders (stubbed with explicit provenance requirements)
-# ---------------------------------------------------------------------------
-
-
-def style_controls(pair: Pair) -> Any:
-    """STUB: verbosity/format/confidence-matched rewrites of a pair.
-
-    Matching everything but the labelled axis (so a verbosity-controlled correctness pair reads the
-    same length and register on both sides) requires an oracle rewrite that a mechanical edit cannot
-    produce, with oracle provenance stamping. It is stubbed rather than approximated so no study
-    mistakes an uncontrolled pair for a controlled one.
-    """
-    raise NotImplementedError(
-        "style_controls needs an oracle rewrite to hold style/verbosity/confidence fixed while "
-        "varying only the labelled axis, with oracle provenance. "
-        "Use the mechanical corrupt_step / receipt_edits builders instead."
-    )
-
-
-def quadruples(topic_bank: Any) -> Any:
-    """STUB: L2 agree/disagree x correct/incorrect controlled quadruples.
-
-    The 2x2 sycophancy design needs oracle-authored responses that vary agreement and correctness
-    independently while holding topic and register fixed. Stubbed until the oracle layer exists.
-    """
-    raise NotImplementedError(
-        "quadruples needs oracle-authored cells (agree/disagree x correct/incorrect) with matched "
-        "register and oracle provenance."
-    )
-
-
-def tournament_from_judges(prompts: Any, pool: Any, k: int) -> Any:
-    """STUB: k-wise judge tournaments with position-debiasing rotation.
-
-    Building a tournament from a judge pool requires calling the judges (oracles) with position
-    rotation and stamping each edge with its judge id and prompt hash. Stubbed until the oracle
-    layer exists; the `Tournament` schema and `EdgeObs.judge_id` are already in place for it.
-    """
-    raise NotImplementedError(
-        "tournament_from_judges needs a judge oracle pool with position-debiasing rotation and "
-        "per-edge provenance stamping. The Tournament/EdgeObs schema is "
-        "ready to receive its output."
-    )
-
-
 __all__ = [
     "corrupt_step",
     "receipt_edits",
     "paraphrase_battery",
-    "style_controls",
-    "quadruples",
-    "tournament_from_judges",
 ]

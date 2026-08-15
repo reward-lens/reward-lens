@@ -1,4 +1,4 @@
-"""Versioned builtin datasets that ship in the package wheel.
+"""Versioned builtin datasets that ship in the package wheel (section 2.4.2).
 
 These are the small, human-authored (and, where marked, mechanically authored) seed sets that seed
 the data plane: the v1 diagnostic triples imported with honest lineage, plus the two new dimensions
@@ -6,9 +6,9 @@ authored for v3. Importing this package registers their dataset cards so ``regis
 can serve them by name. Everything here is torch-free and cheap to import.
 
 ``diagnostic_seeds`` holds the 65 hand-written triples themselves. It was
-``reward_lens.diagnostic_data_v2`` in v1, where it sat at the package root beside the v1 analysis
-modules and got counted as one of them. It never was: it is a dataset, its only consumer is
-``diagnostic_v3`` here, and this is where the datasets live.
+``reward_lens.diagnostic_data_v2`` until W0.5's second half, where it sat at the package root beside
+the v1 analysis modules and got counted as one of them. It never was: it is a dataset, its only
+consumer is ``diagnostic_v3`` here, and this is where the datasets live.
 """
 
 from __future__ import annotations
