@@ -315,7 +315,7 @@ def _verdict(
     0.8291, position alone 0.8400, conditioned 0.6298 with a 95% interval of [0.5949, 0.6685]. The
     old rule called that "localises" and said "the discrimination is its own rather than the
     position prior's", when five sixths of the distance from chance to the pooled number was the
-    position prior's.
+    position prior's. SPEC-ERRATA E42 item 9.
 
     Five verdicts rather than four, because the above-chance confound is not the same statement as
     the below-chance one. Above chance the localiser does discriminate and the published number
@@ -544,7 +544,7 @@ ACCESS_STORED: AccessMatrix = {
     Component.GOLD: Access.RECORD,
 }
 
-#: A re-scoring of a recorded statistic. The twelve envelope conditions are all properties of a
+#: A re-scoring of a recorded statistic. Section 2.4's twelve conditions are all properties of a
 #: training run, and this instrument reads an archive: no regime can make a rank statistic over
 #: fixed numbers wrong. Declared explicitly rather than left empty, which `EnvelopeSpec` refuses.
 POSITION_ENVELOPE = EnvelopeSpec(

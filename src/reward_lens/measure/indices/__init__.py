@@ -1,11 +1,11 @@
-"""``reward_lens.measure.indices`` — the index library (the A-series theory objects).
+"""``reward_lens.measure.indices`` — the index library (DESIGN section 2.8.3, Appendix A).
 
-One module per index, each an `Observable` with a formal definition, a ``faithful_to`` anchor naming
-the theory object it instantiates, and a ``gauge_status``. The indices are the scalar diagnostics the
-cards and the scoreboard speak in; centralizing them here is what keeps the fifty programs of the
-corpus speaking one language, and giving each a single definition with an explicit ``deviations`` list
-is the structural fix for the operationalization drift that let v1 compute a coverage statistic while
-citing a distortion index.
+One module per index, each an `Observable` with a formal definition in Appendix A, a ``faithful_to``
+anchor naming that entry, and a ``gauge_status``. The indices are the scalar diagnostics the cards and
+the scoreboard speak in; centralizing them here is what keeps the fifty programs of the corpus speaking
+one language, and giving each a single Appendix A definition with an explicit ``deviations`` list is the
+structural fix for the operationalization drift that let v1 compute a coverage statistic while citing a
+distortion index (liability 2).
 
 Every module exposes two things: a pure function that is the mathematics of the index, provable on
 synthetic data where the answer is known, and an `Observable` subclass whose ``measure`` reads the
@@ -14,7 +14,7 @@ production path, degrading gracefully (a note in the Evidence, never a fabricate
 dependency the corpus is still building — a concept-feature bank, a probe battery, an interventions
 patch — is not yet available.
 
-Theory-object coverage:
+Appendix A coverage:
 
   - A1  KUI                  ``kui``                  (fully computed)
   - A2  Distortion v2        ``distortion``           (definition + synthetic test)
@@ -34,14 +34,8 @@ Theory-object coverage:
   -     Robustness SNR       ``snr``                  (definition + synthetic test)
   -     Contested direction  ``contested``            (definition + synthetic test)
 
-The pure functions here are numpy and the substrate readers import torch lazily, only when an
-Observable actually runs on a model. Importing the package nonetheless requires the ``[white-box]``
-extra today, over a single line: ``coherence`` imports ``participation_ratio`` from
-``reward_lens.geometry``, and the guard sits on the geometry package rather than on the function,
-which is itself pure numpy. So the base-install job skips this catalogue instead of covering it.
-Moving that function somewhere torch-free is what would earn the coverage back; it is coupled to
-``SpectrumResult`` in ``geometry/hessian.py``, so it is a change to make deliberately rather than
-in passing.
+Importing this package pulls no torch: the pure functions are numpy, and the substrate readers import
+torch lazily only when an Observable actually runs on a model.
 """
 
 from __future__ import annotations

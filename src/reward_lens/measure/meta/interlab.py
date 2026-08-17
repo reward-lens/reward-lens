@@ -610,7 +610,7 @@ def register_ladder() -> list[str]:
                 direction="approximately_unbiased",
                 why=(
                     "when the laboratories are configurations of one model rather than different "
-                    "models, s_L is the configuration-level noise floor measured directly. "
+                    "models, s_L is the configuration-level noise floor of §4.7 measured directly. "
                     "Specified and not built here: this build has no store carrying one model under "
                     "two engines over the same items"
                 ),

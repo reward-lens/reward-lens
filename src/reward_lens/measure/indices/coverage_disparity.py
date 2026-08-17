@@ -1,7 +1,7 @@
-"""Coverage disparity: v1's coverage statistic under its honest name (A2, deviation note).
+"""Coverage disparity: v1's coverage statistic under its honest name (Appendix A2, deviation note).
 
 This is NOT the Wang-Huang distortion index. It is the coverage statistic v1's E10 actually computed
-while citing Wang-Huang 2603.28063, the exact operationalization drift A2 calls out. The real
+while citing Wang-Huang 2603.28063, the exact operationalization drift Appendix A2 calls out. The real
 Wang-Huang per-dimension distortion lives in ``distortion.py`` (A2); this module keeps v1's statistic so
 its numbers remain reproducible, but names it for what it measures: the disparity in reward coverage
 across a set of dimensions or groups, not a distortion.
@@ -9,8 +9,8 @@ across a set of dimensions or groups, not a distortion.
 ``coverage(P)`` is the fraction of a property's reward-relevant signal captured by the named/intended
 channels. The disparity is the spread of that coverage across the battery: a large disparity means the
 reward covers some properties well and others poorly, which is a real and reportable inequality, just
-not Wang-Huang's object. Keeping it here, honestly labelled, is the structural fix that makes the
-v1 drift impossible to repeat silently: a card consuming this sees ``coverage_disparity``,
+not Wang-Huang's object. Keeping it here, honestly labelled, is the structural fix (liability 2) that
+makes the v1 drift impossible to repeat silently: a card consuming this sees ``coverage_disparity``,
 never ``distortion``.
 """
 
@@ -63,8 +63,8 @@ class CoverageDisparity(BaseObservable):
     """v1's coverage statistic, kept reproducible under its honest name (not Wang-Huang distortion).
 
     Takes a battery of per-property coverage values (injected; the concept/KUI layer supplies them in
-    production) and reports their disparity. ``faithful_to`` is None on purpose: this instantiates
-    no theory object, it preserves a v1 statistic, and the deviation note says so. Gauge is
+    production) and reports their disparity. ``faithful_to`` is None on purpose: this instantiates no
+    Appendix A theory object, it preserves a v1 statistic, and the deviation note says so. Gauge is
     INVARIANT.
 
     What it cannot do. Every number here is a spread of the coverage vector it was handed, so
@@ -86,7 +86,7 @@ class CoverageDisparity(BaseObservable):
         "operationalization drift.",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.coverage_disparity"
     #: The coverage battery is a recorded measurement from the concept or KUI layer. Nothing here
     #: calls the grader.
@@ -112,9 +112,9 @@ class CoverageDisparity(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """The battery or a refusal. A disparity across nothing is not zero disparity.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.coverage is None:

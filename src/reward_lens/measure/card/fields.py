@@ -251,9 +251,9 @@ def _afriat(cls: Any, inputs: CardInputs) -> Any:
     return cls(inputs.comparisons, baseline_draws=inputs.afriat_baseline_draws)
 
 
-#: The remedy for the two fields B4 fills: instrument the grader so the per-leaf scores are
-#: recorded. A score tree is not something a reader can obtain by asking for more access: it exists
-#: only if somebody recorded the per-leaf scores while the grader ran.
+#: The remedy for the two fields B4 fills, quoted from the shape section 4.2's amendment names.
+#: A score tree is not something a reader can obtain by asking for more access: it exists only if
+#: somebody recorded the per-leaf scores while the grader ran.
 _TAP_REMEDY = (
     "instrument the grader with `reward_lens.tap` so the per-leaf scores and the abstention "
     "channel are recorded, then pass `score_trees=` or `record_groups=` from the recorded groups. "

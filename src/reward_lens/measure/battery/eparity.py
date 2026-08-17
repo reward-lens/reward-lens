@@ -1,11 +1,11 @@
-"""E-parity recompute wiring from v1 activation caches.
+"""E-parity recompute wiring from v1 activation caches (section 4.3.2).
 
 The trust anchor for v3 is that it reproduces v1's verified-clean headline numbers from the cached
 activations before it is trusted to produce new ones. The v1 campaign left its final-token activations
 on disk (``read_v1_cache`` loads one shard into a :class:`~reward_lens.runtime.store.V1Cache`), and the
-targets are recorded in ``fixtures/e_parity/golden.json``. This module is the wiring that turns a cache
-plus a reward direction into the recompute, so the path ``cache + w_r + Observable = golden number`` is
-a single importable function rather than a description.
+historical targets were held in a private campaign fixture that is not distributed here. This module
+keeps the public wiring from a cache and reward direction to a recompute, without claiming access to
+that private target set.
 
 The unavoidable gate is stated plainly here and enforced by the caller. The reward direction ``w_r`` is
 the 8B model's score-head weight. It is a model weight, not a cached activation, and it is not uniquely
@@ -30,10 +30,10 @@ if TYPE_CHECKING:
 
 
 def population_lens(cache: "V1Cache", w_r: "torch.Tensor") -> dict[int, np.ndarray]:
-    """Project every cached final-token residual onto ``w_r``, per layer (the reward lens).
+    """Project every cached final-token residual onto ``w_r``, per layer (the reward-lens).
 
     Returns ``{layer: (N,) projection}`` for each layer present in the cache's residual streams. This
-    is the population reward lens: the reward the model would assign at each layer for each cached
+    is the population reward-lens: the reward the model would assign at each layer for each cached
     sample. It requires ``w_r`` (the 8B score head), which is the gated input; the cache supplies the
     residuals but not the direction. On a small model where ``w_r`` is available this reproduces the v1
     lens exactly, which is what the E-parity test proves before the number is trusted.

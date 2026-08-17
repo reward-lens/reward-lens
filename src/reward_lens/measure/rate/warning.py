@@ -2,8 +2,8 @@
 
 Rising variance and rising lag-1 autocorrelation are the standard pair for critical slowing down,
 and on their own they are not enough. A rolling autocorrelation computed on an autocorrelated series
-drifts upward for reasons that have nothing to do with an approaching bifurcation. Four
-requirements follow from that, and this module implements all four:
+drifts upward for reasons that have nothing to do with an approaching bifurcation, so section 3.4
+sets four requirements and this module implements all four:
 
 **A null built from surrogate series.** Kendall's tau of the indicator against time is compared
 against the same statistic computed on surrogates that preserve the spectrum and destroy the trend.
@@ -67,8 +67,8 @@ SurrogateMethod = Literal["fourier", "ar1"]
 class WarningCriteria:
     """Every number a verdict here is compared against, in one place, with where it came from.
 
-    None of these follows from the statistics themselves, which fix the method and not the
-    thresholds it is read against. They are this module's defaults.
+    None of these is stated in the specification, which names the statistics and not their
+    acceptance rules. They are this module's defaults and they are the list the integrator ratifies.
     """
 
     #: Rolling window as a fraction of the series length. **Chosen: 0.5**, which is the value the
@@ -478,7 +478,7 @@ def flickering(
 ) -> "Flickering | Refusal":
     """Bimodality by mixture BIC, calibrated against a unimodal parametric bootstrap.
 
-    There are two tests for this and this is the second of them. Hartigan's dip is the first and it
+    Section 3.4 names two tests and this is the second of them. Hartigan's dip is the first and it
     is not built: the dip is nonparametric where this is not, which matters, and a from-scratch
     implementation of the greatest-convex-minorant algorithm is a piece of statistics that is easy
     to get subtly wrong and hard to notice. The choice is recorded rather than hidden.
@@ -567,7 +567,7 @@ def flickering(
 class DriverComparison:
     """The relaxation time against the timescale the driver is moving on, which is `Ad` again.
 
-    This is one of the early-warning checks and it is the same quantity `H1` reports,
+    Section 3.4 lists this among the early-warning checks and it is the same quantity `H1` reports,
     reached from the other side: an early autoregressive fit gives the relaxation time, the schedule
     gives the driving rate, and the product is the adiabaticity number. It is here because the
     second caveat on every early-warning reading is that the warning arrives too late when the
@@ -741,7 +741,7 @@ def window_sensitivity(
 @register_payload
 @dataclass(frozen=True)
 class EarlyWarning:
-    """Every early-warning statement about one series, with all four of the required checks.
+    """Every early-warning statement about one series, with the four checks section 3.4 requires.
 
     Read `credible` and then read why. A rising autocorrelation with a significant null, a stable
     window sweep, a quiet noise control and a licensed driver comparison is the strongest statement
@@ -812,7 +812,7 @@ def early_warning(
     instrument: str = "EarlyWarning",
     seed: int = 0,
 ) -> "EarlyWarning | Refusal":
-    """Every required check, on one series, in one call.
+    """Every check section 3.4 asks for, on one series, in one call.
 
     The autocorrelation trend is required and everything else is best-effort: a variance trend, a
     flickering test, the driver comparison when a rate is supplied, the window sweep, and the noise

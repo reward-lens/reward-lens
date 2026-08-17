@@ -1,4 +1,4 @@
-"""``FeatureRewardAlignment`` (E12): which SAE features drive the reward.
+"""``FeatureRewardAlignment`` (E12): which SAE features drive the reward (section 2.8).
 
 A sparse autoencoder decomposes the residual stream into interpretable features whose decoder columns
 are directions in activation space. Since the reward is a linear read of that stream, each feature's
@@ -22,7 +22,7 @@ the ``[dict]`` extra because sparse dictionaries are candidate generators and ne
 substrate. On an install without that extra and without a supplied dictionary there is nothing to
 align against, so this refuses. It does not quietly return the alignment of something else, and it
 does not fabricate a dictionary out of a module it can reach by accident: that dependency was
-undeclared, which is the only reason the fallback ever looked free.
+undeclared until W0.5's second half, which is the only reason the fallback ever looked free.
 """
 
 from __future__ import annotations
@@ -97,7 +97,7 @@ class FeatureRewardAlignment(BaseObservable):
         "random SAE is substituted when none is supplied and the result is flagged accordingly",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.feature_alignment"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     substrates = NEURAL_SUBSTRATES
@@ -110,7 +110,7 @@ class FeatureRewardAlignment(BaseObservable):
     #: Each alignment is an inner product between a decoder column and the readout. Under
     #: `repr.basis` both rotate by the same orthogonal map, so the whole alignment vector, and the
     #: feature ranking read off it, are unchanged. The SAE's own basis is a separate gauge that
-    #: no registered group covers, which is what ``GaugeStatus.RAW_ONLY`` records.
+    #: Appendix B has no group for, which is what ``GaugeStatus.RAW_ONLY`` records.
     invariance = "repr.basis"
     invariance_relation = INVARIANT
     baselines = ("baseline.random_decoder", "baseline.untrained_sae")

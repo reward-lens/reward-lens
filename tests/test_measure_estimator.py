@@ -18,7 +18,7 @@ flag is ``std <= eps``, an absolute threshold on a scale-carrying quantity, so t
 fraction is affine-invariant only outside a band of width ``eps`` around zero spread. There are two
 tests: one on a window with no group inside the band, which passes and is the merge gate, and one on
 a window with a group placed inside it, which fails and records what the failure means. The
-*quantity* as stated ("groups with zero reward spread") is invariant; the estimator
+*quantity* as section 5.E states it ("groups with zero reward spread") is invariant; the estimator
 the trainer actually runs is not, and the difference is the epsilon.
 
 **A refusal test per instrument, asserting the reason and the remedy string.** A refusal with no
@@ -304,7 +304,7 @@ def test_the_replay_check_catches_a_spec_that_does_not_describe_the_transform():
     This test used to build its disagreement out of TRL's ratio clip, which
     `record.scores.replay_advantages` applied as a bound on the advantage: with `epsilon = 0.2`
     every replayed advantage came back as exactly 0.2. That route is closed, because the ratio clip
-    is a property of the loss and is no longer applied to the advantage (E50), so the
+    is a property of the loss and is no longer applied to the advantage (SPEC-ERRATA E50), so the
     disagreement here is built from the divisor instead. A record whose advantages TRL wrote under
     Bessel's correction and whose spec declares the population form misses by 0.1797 at K = 4,
     which is 1,797 times the tolerance.
@@ -666,7 +666,7 @@ def test_e2_is_not_affine_invariant_inside_the_epsilon_band_and_that_is_a_findin
 
     `GroupStats.degenerate` is ``std <= std_epsilon``, an absolute threshold on a quantity that
     carries the reward's scale. A group whose spread sits inside a band of width `eps` around zero
-    changes its verdict under a rescaling, so the fraction moves. The *quantity* as stated
+    changes its verdict under a rescaling, so the fraction moves. The *quantity* section 5.E states
     (groups with zero reward spread) is invariant; the estimator the trainer runs is not, and the
     gap is exactly the epsilon that makes `0 / (0 + eps)` finite.
     """
@@ -706,7 +706,7 @@ def test_e2_is_not_affine_invariant_inside_the_epsilon_band_and_that_is_a_findin
 
 
 def test_e1_declares_the_trivial_group_and_its_generated_test_passes_vacuously():
-    """`none` in the registry is a declaration, not an omission (E11)."""
+    """`none` in the registry is a declaration, not an omission (SPEC-ERRATA E11)."""
     assert QUANTITIES.get("estimator.spec").invariance == "trivial"
     report = check_invariance(
         RecordedEstimator(),
@@ -973,7 +973,7 @@ def test_the_series_needs_a_record_and_nothing_above_it():
 
 
 def test_e4_measures_its_envelope_rather_than_accepting_a_supplied_verdict():
-    """The specification says "`GROUP_NONDEGENERATE` measured, not assumed"."""
+    """Section 5.E line 1753 says "`GROUP_NONDEGENERATE` measured, not assumed"."""
     instrument = AmplifierSafety(mixed_window(), floor=FLOOR)
     measured = instrument.measure_nondegeneracy()
     assert measured is not None
@@ -1002,7 +1002,7 @@ def test_e4_refuses_when_its_own_measurement_says_the_groups_are_degenerate():
 
 
 def test_e2_does_not_require_the_condition_it_measures():
-    """The A4/B5 defect (E29), one series over: an envelope that makes an instrument
+    """The A4/B5 defect (SPEC-ERRATA E29), one series over: an envelope that makes an instrument
     refuse in exactly the regime it exists to report on."""
     for cls in (DegenerateGroups, AllFailGroups):
         assert cls.envelope.unconditional, cls.__name__
@@ -1063,7 +1063,7 @@ def test_the_series_imports_no_torch():
 
 
 def test_a2s_own_types_adapt_onto_the_interface_e3_declares():
-    """Series A ships `ComponentSet` and `GaugeRR`; E3 asks for one number and adapts both.
+    """W3.2a ships `ComponentSet` and `GaugeRR`; E3 asks for one number and adapts both.
 
     The two conversions must agree, because `gauge_rr`'s rule is "everything that is not the part is
     gauge" and that is exactly what `from_component_set` takes as error. Two routes to one number

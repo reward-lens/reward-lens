@@ -1,6 +1,6 @@
 """F4: the residual as a budget with named terms, and the test of whether it closes.
 
-There are nine contributions to `ρ = Δz_obs − η·G·C⁻¹·S` and one question to ask of them:
+Section 3.1.5 gives nine contributions to `ρ = Δz_obs − η·G·C⁻¹·S` and asks one question of them:
 **is `Var(ρ)` accounted for by `Σ u_i²`?** If yes the ledger is closed and the instrument is
 characterised, which is a stronger statement than any individual measurement in the design. If no
 there is an unmodelled term and finding it is a result. Either outcome is publishable, which is
@@ -15,7 +15,7 @@ coverage factor are `core.budget`'s and are not reimplemented here.
 does not carry is not zero, and it is not estimated: it goes into ``missing`` by name, and the
 combined uncertainty is then a **lower bound**, so an excess of `Var(ρ)` over it cannot be
 attributed to an unmodelled term. The verdict distinguishes those two cases and refuses to call the
-second one a discovery. On the two GRPO records this library ships, four of the nine terms are
+second one a discovery. On the two GRPO records this build ships, four of the nine terms are
 missing, and the reason each is missing is a fact about what the tap wrote rather than about the
 run.
 
@@ -37,7 +37,7 @@ from reward_lens.measure.ledger.price import StepSample
 from reward_lens.measure.reconcile.books import StepReconciliation
 from reward_lens.measure.reconcile.facts import Absent, RunFacts
 
-#: The nine terms of the budget, in the order the table gives them. Fixed as a constant so that
+#: The nine terms of §3.1.5's table, in the order the table gives them. Fixed as a constant so that
 #: a budget missing a term is missing a *named* term rather than one nobody noticed was absent.
 TERM_ORDER: tuple[str, ...] = (
     "u_stale",
@@ -111,7 +111,7 @@ class FeatureBudget:
 
     @property
     def is_complete(self) -> bool:
-        """Whether all nine terms were computed. Only then can an excess be a discovery."""
+        """Whether all nine terms of §3.1.5 were computed. Only then can an excess be a discovery."""
         return not self.missing
 
     def render(self) -> str:
@@ -135,9 +135,9 @@ def _rms(values: Sequence[float] | np.ndarray) -> float:
 def advantage_r_squared(samples: Sequence[StepSample], columns: Sequence[int]) -> tuple[float, int]:
     """`R²` of the within-group regression of the advantage on the features, and its sample size.
 
-    `u_basis`, the `ηJF⁻¹e` term, is bounded by `1 − R²` of the regression of `A` on `f`. Taken
-    within group and through the origin after centring, because that is the decomposition performed:
-    `A = Σ_i β_i (f_i − E f_i) + ε` under the policy's own sampling distribution, and `ε`
+    §3.1.5 bounds `u_basis`, the `ηJF⁻¹e` term, by `1 − R²` of the regression of `A` on `f`. Taken
+    within group and through the origin after centring, because that is the decomposition §3.1.3
+    performs: `A = Σ_i β_i (f_i − E f_i) + ε` under the policy's own sampling distribution, and `ε`
     is what the feature span does not reach. A pooled regression would attribute prompt-to-prompt
     heterogeneity to the features and report a higher `R²` than the basis earns.
     """
@@ -172,7 +172,7 @@ def itemise(
     samples: Sequence[StepSample],
     facts: RunFacts,
 ) -> list[FeatureBudget]:
-    """The GUM table, per feature, over the window.
+    """The GUM table of §3.1.5, per feature, over the window.
 
     Each term is a per-step standard uncertainty on `ρ`, root-mean-squared across the window, so
     that the quadrature sum is comparable against `Var(ρ)` across the same window. Terms whose
@@ -267,8 +267,8 @@ def _stale(
             f"rollouts are up to {int(value)} step(s) stale and the size of the resulting bias "
             f"cannot be read off the record",
             "rescore a held-out fraction of the stale rollouts under the policy that was updated "
-            "on them, and pass the difference. That is the Type A evaluation and there is no "
-            "record-only substitute for it.",
+            "on them, and pass the difference. Section 3.1.5 names this as the Type A evaluation "
+            "and there is no record-only substitute for it.",
         )
     )
 

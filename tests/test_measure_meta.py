@@ -81,7 +81,7 @@ def _registry():
     `register_ladders()`, which adds twelve rows for nine quantities. Left in, they would change
     what `ladder()` and `open_quantities()` return for every test module that runs after this one
     in the same process, and the failure would surface somewhere else and read as that module's
-    bug. E40 records the last two times that happened.
+    bug. SPEC-ERRATA E40 records the last two times that happened.
 
     Snapshotting the keys and removing what appeared is deliberate rather than listing the twelve
     impls: an enumerated list goes stale the next time a test here registers one more.
@@ -156,7 +156,7 @@ def test_register_ladders_is_idempotent_and_registers_rungs_that_have_no_impleme
     entries = ladder("substrate.noise_floor")
     # Rung 0 is M1's within-record blank; both rung-1 entries need a second engine, and one of
     # them is M8's, because an interlaboratory comparison of two configurations of one model *is*
-    # the numerics noise floor measured directly.
+    # the noise floor of §4.7 measured directly.
     assert [e.rung for e in entries] == [0, 1, 1]
     assert [e.impl for e in entries] == [
         "m1.within_record_blank",
@@ -815,7 +815,7 @@ def test_every_instrument_emits_a_payload_the_store_codec_can_encode():
 
 
 def test_every_instrument_returns_evidence_or_a_refusal_and_never_raises():
-    """The contract's return type, exercised on the empty construction of each, which all refuse."""
+    """§4.2's return type, exercised on the empty construction of each, which all refuse."""
     for instrument in instances():
         out = instrument.estimate(Context())
         assert isinstance(out, Refusal), instrument.name

@@ -154,9 +154,10 @@ PROPOSED: tuple[Quantity, ...] = (VARIANCE_COMPONENTS, GRR_PERCENT, NDC)
 # The envelope, and the condition the catalogue lost
 # ---------------------------------------------------------------------------
 
-#: A2's envelope in the source reads "fully crossed design; `MASK_STABLE`".
+#: ASSAY line 1627 prints A2's envelope as "fully crossed design; `MASK_STABLE`".
 #: `spec/CATALOGUE.yaml` carries only `MASK_STABLE`: the merge read the `Env` column as a list of
-#: `RegimeCondition` members and "fully crossed design" is not one, so it was dropped.
+#: `RegimeCondition` members and "fully crossed design" is not one, so it was dropped. That is the
+#: same defect class as SPEC-ERRATA E29's five mis-typed `Env` entries and it is recorded there.
 #:
 #: It is not a cosmetic loss. The estimator in `stats.gtheory` inverts expected mean squares whose
 #: expectations assume exactly one observation in every crossed cell. Run it on a design with holes
@@ -177,8 +178,8 @@ A2_ENVELOPE = EnvelopeSpec(
 GRR_ACCESS: dict[Component, Access] = {Component.GRADER: Access.REPLICATE}
 
 #: Catalogue A2 prints one baseline: "a single-draw point estimate, to show what it hides". The
-#: shipped `spec/CATALOGUE.yaml` split it at the comma into two entries. One baseline, and it is
-#: computed on every reading.
+#: shipped `spec/CATALOGUE.yaml` split it at the comma into two entries, which is SPEC-ERRATA E29's
+#: unapplied baseline-splitting patch. One baseline, and it is computed on every reading.
 GRR_BASELINES: tuple[BaselineID, ...] = ("baseline.single_draw_point_estimate",)
 
 BIAS: Mapping[int, BiasStatement] = {
@@ -433,7 +434,7 @@ class VarianceComponents(MetrologyInstrument):
     faithful_to = "A2"
     deviations = (
         "the catalogue's envelope for this instrument lost the qualifier 'fully crossed design' "
-        "when the source's `Env` column was read as a list of RegimeCondition members. There "
+        "when ASSAY line 1627's `Env` column was read as a list of RegimeCondition members. There "
         "is no member for it, so this instrument enforces the condition as a hard precondition "
         "returning a Refusal and proposes `RegimeCondition.DESIGN_CROSSED`, measured by a new "
         "`grader.design_balance`. Until that lands, the envelope declares MASK_STABLE only and the "
@@ -451,8 +452,9 @@ class VarianceComponents(MetrologyInstrument):
     )
 
     quantity = "grader.variance_components"
-    #: The other two quantities this instrument reports. `Instrument.quantity` is singular and A2
-    #: registers three, so the extra two are declared here and the payload carries all three.
+    #: The other two quantities this instrument reports. `Instrument.quantity` is singular in
+    #: section 4.2 and A2 registers three, so the extra two are declared here and the payload
+    #: carries all three.
     also_reports: tuple[str, ...] = ("grader.grr_percent", "grader.ndc")
     requires = GRR_ACCESS
     substrates = frozenset(

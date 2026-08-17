@@ -1,6 +1,6 @@
 """One shared shape for the six meta-instruments, and the one thing they add to it.
 
-The seam itself is `ControlInstrument`: preflight, compute once, refuse or emit. It was written for
+The seam itself is `ControlInstrument`: preflight, compute once, refuse or emit. W3.7a wrote it for
 the controls bank and series A reuses it, so a third copy here would be a third place for the gate
 logic to drift. What is added is a single hook.
 

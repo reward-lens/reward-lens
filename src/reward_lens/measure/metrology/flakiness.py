@@ -1,4 +1,4 @@
-"""A7, environment flakiness: score variance that belongs to the environment.
+"""A7, environment flakiness: score variance that belongs to the environment (section 5.A).
 
 The cheapest instrument in the catalogue and one of the most damaging. Replay the same task with
 the same policy N times and report the spread. LiveMCPBench's 18.9-point spread is the existence
@@ -79,13 +79,13 @@ FLAKINESS_ACCESS: dict[Component, Access] = {Component.TASK: Access.QUERY | Acce
 #: been reported is one draw from the distribution this instrument measures.
 FLAKINESS_BASELINES: tuple[BaselineID, ...] = ("baseline.single_run",)
 
-#: The source prints `Env determinism claim under test`, which is the reading rather than a
+#: E29: the source prints `Env determinism claim under test`, which is the reading rather than a
 #: precondition. An envelope requiring determinism would make the instrument refuse on exactly the
 #: environments it exists to catch, which is B5's defect in a second place.
 FLAKINESS_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
-        "The source records `Env determinism claim under test`. The determinism claim is what "
+        "ASSAY line 1643 prints `Env determinism claim under test`. The determinism claim is what "
         "this instrument measures, so making it a precondition would make the instrument refuse on "
         "every environment that has something to report. Replaying a task and recording what came "
         "back assumes nothing about the run."

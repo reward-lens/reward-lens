@@ -86,7 +86,7 @@ if TYPE_CHECKING:
     from reward_lens.core.evidence import Evidence
 
 #: F2's envelope. The catalogue prints `envelope_requires: OPEN` for this record, so the two
-#: conditions here are a proposal rather than a transcription and are open to revision.
+#: conditions here are a proposal rather than a transcription and the integrator has to ratify them.
 #:
 #: `LINEAR_RESPONSE` is deliberately **not** among them: `MEASURED_BY` names
 #: `selection.explained_fraction` as the quantity that measures that condition, and this instrument
@@ -305,7 +305,7 @@ def lambda_by_step(
 ) -> list[tuple[int, float]]:
     """`Λ` per step, fitted over a sliding window of `2·context + 1` step pairs centred on each.
 
-    The quantity is `Λ` **per step**, and `Λ` is a fraction of variance across steps,
+    The acceptance clause asks for `Λ` **per step**, and `Λ` is a fraction of variance across steps,
     so a single pair cannot produce one: with one point the through-origin fit passes through it and
     the uncentred `R²` is 1 by construction. That is the vacuous answer, so a window is used and its
     width is reported. ``context=5`` gives eleven pairs per point, which is above the five-pair floor
@@ -336,9 +336,9 @@ class _ExplainedInstrument(BaseObservable):
     version = "1.0"
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to: str | None = "Price equation, first-order residual test"
+    faithful_to: str | None = "Price equation (section 3.1.1), first-order residual test"
     deviations: tuple[str, ...] = (
-        "the regression is specified without its conventions. It is fitted through the "
+        "section 3.5 states the regression and not its conventions. It is fitted through the "
         "origin, so the reported R-squared is the uncentred one, and each feature enters divided "
         "by its own pooled standard deviation over the window so that the pooled fit is not a "
         "statement about the units the converter recorded in.",
@@ -351,7 +351,7 @@ class _ExplainedInstrument(BaseObservable):
     substrates = frozenset(Substrate)
     phases = frozenset({Phase.IN_RUN, Phase.POST_RUN})
     envelope = EXPLAINED_ENVELOPE
-    #: `units` is the one invariance group whose assertion is a refusal rather than a numeric
+    #: `units` is the one group of Appendix B whose assertion is a refusal rather than a numeric
     #: relation, so `check_invariance` routes it to `check_unit_refusal` and the generated test is
     #: about a comparison rather than about a value. Both quantities here are dimensionless, and
     #: the substantive checks that are not vacuous are property tests: `Lambda` and `eta_eff` are
@@ -461,7 +461,7 @@ class _ExplainedInstrument(BaseObservable):
             )
         return fit
 
-    # -- the two methods ---------------------------------------------------
+    # -- the two methods of section 4.2 ------------------------------------
 
     def estimate(self, ctx: Context) -> Reading:
         pre = self.preflight(ctx)
@@ -609,7 +609,7 @@ def _register() -> None:
                     "through-origin slope is attenuated toward zero by the classical "
                     "errors-in-variables factor. The attenuation is the ratio of true to observed "
                     "covariance variance across steps, which C1's within-prompt rollout variance "
-                    "estimates, and correcting it is what reconciles the two."
+                    "estimates, and correcting it is the unification section 3.1.3 names."
                 ),
             ),
             cost=CostModel(

@@ -1,4 +1,4 @@
-"""E5, clip and mask accounting: what the clip removes, propagated.
+"""E5, clip and mask accounting: what the clip removes, propagated (section 5.E).
 
 Clip fraction is logged by everything. What nobody propagates is the shrinkage the clip applied to
 the update, and that shrinkage is the multiplier on every step whose gradient crossed the threshold.
@@ -325,7 +325,7 @@ class ClipAccounting(EstimatorInstrument):
     faithful_to = "E5"
     deviations = (
         "the effect is computed from the two recorded gradient norms rather than by recomputing "
-        "the gradient. The catalogue says 'recomputing unclipped', which needs a backward "
+        "the gradient. Section 5.E's sentence says 'recomputing unclipped', which needs a backward "
         "pass; the unclipped norm is the one every trainer already logs, so the ratio of the two "
         "is the same number without the pass",
         "the ratio-clip fraction is read out of `OptimizerTelemetry.extra`, which is untyped by "
@@ -335,7 +335,7 @@ class ClipAccounting(EstimatorInstrument):
         "gradient-norm clip) and this instrument does not settle it. It is reported as recorded "
         "and used in no calculation",
         "the effect is propagated into the applied update rather than into veRL's `proxy1`. "
-        "The catalogue's `says` line for E5 reads 'Recomputing unclipped moves the gradient norm by "
+        "Section 5.E's `says` line for E5 reads 'Recomputing unclipped moves the gradient norm by "
         "31%, so every gradient-derived quantity is biased', which assumes the logged norm is the "
         "post-clip one. It is the pre-clip norm in torch, FSDP, veRL and transformers, each of "
         "which says so in its own source, so the quantity the clip biases is the update and not "

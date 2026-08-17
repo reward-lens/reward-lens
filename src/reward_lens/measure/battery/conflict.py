@@ -1,4 +1,4 @@
-"""``ConflictMatrix`` (E09): the geometry of competing reward terms.
+"""``ConflictMatrix`` (E09): the geometry of competing reward terms (section 2.8).
 
 Different quality axes (helpfulness, verbosity, formatting, ...) each define a direction in activation
 space, estimated as the mean chosen-minus-rejected difference for that axis. Their pairwise cosines
@@ -51,8 +51,8 @@ class ConflictMatrix(BaseObservable):
 
     This instrument does not declare ``LINEAR_READOUT``. It never reaches a readout vector: the
     directions come from activation differences at a hardcoded final residual site, and the cosines
-    are computed between those differences. The declaration was dropped after an audit of all
-    fourteen sites in ``measure/``.
+    are computed between those differences. The declaration was dropped in W1.5 after an audit of
+    all fourteen sites in ``measure/``.
     """
 
     name = "ConflictMatrix"
@@ -65,7 +65,7 @@ class ConflictMatrix(BaseObservable):
         "v1 learned them); cosines are RAW_ONLY (basis-dependent), meaningful within one model",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.term_conflict"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     substrates = NEURAL_SUBSTRATES
@@ -83,7 +83,7 @@ class ConflictMatrix(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_direction_pair", "baseline.shuffled_axis_labels")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",

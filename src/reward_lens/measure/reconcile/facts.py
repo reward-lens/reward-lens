@@ -1,6 +1,6 @@
 """What the record says about each term of the residual budget, and what it does not say.
 
-Six of the nine itemised contributions are properties of the training loop rather than of
+Six of the nine contributions §3.1.5 itemises are properties of the training loop rather than of
 the features: the KL coefficient, the entropy coefficient, the rollout staleness, the clip
 fraction, the optimiser's raw-minus-applied gap, and the curvature. This module reads them off a
 `Run` and reports each one as present with a value or absent with the reason and the remedy.
@@ -12,7 +12,7 @@ applied none, and a budget that assumes the second closes by construction. The d
 first is a result and the second is a gap, and a budget that cannot tell them apart cannot say
 which of its terms it is entitled to trust.
 
-On the two GRPO records this library ships, both readings occur. `beta` is 0.0 in the schedule at
+On the two GRPO records this build ships, both readings occur. `beta` is 0.0 in the schedule at
 every step, so the KL pull is exactly zero and `u_KL` vanishes for a reason rather than for want of
 a number. `grad_norm_unclipped`, `update_norm` and `clip_fraction` are all `None`, and the recorded
 config names `adamw_torch_fused`, so the optimiser certainly carries momentum and the record

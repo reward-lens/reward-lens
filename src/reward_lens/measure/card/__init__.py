@@ -1,4 +1,4 @@
-"""D7, the grader card: the composite artifact and the wedge product.
+"""D7, the grader card: the composite artifact and the wedge product (section 5.D).
 
 Nothing like it exists. A marketplace listing for a reward model states its architecture, its
 training mixture and a leaderboard number, and states none of the thirteen quantities a buyer

@@ -8,8 +8,7 @@ causes and only one of them is a discovery:
     characterised.
 ``unmodelled``
     The ratio is above 1 with its interval clear of it, **and every one of the nine terms was
-    computed**. There is a contribution the itemisation does not name, and finding that is a
-    result.
+    computed**. There is a contribution §3.1.5 does not name, and finding it is a result.
 ``incomplete``
     The ratio is above 1 and terms are missing. The budget is a lower bound, so the excess is
     unattributed rather than unmodelled. Naming this separately is the whole point: the flattering
@@ -202,7 +201,7 @@ def _verdict_of(ratio: float, low: float, high: float, n_missing: int) -> tuple[
         )
     return (
         "unmodelled",
-        "every itemised term was computed and the residual variance still exceeds them, "
+        "every term of section 3.1.5 was computed and the residual variance still exceeds them, "
         "so there is a contribution the itemisation does not name",
     )
 

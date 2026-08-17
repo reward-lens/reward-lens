@@ -3,7 +3,7 @@
 Every id here is already registered. `spec/QUANTITIES.yaml` carries the row, the unit and the
 invariance group, and carries `definition: OPEN`, `interpretation: OPEN` and `support: OPEN` for
 each one. So `Quantity.definition` resolves to the empty string, and a quantity with no definition
-cannot do its one job: two rungs of a ladder are comparable because they estimate the
+cannot do the one job §2.5 gives it: two rungs of a ladder are comparable because they estimate the
 same defined thing, and nothing is comparable to a blank.
 
 Nothing here registers anything. `register_quantity` refuses to redefine a live name to something
@@ -89,7 +89,7 @@ SUBSTRATE_LOD = Quantity(
     unit=_DOSE,
     invariance="units",
     interpretation=(
-        "Below this, refuse. The three-outcome rule is refuse below the LOD, return a "
+        "Below this, refuse. The three-outcome rule of §4.7 is refuse below the LOD, return a "
         "bound between the LOD and the LOQ, and report with a budget above the LOQ."
     ),
     support=(0.0, float("inf")),
@@ -196,7 +196,7 @@ LADDER_RUNG_DISAGREEMENT = Quantity(
     id="ladder.rung_disagreement",
     definition=(
         "The absolute difference between two rungs of one estimator ladder for one quantity, "
-        "computed on identical data. It is a `Transfer` term of the calibration chain: the "
+        "computed on identical data. It is a `Transfer` term of §2.8's calibration chain: the "
         "cheap rung's transfer uncertainty against the expensive one, on this substrate."
     ),
     unit=_DELTA,

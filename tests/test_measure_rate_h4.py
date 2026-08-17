@@ -113,8 +113,9 @@ def test_the_width_estimator_is_close_to_unbiased_at_two_noise_levels():
     therefore 1.1 steps. So this asserts the magnitude only. Over 200 replicates the drift is
     upward at every noise level from 0.02 to 0.2, by +0.17 percent to +2.2 percent of the planted
     width, and upward is the safe direction: a width biased up makes every lead measured against it
-    smaller, so the error is toward claiming less margin than there was. That measurement was made
-    at a replicate count this test cannot carry, so it is reported rather than asserted here.
+    smaller, so the error is toward claiming less margin than there was. That measurement is in the
+    build report with its replicate counts rather than asserted here at a sample size that cannot
+    carry it.
     """
     for sd, tolerance in ((0.02, 0.02), (0.2, 0.06)):
         widths = [
@@ -244,7 +245,7 @@ def test_a_lead_is_reported_in_widths_with_the_step_count_labelled():
 
 
 def test_the_specification_worked_example_reproduces():
-    """The worked example prints "a fitted width of 58 steps. A 40-step lead is 0.69 of a window."
+    """Section 3.4 prints "a fitted width of 58 steps. A 40-step lead is 0.69 of a window."
 
     The width is planted at 58 and the lead is planted at 40 steps before the fitted midpoint, so
     what this checks is the arithmetic of the unit and the fit's ability to land on 58.
@@ -374,7 +375,7 @@ def test_the_envelope_downgrades_rather_than_refusing():
     """Both conditions are confounders for a fitted width and neither makes the fit unreal.
 
     An envelope that refused here would withhold the fit on exactly the records where a reader most
-    needs to see it and then decide, which is E29's failure in the other direction.
+    needs to see it and then decide, which is SPEC-ERRATA E29's failure in the other direction.
     """
     envelope = TransitionWidth.envelope
     assert envelope.on_violation == "downgrade"

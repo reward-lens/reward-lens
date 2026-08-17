@@ -1,4 +1,4 @@
-"""A4, the Blackwell order: rank graders by informativeness rather than accuracy.
+"""A4, the Blackwell order: rank graders by informativeness rather than accuracy (section 5.A).
 
 Accuracy is the wrong statistic and the size of the gap is on the record: pairwise accuracy
 correlates 0.220 to 0.382 with downstream RLHF performance, against 0.924 to 0.963 for a
@@ -12,10 +12,10 @@ exactly when B is a garbling of A: when there is a stochastic matrix ``M`` with 
 That is a statement about channels, not about scores, which is why this instrument needs no scalar
 representation and why its envelope is unconditional. A grader whose preference structure has curl
 mass above B5's bound is not scalar-representable and is still perfectly orderable here. The
-catalogue carried `SCALAR_REPRESENTABLE` as a *requirement* for a while, because the source line
+catalogue carried `SCALAR_REPRESENTABLE` as a *requirement* for one wave, because the source line
 reads "`SCALAR_REPRESENTABLE` not required" and a negation transcribed as a list of one becomes a
 requirement. That made the instrument for ranking graders refuse on exactly the graders it exists to
-rank. It is corrected here.
+rank. Corrected in SPEC-ERRATA E29.
 
 **Store agreement patterns, not vote counts, and the reduction happens at read time.** Under
 arbitrarily dependent errors the prevalence of the true state is completely unidentified: weak
@@ -98,12 +98,12 @@ BLACKWELL_ACCESS: dict[Component, Access] = {
 #: Catalogue A4 names one baseline, and it is the thing this instrument argues with.
 BLACKWELL_BASELINES: tuple[BaselineID, ...] = ("baseline.rewardbench_accuracy",)
 
-#: Unconditional, with the justification quoting the line the merge inverted.
+#: E29: unconditional, with the justification quoting the line the merge inverted.
 BLACKWELL_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
-        "The source reads `Env SCALAR_REPRESENTABLE not required`. The Blackwell order is over "
-        "channels rather than over scores, so a grader whose preference structure no scalar "
+        "ASSAY line 1634 prints `Env SCALAR_REPRESENTABLE not required`. The Blackwell order is "
+        "over channels rather than over scores, so a grader whose preference structure no scalar "
         "can carry is still orderable, and this instrument is the one that says so. No regime of a "
         "run can make a conditional distribution stop being a conditional distribution."
     ),

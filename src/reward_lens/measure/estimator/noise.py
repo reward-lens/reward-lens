@@ -1,4 +1,4 @@
-"""E3, the signal-versus-noise share of the gradient and its attribution.
+"""E3, the signal-versus-noise share of the gradient and its attribution (section 5.E).
 
 **veRL already ships the fraction.** `compute_variance_proxy_metrics` at
 `verl/trainer/ppo/metric_utils.py:691` emits five metrics under a `variance_proxy/` prefix, built on
@@ -46,7 +46,7 @@ sampling, and 6 are the clip", and the third term is not derivable for the reaso
 own effect is carried on the reading as `clip_shrinkage` with the sentence that says why it is not
 a share of the noise, rather than being folded into one.
 
-**The scope note this needs, and it is narrower than "nobody does this".** Three papers
+**The scope note section 3.2 insists on, and it is narrower than "nobody does this".** Three papers
 connect grader unreliability to gradient quality: arXiv 2510.00915 formalises verifier unreliability
 as a stochastic reward channel with asymmetric rates and derives an unbiased policy-gradient
 estimator implemented as hooks in a GRPO pipeline; arXiv 2510.18924 proves reward corruption
@@ -97,8 +97,8 @@ from reward_lens.record.scores import (
     replay_advantages,
 )
 
-#: The five metric keys veRL emits, with the `variance_proxy/` prefix that is easy to drop when
-#: they are quoted. They arrive in `OptimizerTelemetry.extra`, which is untyped, so reading them
+#: The five metric keys veRL emits, with the `variance_proxy/` prefix SPEC-ERRATA E7 records that
+#: section 8.2 dropped. They arrive in `OptimizerTelemetry.extra`, which is untyped, so reading them
 #: is a declared deviation.
 PROXY_KEYS: dict[str, str] = {
     "proxy1": "variance_proxy/proxy1_signal_strength",

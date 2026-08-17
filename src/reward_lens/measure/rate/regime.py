@@ -1,24 +1,24 @@
-"""H5, the regime reading: the twelve regime conditions measured from a record.
+"""H5, the regime reading: the twelve conditions of section 2.4 measured from a record.
 
 Access, phase and substrate all fail loudly. Regime fails quietly, and this module is where the
 quiet failure is made to speak. Every instrument in the library declares an `EnvelopeSpec` naming
 the conditions its estimator needs to be *true* rather than merely available; the reading this
 module produces is what those declarations are checked against. That is why it is a mechanism and
-not a finding.
+not a finding, and why it moved out of Phase 6.
 
 **Three states per condition, and the third one is the work.** `holds=True` and `holds=False` are
 easy. `holds=None` means the determination could not be made, and getting those right matters more
 than getting the easy ones right, because a `False` that means "I could not tell" is the exact
 defect this library exists to prevent. Several of the twelve are `None` on most real records today:
-`LINEAR_RESPONSE` needs a Lambda a record does not carry, `ABOVE_LOD` is a property of a reading
+`LINEAR_RESPONSE` needs a Lambda that W4.3 has not built, `ABOVE_LOD` is a property of a reading
 rather than of a run, and `STATIONARY_GRADER` needs either a check standard or a weight schedule
 that most converters do not carry. Each of those returns `None` with a sentence saying what would
 settle it.
 
 **What this cannot do, stated up front.**
 
-The reading is a *window* statistic wearing a per-step name. The conditions are defined "measured
-per step", and four of the twelve are statements about change (`QUASI_STATIC`, `STATIONARY_GRADER`,
+The reading is a *window* statistic wearing a per-step name. Section 2.4 says "measured per step",
+and four of the twelve are statements about change (`QUASI_STATIC`, `STATIONARY_GRADER`,
 `EXOGENOUS_CURRICULUM`, and the schedule half of anything else), so on a window of one step they
 have nothing to compare against and return `None` rather than a vacuous pass. Widen the window with
 `context=` and they become answerable. A one-step window that reported `STATIONARY_GRADER` true
@@ -29,14 +29,14 @@ Three of the twelve are one-sided tests and say so in their detail. `EXOGENOUS_C
 detect a curriculum responding to the score and cannot prove one is not; `NO_COMPACTION` on a
 record whose converter never emits `CompactionEvent` cannot tell an absence from a silence, and
 returns `None` when it cannot rule that out; `LIGHT_TAILED` at the exceedance counts a training
-record supplies is a flag rather than an estimate, and a defensible tail estimate needs roughly
-1,570 exceedances against the thirty this module will settle for.
+record supplies is a flag rather than an estimate, and section 3.0.1 puts a defensible tail
+estimate at roughly 1,570 exceedances against the thirty this module will settle for.
 
 Every threshold a verdict is compared against lives in `RegimeThresholds` and every sample-size
 floor that decides measured-against-indeterminate lives in `RegimeFloors`. Two of the thresholds
-come with the conditions themselves and are cited at the field; the rest are this module's defaults
-and are marked as such, because a threshold in an envelope is not a decision an implementation gets
-to make quietly.
+are stated in the specification and are cited at the field; the rest are this module's defaults and
+are marked as needing ratification, because a threshold in an envelope is not a decision an
+implementation gets to make quietly.
 """
 
 from __future__ import annotations
@@ -89,13 +89,13 @@ Window = tuple[int, int]
 #: twelve resolve to an id `spec/QUANTITIES.yaml` already carries. Five do not, and they are
 #: proposed under the existing `run.` prefix rather than invented under a new one:
 #: `run.max_staleness`, `run.curriculum_response`, `run.compaction_events`, `run.importance_ess`
-#: and `run.mask_signature` have no catalogue row, so an instrument requiring `NEAR_POLICY` today
+#: and `run.mask_signature` have no Appendix A row, so an instrument requiring `NEAR_POLICY` today
 #: has no registered quantity to point `measured_by` at.
 #:
 #: That gap is silent rather than loud, which is why it is named here. `EnvelopeSpec.__post_init__`
 #: checks that every condition in `requires` appears in `measured_by` and does not check that the
 #: value is a registered quantity, so an envelope naming an id nobody registered constructs
-#: cleanly and reads as rigour.
+#: cleanly and reads as rigour. The five rows are in the build report as a patch.
 MEASURED_BY: Mapping[RegimeCondition, str] = {
     RegimeCondition.QUASI_STATIC: "run.adiabaticity",
     RegimeCondition.LINEAR_RESPONSE: "selection.explained_fraction",
@@ -112,12 +112,12 @@ MEASURED_BY: Mapping[RegimeCondition, str] = {
     # A property of a measurement design rather than of a training run, so nothing in a bare
     # record determines it and `measure_regime` reports it unknown rather than as a pass.
     # It is here because this mapping is asserted to cover every member: a condition with no
-    # measuring quantity is one an envelope can require and nobody can check.
+    # measuring quantity is one an envelope can require and nobody can check. SPEC-ERRATA E49.
     RegimeCondition.DESIGN_CROSSED: "grader.design_balance",
 }
 
-#: Which of the twelve `MEASURED_BY` targets `spec/QUANTITIES.yaml` does not carry. Empty today,
-#: and kept as data rather than deleted so the assertion stays a live check on an empty set
+#: Which of the twelve `MEASURED_BY` targets `spec/QUANTITIES.yaml` does not carry. Empty since
+#: wave 3, and kept as data rather than deleted so the assertion stays a live check on an empty set
 #: instead of a test nobody wrote. `EnvelopeSpec.__post_init__` now enforces that every id here
 #: resolves, which is the guard this constant was standing in for.
 UNREGISTERED_MEASURED_BY: frozenset[str] = frozenset()
@@ -132,37 +132,38 @@ UNREGISTERED_MEASURED_BY: frozenset[str] = frozenset()
 class RegimeThresholds:
     """Every number a verdict is compared against, in one place, with where it came from.
 
-    Two of these come with the conditions themselves and are used as stated. The other seven are
-    this module's defaults, chosen for the reasons given at each field. A default is not a decision;
-    it is a placeholder that behaves like one until somebody says otherwise, which is why they are
-    gathered here rather than scattered through the estimators.
+    Two of these are stated in the specification and are used as stated. The other seven are this
+    module's defaults, chosen for the reasons given at each field, and they are the list the
+    integrator has to ratify. A default is not a decision; it is a placeholder that behaves like
+    one until somebody says otherwise, which is why they are gathered here rather than scattered
+    through the estimators.
     """
 
-    #: Ad = tau_relax * |d log lambda / dt|. The condition as stated: "Ad much less than 1 is
+    #: Ad = tau_relax * |d log lambda / dt|. Section 3.4 line 1052: "Ad much less than 1 is
     #: quasi-static and Level 0 extrapolation is licensed. Ad of order 1 or more is fast driving
     #: and it is not." The sentence gives two numbers and only one of them is a boundary: 1.0 is
-    #: where the licence stops. The stricter reading of "much less than 1" argues for 0.1, which
-    #: would refuse a band nothing explicitly refuses. **Chosen: 1.0.**
+    #: where the spec says the licence stops. The stricter reading of "much less than 1" argues
+    #: for 0.1, which would refuse a band the spec does not explicitly refuse. **Chosen: 1.0.**
     ad_max: float = 1.0
 
-    #: The fraction of groups that may be degenerate. **Stated** by the capability report, which
+    #: The fraction of groups that may be degenerate. **Stated**, section 4.5 line 1458, which
     #: prints "GROUP_NONDEGENERATE ok degenerate group fraction 0.04 (threshold 0.20)". Note the
     #: direction: the statistic is the *degenerate* fraction and the condition holds when it is
     #: below the threshold, which is the opposite orientation from the condition's name.
     degenerate_group_fraction_max: float = 0.20
 
-    #: Optimizer steps behind the current policy. **Stated** by the capability report, which prints
+    #: Optimizer steps behind the current policy. **Stated**, section 4.5 line 1459, which prints
     #: "NEAR_POLICY ok max staleness 2 steps (threshold 8)".
     max_staleness_steps: int = 8
 
-    #: Lambda, F2's selection-explained fraction, below which the first-order expansion is not
-    #: carrying the movement. Nothing states a boundary for it.
+    #: Lambda, the selection-explained fraction of section 3.5 (F2), below which the first-order
+    #: expansion is not carrying the movement. Nothing in the specification states a boundary.
     #: **Chosen: 0.5**, on the argument that below a half the term you expanded explains less of
-    #: what moved than everything you dropped. Lambda itself is F2's and is not computed here.
+    #: what moved than everything you dropped. Lambda itself is W4.3 and is not computed here.
     explained_fraction_min: float = 0.5
 
     #: How far a check standard may move before the grader counts as non-stationary, in the
-    #: standard's own units. A check standard is a probe set whose job is to be
+    #: standard's own units. Section 4.7 defines a check standard as a probe set whose job is to be
     #: invariant, so any movement in it is instrument drift by construction, and the tolerance that
     #: follows from that definition is zero. **Chosen: 0.0**, which is strict and which a run
     #: should override with its standard's own reproducibility limit rather than with a guess.
@@ -178,18 +179,19 @@ class RegimeThresholds:
     #: It is a convention and not a theorem, and it is the one number here with the least support.
     ess_fraction_min: float = 0.5
 
-    #: The Hill estimate above which the tail stops being light. The one cited measurement is "a
-    #: Hill estimate around 0.20 on an open reward model, consistent with light-tailed error", and
-    #: the worked capability report prints "Hill gamma-hat = 0.19 [0.12, 0.27]. Light-tailed
+    #: The Hill estimate above which the tail stops being light. Section 3.5 line 768 reports "a
+    #: Hill estimate around 0.20 on an open reward model, consistent with light-tailed error" and
+    #: section 4.5's own worked report prints "Hill gamma-hat = 0.19 [0.12, 0.27]. Light-tailed
     #: assumption holds", so whatever the bound is, 0.20 has to pass it. **Chosen: 0.25.** Strictly
     #: the moment generating function fails to exist for any positive shape at all, so this is a
     #: bound on the estimate rather than on the truth, and the interval on a training record's
     #: exceedance count is wide enough to cross it.
     hill_max: float = 0.25
 
-    #: Curl mass, the share of comparison energy no scalar can express. No bound is stated
-    #: anywhere. **Chosen: 0.05.** The one measured value in the project is 0.214 of
-    #: intransitive mass, which is a substantial finding, so the bound has to sit well below it.
+    #: Curl mass, the share of comparison energy no scalar can express (section 3.6). No bound is
+    #: stated anywhere. **Chosen: 0.05.** The one measured value in the project is 0.214 of
+    #: intransitive mass, which the specification treats as a substantial finding, so the bound
+    #: has to sit well below it.
     curl_mass_max: float = 0.05
 
 
@@ -205,12 +207,12 @@ class RegimeFloors:
 
     #: Points needed for the early AR(1) fit that supplies tau_relax at rung 0.
     ar_min_points: int = 10
-    #: How many steps from the start of the run count as "early" for that fit. The relaxation time
-    #: should be estimated before the transition, and a fit run over the transition
+    #: How many steps from the start of the run count as "early" for that fit. Section 3.4 wants
+    #: the relaxation time estimated before the transition, and a fit run over the transition
     #: measures the transition.
     ar_early_steps: int = 50
-    #: Exceedances needed before a Hill estimate is reported at all. A defensible estimate needs
-    #: roughly 1,570; this is a regime flag rather than a tail claim, and
+    #: Exceedances needed before a Hill estimate is reported at all. Section 3.0.1 puts a
+    #: defensible estimate at roughly 1,570; this is a regime flag rather than a tail claim, and
     #: thirty is where the estimator stops being pure noise. Anything computed here between the
     #: two numbers is a flag, and the detail says so.
     hill_min_exceedances: int = 30
@@ -230,7 +232,7 @@ class RegimeInputs:
     `None` and never a default value, because a default value would be a measurement nobody took.
     """
 
-    #: The relaxation time in optimizer steps. Rung 1 measures this by perturb and
+    #: The relaxation time in optimizer steps. Section 3.4's rung 1 measures this by perturb and
     #: hold; supplying it here skips the AR(1) fit and the reading says which path produced it.
     tau_relax: float | None = None
     #: Which key of `Step.schedule` is the annealing parameter. None means every positive key is
@@ -239,7 +241,7 @@ class RegimeInputs:
     schedule_parameter: str | None = None
     #: Which recorded series the AR(1) relaxation time is fitted to.
     relaxation_series: Literal["group_mean", "entropy", "kl_to_previous"] = "group_mean"
-    #: Lambda, the selection-explained fraction. F2 computes it; this module does not.
+    #: Lambda, the selection-explained fraction. W4.3 (F2) computes it; this module does not.
     explained_fraction: float | None = None
     #: The substrate's disagreement with itself, for the below-LOD check.
     lod: LimitOfDetection | None = None
@@ -271,7 +273,7 @@ _NAN = float("nan")
 def _provenance(condition: RegimeCondition, material: Mapping[str, Any]) -> str:
     """A content-derived id for one condition's determination, so the check is auditable.
 
-    `ConditionReading.provenance` has the type `EvidenceID` for the reason "so the
+    Section 2.4 gives `ConditionReading.provenance` the type `EvidenceID` and the reason "so the
     check is itself auditable". There is no Evidence row at the point a condition is decided, so
     this is a content hash over the material that decided it: the same inputs give the same id, and
     two readings that disagree have visibly different material rather than an unexplained
@@ -505,12 +507,12 @@ def _measure_quasi_static(
     inputs: RegimeInputs,
     early: Sequence[Step],
 ) -> ConditionReading:
-    """``Ad = tau_relax * |d log lambda / dt|``.
+    """``Ad = tau_relax * |d log lambda / dt|``, section 3.4.
 
     Both factors are in optimizer steps, so the product is dimensionless: a relaxation time in
     steps against a driving rate per step. The rung-0 relaxation time comes from the early AR(1)
-    coefficient of a recorded series, which is the cheap route to it and is weaker
-    than the perturb-and-hold measurement in every way except cost. The worked
+    coefficient of a recorded series, which is section 3.4's own cheap route to it and is weaker
+    than the perturb-and-hold measurement in every way except cost. The specification's worked
     capability report prints this condition as `unknown` with "requires two anneal rates; see G3",
     which is the rung-2 answer; this is the rung that a single record supports.
 
@@ -573,10 +575,10 @@ def _measure_quasi_static(
 def _measure_linear_response(
     thresholds: RegimeThresholds, inputs: RegimeInputs
 ) -> ConditionReading:
-    """Measured by Lambda, which is F2's selection-explained fraction and is F2's to compute.
+    """Measured by Lambda, which is F2's selection-explained fraction and is W4.3's to compute.
 
-    The condition is "step small enough that the O(eta squared) term is negligible; measured by
-    Lambda", and Lambda is the R-squared of the
+    Section 2.4 defines this condition as "step small enough that the O(eta squared) term is
+    negligible; measured by Lambda", and section 3.5 defines Lambda as the R-squared of the
     observed movement regressed on the first-order selection term. So a high Lambda says the term
     that was expanded explains what moved, which is the operational form of the second-order term
     being negligible.
@@ -593,7 +595,7 @@ def _measure_linear_response(
             condition,
             (
                 "Lambda is not available. It is F2's selection-explained fraction "
-                "(`selection.explained_fraction`), and nothing in a record computes "
+                "(`selection.explained_fraction`), built by W4.3, and nothing in a record computes "
                 "it without a featuriser. Supply it as `RegimeInputs.explained_fraction`"
             ),
         )
@@ -619,10 +621,10 @@ def _measure_linear_response(
 def _measure_group_nondegenerate(
     groups: Sequence[Group], thresholds: RegimeThresholds
 ) -> ConditionReading:
-    """K > 1 and std(r) > 0 for a stated fraction of groups.
+    """K > 1 and std(r) > 0 for a stated fraction of groups, section 2.4.
 
     The statistic reported is the *degenerate* fraction, not the non-degenerate one, because that
-    is what the capability report prints beside the threshold: "degenerate group
+    is what section 4.5's own capability report prints beside the threshold: "degenerate group
     fraction 0.04 (threshold 0.20)". Reporting the complement against the same number would invert
     the verdict silently.
 
@@ -698,7 +700,7 @@ def _measure_group_nondegenerate(
 def _measure_near_policy(
     steps: Sequence[Step], trajectories: Sequence[Trajectory], thresholds: RegimeThresholds
 ) -> ConditionReading:
-    """Staleness below a bound, and segment provenance singular. Both halves of the condition.
+    """Staleness below a bound, and segment provenance singular. Section 2.4, both halves.
 
     Singularity is asserted *per trajectory* and never across the window. A window of forty steps
     necessarily contains forty policy versions, because that is what training is; what the
@@ -760,8 +762,7 @@ def _measure_near_policy(
 def _numeric_signature(node: Any, depth: int = 0) -> tuple[Any, ...]:
     """Every named constant in a score tree, without importing the module that defines one.
 
-    `record.scores` owns `ScoreTree` and this module must not depend on it existing, so the walk is
-    structural
+    W2.2 owns `ScoreTree` and this module must not depend on it existing, so the walk is structural
     rather than typed: a node has a `name`, its numeric parameters are whatever of `weights`,
     `bias`, `constant`, `threshold`, `cap` and `knots` it carries, and its children live under
     `children`, `otherwise`, `primary`/`secondary` or `child`. Anything that is not shaped like that
@@ -816,20 +817,20 @@ def _score_tree_signature(step_: Step) -> tuple[Any, ...] | None:
 def _measure_stationary_grader(
     steps: Sequence[Step], thresholds: RegimeThresholds, inputs: RegimeInputs
 ) -> ConditionReading:
-    """Grader and rubric weights unchanged across the window.
+    """Grader and rubric weights unchanged across the window, section 2.4.
 
     Three routes, tried in that order, and they are not equivalent.
 
     Supplied weights are the direct observation of the thing the condition names, and when they are
     there the reading counts distinct weight vectors and names the step at which they first changed,
-    which is the sentence the capability report prints: "rubric weights changed at step 240".
+    which is the sentence section 4.5 prints: "rubric weights changed at step 240".
 
     A score tree on the record is the same observation taken from the record instead of from the
     caller, and it is strictly better because nobody had to remember to pass it. It is read
-    structurally rather than through an import, so a record written before score trees existed, or
-    by a converter that attaches something else, falls through rather than failing.
+    structurally rather than through an import, so a record written before W2.2 landed, or by a
+    converter that attaches something else, falls through rather than failing.
 
-    A check standard is the indirect route: it is a frozen probe set whose job
+    A check standard is the indirect route: section 4.7 defines it as a frozen probe set whose job
     is to be invariant, so any movement in it is instrument drift by construction. It is a lower
     bound on the grader's movement rather than a measurement of it, because a grader can change in
     ways the standard does not resolve.
@@ -961,7 +962,7 @@ def _measure_stationary_grader(
 def _measure_exogenous_curriculum(
     steps: Sequence[Step], thresholds: RegimeThresholds, floors: RegimeFloors
 ) -> ConditionReading:
-    """The task distribution is not responding to the score.
+    """The task distribution is not responding to the score, section 2.4.
 
     The mechanism this detects is the live one: a sampler that drops the tasks the policy has
     solved, which is DAPO's dynamic sampling and every curriculum built on it. Its signature in a
@@ -1079,7 +1080,7 @@ def _measure_exogenous_curriculum(
 def _measure_no_compaction(
     trajectories: Sequence[Trajectory], inputs: RegimeInputs
 ) -> ConditionReading:
-    """No prefix rewrite inside the measurement window.
+    """No prefix rewrite inside the measurement window, section 2.4.
 
     After a rewrite the old prefix is a different string, so the importance ratio is undefined
     rather than stale and the violation behaviour is `refuse` rather than `bound`. The count uses
@@ -1147,7 +1148,7 @@ def _measure_no_compaction(
 
 
 def _measure_above_lod(inputs: RegimeInputs) -> ConditionReading:
-    """The effect exceeds the limit of detection.
+    """The effect exceeds the limit of detection, section 4.7.
 
     This is the one condition of the twelve that is not a property of a run. A limit of detection
     is `3.3 sigma_blank / S` for one measurement substrate, and whether something exceeds it is a
@@ -1212,7 +1213,7 @@ def _measure_ess_adequate(
     floors: RegimeFloors,
     inputs: RegimeInputs,
 ) -> ConditionReading:
-    """The importance weights have not degenerated.
+    """The importance weights have not degenerated, section 2.4.
 
     The weights come from the two logprob streams the record already carries: `logprobs_sampling`
     is what the inference engine assigned when the tokens were drawn and `logprobs_train` is what
@@ -1305,7 +1306,7 @@ def _measure_light_tailed(
     floors: RegimeFloors,
     inputs: RegimeInputs,
 ) -> ConditionReading:
-    """The MGF exists; the Hill estimate is below a stated bound.
+    """The MGF exists; the Hill estimate is below a stated bound. Section 2.4.
 
     The sample defaults to the per-trajectory advantages, because the advantage is what multiplies
     the gradient and a heavy tail there is what makes a batch mean a statement about its largest
@@ -1316,8 +1317,7 @@ def _measure_light_tailed(
     measures the heavier of the two tails and not the right tail specifically; a signed quantity
     with one heavy side and one light side reports the heavy one, which is the conservative
     direction. And the exceedance counts a training record supplies are one to two orders of
-    magnitude below what a defensible estimate needs, so what comes back at thirty exceedances is a
-    flag
+    magnitude below what section 3.0.1 asks for, so what comes back at thirty exceedances is a flag
     and not a tail claim. The detail carries the count so a reader can see which one they have.
     """
     condition = RegimeCondition.LIGHT_TAILED
@@ -1343,7 +1343,7 @@ def _measure_light_tailed(
             condition,
             (
                 f"{n} values from {source} give {k} exceedances at q = 0.95, against a floor of "
-                f"{floors.hill_min_exceedances}. A defensible tail estimate needs "
+                f"{floors.hill_min_exceedances}. Section 3.0.1 puts a defensible tail estimate at "
                 f"roughly 1,570 exceedances; below the floor this reports nothing rather than a "
                 f"number with no support under it"
             ),
@@ -1383,7 +1383,7 @@ def _measure_light_tailed(
 def _measure_scalar_representable(
     groups: Sequence[Group], thresholds: RegimeThresholds
 ) -> ConditionReading:
-    """Curl mass below a stated bound.
+    """Curl mass below a stated bound, section 3.6.
 
     `GroupStats.curl_mass` is populated only where the group is a k-wise comparison, which is the
     only place the question is live: a group of independently scored rollouts has no comparison
@@ -1392,7 +1392,7 @@ def _measure_scalar_representable(
 
     The maximum over groups rather than the mean. Curl mass is an energy share and a single group
     whose comparisons are cyclic makes the scalar approximation wrong on that group, whatever the
-    other groups did; averaging it away is how a local failure becomes invisible. B1 is the
+    other groups did; averaging it away is how a local failure becomes invisible. B1 (W3.3a) is the
     instrument that estimates this properly, with its four nulls; this reads what the record
     already carries.
     """
@@ -1406,7 +1406,7 @@ def _measure_scalar_representable(
             (
                 f"none of the {len(groups)} groups in this window records a curl mass. It is "
                 f"populated only for k-wise comparison groups, so this is the question not having "
-                f"been asked rather than the answer being zero. B1 estimates it"
+                f"been asked rather than the answer being zero. B1 (W3.3a) estimates it"
             ),
         )
     worst, where = max(values, key=lambda pair: pair[0])
@@ -1443,7 +1443,7 @@ def _turn_mask_state(turn: Turn) -> str:
 def _measure_mask_stable(
     trajectories: Sequence[Trajectory], groups: Sequence[Group]
 ) -> ConditionReading:
-    """The loss-mask policy is unchanged across the window.
+    """The loss-mask policy is unchanged across the window, section 2.4.
 
     Measured per role rather than per trajectory, which matters more than it sounds. A trajectory
     whose masks were recorded and one whose masks were not have different signatures for a reason
@@ -1517,7 +1517,7 @@ def measure_regime(
     inputs: RegimeInputs | None = None,
     cross_check: bool = True,
 ) -> RegimeReading:
-    """The twelve regime conditions, measured over one window of one run.
+    """The twelve conditions of section 2.4, measured over one window of one run.
 
     ``step=k`` measures at one step, ``window=(lo, hi)`` over a half-open span, and neither
     measures over the whole run. ``context`` widens whichever was asked for on both sides, which is
@@ -1529,7 +1529,7 @@ def measure_regime(
     `EnvelopeSpec.classify` and the capability report both treat a condition *absent* from a
     reading as never measured and one *present* with `holds=None` as measured and indeterminate, so
     including everything means an instrument requiring `LINEAR_RESPONSE` is refused rather than run
-    with its envelope unchecked. That is the required behaviour ("unknown is not a
+    with its envelope unchecked. That is the behaviour section 2.4 asks for ("unknown is not a
     pass") and it is stricter than what a partial reading would produce.
 
     ``cross_check`` folds the run's own `RegimeDeclaration` into the detail of any condition where
@@ -1606,8 +1606,9 @@ def _measure_design_crossed() -> ConditionReading:
     It returns `None` rather than being left out of the reading, and the difference matters. A
     condition absent from a `RegimeReading` reads as unchecked, which travels onto an instrument as
     "nobody looked". A condition present with `holds=None` says the measurement was attempted here
-    and this is the wrong place to attempt it, and it names the place that is. That is what the
-    third state exists for, and it is what stops a caller reading silence as a pass.
+    and this is the wrong place to attempt it, and it names the place that is. That is the third
+    state section 2.4 has for exactly this, and it is what stops a caller reading silence as a pass.
+    SPEC-ERRATA E49.
     """
     return _undetermined(
         RegimeCondition.DESIGN_CROSSED,
@@ -1651,8 +1652,8 @@ def _with_declaration(run: Run, reading: RegimeReading) -> RegimeReading:
 # ---------------------------------------------------------------------------
 
 #: H5's own envelope. It cannot require regime conditions without requiring itself, and an empty
-#: `requires` needs an explicit justification rather than silence, which is the lint rule doing its
-#: job on the one instrument most tempted to skip it.
+#: `requires` needs an explicit justification rather than silence, which is the lint rule of
+#: section 2.4 doing its job on the one instrument most tempted to skip it.
 REGIME_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
@@ -1674,7 +1675,7 @@ class RunRegime(BaseObservable):
     money to find out whether it may run would not be a preflight.
 
     What it cannot do. It reports twelve conditions and it can determine at most ten of them from a
-    record alone today, because `LINEAR_RESPONSE` needs a Lambda that F2 computes and `ABOVE_LOD`
+    record alone today, because `LINEAR_RESPONSE` needs a Lambda that W4.3 computes and `ABOVE_LOD`
     is a property of a reading rather than of a run. On a record with no check standard, no
     compaction events and one logprob stream, four more come back undetermined. That is the correct
     output and not a shortfall: the alternative is a verdict on a check that did not happen.
@@ -1686,16 +1687,16 @@ class RunRegime(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = None
     deviations = (
-        "tau_relax is defined by perturb-and-hold, and the adiabaticity number is settled "
+        "section 3.4 measures tau_relax by perturb-and-hold and settles the adiabaticity number "
         "with a two-rate collapse test (G3). Rung 0 here fits the early AR(1) coefficient of a "
-        "recorded series instead, which is the cheap route and is weaker in every "
+        "recorded series instead, which is section 3.4's own cheap route and is weaker in every "
         "way but cost.",
-        "EXOGENOUS_CURRICULUM has no standard estimator. The one here is a "
+        "EXOGENOUS_CURRICULUM has no estimator in the specification. The one here is a "
         "rank-biserial test of task survival against score across consecutive steps, which detects "
         "score-responsive sampling and cannot prove its absence.",
     )
 
-    # -- the instrument declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "run.regime"
     requires: AccessMatrix = _REGIME_ACCESS
     substrates = frozenset(Substrate)
@@ -1704,10 +1705,10 @@ class RunRegime(BaseObservable):
     phases = frozenset({Phase.IN_RUN, Phase.POST_RUN})
     envelope = REGIME_ENVELOPE
     #: `run.regime` is registered with invariance `none`, which resolves to the trivial group: no
-    #: registered transformation acts on a set of verdicts. That makes the generated test pass
-    #: vacuously, which is honest and is also weak. A non-vacuous check is available: the verdicts
-    #: should be invariant under `reward.affine` wherever their thresholds are scale-free, which is
-    #: a real property and a real test.
+    #: transformation in Appendix B acts on a set of verdicts. That makes the generated test pass
+    #: vacuously, which is honest and is also weak, and the build report proposes the non-vacuous
+    #: check that is available (the verdicts should be invariant under `reward.affine` wherever
+    #: their thresholds are scale-free, which is a real property and a real test).
     invariance = "none"
     invariance_relation = INVARIANT
     baselines = ("baseline.run_declaration", "baseline.assume_all_hold")
@@ -1733,7 +1734,7 @@ class RunRegime(BaseObservable):
         self.inputs = inputs or RegimeInputs()
         self._computed: RegimeReading | None = None
 
-    # -- the two instrument methods ----------------------------------------
+    # -- the two methods of section 4.2 ------------------------------------
 
     def compute(self) -> RegimeReading | Refusal:
         """The reading, or a refusal when there is no record in the window to read.
@@ -1856,7 +1857,7 @@ def _register() -> None:
     """One rung for `run.regime`, so the capability report knows the estimator exists.
 
     `spec/QUANTITIES.yaml` gives this quantity one rung, and this is it. A rung 1 would be the
-    perturb-and-hold relaxation time and the two-rate collapse test, which need two
+    perturb-and-hold relaxation time and the two-rate collapse test of section 3.4, which need two
     runs rather than a better reading of one, so they are a different instrument (H1) rather than a
     higher rung of this one.
     """

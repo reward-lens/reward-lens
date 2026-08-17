@@ -465,7 +465,7 @@ def compare_to_placebo(
     """The M4 gate. No placebo arm means a refusal, not a caveat.
 
     Returns a `PlaceboComparison` when both arms are present, and a `Refusal` when the placebo arm
-    is missing. The refusal reason is `NO_MATCHED_CONTROL`, which is defined for the
+    is missing. The refusal reason is `NO_MATCHED_CONTROL`, which the specification defines for the
     positive-control case; a missing negative control is the same failure in the other direction
     and the remedy names which one is missing. See the module note in `measure.controls` about
     that reuse.
@@ -575,7 +575,7 @@ class SemanticPlacebo(ControlInstrument):
         "scalars the verdict is `unresolved` rather than a ratio threshold",
     )
 
-    # -- the declarations
+    # -- the section 4.2 declarations
     quantity = "placebo.effect_ratio"
     #: `requires`, not `access`. See the note on `DumbBaselineBank`.
     requires = {Component.GRADER: Access.RECORD, Component.RECORD: Access.RECORD}

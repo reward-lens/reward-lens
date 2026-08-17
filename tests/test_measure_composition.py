@@ -2,8 +2,7 @@
 
 Every expected number here was computed by hand from the composition and is written into the test
 that asserts it, so a change in the implementation cannot quietly move the target. The worked group
-is the score tree's, kept deliberately: four rollouts, a task reward of `correct + 0.25 * style`,
-and a
+is W2.2's, kept deliberately: four rollouts, a task reward of `correct + 0.25 * style`, and a
 Kimi-K3-shaped override pinning the score to -1 when a rollout's token count exceeds 1.5 times the
 task's budget.
 
@@ -453,7 +452,7 @@ def test_the_census_reports_leaves_a_binding_override_shadowed() -> None:
 
 
 def test_the_counterfactual_passes_the_substrate_s_refusal_through_unchanged() -> None:
-    """Reused rather than restated: the reason, the detail and the remedy are the score tree's own.
+    """Reused rather than restated: the reason, the detail and the remedy are W2.2's own.
 
     Asserted against a direct call rather than against a hard-coded reason, because the reason
     belongs to `record.scores` and an instrument that quietly reworded it would be inventing a
@@ -508,7 +507,7 @@ def test_the_counterfactual_refuses_an_empty_record_rather_than_returning_nothin
 def test_naming_a_node_no_tree_carries_raises_rather_than_refusing() -> None:
     """A mis-specified measurement is a call error, not a limit of the data.
 
-    The score tree raises here on purpose and the exception carries the inventory, so the reply to "removing
+    W2.2 raises here on purpose and the exception carries the inventory, so the reply to "removing
     kl_penalty changed nothing" is a list of the nodes this record actually has. A refusal would
     read as a fact about the run.
     """
@@ -522,7 +521,7 @@ def test_the_composition_tree_refuses_a_record_that_kept_only_totals() -> None:
     got = CompositionTree([None, None, None]).compute()
     assert isinstance(got, Refusal)
     # The access was sufficient and the field is not there, which is what the sixteenth reason is
-    # for (E30). "Instrument your grader" and "ask for more access" are different
+    # for (SPEC-ERRATA E30). "Instrument your grader" and "ask for more access" are different
     # remedies and this is the first of the two.
     assert got.reason is RefusalReason.RECORD_INCOMPLETE
     assert "kept a total and not a composition" in got.detail

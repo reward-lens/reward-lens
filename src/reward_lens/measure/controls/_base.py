@@ -28,7 +28,7 @@ from reward_lens.measure.base import BaseObservable, Context, run
 
 
 class ControlInstrument(BaseObservable):
-    """Preflight, compute, refuse or emit. The four control instruments share this."""
+    """Preflight, compute, refuse or emit. The four meta-instruments of W3.7a share this."""
 
     #: Set by `estimate` for the duration of one call, so `measure` does not recompute.
     _computed: Any = None
@@ -67,8 +67,9 @@ class ControlInstrument(BaseObservable):
                 require_frame_for_comparison(self.gauge_status, ctx.frame)
             # `run` sets this before delegating and the no-signal branch has to do the same. Left
             # unset, `Context.emit` finds no observable and stamps `observable='anonymous'`,
-            # `observable_version='0'` and `quantity=''`, so the reading is attributed to nobody
-            # and the unit machinery has nothing to key on.
+            # `observable_version='0'` and (since E35 forwards it) `quantity=''`, so the reading
+            # is attributed to nobody and the unit machinery has nothing to key on. Found by W3.2a
+            # when a test asserted the emitted quantity rather than the returned value.
             ctx._observable = self
             try:
                 return self.measure(ctx)

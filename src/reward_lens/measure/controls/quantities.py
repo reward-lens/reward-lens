@@ -1,8 +1,9 @@
 """Three quantities M3 and M4 need, proposed here and **not registered**.
 
-M3 to M8 carry `quantities: OPEN` in `spec/CATALOGUE.yaml` as a bare string rather than a list. So
-two of the four instruments in this package estimate something the registry has no id for, and
-`lint_instrument` reports that by name, which is the lint doing its job.
+M3 to M8 carry `quantities: OPEN` in `spec/CATALOGUE.yaml` as a bare string rather than a list,
+recorded as SPEC-ERRATA E14. So two of the four instruments in this package estimate something the
+registry has no id for, and `lint_instrument` reports that by name, which is the lint doing its
+job.
 
 Registering a quantity is a decision about what the library claims to measure and it belongs in
 `spec/QUANTITIES.yaml`, which this package does not write to. So the proposals live here as data.

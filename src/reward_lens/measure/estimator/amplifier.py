@@ -1,4 +1,4 @@
-"""E4, amplifier safety: is this reward component safe to add.
+"""E4, amplifier safety: is this reward component safe to add (section 3.2, section 5.E).
 
     AmplifierSafety(c) = Var_group(r_c | all-fail groups) / Var_group(r_c | mixed groups)
 
@@ -110,7 +110,7 @@ AMPLIFIER_BASELINES: tuple[BaselineID, ...] = (
     "baseline.component_sd",
 )
 
-#: Above this the component is a live amplifier. **Stated**: "near zero is safe; order
+#: Above this the component is a live amplifier. **Stated**, section 3.2: "near zero is safe; order
 #: one or above is a live amplifier". Reported alongside every reading so the verdict is auditable
 #: rather than asserted, and it is not an envelope threshold: it labels a reading, it does not gate
 #: one.
@@ -123,27 +123,28 @@ LIVE_AMPLIFIER_AT = 1.0
 SAFE_BELOW = 0.1
 
 #: The all-fail fraction at which the phase counts as all-fail-dominated, for rung 2. **Chosen:
-#: 0.5**, on the argument that the condition is about the phase in which all-fail groups
+#: 0.5**, on the argument that section 3.2's condition is about the phase in which all-fail groups
 #: dominate the update, and a majority of groups is the weakest defensible reading of dominate.
 DOMINANCE_AT = 0.5
 
 #: The fraction of its own early-training all-fail variance a component must retain for rung 2 to
 #: call the variance persistent. **Chosen: 0.5**, on the argument that a component that has lost
-#: half its variance is on a decay path and the safe case is the one where the variance
+#: half its variance is on a decay path and section 3.2's safe case is the one where the variance
 #: vanishes.
 PERSISTENCE_AT = 0.5
 
-#: The degenerate-group fraction above which `GROUP_NONDEGENERATE` fails. **Stated** by the
-#: capability report, which prints "GROUP_NONDEGENERATE ok degenerate group fraction 0.04 (threshold
+#: The degenerate-group fraction above which `GROUP_NONDEGENERATE` fails. **Stated**, section 4.5
+#: line 1458, which prints "GROUP_NONDEGENERATE ok degenerate group fraction 0.04 (threshold
 #: 0.20)". This is the same number `measure.rate.regime.RegimeThresholds` carries and it is
 #: restated here rather than imported, because importing it would make E4's envelope depend on
 #: another package's default and a threshold that moves silently is worse than one that is
 #: duplicated visibly.
 DEGENERATE_FRACTION_MAX = 0.20
 
-#: `GROUP_NONDEGENERATE`, **measured, not assumed**. The catalogue merge dropped that qualifier,
-#: so it is restored here where it can be enforced: `preflight` measures the condition from the
-#: groups it holds and uses its own measurement in preference to any verdict the caller supplied.
+#: `GROUP_NONDEGENERATE`, **measured, not assumed**. Section 5.E line 1753 carries that qualifier
+#: and the catalogue merge dropped it (SPEC-ERRATA E29 is the entry for that class of loss), so it
+#: is restored here where it can be enforced: `preflight` measures the condition from the groups it
+#: holds and uses its own measurement in preference to any verdict the caller supplied.
 AMPLIFIER_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.GROUP_NONDEGENERATE}),
     measured_by={RegimeCondition.GROUP_NONDEGENERATE: "estimator.degenerate_fraction"},
@@ -259,7 +260,7 @@ class SafetyTrajectory:
     step ``s``. They were declared `tuple[float, ...]` and built as nested tuples, and three
     `type: ignore[arg-type]` comments carrying the wrong error code suppressed nothing and hid the
     mismatch. The construction and the only consumer both already treated them as nested, so this
-    corrects the declaration rather than the behaviour.
+    corrects the declaration rather than the behaviour. SPEC-ERRATA E39.
 
     ``names`` is on the object because without it the three parallel series are keyed by an
     ordering the object does not record, and a caller that zips them against a `names` obtained
@@ -841,17 +842,17 @@ class AmplifierSafety(EstimatorInstrument):
     faithful_to = "E4"
     deviations = (
         "`Var_group` is the degrees-of-freedom-weighted pooled within-group variance rather than "
-        "the mean of the per-group variances. `Var_group` is written without saying which, "
+        "the mean of the per-group variances. Section 3.2 writes `Var_group` without saying which, "
         "and the two differ the moment groups have different K, which happens as soon as a grader "
         "abstains on one rollout",
         "rung 2 projects the step at which the all-fail fraction crosses a stated dominance level "
-        "rather than a collapse in task success. The condition is about the phase in "
+        "rather than a collapse in task success. Section 3.2's condition is about the phase in "
         "which all-fail groups dominate, and a record contains that fraction directly while it "
         "contains a collapse only after one has happened",
         "an estimator that does not z-score gets a refusal carrying the component magnitudes as a "
         "bound, rather than a ratio. `verifiers` is the framework this fires on",
         "the denominator is the genuinely mixed groups, so a window is partitioned three ways and "
-        "not two. The condition is written `Var_group(r_c | mixed groups)` and reading `mixed` as "
+        "not two. Section 3.2 writes `Var_group(r_c | mixed groups)` and reading `mixed` as "
         "`not all-fail` pools in the groups where nothing failed, whose task component cannot vary "
         "either. The all-pass count and their pooled variance are on every reading so the size of "
         "the difference is visible on the reader's own record",
@@ -893,8 +894,8 @@ class AmplifierSafety(EstimatorInstrument):
     def measure_nondegeneracy(self) -> ConditionReading | None:
         """`GROUP_NONDEGENERATE` from the groups this instrument holds, not from a declaration.
 
-        The catalogue's own entry for E4 says "`GROUP_NONDEGENERATE` measured, not assumed", and
-        the qualifier is the whole point: a caller who passes `RegimeReading.of(GROUP_NONDEGENERATE=
+        Section 5.E's own entry for E4 says "`GROUP_NONDEGENERATE` measured, not assumed", and the
+        qualifier is the whole point: a caller who passes `RegimeReading.of(GROUP_NONDEGENERATE=
         True)` has supplied a verdict, and `ConditionReading.detail` on that constructor says so in
         as many words ("supplied, not measured"). This computes the statistic instead.
         """

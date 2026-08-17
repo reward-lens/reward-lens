@@ -1,4 +1,4 @@
-"""Series E, the estimator: where a good reward becomes a bad gradient.
+"""Series E, the estimator: where a good reward becomes a bad gradient (section 3.2, section 5.E).
 
 Between the grader and the gradient sits a transform that both prior designs treat as plumbing. It
 is not plumbing. It is scale-invariant, so it destroys dose control; it divides by a group standard
@@ -22,7 +22,7 @@ Seven instruments over six catalogue records:
         drawn.
     E4  `AmplifierSafety`, `estimator.amplifier_safety`
         The variance ratio between all-fail and mixed groups, per reward component. The single most
-        actionable instrument in the series for someone about to add a reward term.
+        actionable instrument in Part 5 for someone about to add a reward term.
     E5  `ClipAccounting`, `estimator.clip_fraction_effect`
         The clip fraction, and what it does to every quantity derived from the gradient norm. This
         is the instrument that tells veRL's `proxy1` it is lying.

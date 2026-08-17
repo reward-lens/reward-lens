@@ -12,15 +12,17 @@ rung 1 rather than being a separate code path somebody has to remember to run.
 `AveragedJacobianTransport` fits `J_l` here, with the library's own runtime and autograd.
 `jlens_transport` adapts an externally fitted lens, for a caller who has one.
 
-**On vendoring `anthropics/jacobian-lens`, and why this does not.** Vendoring Apache-2.0 code
-means shipping its licence, and the copy available is the *contents* of the package directory,
-eight modules and a `pyproject.toml`, with **no LICENSE file and no README**. Beyond that, a hard
-dependency on a package that is not importable everywhere is one nothing here could have been
-tested against. So C8 is built against a protocol instead: a caller who installs `jlens` gets the vendor's
+**On vendoring `anthropics/jacobian-lens`, and why this does not.** The plan was to vendor it. What
+is actually in the fetched copy at `assay-recon/jlens-fetched/` is the *contents* of the package
+directory: eight modules and a `pyproject.toml`, with **no LICENSE file and no README**. Vendoring
+Apache-2.0 code means shipping its licence, and the licence text is not in what was fetched.
+Re-fetching was out of scope. Beyond that, taking a dependency is not a builder's decision, and the
+package is not importable in this environment at all, so nothing here could have been tested against
+it. So C8 is built against a protocol instead: a caller who installs `jlens` gets the vendor's
 fitted lens through `jlens_transport` in one line, and a caller who does not gets a Jacobian fitted
 here and the vanilla comparator regardless.
 
-**Two facts about that package, verified in its source, that cost a day each if missed.**
+**Two facts about that package, verified in the fetched source, that cost a day each if missed.**
 The importable name is `jlens`, not `jacobian-lens`. And `SKIP_FIRST_N_POSITIONS = 16` builds the
 mask `[skip_first : seq_len - 1]`, which drops the **final** position as well as the first sixteen.
 The second is narrower than it sounds and the narrowing matters: that mask is used at **fit** time

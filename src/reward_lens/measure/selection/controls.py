@@ -27,7 +27,8 @@ the same nucleus does not. Almost nobody in interpretability runs the chronic ve
 CONTROL`, and `CONTROL` means standing up a counterfactual arm of the whole training loop, which is
 a training run rather than a forward pass. The quantities are registered, the estimator is written
 and testable against supplied readouts, and `AcuteChronic` with no chronic arm returns a refusal
-naming what running it would cost rather than a number. That is the honest state.
+naming what running it would cost rather than a number. That is the honest state and it is the state
+the build brief requires.
 """
 
 from __future__ import annotations
@@ -611,7 +612,8 @@ class AcuteChronic(SelectionInstrument):
     published pulse experiment is at.
 
     Kill condition, from the catalogue: if acute and chronic agree everywhere, the distinction is
-    not operative here. That is unanswerable until something runs the chronic arm.
+    not operative here. That is unanswerable from this checkout, because nothing has run the chronic
+    arm on anything.
     """
 
     name = "AcuteChronic"

@@ -57,9 +57,10 @@ class FrontierInstrument(BaseObservable):
             # `Context.emit` reads the instrument's name, version, gauge status and **quantity** off
             # `ctx._observable`, and `measure.base.run` is the only thing that used to set it. This
             # branch bypasses `run` because there is no signal to gate on, so every reading it
-            # produced was emitted as `anonymous` with `quantity=""`. That silently unmakes the
-            # unit discipline: a per-token reading with no quantity on it can be ranked against a
-            # per-sequence one and the unit machinery has nothing to key on.
+            # produced was emitted as `anonymous` with `quantity=""`. That silently unmakes E35: a
+            # per-token reading with no quantity on it can be ranked against a per-sequence one and
+            # the unit machinery has nothing to key on. Third defect in the `emit` family, after
+            # E35 and E44, and the same shape each time. SPEC-ERRATA E51.
             ctx._observable = self
             return self.measure(ctx)
         finally:

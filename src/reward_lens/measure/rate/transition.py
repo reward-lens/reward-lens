@@ -7,7 +7,7 @@ on one axis, and the raw step count is the worst of them, because a lab reportin
 change in reward-hacking rate happens inside the first 64 steps has also told you that a 40-step
 lead inside a 64-step window is most of the run rather than a comfortable margin.
 
-This library fixes it: **lead time is a fraction of the fitted transition width**, where the width
+Section 3.4 fixes it: **lead time is a fraction of the fitted transition width**, where the width
 comes from a changepoint or sigmoid fit to the outcome series, and the fit is reported with it. The
 second half of that sentence is not decoration. A width with no fit quality beside it is a unit
 with no scale, because the number 58 means one thing when the logistic explains 94 percent of the
@@ -85,10 +85,11 @@ TEN_TO_NINETY = 2.0 * math.log(9.0)
 class TransitionCriteria:
     """Every number a verdict here is compared against, in one place, with where it came from.
 
-    None of these follows from the estimator itself ("a changepoint or sigmoid fit"), which fixes
-    the method and not the thresholds it is read against. They are this module's defaults, chosen
-    for the reasons at each field. A default is not a decision; it behaves like one until somebody
-    says otherwise, which is why they are gathered here rather than buried in the fitting code.
+    None of these is stated in the specification, which gives the estimator ("a changepoint or
+    sigmoid fit") and not its acceptance rules. They are this module's defaults, chosen for the
+    reasons at each field, and they are the list the integrator has to ratify. A default is not a
+    decision; it behaves like one until somebody says otherwise, which is why they are gathered
+    here rather than buried in the fitting code.
     """
 
     #: AICc of the best no-transition model minus AICc of the logistic, below which the transition
@@ -298,7 +299,7 @@ class TransitionFit:
 @register_payload
 @dataclass(frozen=True)
 class LeadTime:
-    """One alarm's lead, in this library's unit and in the unit the literature uses.
+    """One alarm's lead, in the unit of section 3.4 and in the unit the literature uses.
 
     `widths` is the number this library scores in. `steps` is carried beside it for continuity with
     the four conventions in circulation and **is not comparable across runs**, because two runs'
@@ -695,7 +696,7 @@ def fit_transition(
 
 
 def lead_time(alarm_step: float, fit: TransitionFit) -> LeadTime:
-    """A lead in this library's unit: the fraction of a fitted transition width.
+    """A lead in the unit of section 3.4: the fraction of a fitted transition width.
 
     Positive means the alarm fired before the transition. The step count travels with it and is
     labelled at every rendering as not comparable across runs, which is the whole reason this
@@ -872,10 +873,11 @@ def available_series(run: Run, *, window: Window | None = None) -> dict[str, int
 # ---------------------------------------------------------------------------
 
 #: What has to be true for a fitted width to be a property of the policy rather than of the setup.
-#: Both conditions downgrade rather than refuse, which is the right behaviour for this shape: the
-#: width is still a real fit of the series that was recorded, and what it loses outside the
-#: envelope is the right to be called a property of the run. Requiring a refusal here would
-#: withhold the fit on exactly the records where a reader most needs to see it and then decide.
+#: Both conditions downgrade rather than refuse, which is section 2.4's own worked behaviour for
+#: this shape: the width is still a real fit of the series that was recorded, and what it loses
+#: outside the envelope is the right to be called a property of the run. Requiring a refusal here
+#: would withhold the fit on exactly the records where a reader most needs to see it and then
+#: decide, which is the failure SPEC-ERRATA E29 is about.
 TRANSITION_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.STATIONARY_GRADER, RegimeCondition.EXOGENOUS_CURRICULUM}),
     measured_by=MEASURED_BY,
@@ -915,13 +917,13 @@ class TransitionWidth(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to: str | None = "H4"
     deviations: tuple[str, ...] = (
-        "the width can come from 'a changepoint or sigmoid fit'. This is the sigmoid "
+        "section 3.4 says the width comes from 'a changepoint or sigmoid fit'. This is the sigmoid "
         "half only. A changepoint fit answers a different question (where did it change) and "
         "`stats.changepoint` already answers it; what a lead time needs is a width, and a "
         "changepoint has none.",
-        "the width is the 10-to-90 rise of the fitted logistic. No convention is fixed for it "
-        "elsewhere, and 10-to-90 is the one that makes the width a fixed multiple of the fitted "
-        "scale and is the convention rise time is reported in everywhere else it is measured.",
+        "the width is the 10-to-90 rise of the fitted logistic. Section 3.4 states no convention, "
+        "and 10-to-90 is the one that makes the width a fixed multiple of the fitted scale and is "
+        "the convention rise time is reported in everywhere else it is measured.",
     )
 
     quantity = "run.transition_width"
@@ -1049,7 +1051,7 @@ def _register() -> None:
     `spec/QUANTITIES.yaml` gives this quantity two rungs and the catalogue's H4 record prints its
     ladder as `OPEN`, so what the second rung is has not been decided anywhere. It is not invented
     here: a rung registered with no estimator behind it reads as a plan and this one would be a
-    guess.
+    guess. The build report carries the request.
     """
     register_estimator(
         EstimatorEntry(

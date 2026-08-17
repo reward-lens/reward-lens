@@ -1,4 +1,4 @@
-"""M9, incremental validity: what this instrument adds to the ones already run.
+"""M9, incremental validity: what this instrument adds to the ones already run (§6.4).
 
 The bar is **decorrelation plus signal, not superiority.** An instrument ten points worse than the
 best method already in the bank and uncorrelated with it is worth more than one two points better
@@ -230,7 +230,7 @@ class Increment:
 
     @property
     def record(self) -> IncrementalValidity:
-        """The kernel's record, so this reading composes with anything that already reads one."""
+        """The kernel's §6.4 record, so this reading composes with anything that already reads one."""
         return IncrementalValidity(
             own_score=self.own_score,
             baseline_score=self.best_baseline_score,
@@ -287,7 +287,7 @@ class Increment:
 class IncrementalValidityReading(MetaInstrument):
     """M9. Whether an instrument adds anything over the ones already run, measured.
 
-    Required on every white-box reading. The reading it produces is deliberately capable of
+    Required on every white-box reading by §6.4. The reading it produces is deliberately capable of
     saying no: an increment whose interval covers zero is the intended output for a redundant
     instrument, not a failure of the measurement.
     """
@@ -320,7 +320,7 @@ class IncrementalValidityReading(MetaInstrument):
         "carries six numbers plus an interval. The four are on the reading as the kernel's own "
         "`IncrementalValidity` record, reachable as `Increment.record`, so anything consuming the "
         "registered shape gets it unchanged",
-        "`Evidence.incremental` is the field that is mandatory on a white-box reading and "
+        "`Evidence.incremental` is the field §6.4 makes mandatory on a white-box reading and "
         "`Context.emit` takes no argument that sets it, so the record travels in the value payload "
         "instead. Noted rather than worked around, because the fix is one keyword on `emit` and it "
         "is not this package's to make",

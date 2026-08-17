@@ -1,6 +1,6 @@
-"""A6 Style Share: the style complement of the verification score.
+"""A6 Style Share: the style complement of the verification score (Appendix A6).
 
-Formal definition, A6. ``StyleShare =`` the fraction of the correctness-``Δr`` removed by
+Formal definition: Appendix A6. ``StyleShare =`` the fraction of the correctness-``Δr`` removed by
 projecting the twin activation difference ``Δh`` onto the style subspace. Where the verification score
 (``verification_score.py``) measures how much of the clean-vs-corrupted reward gap lives at the error
 span, the style share measures how much of it the reward reads off style directions instead. ``VS`` and
@@ -47,7 +47,7 @@ def _orthonormalize(basis: np.ndarray) -> np.ndarray:
 
 
 def style_share(delta_h: np.ndarray, style_basis: np.ndarray, w_r: np.ndarray) -> float:
-    """The style share ``= (w_r · P_style Δh) / (w_r · Δh)`` (A6).
+    """The style share ``= (w_r · P_style Δh) / (w_r · Δh)`` (Appendix A6).
 
     Projects the clean-vs-corrupted activation difference ``Δh`` onto the (orthonormalized) style
     subspace and reports the fraction of the reward change ``w_r · Δh`` that the projection carries. A
@@ -94,7 +94,7 @@ class StyleShare(BaseObservable):
         "style dictionary are the production path (interventions + concepts)",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.style_share"
     #: The reward direction is read off the head; the twin activation difference and the style
     #: basis are recorded from an earlier corruption experiment and from the concept layer.
@@ -115,8 +115,8 @@ class StyleShare(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_subspace", "baseline.full_space")
     rung = 0
-    #: A white-box reading owes an `IncrementalValidity` and this instrument cannot produce
-    #: one. The id is checkable and the prose is the argument.
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
+    #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",
         "the reading is a single ratio of two inner products, computed from an injected activation "
@@ -136,9 +136,9 @@ class StyleShare(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """The activation difference and the style subspace, or a refusal.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.delta_h is None or self.style_basis is None:

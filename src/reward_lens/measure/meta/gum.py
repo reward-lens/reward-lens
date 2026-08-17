@@ -1,9 +1,9 @@
-"""M7, the uncertainty budget as a first-class reading.
+"""M7, the uncertainty budget as a first-class reading (§4.7).
 
 A confidence interval is one number that has already thrown away the thing worth knowing, which is
 *which term dominates*. The GUM's alternative is a table: enumerate every contribution, say for each
 whether it was evaluated statistically or by judgement, give each a sensitivity coefficient, and
-compose in quadrature. The payload is the last line, and the observation that goes with it is
+compose in quadrature. The payload is the last line, and the specification's observation about it is
 the reason this instrument exists: **the largest term is almost never sampling noise**, and a budget
 that cannot say so is not doing its job.
 
@@ -419,7 +419,7 @@ class UncertaintyBudgetReading(MetaInstrument):
             # only when there are none; with a small `nu_eff` the applied factor is the Student t
             # quantile and can be several times larger. Reporting the field beside a t-expanded
             # number printed "k = 2" next to an interval expanded by 12.7, which was latent only
-            # because this reading's own `nu_eff` is 773.
+            # because this reading's own `nu_eff` is 773. SPEC-ERRATA E50.
             coverage_k=budget.coverage_factor,
             dominant_term=dominant.name,
             dominant_share=shares.get(dominant.name, float("nan")),

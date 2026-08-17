@@ -1,6 +1,6 @@
 """Level 3, the contract layer: how hard to optimise, derived rather than tuned.
 
-The argument for this layer is that without it the metrology produces true numbers nobody acts
+Section 3.5.2's argument is that without this layer the metrology produces true numbers nobody acts
 on. "Thirty-seven percent of your gradient this step was grader noise" is a good sentence and it does
 not tell anyone what to do. This package converts a measured noise into a weight, and the evidence
 that it is load-bearing empty space is blunt: **nobody sets a reward component's weight from that
@@ -41,9 +41,10 @@ positive power unboundedly worse than none.
 The whole layer needs a noise covariance and four stated numbers, and nothing else: no GPU, no policy
 checkpoint, no record, no gradients. It imports no torch and it answers before a run exists.
 
-**The catalogue carries no N5 to N8 records.** The six quantity rows and the four instrument
-records this package needs are proposed as data in `quantities.py` and emitted by `as_yaml_rows()`
-and `as_catalogue_rows()`, and nothing registers them at import.
+**The catalogue carries no N5 to N8 records.** SPEC-ERRATA E23 records why: Part 9 assigns no work
+package to section 3.5.2 and Appendix A registers no quantity for it. The six quantity rows and the
+four instrument records this package needs are proposed as data in `quantities.py` and emitted by
+`as_yaml_rows()` and `as_catalogue_rows()`, and nothing registers them at import.
 """
 
 from __future__ import annotations

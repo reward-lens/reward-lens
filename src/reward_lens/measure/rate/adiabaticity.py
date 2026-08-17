@@ -6,19 +6,19 @@
 whichever schedule parameter is annealing. `Ad` far below 1 is quasi-static, and Level 0
 extrapolation and the whole critical-slowing-down early-warning toolbox are licensed on it. `Ad` of
 order 1 or more is fast driving, and none of that is licensed, because a system that never catches
-up with its driver has no equilibrium to extrapolate from. This is a `RegimeCondition` measured
-per step, and it gates every instrument that assumes equilibrium.
+up with its driver has no equilibrium to extrapolate from. Section 3.4 makes this a
+`RegimeCondition` measured per step, and it gates every instrument that assumes equilibrium.
 
 **Rung 0 only.** The relaxation time here comes from the early lag-1 autoregression of a recorded
 series, which needs a record and nothing else. Rung 1 is perturb-and-hold, which is the measurement
 this quantity is defined by and which needs compute and a counterfactual arm; it is registered as a
 rung with its access and its cost and it is not built here.
 
-**Why this exists when `rate/regime.py` already computes one.** That module fits the same lag-1
+**Why this exists when `rate/regime.py` already computes one.** W2.7 fits the same lag-1
 coefficient by ordinary least squares and its own docstring says the estimator is biased low by
 roughly ``(1 + 3 phi) / n``, that detrending costs about as much again, and that a short relaxation
 time makes `Ad` small and `QUASI_STATIC` pass. So the cheap rung errs toward *licensing*, which is
-the wrong direction for a safety check, and it recorded that rather than fixing it because
+the wrong direction for a safety check, and W2.7 recorded that rather than fixing it because
 correcting it is a decision about what the library estimates. This module takes that decision. Two
 things change and both push the same way:
 
@@ -41,7 +41,7 @@ coverage makes the upper bound optimistic, so the licence is slightly easier to 
 says, and the fix is more early steps rather than a wider nominal level.
 
 The two rung-0 estimators therefore disagree by construction, and that disagreement is published as
-a `Transfer` rather than reconciled: `tau_transfer` returns the chain term, which is
+a `Transfer` rather than reconciled: `tau_transfer` returns the section 2.8 chain term, which is
 M11's whole argument applied to two estimators at one rung instead of two rungs.
 """
 
@@ -119,7 +119,7 @@ class RelaxationFloors:
     #: Points needed for the early lag-1 fit. `RegimeFloors.ar_min_points` is 10 and this matches.
     min_points: int = 10
     #: How many steps from the start of the run count as early. `RegimeFloors.ar_early_steps` is 50
-    #: and this matches. The relaxation time should be estimated before the transition,
+    #: and this matches. Section 3.4 wants the relaxation time estimated before the transition,
     #: because a fit run over a transition measures the transition.
     early_steps: int = 50
     #: Parametric-bootstrap replicates for the bias and the interval. **Chosen: 400**, which puts
@@ -138,7 +138,7 @@ class RelaxationFloors:
 def _phi_ols(x: np.ndarray) -> float:
     """The lag-1 coefficient of the detrended series, by ordinary least squares.
 
-    Exactly the regime estimator, reusing its detrend so the two cannot drift apart. Detrending
+    Exactly W2.7's estimator, reusing W2.7's detrend so the two cannot drift apart. Detrending
     first is not optional: a training run's mean reward climbs, an autoregression fitted to a
     climbing series returns a coefficient near one whatever the dynamics are, and a coefficient
     near one turns into an unbounded relaxation time.
@@ -159,8 +159,7 @@ def tau_of(phi: float) -> float:
     rather than an undefined one. A coefficient at or above one is a series that does not return,
     whose relaxation time is unbounded and whose `Ad` is unbounded with it.
 
-    The regime estimator returns no time at all in both cases and says so, which is right for a
-    point estimate on
+    W2.7 returns no time at all in both cases and says so, which is right for a point estimate on
     one number. It is wrong for an interval, because an interval whose lower end is a
     non-relaxing series still has an upper end, and the upper end is the one a safety check needs.
     """
@@ -176,8 +175,7 @@ def tau_of(phi: float) -> float:
 class RelaxationTime:
     """`tau_relax` in optimizer steps, with the bias that was removed and the interval that is left.
 
-    `phi_ols` is what the regime estimator reports and `phi` is what this module reports; `bias` is
-    the difference
+    `phi_ols` is what W2.7 reports and `phi` is what this module reports; `bias` is the difference
     and it is measured rather than assumed. The interval is a basic bootstrap interval on the
     coefficient mapped through `tau_of`, which is monotone, so the ends stay the ends.
     """
@@ -298,7 +296,7 @@ def relaxation_time(
             remedy=(
                 "report the relaxation time from the perturb-and-hold rung instead, or widen the "
                 "early window so the fit has more residual to work with. The uncorrected "
-                "coefficient is available on the regime reading and it is biased toward "
+                "coefficient is available on the W2.7 regime reading and it is biased toward "
                 "licensing, which is the direction that matters here."
             ),
             statistics={"n": n, "phi_ols": phi_ols, "replicates": int(simulated.size)},
@@ -344,8 +342,8 @@ def relaxation_time(
 class DriveRate:
     """``|d log lambda / dt|`` across one pair of consecutive recorded steps.
 
-    Per step rather than per window, because this condition is measured per step and the two are
-    genuinely different. A window maximum is one number for forty steps and it
+    Per step rather than per window, because section 3.4 says this condition is measured per step
+    and the two are genuinely different. A window maximum is one number for forty steps and it
     hides which step it came from; on a schedule that decays linearly to zero the log derivative is
     small everywhere and unbounded at the last step, so the window maximum says "fast driving" about
     a run that was quasi-static for all but its final step.
@@ -451,11 +449,11 @@ class AdiabaticityReading:
     """`Ad` per step over a window, and the `QUASI_STATIC` verdict the upper bound supports.
 
     `holds` is taken on `ad_high`, the upper end of the interval at the worst step, and that is the
-    decision this instrument exists to take differently from the regime estimator. Reading `Ad`
-    licenses treating the run as quasi-static, so it holds when the whole interval is below the
-    threshold, fails when the whole interval is above it, and is `None` when the interval straddles
-    it. A point estimate below a threshold with an interval crossing it has established nothing, and
-    the rule is that unknown is not a pass.
+    decision this instrument exists to take differently from W2.7. Reading `Ad` licenses treating
+    the run as quasi-static, so it holds when the whole interval is below the threshold, fails when
+    the whole interval is above it, and is `None` when the interval straddles it. A point estimate
+    below a threshold with an interval crossing it has established nothing, and section 2.4's rule
+    is that unknown is not a pass.
     """
 
     per_step: tuple[StepAdiabaticity, ...]
@@ -518,7 +516,7 @@ def adiabaticity(
     """`Ad` per step over one window of one run, from the record alone.
 
     The relaxation time is fitted on the run's own early window, not on the requested one, because
-    it should be estimated before the transition and a window chosen for another reason has
+    section 3.4 wants it estimated before the transition and a window chosen for another reason has
     no claim to be early. The driving rate is per step over the requested window.
 
     Returns a `Refusal` when the record carries no schedule this window can differentiate, and a
@@ -691,11 +689,11 @@ def regime_inputs(
         ad = adiabaticity(run)
         reading = measure_regime(run, inputs=regime_inputs(ad))
 
-    ``bound`` defaults to `upper` and that default is the argument. The regime estimator compares a
-    point estimate against the threshold, and its own point estimate is biased toward licensing;
-    handing it the upper end of this interval makes its verdict mean "the assumption is established"
-    rather than "the assumption was not contradicted". Passing `point` gives the bias-corrected
-    point estimate instead, which is still strictly less licensing than what it fits for itself.
+    ``bound`` defaults to `upper` and that default is the argument. W2.7 compares a point estimate
+    against the threshold, and its own point estimate is biased toward licensing; handing it the
+    upper end of this interval makes its verdict mean "the assumption is established" rather than
+    "the assumption was not contradicted". Passing `point` gives the bias-corrected point estimate
+    instead, which is still strictly less licensing than what W2.7 fits for itself.
 
     A flat schedule passes no relaxation time at all, and that is right rather than a gap. When
     every recorded parameter is constant the driver is not moving, so `Ad` is zero whatever the
@@ -706,7 +704,8 @@ def regime_inputs(
     One thing this cannot carry across, and it is worth naming because it shows up in the reading:
     `RegimeInputs` has no field for where a supplied `tau_relax` came from, so the condition's
     detail will say "tau_relax supplied by the caller" and not which estimator or which end of
-    which interval. The full reading is on this object.
+    which interval. The full reading is on this object and the build report proposes the one-field
+    change that would let the detail say it.
     """
     tau = reading.tau.tau_high if bound == "upper" else reading.tau.tau
     if reading.flat_schedule and not math.isfinite(tau):
@@ -725,15 +724,15 @@ def regime_inputs(
 
 
 def tau_transfer(reading: AdiabaticityReading) -> Transfer:
-    """The two rung-0 relaxation times, differenced, as a chain term.
+    """The two rung-0 relaxation times, differenced, as a section 2.8 chain term.
 
-    The regime estimator and this one read the same series over the same early window and differ only
+    W2.7's estimator and this one read the same series over the same early window and differ only
     in whether the bias of the lag-1 fit is removed, so their difference is not sampling noise: it
     is what the uncorrected estimator costs, measured on this run. `ladder_disagreement` is the
     kernel's one-call form and this is a thin wrapper over it, deliberately, because M11 already
     owns the general case and a second implementation of it is a second thing to keep right.
 
-    That estimator returns nothing at all when its coefficient is at or below zero, and on the
+    W2.7's estimator returns nothing at all when its coefficient is at or below zero, and on the
     200-step GRPO record that is what it does. The transfer is then between no number and a number,
     which is reported as a disagreement of the whole of this module's estimate with the note saying
     which side was absent. That is the honest reading: an estimator that declines is not an
@@ -773,7 +772,7 @@ def tau_transfer(reading: AdiabaticityReading) -> Transfer:
 #: if the grader moved during that window the fit measures the grader moving rather than the policy
 #: returning. Downgrade rather than refuse, because the fit is still a real fit of the series that
 #: was recorded and what it loses outside the envelope is the right to be read as a property of the
-#: policy. The worked case for `downgrade` has this shape.
+#: policy. Section 2.4's own worked case for `downgrade` has this shape.
 ADIABATICITY_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.STATIONARY_GRADER}),
     measured_by=MEASURED_BY,
@@ -792,9 +791,9 @@ _PERTURB_ACCESS: AccessMatrix = {
 }
 
 #: The catalogue gives H1 one baseline, "assume quasi-static, which is what everyone does", and
-#: `spec/CATALOGUE.yaml` carries it as two entries because the merge split it at the comma. The
-#: second entry here is not that fragment: it is the other reflex, which is to assume the system
-#: relaxes in one step, and it is a
+#: `spec/CATALOGUE.yaml` carries it as two entries because the merge split it at the comma. That is
+#: SPEC-ERRATA E29's unapplied E26 patch, live in this record. The second entry here is not that
+#: fragment: it is the other reflex, which is to assume the system relaxes in one step, and it is a
 #: real number on every run rather than a restatement of the first.
 ADIABATICITY_BASELINES = (
     "baseline.assume_quasi_static",
@@ -809,8 +808,8 @@ class Adiabaticity(BaseObservable):
     gates: a check that had to spend GPU time to find out whether an assumption held would not get
     run.
 
-    What it cannot do. The relaxation time is fitted rather than measured, and the quantity is
-    defined by the measurement it is not doing: perturb the policy, hold the schedule, count
+    What it cannot do. The relaxation time is fitted rather than measured, and section 3.4 defines
+    the quantity by the measurement it is not doing: perturb the policy, hold the schedule, count
     the steps until the observable returns. A fitted lag-1 time and a perturb-and-hold time agree
     only if the system's memory really is first-order, which nobody has checked on a language
     policy, so this rung reports a first-order summary of whatever the real dynamics are. That is
@@ -827,9 +826,9 @@ class Adiabaticity(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to: str | None = "H1"
     deviations: tuple[str, ...] = (
-        "tau_relax is defined by perturb-and-hold. This is rung 0, the early lag-1 fit, "
-        "which is the other named route to it and which is weaker in every way but cost.",
-        "Ad is normally read against a threshold as a point. The verdict here is taken on the "
+        "section 3.4 measures tau_relax by perturb-and-hold. This is rung 0, the early lag-1 fit, "
+        "which section 3.4 also names and which is weaker in every way but cost.",
+        "section 3.4 reads Ad against a threshold as a point. The verdict here is taken on the "
         "upper end of the interval on tau_relax, because the condition licenses an assumption and "
         "a point below a threshold with an interval crossing it has not established one.",
     )
@@ -931,7 +930,7 @@ def _register() -> None:
 
     Registering rung 1 with `run=None` is what makes `reward-lens capabilities` able to say "the
     better answer exists, here is what it costs and what access it needs" instead of silently
-    offering only the cheap one. The whole argument for separating quantities from
+    offering only the cheap one. Section 2.5's whole argument for separating quantities from
     estimators is that a rung nobody has built is a research target rather than a gap.
     """
     register_estimator(
@@ -969,12 +968,12 @@ def _register() -> None:
                     "not measured. This is the definition of the quantity rather than an "
                     "estimator of it, so its bias is the bias of the protocol: how large a nudge "
                     "counts as small, and whether the return is exponential at all. Both are "
-                    "answered by running it at three magnitudes."
+                    "answered by running it at three magnitudes, which is what W6.2 is for."
                 ),
             ),
             cost=CostModel(
                 note="one held arm per perturbation, run until the observable returns, at three "
-                "magnitudes to check that the response is linear. Not built."
+                "magnitudes to check that the response is linear. Not built; W6.2"
             ),
             phases=frozenset({Phase.IN_RUN}),
             run=None,
@@ -1015,7 +1014,7 @@ def _register() -> None:
                 why="inherits the rung-1 relaxation time's; the driving rate is exact either way.",
             ),
             cost=CostModel(
-                note="the rung-1 relaxation time plus one pass over the schedule. Not built."
+                note="the rung-1 relaxation time plus one pass over the schedule. Not built; W6.2"
             ),
             phases=frozenset({Phase.IN_RUN}),
             run=None,

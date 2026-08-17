@@ -122,7 +122,7 @@ class _ReconcileBase(BaseObservable):
     substrates = frozenset(Substrate)
     phases = frozenset({Phase.IN_RUN, Phase.POST_RUN})
     envelope = RECONCILE_ENVELOPE
-    #: `units` is the one registered group whose assertion is a refusal rather than a numeric
+    #: `units` is the one group of Appendix B whose assertion is a refusal rather than a numeric
     #: relation, so `check_invariance` routes it to `check_unit_refusal`. The substantive property
     #: this package asserts instead is that the Lande slope and the closure ratio are unchanged by a
     #: per-feature rescale of the features, which is not vacuous: `Δz`, `S`, `C` and `G` all rescale
@@ -262,7 +262,7 @@ class _ReconcileBase(BaseObservable):
     def compute(self) -> Any:  # pragma: no cover - overridden
         raise NotImplementedError
 
-    # -- the two methods of the instrument protocol -------------------------
+    # -- the two methods of section 4.2 ------------------------------------
 
     def estimate(self, ctx: Context) -> Reading:
         pre = self.preflight(ctx)
@@ -328,12 +328,12 @@ class ReconciliationResidual(_ReconcileBase):
 
     name = "ReconciliationResidual"
     quantity = "books.reconciliation_residual"
-    faithful_to: str | None = "the reconciliation identity"
+    faithful_to: str | None = "the reconciliation identity (section 3.1.5)"
     deviations: tuple[str, ...] = (
         "`C` is pooled across the window by default rather than estimated per step. Eight rollouts "
         "in two groups leave six within-group degrees of freedom at one step, which is too few to "
         "invert. `S` stays per step, so the gradient still moves with the step's own pressure.",
-        "terms of the budget table whose inputs the record does not carry are named in "
+        "terms of the section 3.1.5 table whose inputs the record does not carry are named in "
         "`missing` rather than estimated, so the combined uncertainty is a lower bound and an "
         "excess of `Var(rho)` over it cannot be read as an unmodelled term.",
         "`u_basis` converts `1 - R^2` into feature units by assuming the unexplained advantage "
@@ -384,7 +384,7 @@ class BudgetClosure(_ReconcileBase):
     name = "BudgetClosure"
     quantity = "books.budget_closure"
     rung = 2
-    faithful_to: str | None = "the closure test"
+    faithful_to: str | None = "the closure test (section 3.1.5)"
     deviations: tuple[str, ...] = (
         "the interval on the ratio is a cluster bootstrap over step pairs and resamples the "
         "numerator only. `sum u^2` is composed from window-level statistics computed on the same "
@@ -444,11 +444,11 @@ class LandeSlope(_ReconcileBase):
     quantity = "selection.lande_slope"
     envelope = LANDE_ENVELOPE
     rung = 1
-    faithful_to: str | None = "Lande's equation"
+    faithful_to: str | None = "Lande's equation, derived at section 3.1.3"
     deviations: tuple[str, ...] = (
         "the fit is through the origin and each feature enters divided by its own pooled spread "
         "over the window, which are `measure.ledger.explained`'s conventions and are stated "
-        "because the registered entry gives the regression and not its conventions.",
+        "because section 5's entry gives the regression and not its conventions.",
         "with `G` at the covariance bound the regressor reduces to `eta*S` exactly and the slope "
         "is F2's `eta_eff` rescaled. The fit reports `is_degenerate` rather than a caveat.",
         "a `G` fitted from `Delta z` makes the regression circular and is refused rather than "
@@ -545,7 +545,7 @@ _RESIDUAL_BIAS = BiasStatement(
 _CLOSURE_BIAS = BiasStatement(
     direction="downward",
     why=(
-        "every budget term whose input the record does not carry is omitted rather than "
+        "every term of section 3.1.5 whose input the record does not carry is omitted rather than "
         "estimated, so `sum u^2` is a lower bound on the uncertainty the apparatus really has and "
         "the ratio `Var(rho) / sum u^2` is biased upward. The verdict names the omitted terms and "
         "reports `incomplete` rather than `unmodelled` for exactly this reason."
@@ -558,8 +558,8 @@ _LANDE_BIAS = BiasStatement(
         "the regressor is a measured covariance solved against a measured covariance, so the "
         "through-origin slope is attenuated toward zero by the classical errors-in-variables "
         "factor, and the attenuation is worse here than for F2's `eta_eff` because `C^-1` "
-        "amplifies the error in `S` along the directions where `C` is smallest. The correction "
-        "is `beta_corr = (C_obs - C_err)^-1 S` with `C_err` the within-prompt "
+        "amplifies the error in `S` along the directions where `C` is smallest. Section 3.1.3 "
+        "names the correction: `beta_corr = (C_obs - C_err)^-1 S` with `C_err` the within-prompt "
         "rollout variance."
     ),
 )
@@ -576,7 +576,7 @@ def _register() -> None:
     """
     for rung, impl, note in (
         (0, "books.reconciliation_residual.record_and_metric", "the residual alone"),
-        (1, "books.reconciliation_residual.gum_itemised", "the GUM itemisation of the budget"),
+        (1, "books.reconciliation_residual.gum_itemised", "the GUM itemisation of section 3.1.5"),
     ):
         register_estimator(
             EstimatorEntry(

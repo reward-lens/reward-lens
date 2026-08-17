@@ -1,6 +1,6 @@
-"""A6 Verification Score: causal fraction of correctness-Δr at the error span.
+"""A6 Verification Score: causal fraction of correctness-Δr at the error span (Appendix A6).
 
-Formal definition, A6. ``VS =`` the fraction of the correctness-``Δr`` between clean and
+Formal definition: Appendix A6. ``VS =`` the fraction of the correctness-``Δr`` between clean and
 corrupted twins that is causally attributable to the error span, measured by patching the clean twin's
 error-span activations into the corrupted run (faithful_to the error-microscope construction). A
 process/verifier reward that is genuinely checking the work concentrates its clean-vs-corrupted reward
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 def verification_score(dr_total: float, dr_error_span: float) -> float:
-    """The verification score ``VS = Δr_error_span / Δr_total`` (A6).
+    """The verification score ``VS = Δr_error_span / Δr_total`` (Appendix A6).
 
     ``dr_total = r(clean) − r(corrupted)`` is the whole correctness reward gap; ``dr_error_span`` is the
     part recovered by patching the clean twin's error span into the corrupted run. Their ratio is the
@@ -75,7 +75,7 @@ class VerificationScore(BaseObservable):
         "the production path through the interventions subsystem",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.verification_score"
     #: Both deltas are recorded from an earlier clean-twin span-patching experiment.
     requires: AccessMatrix = {Component.RECORD: Access.RECORD}
@@ -100,9 +100,9 @@ class VerificationScore(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """Both halves of the span patch, or a refusal. A ratio needs a denominator.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.dr_total is None or self.dr_error_span is None:

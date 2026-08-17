@@ -18,10 +18,11 @@ argmax number is admissible. The catalogue's kill condition is exactly this: **k
 controls show the mean moves while the mode is fixed.** `Controls.kills` implements that sentence
 and the instrument refuses rather than reporting when it fires.
 
-**A note on the four controls.** The catalogue's baseline line names four controls without
-specifying them, so the four implemented here are derived from the failure mode the entry itself
-states rather than transcribed from a list, and they are named in `Controls` so a reader can check
-them against the failure mode they are meant to catch.
+**A note on the four controls.** The catalogue's baseline line names "the four controls report 04
+specifies". That report is not in this checkout and was not located, so the four implemented here
+are derived from the failure mode the entry itself states rather than transcribed from it, and they
+are named in `Controls` so a reader can check them against report 04 when it surfaces. That
+substitution is recorded in this package's build report rather than left for somebody to discover.
 
 **Scope limit.** A commitment position is measured against a *threshold* on a monotone-ish reading,
 and a reading that oscillates has no well-defined commitment position; `Commitment.is_stable` is the
@@ -441,7 +442,7 @@ class VerdictDirection(SelectionInstrument):
         "and the `tokenization` group admits only invariance, so the index is carried as a "
         "presentational field beside the fraction",
         "the four controls are derived from the failure mode the catalogue entry states rather than "
-        "transcribed from a specified list",
+        "transcribed from report 04, which is not in this checkout",
     )
 
     def __init__(

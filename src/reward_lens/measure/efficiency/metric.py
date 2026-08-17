@@ -1,14 +1,14 @@
-"""`G = J F⁻¹ Jᵀ`: the behavioural covariance a parameter move can actually reach.
+"""`G = J F⁻¹ Jᵀ`: the behavioural covariance a parameter move can actually reach (§3.1.3).
 
 `G` is the object both the capacity book and the cost book are built on. With `J = ∂z/∂θ` the
 Jacobian of the measured feature means and `F` the Fisher information, `G` answers "which patterns
-of behavioural change can a parameter step produce, and at what price in nats". Two things follow
-from it that this module is here to supply: heritability `h²_i = G_ii/C_ii`, and the minimum
+of behavioural change can a parameter step produce, and at what price in nats". §3.1.3 derives two
+things from it that this module is here to supply: heritability `h²_i = G_ii/C_ii`, and the minimum
 information cost `KL_min(Δz) = ½ Δzᵀ G⁻¹ Δz` that `measure.efficiency.cost` divides into.
 
 **Three estimators, and they are not interchangeable.**
 
-`covariance_bound` (rung 0, record only). `C ⪰ G` holds for every feature basis: no
+`covariance_bound` (rung 0, record only). §3.1.3 proves `C ⪰ G` for every feature basis: no
 parameter perturbation can produce more feature variance than the rollouts already show. So
 `G = C` is an upper bound on the metric and therefore makes `KL_min` a **lower bound** on the true
 minimum cost, and a lower bound on `KL_min` is a lower bound on efficiency. It needs no gradients,
@@ -30,18 +30,18 @@ both centred within their prompt group, the push-through identity gives
 
 so the whole of `G` comes out of the `n × n` Gram matrix of scores. That costs `n` backward passes
 and one `n × n` solve, against the `k` Jacobian-vector products plus `k` conjugate-gradient Fisher
-solves the direct construction costs. It is also exactly, not approximately, consistent with
-`C ⪰ G`: the eigenvalues of `K(K + mλI)⁻¹` lie in `[0, 1)`, so `Ĝ ⪯ (1/m)ΦᵀΦ = Ĉ` holds in finite
-samples and `h² ∈ [0, 1]` is arithmetic rather than an assumption.
+solves §3.1.3 costs it at. It is also exactly, not approximately, consistent with `C ⪰ G`: the
+eigenvalues of `K(K + mλI)⁻¹` lie in `[0, 1)`, so `Ĝ ⪯ (1/m)ΦᵀΦ = Ĉ` holds in finite samples and
+`h² ∈ [0, 1]` is arithmetic rather than an assumption.
 
 **What the rung-2 estimator cannot do, three lines in rather than on a caveats page.** With fewer
 rollouts than parameters, which is every real policy, the *undamped* plug-in is not merely noisy,
 it is degenerate: `Φ` lies entirely inside the row space of `S`, the projection is the identity on
 it, and `Ĝ = Ĉ` **exactly**, so `h² = 1` for every feature no matter what is true. On the 200-step
 fixture at λ→0 the three moving features come back at `h² = 0.99999`. The damping is therefore not
-a numerical convenience, it is the entire content of the estimate, which is why the `λ` is reported
-and why `damping_stable` is on every reading. A `damping_stable` of False means the number you are
-holding is a function of a regularisation constant, and it should be read as the
+a numerical convenience, it is the entire content of the estimate, which is why §3.1.3 asks for the
+`λ` to be reported and why `damping_stable` is on every reading. A `damping_stable` of False means
+the number you are holding is a function of a regularisation constant, and it should be read as the
 `covariance_bound` with a shrinkage applied rather than as a measurement of `G`.
 
 The second limit is memory. The kernel form holds `n · |θ|` floats: 78 MB for eight rollouts of a
@@ -71,8 +71,8 @@ RANK_TOLERANCE = 1e-10
 #: The default relative damping for `fisher_kernel`, expressed as a fraction of `trace(K)/n` so it
 #: is dimensionless and survives a rescaling of the parameterisation. **Chosen: 1e-2**, which on the
 #: 200-step fixture leaves `h²` at 0.992 and puts the estimator visibly in the regime the module
-#: docstring describes. It is a placeholder that behaves like a decision, and it is a default
-#: rather than a fitted value: nothing here is tuned to make a result come out.
+#: docstring describes. It is a placeholder that behaves like a decision, and the integrator has to
+#: ratify it; nothing here is tuned to make a result come out.
 DEFAULT_DAMPING = 1e-2
 
 #: How much `G` may move across a decade of `λ` and still be called stable. **Chosen: 0.05** on the
@@ -84,7 +84,7 @@ DEFAULT_STABILITY_TOL = 0.05
 def _within_group_centre(matrix: np.ndarray, group_ids: np.ndarray) -> np.ndarray:
     """Subtract each prompt group's own mean from its rows.
 
-    Within-group and not pooled, for the reason that settles it for the ledger and which
+    Within-group and not pooled, for the reason SPEC-ERRATA E17 settles for the ledger and which
     applies with more force here: `E_y[∇_θ log π(y|x)] = 0` holds **per prompt**, not across
     prompts. Centring pooled would leave the between-prompt mean score in `S`, and that is a
     property of the task distribution rather than of the policy.
@@ -98,7 +98,7 @@ def _within_group_centre(matrix: np.ndarray, group_ids: np.ndarray) -> np.ndarra
 
 @dataclass(frozen=True)
 class MetricG:
-    """`G = J F⁻¹ Jᵀ`: the covariance a parameter move can actually reach.
+    """`G = J F⁻¹ Jᵀ`: the covariance a parameter move can actually reach (§3.1.3).
 
     ``names`` is the feature basis and it is the join key between this, the ledger's `Δz` and the
     cost book's shares. It is `StepSample.names` in `StepSample.names` order, whole: a feature that
@@ -110,10 +110,9 @@ class MetricG:
     regularisation cannot be checked for the stability it also has to claim.
 
     ``covariance`` is `C`, the within-group feature covariance the same rollouts produce. It is not
-    part of the interface `measure.reconcile` reads and it is here because two things need it:
-    `h²  = G_ii/C_ii`, which is C2's quantity and not this package's, and the `C ⪰ G` self-check,
-    which is the one arithmetic property that catches a sign or a denominator error in any of the
-    three estimators.
+    part of the interface W5.6 reads and it is here because two things need it: `h²  = G_ii/C_ii`,
+    which is C2's quantity and not this package's, and the `C ⪰ G` self-check, which is the one
+    arithmetic property that catches a sign or a denominator error in any of the three estimators.
     """
 
     names: tuple[str, ...]
@@ -125,7 +124,7 @@ class MetricG:
     method: str
     n_samples: int
     #: Additive to the fixed interface, defaulted, invisible to a reader that uses only the fields
-    #: above.
+    #: above. Proposed to the integrator rather than assumed: see this package's report.
     covariance: np.ndarray | None = None
     n_groups: int = 0
     rank_tolerance: float = RANK_TOLERANCE
@@ -154,7 +153,7 @@ class MetricG:
                 raise ValueError(
                     f"G has a negative eigenvalue at {float(eigenvalues.min()):.6g}, against a "
                     f"largest of {float(eigenvalues.max()):.6g}. `G` is positive semi-definite by "
-                    f"construction, so a negative eigenvalue means the estimate is not a "
+                    f"construction (§3.1.3), so a negative eigenvalue means the estimate is not a "
                     f"metric. `KL_min` computed against it would be negative for some `Δz`, which "
                     f"is a cost of less than nothing. Refuse instead, or raise the damping."
                 )
@@ -162,7 +161,7 @@ class MetricG:
     # -- the spectrum ------------------------------------------------------
 
     def eigen(self) -> tuple[np.ndarray, np.ndarray]:
-        """`(g, U)` with `G = U diag(g) Uᵀ`, ascending. The basis the decomposition is exact in."""
+        """`(g, U)` with `G = U diag(g) Uᵀ`, ascending. The basis §3.1.4's decomposition is exact in."""
         values, vectors = np.linalg.eigh(0.5 * (self.matrix + self.matrix.T))
         return np.clip(values, 0.0, None), vectors
 
@@ -192,7 +191,7 @@ class MetricG:
         }
 
     def single_feature_bound(self, feature: str, delta: float) -> float:
-        """`δ² / (2 G_ii)`: the least it can cost to move one feature by `δ`.
+        """`δ² / (2 G_ii)`: the least it can cost to move one feature by `δ`, §3.1.4's bound.
 
         Infinite when `G_ii` is zero, which is the correct reading and not a failure: a feature the
         parameterisation cannot move is a feature no number of nats will move, and that is `h² = 0`
@@ -230,14 +229,14 @@ class MetricG:
         return value, out_of_range, rotated
 
     def kl_min(self, dz: np.ndarray) -> tuple[float, float]:
-        """`(½ Δzᵀ G⁻¹ Δz, out-of-range fraction)`. The exact minimum cost, in nats."""
+        """`(½ Δzᵀ G⁻¹ Δz, out-of-range fraction)`. §3.1.4's exact minimum cost, in nats."""
         value, out_of_range, _ = self._spectral_solve(dz)
         return value, out_of_range
 
     def eigen_shares(self, dz: np.ndarray) -> np.ndarray:
         """`½ (Δz̃_j)² / g_j` per eigen-direction. Exactly additive, and the directions are unnamed.
 
-        This is the exact decomposition and it is the only one that needs no allocation
+        This is §3.1.4's decomposition verbatim and it is the only one that needs no allocation
         rule. `measure.efficiency.cost` turns it into shares of *named* features, which is a
         different and harder problem because named features are correlated.
         """
@@ -250,7 +249,7 @@ class MetricG:
         return out
 
     def submatrix(self, indices: Sequence[int]) -> "MetricG":
-        """`G_TT` on a subset of the basis, the value of the coalition `T` in the cost game."""
+        """`G_TT` on a subset of the basis, which is the value of the coalition `T` in §3.1.4's game."""
         idx = np.asarray(list(indices), dtype=int)
         sub = np.asarray(self.matrix, dtype=np.float64)[np.ix_(idx, idx)]
         return MetricG(
@@ -315,7 +314,7 @@ def pooled_rollouts(samples: Sequence[StepSample]) -> tuple[np.ndarray, np.ndarr
 
 
 def _conditioning(matrix: np.ndarray) -> float:
-    """`n_D = Σ eig / max eig`: the effective dimension, which is a stable rank and not a rank."""
+    """`n_D = Σ eig / max eig`: §3.7's effective dimension, which is a stable rank and not a rank."""
     values = np.linalg.eigvalsh(0.5 * (matrix + matrix.T))
     values = np.clip(values, 0.0, None)
     top = float(values.max()) if values.size else 0.0
@@ -353,7 +352,7 @@ def _realised_g(
 ) -> tuple[np.ndarray, int, str]:
     """Lande's equation regressed across a window: `Δz_t = η_t G β_t`, one row of `G` per feature.
 
-    The rung-0 estimator, in matrix form. `β = C⁻¹S` is the selection *gradient*, so this
+    §3.1.3's rung-0 estimator, in matrix form. `β = C⁻¹S` is the selection *gradient*, so this
     regresses what moved on what selection pushed for after the correlation between features has
     been divided out, which is the whole difference between the differential and the gradient.
 
@@ -417,7 +416,7 @@ def metric_g(
     """`G` over a window of steps, by one of the three estimators, or the refusal that says why not.
 
     ``samples`` is a window of `StepSample`, which fixes the basis: `G.names` comes out as
-    `samples[0].names`, whole and in order, which is the join key across this package.
+    `samples[0].names`, whole and in order, which is the join key D19 fixes.
 
     ``method`` is ``"covariance_bound"`` (rung 0, `G = C`, so `KL_min` is a lower bound),
     ``"realised"`` (rung 0, Lande regressed across the window, needs ``ledgers``), or
@@ -450,7 +449,7 @@ def metric_g(
             raise ValueError(
                 f"step {sample.index} carries basis {list(sample.names)} against "
                 f"{list(names)} at step {samples[0].index}. `G`, `Δz` and the cost book's shares "
-                f"are vectors in one basis in one order, and a window that changes basis "
+                f"are vectors in one basis in one order (D19), and a window that changes basis "
                 f"half way through has no single `G` to estimate."
             )
 
@@ -497,7 +496,7 @@ def metric_g(
         absolute_damping = 0.0
         stable = True
         notes.append(
-            "`G = C`, which is the bound `C ⪰ G` taken at equality. Every `KL_min` computed "
+            "`G = C`, which is §3.1.3's bound `C ⪰ G` taken at equality. Every `KL_min` computed "
             "against it is a **lower** bound on the true minimum cost, and every efficiency a "
             "lower bound on the true efficiency."
         )
@@ -620,7 +619,7 @@ def metric_g(
             f"than round-off is refused rather than lifted."
         )
 
-    # `C ⪰ G` is arithmetic for both of the estimators that go through the covariance:
+    # §3.1.3's `C ⪰ G` is arithmetic for both of the estimators that go through the covariance:
     # `covariance_bound` takes it at equality, and `fisher_kernel` multiplies `C` by a matrix whose
     # eigenvalues lie in [0, 1). So a violation is a bug in this module rather than a property of
     # the data, and it is checked here rather than left to a test that might not be run. The
@@ -632,7 +631,7 @@ def metric_g(
         if float(gap.min()) < floor:
             raise ValueError(
                 f"`C - G` has eigenvalue {float(gap.min()):.6g}, so this estimate violates "
-                f"the bound `C ⪰ G`. No parameter perturbation can produce more feature variance "
+                f"§3.1.3's `C ⪰ G`. No parameter perturbation can produce more feature variance "
                 f"than the rollouts already show, so `G` above `C` is an arithmetic error in "
                 f"`{method}` (a denominator, a centring, or a sign), not a finding."
             )

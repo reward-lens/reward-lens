@@ -1,14 +1,14 @@
 """N2, the visibility horizon: where a tilt extrapolation goes blind, in nats.
 
-Weight degeneracy is the reason this package exists. Importance weights degenerate as lambda grows,
-so a tilt estimate has a range over which it is a measurement and a range beyond which it is a
+Section 3.0.1 is the reason this package exists. Importance weights degenerate as lambda grows, so
+a tilt estimate has a range over which it is a measurement and a range beyond which it is a
 confident number produced by four rollouts. The Kish effective sample size
 
     ESS(lambda) = (sum w_i)^2 / sum w_i^2
 
 says which is which, and the horizon is the largest lambda at which it still clears a stated floor,
-default 0.05 of n. Past that this instrument declines to answer, and that is not caution:
-it is the quantity a published lower bound is already written in. The best-of-n
+default 0.05 of n. Past that this instrument declines to answer, and section 3.0.1 is explicit that
+this is not caution: it is the quantity a published lower bound is already written in. The best-of-n
 coverage coefficient is
 
     C = E_{pi*}[pi* / pi_ref] = 1 + chi^2(pi* || pi_ref) = n / ESS
@@ -17,8 +17,8 @@ so their controlling constant is this horizon reciprocated, and the reason that 
 concede the turn "may be impossible to know" is that nobody measures it. Measuring it is cheap:
 it costs nothing beyond the n grader calls N1 already makes.
 
-**Why the reading is in nats rather than in lambda.** A horizon is easy to report as
-"past lambda = 2.4", and lambda carries the reciprocal of the reward's scale. Two graders
+**Why the reading is in nats rather than in lambda.** Section 3.0.3's own sentence reports the
+horizon as "past lambda = 2.4", and lambda carries the reciprocal of the reward's scale. Two graders
 whose scores differ by a factor of ten have horizons differing by a factor of ten in lambda and by
 nothing at all in KL, so a horizon in lambda cannot be compared across graders and is not invariant
 under the `reward.affine` group the quantity is registered under. The reading is the KL at which ESS
@@ -63,8 +63,8 @@ from reward_lens.measure.frontier.potential import (
 
 #: Every instrument in this package applies to any grader that returns a number, which is all six
 #: substrates. Level 0 reads scores and never reaches inside anything, so the distinction between a
-#: scalar head and a program has no purchase here: that is the whole content of the claim that the
-#: frontier is estimable "for any substrate, including a closed API".
+#: scalar head and a program has no purchase here: that is the whole content of section 3.0's claim
+#: that the frontier is estimable "for any substrate, including a closed API".
 ALL_SUBSTRATES = frozenset(
     {
         Substrate.NEURAL_SCALAR,
@@ -76,7 +76,7 @@ ALL_SUBSTRATES = frozenset(
     }
 )
 
-#: The access this layer needs, in full: "GRADER: QUERY, POLICY: QUERY, GOLD: QUERY on the same n
+#: What section 3.0 says the access is: "GRADER: QUERY, POLICY: QUERY, GOLD: QUERY on the same n
 #: samples. Nothing else." POLICY:QUERY is there because the n rollouts have to come from somewhere,
 #: and a horizon computed on somebody else's rollouts is a horizon for their base policy.
 HORIZON_ACCESS: dict[Component, Access] = {
@@ -106,7 +106,7 @@ def light_tailed_envelope(measured_by: str = "frontier.tail_index") -> EnvelopeS
     that exists only where ``K`` does. On a genuinely heavy-tailed reward the empirical ``K`` is
     still a finite sum and still returns a number, and that number converges to nothing. So the
     condition attaches to the axis the horizon is reported on rather than to the effective sample
-    size, and registering the horizon in nats is what brings it in.
+    size, and the errata's decision to register the horizon in nats is what brings it in.
     """
     return EnvelopeSpec(
         requires=frozenset({RegimeCondition.LIGHT_TAILED}),
@@ -262,11 +262,11 @@ class VisibilityHorizon(FrontierInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "N2"
     deviations = (
-        "the reading is the KL at the crossing, not the lambda. A horizon is easy to report as "
+        "the reading is the KL at the crossing, not the lambda. Section 3.0.3's sentence reports "
         "a lambda; lambda carries the reciprocal of the reward's scale and is not comparable "
         "across graders, so lambda_max is reported alongside rather than as the quantity",
         "the search is over lambda >= 0 only. A negative tilt is a well-defined member of the "
-        "family and has its own horizon, and nothing here asks for it: the question the "
+        "family and has its own horizon, and nothing in section 3.0 asks for it: the question the "
         "layer answers is what happens under optimisation pressure, which is the positive axis",
     )
 

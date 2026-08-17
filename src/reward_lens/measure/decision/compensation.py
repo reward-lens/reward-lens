@@ -4,8 +4,8 @@ The principle is Milgrom and Roberts (1992), not Holmstrom and Milgrom (1991). T
 compensation principle" does not appear in the 1991 paper and citing it there is a citation error
 this module declines to repeat.
 
-**The derivation, because the source's statement of it is inverted.** Let the agent hold a pool of
-capacity it can spend on any task, so its cost depends on the total: `c(sum_j t_j)`. Its
+**The derivation, because the specification's statement of it is inverted.** Let the agent hold a
+pool of capacity it can spend on any task, so its cost depends on the total: `c(sum_j t_j)`. Its
 payoff under a composite `sum_i alpha_i x_i` is `sum_i alpha_i mu_i(t_i) - c(T)`, and the first-order
 condition on task `i` is
 
@@ -18,8 +18,8 @@ is the **commission** `kappa_i = alpha_i mu'_i`. The weights themselves must the
 **lowest** `alpha_i mu'_i`, because capacity flows to wherever the marginal return is highest and a
 task offering less than the others receives none of it once effort is fungible.
 
-The source states the first half correctly, that after dividing each signal by its own sensitivity
-the commissions must be equal, and then draws the reciprocal conclusion: it prints
+Section 3.5.2 states the first half of this correctly, that after dividing each signal by its own
+sensitivity the commissions must be equal, and then draws the reciprocal conclusion: it prints
 `alpha_i` proportional to `mu'_i` and names the starved component as the one with the lowest
 `alpha_i / mu'_i`. Dividing signal `x_i` by `mu'_i` produces a signal with unit sensitivity whose
 commission is `alpha_i mu'_i`, so the two halves of that sentence contradict each other and the
@@ -263,7 +263,7 @@ class EqualCompensation(DecisionInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "N6"
     deviations = (
-        "the source states the conclusion of the equal-compensation principle as alpha_i "
+        "the specification states the conclusion of the equal-compensation principle as alpha_i "
         "proportional to mu'_i, and names the starved component as the one with the lowest "
         "alpha_i / mu'_i. Both are the reciprocal of what its own preceding clause implies and of "
         "what the agent's first-order condition gives, which is that alpha_i mu'_i must be equal "
@@ -273,8 +273,8 @@ class EqualCompensation(DecisionInstrument):
         "diagonal. When a component's score responds to effort on other tasks, the quantity the "
         "principle constrains is the task-level marginal return (M' alpha)_j, which is reported "
         "beside the table and named as the one to read",
-        "the catalogue carries no N6 record and no registered quantity row. "
-        "`quantities.as_catalogue_rows()` emits the proposed record",
+        "the catalogue carries no N6 record and Appendix A no quantity row, for the reason "
+        "SPEC-ERRATA E23 gives. `quantities.as_catalogue_rows()` emits the proposed record",
         "the starvation floor of 0.9 is this module's own, not a catalogue threshold. It exists so "
         "that `holds` is a verdict rather than a float comparison against zero, and every reading "
         "carries the spread so a reader can apply a different floor without recomputing",

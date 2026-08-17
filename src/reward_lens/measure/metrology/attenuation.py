@@ -1,4 +1,4 @@
-"""A3, the attenuation factor: how much grader error shrinks the selection signal.
+"""A3, the attenuation factor: how much grader error shrinks the selection signal (section 5.A).
 
 Spearman published the correction in 1904 and nobody has pointed it at a reward model. The
 arithmetic is three lines. What took the hundred and twenty years is having a variance
@@ -114,7 +114,7 @@ def attenuation_envelope(measured_by: str | None = None) -> EnvelopeSpec:
     spelling. This module named `grader.group_spread`, which is registered nowhere, so the envelope
     declared a precondition and no way to check it while reading as rigour. `EnvelopeSpec` now
     rejects that at construction and caught this on its first run. One condition, one measuring
-    quantity, one place it is written down.
+    quantity, one place it is written down. SPEC-ERRATA E37.
     """
     from reward_lens.measure.rate.regime import MEASURED_BY
 
@@ -137,7 +137,7 @@ def _component_facets(name: str) -> frozenset[str]:
     Names are single-character facet labels with an optional ``,e`` suffix marking a term
     confounded with residual: ``p``, ``r``, ``pr``, ``pro,e``. Anything that does not parse under
     that convention returns an empty set, which keeps it out of the relative error rather than
-    silently inflating it.
+    silently inflating it. SPEC-ERRATA E43.
     """
     head = name.split(",", 1)[0].strip()
     if not head:
@@ -156,10 +156,10 @@ def _component_facets(name: str) -> frozenset[str]:
 class RewardVariance:
     """The two numbers A3 takes from A2's decomposition, and what they have to mean.
 
-    A2 is the variance-components instrument and it produces a full facet decomposition: item,
-    rater, occasion, their interactions, and a residual. A3 needs that collapsed to two numbers and
-    the collapse is a decision rather than an arithmetic step, so it is made explicitly here rather
-    than assumed.
+    A2 (W3.2a) is the variance-components instrument and it produces a full facet decomposition:
+    item, rater, occasion, their interactions, and a residual. A3 needs that collapsed to two
+    numbers and the collapse is a decision rather than an arithmetic step, so it is made explicitly
+    here rather than assumed.
 
     ``sigma2_true`` is the universe-score variance: the part of ``Var(r)`` attributable to the thing
     being measured. In a crossed item x rater x occasion design that is ``sigma2(item)`` and nothing
@@ -245,7 +245,7 @@ class RewardVariance:
         p-by-r design with `sigma2(p) = 1.0`, a main effect `sigma2(r) = 0.6` and an interaction
         `sigma2(pr,e) = 0.4`, the two give attenuation factors of 0.845 and 0.707. The direction is
         the one the old comment here warned about in the abstract and then took: the correction was
-        overstated whenever a facet carried a main effect.
+        overstated whenever a facet carried a main effect. SPEC-ERRATA E43.
 
         Membership is read off the component name, which follows the convention `stats/gtheory.py`
         writes: single-character facet labels, optionally suffixed with ``,e`` for a term confounded
@@ -557,7 +557,7 @@ def _unstandardised_refusal(instrument: str) -> Refusal:
     The square root is derived from that division. On an unstandardised advantage the selection
     differential is unattenuated under independent error and the honest factor is 1.0, which is a
     different claim about a different estimator, so reporting this instrument's number there would
-    be a confident wrong answer of exactly the kind a refusal exists to prevent.
+    be a confident wrong answer of exactly the kind section 6.1 forbids.
     """
     return Refusal(
         instrument=instrument,

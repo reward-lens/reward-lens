@@ -19,9 +19,8 @@ statistic on the step axis for exactly this reason: it is the number a reader ge
 reparametrise, and printing it beside the measurement is what makes the reparametrisation visible
 rather than assumed.
 
-**The verdict statistic is the registered one.** The registered prediction resolves on whether "the
-two anneal rates' curves do not collapse within their bands", so the primary number here is a band
-test on the shared
+**The verdict statistic is the registered one.** P7 resolves on whether "the two anneal rates'
+curves do not collapse within their bands", so the primary number here is a band test on the shared
 `lambda` support and not a summary of two fits. `separated_fraction` is the fraction of the shared
 support on which the two arms' pointwise bands fail to overlap, and the bands are block bootstraps
 that keep each arm's own autocorrelation.
@@ -29,8 +28,7 @@ that keep each arm's own autocorrelation.
 The interpretable secondary number is `shift_in_widths`: the two arms' fitted transition midpoints
 in `lambda`, differenced, in units of the pooled fitted transition width. It is in widths because
 H4 defines that unit for this library and a second unit for the same kind of displacement would be
-the fifth incommensurable convention in a literature that already has four. The sign carries the
-physics: a
+the fifth incommensurable convention section 3.4 exists to stop. The sign carries the physics: a
 rate-induced transition is displaced **later in lambda** on the faster arm, because the system is
 lagging its driver. A displacement in the other direction is real and is not rate-induced tipping,
 and `render` says which one it found rather than reporting a magnitude.
@@ -91,9 +89,9 @@ if TYPE_CHECKING:
 class CollapseCriteria:
     """Every number a verdict here is compared against, in one place, with where it came from.
 
-    The design fixes the method and not the thresholds it is read against, so these are this
-    module's defaults. They are gathered here because a default behaves like a decision until
-    somebody says otherwise.
+    The specification gives the design and not its acceptance rules, so these are this module's
+    defaults and they are the list the integrator ratifies. They are gathered here because a default
+    behaves like a decision until somebody says otherwise.
     """
 
     #: Grid points on the shared `lambda` support. **Chosen: 200.** Fine enough that
@@ -634,7 +632,7 @@ _COLLAPSE_ACCESS: AccessMatrix = {
     Component.RECORD: Access.RECORD,
 }
 
-#: The catalogue names one baseline, "a single-rate run", and the registered prediction names
+#: The catalogue names one baseline, "a single-rate run", and PREDICTIONS.md's P7 row names
 #: "assume bifurcation". They are the same reflex from two directions and both are scored.
 COLLAPSE_BASELINES = (
     "baseline.single_rate_run",
@@ -664,13 +662,13 @@ class RateDependenceTest(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to: str | None = "H2"
     deviations: tuple[str, ...] = (
-        "the criterion is 'if the curves collapse onto each other'. Collapse is made mechanical "
+        "section 3.4 says 'if the curves collapse onto each other'. Collapse is made mechanical "
         "here as the fraction of the shared lambda support on which two block-bootstrap bands fail "
-        "to overlap, with a threshold of 5 percent of the support. No threshold is fixed for it "
-        "anywhere else, so this one is a default.",
+        "to overlap, with a threshold of 5 percent of the support. The specification states no "
+        "threshold and this one is a default the integrator ratifies.",
         "the midpoint shift is reported in fitted transition widths, which is H4's unit rather than "
-        "a unit stated for this instrument. A second unit for the same displacement "
-        "is what the lead-time argument objects to.",
+        "anything section 3.4 states for this instrument. A second unit for the same displacement "
+        "is what section 3.4's own lead-time argument objects to.",
     )
 
     quantity = "run.rate_dependence"

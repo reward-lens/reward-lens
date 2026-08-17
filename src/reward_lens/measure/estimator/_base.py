@@ -13,8 +13,8 @@ one instrument family reaching into another's underscore is a dependency that is
 point where it breaks. The duplicated part is thirty lines of dispatch.
 
 **One kernel behaviour this file works around, deliberately.** `measure/base.py`'s `run()` raises
-`CapabilityError` where an instrument should return a `Refusal`. Nothing here depends on the
-exception: every instrument in this package declares
+`CapabilityError` where section 4.2 says an instrument returns a `Refusal` (SPEC-ERRATA E27, fix
+scheduled). Nothing here depends on the exception: every instrument in this package declares
 `Capability.NONE` and reads a record through the access matrix, so the raising branch is
 unreachable from `estimate`, and when the kernel starts returning a refusal instead, this file needs
 no change.
@@ -63,9 +63,10 @@ class EstimatorInstrument(BaseObservable):
             # `Context.emit` reads the instrument's name, version, gauge status and **quantity** off
             # `ctx._observable`, and `measure.base.run` is the only thing that used to set it. This
             # branch bypasses `run` because there is no signal to gate on, so every reading it
-            # produced was emitted as `anonymous` with `quantity=""`. That silently unmakes the
-            # unit discipline: a per-token reading with no quantity on it can be ranked against a
-            # per-sequence one and the unit machinery has nothing to key on.
+            # produced was emitted as `anonymous` with `quantity=""`. That silently unmakes E35: a
+            # per-token reading with no quantity on it can be ranked against a per-sequence one and
+            # the unit machinery has nothing to key on. Third defect in the `emit` family, after
+            # E35 and E44, and the same shape each time. SPEC-ERRATA E51.
             ctx._observable = self
             return self.measure(ctx)
         finally:

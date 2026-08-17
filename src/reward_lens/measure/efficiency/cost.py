@@ -1,7 +1,8 @@
 """F3, the cost book: what the step spent, what it needed to spend, and where the nats went.
 
 One optimiser step moves the policy by `D_t = KL(π_{t+1} ‖ π_t) ≈ ½ Δθᵀ F Δθ` nats. Every framework
-logs something in that family. The question is where those nats went, and it has an exact answer. Minimising `½ΔθᵀFΔθ` subject to `JΔθ = Δz` gives `Δθ* = F⁻¹Jᵀ G⁻¹ Δz`, and substituting back,
+logs something in that family. §3.1.4's question is where those nats went, and it has an exact
+answer. Minimising `½ΔθᵀFΔθ` subject to `JΔθ = Δz` gives `Δθ* = F⁻¹Jᵀ G⁻¹ Δz`, and substituting back,
 
     KL_min(Δz) = ½ Δzᵀ G⁻¹ Δz
 
@@ -32,7 +33,7 @@ efficiency axiom makes them sum to `v(N)` exactly rather than approximately. Wha
 `KL_min − v(N)`, is the nats the movement of features **outside** the attributed set demands on top
 of that, and it is `residual_share`: a named field, not a rounding gap. Reporting per-feature
 shares that do not sum to the thing they are shares of is what every ad hoc attribution scheme in
-this space does, and it is what the construction-time assertion here rules out.
+this space does, and it is what D19 makes a construction-time assertion here.
 
 **Three things this cannot do, here rather than on a caveats page.**
 
@@ -154,7 +155,7 @@ def shapley_shares(
         if unknown:
             raise ValueError(
                 f"attribute_to names {unknown}, which are not in this metric's basis "
-                f"{names}. The basis is the join key and a share against a name `G` does "
+                f"{names}. The basis is the join key (D19) and a share against a name `G` does "
                 f"not carry cannot be reconciled with a ledger row."
             )
         chosen = [names.index(n) for n in wanted if names.index(n) in movable]
@@ -255,9 +256,9 @@ class StepKlMin:
 class StepCost:
     """One step of the cost book (F3).
 
-    The field set is fixed in advance so that `measure.reconcile` could write F4's reconciliation
-    against it. ``noise_floor`` is additive to it, defaulted, and invisible to a reader that uses
-    only the fields above.
+    The field set is D19's, fixed before the wave so that W5.6 could write F4's reconciliation
+    against it concurrently. ``noise_floor`` is additive to it, defaulted, and invisible to a reader
+    that uses only the fields D19 prints.
 
     Two assertions run at construction and they guard different things. The shares must sum to
     `kl_min`, because an attribution that does not add up to what it attributes is the confident
@@ -285,7 +286,7 @@ class StepCost:
                 f"step {self.step}: efficiency is {self.efficiency!r}, outside [0, 1]. "
                 f"`KL_min` is the minimum nats any step could have spent to produce this `Δz` and "
                 f"`D_t` is what this step did spend, so the ratio is bounded by construction "
-                f"(frozen prediction P5). kl_min {self.kl_min:.6g} against kl_spent "
+                f"(§3.1.4, frozen prediction P5). kl_min {self.kl_min:.6g} against kl_spent "
                 f"{self.kl_spent:.6g}. This is an instrument bug, not a finding: `cost_series` "
                 f"refuses on data that breaks the premise before constructing a StepCost."
             )
@@ -319,7 +320,7 @@ class StepCost:
 def _assert_shares_add_up(
     shares: Mapping[str, float], residual: float, kl_min: float, step: int
 ) -> None:
-    """The construction-time rule: the shares plus the residual are `kl_min`, or nothing is built."""
+    """D19's construction-time rule: the shares plus the residual are `kl_min`, or nothing is built."""
     total = float(sum(shares.values())) + float(residual)
     scale = max(abs(kl_min), 1e-12)
     if not math.isfinite(total) or abs(total - kl_min) > SHARE_TOLERANCE * scale:
@@ -327,7 +328,7 @@ def _assert_shares_add_up(
             f"step {step}: the per-feature shares sum to {float(sum(shares.values())):.10g} and "
             f"the residual is {residual:.10g}, which together make {total:.10g} against a kl_min "
             f"of {kl_min:.10g}. A per-feature attribution that does not add up to the quantity it "
-            f"attributes is the confident wrong number this library exists to refuse; the "
+            f"attributes is the confident wrong number this library exists to refuse (D19); the "
             f"unattributed remainder is `residual_share` and not a rounding gap."
         )
     if residual < -SHARE_TOLERANCE * scale:
@@ -417,7 +418,7 @@ def kl_min_series(
             reason=RefusalReason.UNIT_MISMATCH,
             detail=(
                 f"the ledger's basis is {list(ledgers[0].names)} and `G`'s is {list(g.names)}. "
-                f"`Δz` and `G` are vectors and a matrix in one basis in one order, so a "
+                f"`Δz` and `G` are vectors and a matrix in one basis in one order (D19), so a "
                 f"quadratic form taken across two bases pairs one feature's movement with "
                 f"another's reachability."
             ),
@@ -504,9 +505,9 @@ def cost_series(
 
     ``kl_spent`` maps a step index to the nats that step spent. When it is omitted and ``run_`` is
     given, `kl_to_previous` is read off the record. When neither yields a number this refuses with
-    `RECORD_INCOMPLETE` rather than substituting anything, which is the one outcome to rule out by
-    name: an efficiency computed against a proxy denominator is wrong by an unknown factor and still
-    reads as a measurement.
+    `RECORD_INCOMPLETE` rather than substituting anything, which is the one outcome §3.1.4 rules
+    out by name: an efficiency computed against a proxy denominator is wrong by an unknown factor
+    and still reads as a measurement.
 
     Steps whose `KL_min` exceeds their `D_t` do not produce a `StepCost`. That is F3's kill
     condition and it is returned as a refusal carrying the numbers, because a bounded quantity
@@ -591,14 +592,15 @@ def cost_series(
 #: not linear in `Δθ` then neither the constraint nor the bound means what it says. F2's `Λ`
 #: measures it.
 #:
-#: `ESS_ADEQUATE` because `Δz_observed` is an expectation under the step's own sampling
+#: `ESS_ADEQUATE` because §3.1.4's `Δz_observed` is an expectation under the step's own sampling
 #: distribution, and once the rollouts in hand no longer resolve that expectation the movement being
-#: costed is not the policy's.
+#: costed is not the policy's. The catalogue's own comment records this as an amendment carried over
+#: from CALIPER G1's visibility limit.
 #:
 #: Both measurers come from `measure.rate.regime.MEASURED_BY`, which is the map every other
 #: instrument in the library resolves through. The catalogue record names
 #: `frontier.visibility_horizon` for `ESS_ADEQUATE` where that map names `run.importance_ess`; the
-#: disagreement is recorded here and is not resolved here.
+#: disagreement is in this package's report and is not resolved here.
 COST_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.LINEAR_RESPONSE, RegimeCondition.ESS_ADEQUATE}),
     measured_by={
@@ -664,12 +666,12 @@ class _CostInstrument(BaseObservable):
 
     The four are computed together and reported separately, which is the pattern
     `measure.ledger.price` uses for F1's pair and `measure.composition` for the abstention pair.
-    An instrument gets one quantity so that two rungs of one ladder can be compared, and
+    §4.2 gives an instrument one quantity so that two rungs of one ladder can be compared, and
     `update.kl_spent` (rung 0, a record read) and `update.kl_share` (rung 3, a Shapley allocation)
     are three rungs apart on the same book.
 
     ``capabilities`` is `NONE` and the network access is declared in ``requires`` instead, which is
-    where it belongs. `Capability` says what a `RewardSignal` must offer and there is no signal
+    where §4.2 puts it. `Capability` says what a `RewardSignal` must offer and there is no signal
     here: the subject is a record plus an already-estimated `MetricG`. The access that `G` needed
     is not lost, it is read off the metric's own rung and put in the access matrix at construction,
     so an instrument handed a rung-2 `G` declares `POLICY: BACKWARD` and one handed a rung-0 `G`
@@ -680,7 +682,7 @@ class _CostInstrument(BaseObservable):
     version = "1.0"
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to: str | None = "KL budget and efficiency"
+    faithful_to: str | None = "KL budget and efficiency (section 3.1.4)"
     deviations: tuple[str, ...] = (
         "`D_t` is `KL(pi_t+1 || pi_t)` and the quantity a framework logs under that name is "
         "sometimes the KL to the frozen reference instead, which is cumulative rather than "
@@ -706,7 +708,7 @@ class _CostInstrument(BaseObservable):
     #: change of parameters `J -> J A^-1` and `F -> A^-T F A^-1`, so `G = J F^-1 J^T` is unchanged
     #: and `KL_min`, `efficiency` and every share with it. `units` because the numerator and the
     #: denominator are in nats per sequence and the efficiency is dimensionless, and ranking one
-    #: against the other is a unit error.
+    #: against the other is the unit error §6.1 names.
     invariance = "policy.reparam, units"
     invariance_relation = INVARIANT
     baselines = COST_BASELINES

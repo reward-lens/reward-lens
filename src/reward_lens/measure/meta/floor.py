@@ -1,4 +1,4 @@
-"""M1, the substrate noise floor and the two limits that follow from it.
+"""M1, the substrate noise floor and the two limits that follow from it (§4.7).
 
 Analytical chemistry has had `LOD = 3.3 sigma_blank / S` since the 1970s. Machine learning has
 nothing of the kind and reports effect sizes below its own substrate noise routinely, which is the
@@ -404,7 +404,7 @@ def limits_from(
 
 
 def verdict_for(reading: float, limits: LimitOfDetection) -> Verdict:
-    """Which of the three outcomes a reading falls into on this substrate."""
+    """Which of §4.7's three outcomes a reading falls into on this substrate."""
     return limits.verdict(reading)
 
 

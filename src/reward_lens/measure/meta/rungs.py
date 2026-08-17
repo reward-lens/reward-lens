@@ -2,7 +2,7 @@
 
 When two rungs of one estimator ladder run on the same data and give different answers, the
 difference is not a discrepancy to reconcile. It is the cheap rung's transfer uncertainty against
-the expensive one, measured on this substrate, and it is the one term of the calibration chain
+the expensive one, measured on this substrate, and it is the one term of §2.8's calibration chain
 that falls out of an experiment somebody was going to run anyway. Nobody publishes it.
 
 **This instrument must not resolve the disagreement, and that is the whole design.** There is no
@@ -193,7 +193,7 @@ class Disagreement:
     baselines: Mapping[str, float] = field(default_factory=dict)
 
     def transfer(self) -> Transfer:
-        """The difference as a chain term, so it composes into every budget downstream."""
+        """The difference as a §2.8 chain term, so it composes into every budget downstream."""
         return ladder_disagreement(
             self.cheap_value,
             self.expensive_value,

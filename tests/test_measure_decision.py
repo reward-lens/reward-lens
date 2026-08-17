@@ -5,7 +5,7 @@ zero-weight theorem is asserted with `== 0.0` and not with a tolerance, the matr
 checked against fractions computed by hand, and the sorting theorem's identity for two components is
 checked against `(1 + x)^2 / (1 + 2x)` at three values of `x`.
 
-The clause runs on real recorded scores and lives in
+The acceptance clause runs on real recorded scores and lives in
 `tests/acceptance/test_w4_decision.py`. This file is the arithmetic, the refusals and the
 declarations.
 """
@@ -76,7 +76,7 @@ def _registry():
     The quantity registry is process-global. Leaving six rows in it changes what every later test in
     the same process sees, and `tests/acceptance/test_w1_kernel.py` asserts an exact count, so a
     module that registers and does not clean up breaks a test in a package it has nothing to do
-    with. That is E40's pattern for the third time, and the fix is the one E40 settled
+    with. That is SPEC-ERRATA E40's pattern for the third time, and the fix is the one E40 settled
     on: snapshot what was there and remove whatever appeared, rather than listing the six ids, which
     goes stale the moment a seventh is proposed.
     """
@@ -271,7 +271,7 @@ def test_the_noise_correlation_from_residuals_needs_paired_cells():
 
 
 def test_the_matrix_ordering_is_c_before_sigma_and_transposing_it_triples_one_weight():
-    """The same worked example the clause carries, asserted here as arithmetic.
+    """The same worked example the acceptance clause carries, asserted here as arithmetic.
 
     `C'' = [[2, 1], [1, 4]]`, `Sigma = diag(1, 3)`, `r = 0.5`, `B' = (1, 1)`. The two products
     differ off the diagonal, `C'' Sigma = [[2, 3], [1, 12]]` against `Sigma C'' = [[2, 1], [3, 12]]`,
@@ -877,7 +877,7 @@ def test_lint_instrument_is_empty_for_all_four_once_the_proposals_are_registered
 
 
 def test_the_only_lint_finding_before_registration_is_the_unregistered_quantity():
-    """Which is the lint doing its job: the catalogue carries no N5 to N8 row. E23."""
+    """Which is the lint doing its job: the catalogue carries no N5 to N8 row. SPEC-ERRATA E23."""
     load_quantities()
     for cls in DECISION:
         findings = [f for f in lint_instrument(cls()) if f.field != "quantity"]
@@ -945,7 +945,7 @@ def test_an_in_run_reading_is_a_phase_mismatch_because_the_model_has_one_period(
 
 
 def test_a_missing_weight_sweep_on_a_record_is_record_incomplete_and_not_access_insufficient():
-    """E30's test: whether the remedy is answerable where the reader is standing.
+    """SPEC-ERRATA E30's test: whether the remedy is answerable where the reader is standing.
 
     With a record named, it is not. The sweep was never run, nothing in the record recovers a
     response to a change nobody made, and the fix is upstream in whatever produced the run. With no
@@ -1010,7 +1010,7 @@ def test_a_sweep_over_the_risk_aversion_removes_the_need_to_state_it():
 
 
 def test_the_weight_vector_is_covariant_with_weight_minus_one_under_reward_affine():
-    """The generated property test, on the group action this instrument lives under.
+    """The generated property test of section 2.6, on the group action this instrument lives under.
 
     A weight is a price per unit of signal, so rescaling every component's score by `a` must divide
     every weight by `a`. The payload is the component score matrix; `Sigma` is its covariance and
@@ -1116,12 +1116,13 @@ def test_the_proposed_rows_and_records_parse_as_yaml_and_name_only_proposed_quan
         assert row["invariance_group"] == q.invariance
         assert row["min_access"] == PROPOSED_MIN_ACCESS[q.id]
         assert row["instrument"] == list(PROPOSED_INSTRUMENTS[q.id])
+        assert row["errata"] == "E23"
     records = yaml.safe_load(as_catalogue_rows())
     assert [r["id"] for r in records] == ["N5", "N6", "N7", "N8"]
     proposed = {q.id for q in PROPOSED}
     for record in records:
         assert set(record["quantities"]) <= proposed
-        assert record["status"] == "planned"
+        assert record["work_package"] == "W3.9"
         assert record["envelope_requires"] == ["STATIONARY_GRADER"]
         assert record["kill_condition"]
         assert len(record["baselines"]) == 2

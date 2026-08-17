@@ -1,7 +1,7 @@
 """N4. Falsifiable conditions on the proxy, and the concomitant of the n-th order statistic.
 
-Two readings, and both are stronger than a predicted turning point because both are unoccupied
-where the turning point is not.
+Two readings, and section 3.0.2's argument is that both are stronger than a predicted turning point
+because both are unoccupied where the turning point is not.
 
 **The checklist.** The surrogate-endpoint literature has spent forty years on exactly the question
 "under what conditions does optimising a proxy fail to harm the true endpoint", and

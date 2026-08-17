@@ -1,10 +1,10 @@
-"""E6, the train-inference logprob mismatch: an instrument, not a footnote.
+"""E6, the train-inference logprob mismatch: an instrument, not a footnote (section 5.E).
 
 The sampling engine and the training engine score the same tokens and they disagree. An importance
 ratio built from two engines that disagree is measuring the engines rather than the policy, and
 prime-rl forms exactly that ratio in one line: ``log_importance_ratio = trainer_logprobs -
 inference_logprobs`` (`prime_rl/trainer/rl/loss.py:103`), with `inference_logprobs` arriving from the
-packer rather than from the trainer. This is the record-level expression of the numerics
+packer rather than from the trainer. This is the record-level expression of section 4.7's numerics
 floor: the disagreement between two implementations of the same computation is the floor under
 every quantity derived from either of them.
 
@@ -14,20 +14,20 @@ which makes this instrument refuse rather than report a mismatch of zero.
 
 **Kill condition, and it is the good one.** If the mismatch is below the numerics floor everywhere,
 that is good news and worth publishing. So a below-floor reading is a **reading** here rather than a
-`BELOW_LOD` refusal, which is a deliberate departure from the general rule: the effect
+`BELOW_LOD` refusal, which is a deliberate departure from section 4.7's general rule: the effect
 this instrument measures *is* the disagreement, so "the disagreement is smaller than the substrate's
 disagreement with itself" is the answer rather than a reason to withhold one.
 
 **The unit, and the one place this instrument and the registry disagree.** The registry gives
 `policy.train_infer_logprob_mismatch` the unit `nats/token` under the `tokenization` group, amended
-deliberately with four independent lines of evidence. But the mean absolute
+deliberately in SPEC-ERRATA E15 with four independent lines of evidence. But the mean absolute
 per-token gap is **not** invariant under re-tokenisation: split every token in two and the numerator
 is roughly unchanged while the denominator doubles. What is exactly invariant is the sequence total,
 ``|sum_t (logp_train - logp_sampling)| = |log P_train(y) - log P_sampling(y)|``, because both are the
 same sequence's log probability under two engines and a tokenisation that decodes to the same string
 gives the same total. So the reading carries both, the headline is the per-token mean the registry
 registers, and the generated invariance test is asserted on the sequence total with a faithful
-generator supplied here. The assertion for this group is "per-token quantities must declare
+generator supplied here. Appendix B's assertion for this group is "per-token quantities must declare
 a normalisation and be invariant under it, or refuse", and the normalisation declared is: the
 invariant object is per sequence, the per-token mean divides it by a token count that re-tokenisation
 moves, and comparing two per-token means across tokenisers is refused rather than converted.
@@ -119,7 +119,7 @@ def _typical_magnitude(turns: Iterable[Turn]) -> float:
 
 #: The mask policy has to hold still across the window, because the mismatch is averaged over the
 #: tokens the loss sees and a window in which the mask changed is a window in which "per token"
-#: means two things. That is `MASK_STABLE`, measured by `run.mask_signature`.
+#: means two things. That is `MASK_STABLE`, measured by `run.mask_signature` (W2.7's mapping).
 MISMATCH_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.MASK_STABLE}),
     measured_by={RegimeCondition.MASK_STABLE: "run.mask_signature"},
@@ -455,7 +455,7 @@ class LogprobMismatch(EstimatorInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "E6"
     deviations = (
-        "a below-floor reading is Evidence rather than a `BELOW_LOD` refusal. The general rule "
+        "a below-floor reading is Evidence rather than a `BELOW_LOD` refusal. Section 4.7's rule "
         "refuses an effect smaller than the substrate's disagreement with itself; here the effect "
         "*is* that disagreement, so the rule would make the instrument refuse in exactly the case "
         "its own kill condition calls good news",
@@ -496,7 +496,7 @@ class LogprobMismatch(EstimatorInstrument):
         self.lod = lod
 
     def estimate(self, ctx: Context) -> Any:
-        # The context's LOD is the one the rule means; the constructor's is for a caller who has
+        # The context's LOD is the one section 4.7 means; the constructor's is for a caller who has
         # a floor and no Context. The context wins when both are present, because the context is
         # what the runner and the capability report consult.
         if ctx.lod is not None:

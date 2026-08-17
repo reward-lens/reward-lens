@@ -1,13 +1,12 @@
 """C2 h²: which behavioural features a gradient step can move at all, and what moves with them.
 
-The derivation is worth following, because the quantity falls out of it rather than being
-transplanted. Let `J = ∂z/∂θ`, so by the score-function identity
+The derivation is §3.1.3's and it is worth following, because the quantity falls out of it rather
+than being transplanted. Let `J = ∂z/∂θ`, so by the score-function identity
 `J_i = ∇_θ E[f_i] = E[f_i ∇_θ log π]`. Let `F = E[∇log π ∇log πᵀ]`. A natural-gradient step is
 `Δθ = η F⁻¹ g` with `g = E[A ∇_θ log π]`, so to first order `Δz = J Δθ = η J F⁻¹ E[A ∇log π]`.
 Decompose the advantage in the feature basis under the sampling distribution,
 `A = Σ_i β_i (f_i − E f_i) + ε` with `ε` orthogonal to the feature span and `β = C⁻¹S` exactly the
-selection-gradient regression coefficient. Then `E[A ∇log π] = Jᵀβ + e` with `e = E[ε ∇log π]`,
-giving
+regression coefficient of §3.1.2. Then `E[A ∇log π] = Jᵀβ + e` with `e = E[ε ∇log π]`, giving
 
     Δz = η G β + η J F⁻¹ e,   where   G := J F⁻¹ Jᵀ
 
@@ -251,8 +250,8 @@ def heritability(
             reason=RefusalReason.ENVELOPE_VIOLATED,
             detail=(
                 f"h2 exceeds 1 on {', '.join(violations)}, so N = C - G has a negative diagonal "
-                f"entry. C >= G is a theorem (Cauchy-Schwarz on the score-function directions), "
-                f"so this is a bug in G or in C and not a finding: max h2 = "
+                f"entry. C >= G is a theorem (Cauchy-Schwarz on the score-function directions, "
+                f"§3.1.3), so this is a bug in G or in C and not a finding: max h2 = "
                 f"{float(np.nanmax(h2)):.6g}"
             ),
             remedy=(
@@ -686,7 +685,7 @@ class _HeritabilityInstrument(BaseObservable):
 
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "feature heritability on the Fisher metric"
+    faithful_to = "3.1.3"
     substrates = ANY_SUBSTRATE
     phases = RECORD_PHASES
     envelope = HERITABILITY_ENVELOPE
@@ -719,8 +718,8 @@ class _HeritabilityInstrument(BaseObservable):
         # instrument here reads its inputs from its own constructor rather than from a signal, so
         # `estimate` calls `measure` directly and never goes through `run`. Without this the reading
         # would be emitted as `anonymous` with `quantity=""` and the unit machinery would have
-        # nothing to key on. The previous value is restored rather than cleared so a nested call
-        # does not lose its own identity.
+        # nothing to key on. SPEC-ERRATA E51, and the previous value is restored rather than
+        # cleared so a nested call does not lose its own identity.
         previous = ctx._observable
         ctx._observable = self  # type: ignore[assignment]
         try:

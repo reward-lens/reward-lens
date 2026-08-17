@@ -1,4 +1,4 @@
-"""A6, the grader stochasticity profile: the grader as a distribution, not a number.
+"""A6, the grader stochasticity profile: the grader as a distribution, not a number (section 5.A).
 
 Every reward-model paper writes ``r(x, y)`` as though the grader were a function. For a judge it is
 a sample. The flip rates have been measured for judges in isolation, 13.6% on one benchmark with a
@@ -77,18 +77,18 @@ from reward_lens.measure.metrology.attenuation import ALL_SUBSTRATES
 #: draw per input forever, and one draw per input has no spread in it.
 DISTRIBUTION_ACCESS: dict[Component, Access] = {Component.GRADER: Access.REPLICATE}
 
-#: The catalogue splits this into two entries because the baseline field was split on commas where
-#: the source separates baselines with semicolons. It is one baseline, and its second clause is an
-#: instruction about how to report it rather than a second comparator.
+#: E26 note: the catalogue splits this into two entries because the merge split ASSAY's baseline
+#: field on commas and ASSAY separates baselines with semicolons. It is one baseline, and its second
+#: clause is an instruction about how to report it rather than a second comparator.
 DISTRIBUTION_BASELINES: tuple[BaselineID, ...] = ("baseline.assume_determinism",)
 
-#: `Env none` in the source, transcribed. A grader's own spread is a property of the grader and
+#: E29: `Env none` in the source, transcribed. A grader's own spread is a property of the grader and
 #: of the design that varied it, and no regime of a training run makes a measured spread wrong.
 DISTRIBUTION_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
-        "No regime condition is recorded for A6. This reads the grader's own output distribution "
-        "under a design the caller controls, so there is no assumption about the run for a regime to "
+        "ASSAY line 1640 prints `Env none`. This reads the grader's own output distribution under a "
+        "design the caller controls, so there is no assumption about the run for a regime to "
         "violate. The scope limit is in the kill condition rather than in an envelope: on a "
         "deterministic scalar head the reading is zero and correct."
     ),

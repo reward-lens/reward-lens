@@ -1,4 +1,4 @@
-"""Series L, reference materials and label metrology.
+"""Series L, reference materials and label metrology (section 5.L).
 
 The layer that says whether the answer key is any good. Nothing in series C or K means anything
 without it, and every prior version of this project assumed it away.
@@ -23,8 +23,8 @@ only as good as the answer key, which nobody measures:
 
 `register_all` populates the estimator ladder for every quantity in the series. It is idempotent and
 it is not called at import: registering a global side effect on import is how a registry ends up
-depending on import order, and a quantity whose definition depends on import order is not a
-quantity.
+depending on import order, and section 2.5's whole argument is that a quantity whose definition
+depends on import order is not a quantity.
 
 **Torch-free.** Nothing here imports torch, directly or through a dependency. L4's residual-stream
 rung is the one thing in the series that would need it, and it is registered with no implementation

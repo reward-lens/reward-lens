@@ -1,4 +1,4 @@
-"""``ConceptDoseResponse`` (E08): concept directions, reward alignment, and dose response.
+"""``ConceptDoseResponse`` (E08): concept directions, reward alignment, and dose response (section 2.8).
 
 A concept (verbosity, confidence, formality) is a direction in activation space, estimated as the
 mean difference between activations that have the concept and activations that do not. Two questions
@@ -67,7 +67,7 @@ class ConceptDoseResponse(BaseObservable):
         "response steers the final residual and reads the reward slope; RAW_ONLY (basis-dependent)",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.concept_dose_slope"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD | Access.MUTATE}
     substrates = NEURAL_SUBSTRATES
@@ -86,7 +86,7 @@ class ConceptDoseResponse(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.norm_matched_random", "baseline.random_direction")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",

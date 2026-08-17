@@ -1,6 +1,6 @@
 """Unit tests for `measure.efficiency`: the metric, the allocation, and the refusals.
 
-The clause is in `tests/acceptance/test_w4_4_efficiency.py`. This file covers the parts
+The acceptance clause is in `tests/acceptance/test_w4_4_efficiency.py`. This file covers the parts
 that clause does not reach: what each of the three `G` estimators does and declines to do, the
 properties of the Shapley game, the pseudo-inverse path, and the two invariance groups F3 declares.
 """
@@ -120,7 +120,7 @@ def test_rank_and_conditioning_read_the_spectrum():
 
 
 def test_the_covariance_bound_is_exactly_the_within_group_covariance():
-    """`G = C` at rung 0, which is the bound taken at equality."""
+    """`G = C` at rung 0, which is §3.1.3's bound taken at equality."""
     window = _random_window()
     g = metric_g(window)
     assert not isinstance(g, Refusal)
@@ -269,7 +269,7 @@ def test_shapley_shares_are_non_negative_and_sum_to_the_attributed_total(seed):
 
 
 def test_the_eigen_decomposition_is_exactly_additive():
-    """The decomposition, which needs no allocation rule because its directions have no names."""
+    """§3.1.4's decomposition, which needs no allocation rule because its directions have no names."""
     rng = np.random.default_rng(1)
     root = rng.normal(size=(3, 3))
     g = _metric(root @ root.T + np.eye(3))
@@ -437,7 +437,7 @@ def test_from_kl_min_is_the_only_way_a_step_cost_gets_a_denominator():
 def _reparam_on_scores(seed: int, scale: float) -> GroupAction:
     """`policy.reparam` in the coordinates this instrument actually reads.
 
-    The group's generator acts on a flat parameter vector as `θ → Jθ`. `G` is not a function of
+    Appendix B's generator acts on a flat parameter vector as `θ → Jθ`. `G` is not a function of
     `θ`: it is a function of the score matrix `S` and the feature matrix, and what a smooth
     invertible reparameterisation `θ' = Aθ` does to a score is `s → A⁻ᵀs`, which on the `(n, |θ|)`
     matrix of row covectors is `S → S A⁻¹`. Applying `θ → Jθ` to a flattened score matrix instead

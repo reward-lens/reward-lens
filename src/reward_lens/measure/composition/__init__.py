@@ -1,4 +1,4 @@
-"""Series B, grader structure: is this thing a scalar, and what is it made of.
+"""Series B, grader structure: is this thing a scalar, and what is it made of (section 5.B).
 
 A pairwise comparison flow decomposes into a gradient part, a curl part and a harmonic part, and only
 the first is representable by any scalar reward. Reporting one intransitivity number throws away the
@@ -8,10 +8,12 @@ half that says what to do about it.
 recorded as a bare win or loss is a sign rather than a margin, and a sign flow is not a gradient even
 under a perfect total order: on the complete graph ``K_n`` a transitive tournament has curl mass
 exactly ``(n-2)/(3n)``. That floor is an encoding artifact with no intransitivity in it, it is larger
-than most reported effects, and subtracting it changes conclusions.
+than most reported effects, and subtracting it changes conclusions. SPEC-ERRATA E32.
 
-This ``__init__`` is deliberately thin: each module is importable directly, and the exports are
-merged here.
+This ``__init__`` is deliberately thin and is owned by the integrator rather than by any of the three
+builders, because W3.3a, W3.3b and W3.3c land in the same package in the same wave and a shared
+export list is the one file three concurrent agents would all have to write. Each module is
+importable directly; the exports are merged here at integration.
 
 One name is deliberately absent. ``summarise`` is defined by both `tournament` and `composition`,
 with unrelated meanings and unrelated return types, so there is no bare ``summarise`` in this

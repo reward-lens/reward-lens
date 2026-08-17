@@ -10,8 +10,8 @@ at ``RECORD`` access on somebody else's training run. So the ledger declares its
 The bank in this module reads text and structure and nothing else. It is deliberately small and
 deliberately surface: five features that any record carrying turn text can produce, so the ledger has
 something real to run on before anybody wires up a probe. **A five-feature surface basis is a small
-basis and the ledger's claim is conditional on it**, which is the Table 2 fallacy, and it is the
-reason `StepSample` carries the feature names into every reading.
+basis and the ledger's claim is conditional on it**, which is the Table 2 fallacy section 3.1.2
+warns about, and it is the reason `StepSample` carries the feature names into every reading.
 
 A featuriser that cannot read a trajectory returns None rather than a vector of zeros. A zero is a
 measurement and an absence is not, and pooling the two is how a run with no recorded text acquires a

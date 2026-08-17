@@ -1,4 +1,4 @@
-"""Shared plumbing for the index library.
+"""Shared plumbing for the index library (DESIGN section 2.8.3, Appendix A).
 
 The indices are the vocabulary of the cards and the scoreboard, so they all reach for the same few
 operations: read a reward direction ``w_r`` off a signal, read final-token activations at a site,
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
-# The observable declarations the index library shares
+# The section 4.2 declarations the index library shares
 # ---------------------------------------------------------------------------
 
 #: How each regime condition the index library depends on is measured, named by quantity id. Every
@@ -45,7 +45,8 @@ if TYPE_CHECKING:
 #: fraction (E2), which counts the groups with no score spread to read a contrast from.
 #: ``ABOVE_LOD`` is measured by the substrate limit of detection (M1), the grader's disagreement
 #: with itself, which is the floor a reward delta has to clear before it is a measurement rather
-#: than noise. ``LINEAR_RESPONSE`` is measured by the selection-explained fraction Lambda (F2).
+#: than noise. ``LINEAR_RESPONSE`` is measured by the selection-explained fraction Lambda (F2),
+#: which is what section 2.4 names for it.
 #:
 #: The same table appears in ``measure/battery/_common.py``. It is duplicated rather than shared
 #: because ``measure.battery`` requires the white-box extra at import and this package is torch-free
@@ -178,11 +179,11 @@ def _to_numpy(x: Any) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 
-# The contract now lives in `reward_lens.core.features` and is re-exported here so every existing
-# import keeps working. It moved because a feature bank is what every Level 1 instrument is written
-# in terms of, which makes it a kernel question rather than an index-library one, and because the
-# name meant two things: `loops/recorder.py` exported an unrelated container under it, now named
-# `DirectionBank`.
+# The contract moved to `reward_lens.core.features` in the ASSAY build and is re-exported here so
+# every existing import keeps working. It moved because a feature bank is what every Level 1
+# instrument is written in terms of, which makes it a kernel question rather than an index-library
+# one, and because the name meant two things: `loops/recorder.py` exported an unrelated container
+# under it, now named `DirectionBank`.
 
 
 @dataclass
@@ -274,16 +275,16 @@ def missing_injection(
     Twelve indices used to answer this case with ``ctx.emit({"note": "... none injected"})``. That
     is a number-shaped object standing where a refusal belongs: it satisfies the letter of "returns
     Evidence or a Refusal" and tells the reader nothing they can act on, and the converter's sweep
-    had to classify it as a third kind to keep its own count honest. The case is a `Refusal`
-    carrying a reason and a remedy.
+    had to classify it as a third kind to keep its own count honest. Section 6.1 says the case is a
+    `Refusal` carrying a reason and a remedy.
 
     It goes in `preflight` rather than in `measure` because that is where the question belongs:
     nothing has to be computed to know that a required input is absent, and `preflight` is the
     method the capability report calls with no GPU work. `BaseObservable.estimate` returns this
     refusal as a value before it ever reaches `measure`.
 
-    `ACCESS_INSUFFICIENT` rather than `RECORD_INCOMPLETE`, on the test of whether the remedy is
-    answerable where the reader is standing: the input is a constructor argument they can supply. A
+    `ACCESS_INSUFFICIENT` rather than `RECORD_INCOMPLETE`, on E30's test: the remedy is answerable
+    where the reader is standing, because the input is a constructor argument they can supply. A
     record-incomplete refusal means the field was never written and nothing the reader does
     recovers it.
     """
@@ -303,8 +304,8 @@ def measured_without_input(inst: Any) -> ValueError:
 
     `measure` is typed ``-> Evidence`` and `run` is the 2.0.1 entry point that returns one. A caller
     who reached it past a refusing preflight made a programming error, which is what an exception is
-    for; `estimate` is the declared entry point and returns the refusal as a value. The same split
-    is in `measure/composition/composition.py:160`.
+    for; `estimate` is the section 4.2 entry point and returns the refusal as a value. The same
+    split is in `measure/composition/composition.py:160`.
     """
     name = getattr(inst, "name", type(inst).__name__)
     return ValueError(
@@ -315,14 +316,14 @@ def measured_without_input(inst: Any) -> ValueError:
 
 
 # ---------------------------------------------------------------------------
-# What a white-box reading owes, and what to say when it cannot pay
+# Section 6.4: what a white-box reading owes, and what to say when it cannot pay
 # ---------------------------------------------------------------------------
 
 #: The reasons a white-box instrument's reading can carry no `IncrementalValidity`, as ids lint can
-#: check rather than prose lint can only print. The record is mandatory on every white-box reading,
-#: and the honest answer for most of this library's white-box instruments is not "here is one" but
-#: "here is exactly why there cannot be one", which is a different statement from silence and has
-#: to be distinguishable from it.
+#: check rather than prose lint can only print. Section 6.4 makes the record mandatory on every
+#: white-box reading, and the honest answer for most of this library's white-box instruments is not
+#: "here is one" but "here is exactly why there cannot be one", which is a different statement from
+#: silence and has to be distinguishable from it.
 #:
 #: Three reasons, and they are not interchangeable. The first is a property of the quantity and will
 #: not change: a reading that is a cosine matrix or a set overlap has no per-item verdict, so there
@@ -375,7 +376,7 @@ def incremental_exemption_findings(inst: Any) -> list[str]:
     if reason not in INCREMENTAL_EXEMPTIONS:
         out.append(
             f"{name}.incremental_exemption names {reason!r}, which is not one of "
-            f"{sorted(INCREMENTAL_EXEMPTIONS)}. A new reason is a library-wide decision, not a "
+            f"{sorted(INCREMENTAL_EXEMPTIONS)}. A new reason is an integrator decision, not a "
             f"string an instrument can invent"
         )
     if not isinstance(prose, str) or len(prose.strip()) < _MIN_REASON_CHARS:
@@ -399,7 +400,7 @@ def measure_incremental_validity(
     n_resamples: int = 2000,
     seed: int = 0,
 ) -> tuple[Any, dict[str, Any]]:
-    """The incremental-validity record for a white-box reading, against the black-box bank.
+    """The §6.4 record for a white-box reading, measured against the built black-box bank.
 
     Returns ``(IncrementalValidity | None, notes)``. The record is None when no baseline in the bank
     could run or could separate anything, and ``notes`` always says which and why, because a reading
@@ -410,13 +411,13 @@ def measure_incremental_validity(
     an instrument's per-item scores and those two, so that no instrument grows its own bank and no
     instrument grows its own increment.
 
-    **The ceiling check is the part that is easy to leave out.** The library's first incremental
-    record was measured against a baseline whose accuracy was 1.0, because the reference run's
-    grader is a length function and the length baseline therefore solves its task outright. Every
-    number in that record was correct and the record established that the four-number shape works,
-    not that opening the network bought anything. So when the best baseline is at ceiling, or when
-    neither method separates the labels, that is reported at the reading rather than left for a
-    reader to infer from an ensemble gain of zero.
+    **The ceiling check is the part that is easy to leave out.** W5.1 measured the library's first
+    incremental record against a baseline whose accuracy was 1.0, because the reference run's grader
+    is a length function and the length baseline therefore solves its task outright. Every number in
+    that record was correct and the record established that the four-number shape works, not that
+    opening the network bought anything. So when the best baseline is at ceiling, or when neither
+    method separates the labels, that is reported at the reading rather than left for a reader to
+    infer from an ensemble gain of zero.
     """
     import numpy as _np
 

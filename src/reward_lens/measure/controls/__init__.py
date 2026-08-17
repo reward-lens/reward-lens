@@ -19,11 +19,11 @@ can find them rather than discover them.**
 
 `RefusalReason.NO_MATCHED_CONTROL` is defined for a null with no *positive* control. M4's missing
 placebo is a missing *negative* control, which is the same failure in the other direction, and it
-reuses the same reason because the fifteen members are a fixed contract and a
+reuses the same reason because the fifteen members are the specification's contract and a
 sixteenth is an amendment rather than an implementation detail. The refusal's detail says which
 kind of control is missing, so nothing is ambiguous at the point of reading.
 
-`resolve_row` refuses an unresolved leaderboard row with `BELOW_LOD`, on the argument that the
+`resolve_row` refuses an unresolved leaderboard row with `BELOW_LOD`, on the argument that §4.7's
 limit of detection and a minimum detectable effect are the same construction over different noise
 sources. Both are open for a reviewer to overturn in favour of a new reason.
 """

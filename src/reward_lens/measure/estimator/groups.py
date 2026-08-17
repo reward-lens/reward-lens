@@ -1,4 +1,4 @@
-"""E2, the degenerate and all-fail group fractions, and where they come from.
+"""E2, the degenerate and all-fail group fractions, and where they come from (section 5.E).
 
 A group whose scores have no spread teaches nothing. Under a z-scoring estimator its advantage is
 ``0 / (0 + eps)``, so it contributes an update of exactly zero if the trainer keeps it and no update
@@ -74,7 +74,7 @@ FRAMEWORK_ZERO_STD_KEY = "frac_reward_zero_std"
 
 #: E2 must not require `GROUP_NONDEGENERATE`: its own quantity is the degenerate fraction, so an
 #: envelope requiring non-degeneracy would make it refuse whenever it has something to report. That
-#: is the same defect A4 and B5 carry, one series over.
+#: is the defect SPEC-ERRATA E29 records for A4 and B5, one series over.
 GROUP_CENSUS_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
@@ -432,7 +432,7 @@ class DegenerateGroups(EstimatorInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "E2"
     deviations = (
-        "the rung-1 attribution has four causes, not two. The catalogue names task difficulty and "
+        "the rung-1 attribution has four causes, not two. Section 5.E names task difficulty and "
         "grader saturation; a degenerate group at neither extreme is the grader declining to "
         "separate four different rollouts, and a group where every score was an abstention is not "
         "a tied group at all. Folding either into one of the two named causes would attribute a "

@@ -1,7 +1,7 @@
 """The two registered predictions this package resolves, and the analyses that resolve them.
 
-**P9** ("the reconciliation residual closes against its itemised budget") and **P10** ("the Lande
-slope is not zero") were frozen at `c746e9f`, before either instrument existed.
+`PREDICTIONS.md` rows **P9** ("the reconciliation residual closes against its itemised budget") and
+**P10** ("the Lande slope is not zero") were frozen at `c746e9f`, before either instrument existed.
 That ordering is the whole point: a prediction written after the evidence is a description.
 `studies.freeze.freeze` hashes the spec and records the git sha, so an edit after the fact produces
 a visibly different study version rather than a quiet correction.
@@ -46,8 +46,8 @@ METRIC_CLOSURE_CI_LOW = "closure_ratio_ci_low"
 METRIC_CLOSURE_CI_HIGH = "closure_ratio_ci_high"
 METRIC_MISSING_TERMS = "n_terms_not_computed"
 METRIC_RUNS_CLOSED = "n_runs_closed"
-#: The registered rule of P9 is "`Var(rho)` accounted for by `sum u_i^2` within its stated
-#: interval", which is a statement about an interval and not about a point. Registered
+#: The registered rule of `PREDICTIONS.md` P9 is "`Var(rho)` accounted for by `sum u_i^2` within
+#: its stated interval", which is a statement about an interval and not about a point. Registered
 #: as the indicator so the comparison is mechanical: 1 when the interval on the ratio contains 1.
 METRIC_INTERVAL_CONTAINS_ONE = "closure_interval_contains_one"
 
@@ -133,11 +133,10 @@ BUDGET_CLOSURE_SPEC = StudySpec(
     ),
     version=1,
     notes=(
-        "Frozen before the instrument existed. The nine terms are the itemised uncertainty table "
-        "and the composition, the Welch-Satterthwaite effective degrees of freedom and the "
-        "coverage factor are core.budget's. The metric names a quantity rather than an "
-        "implementation, so a better estimator of any single term does not change what was "
-        "predicted."
+        "Frozen before the instrument existed. The nine terms are section 3.1.5's table and the "
+        "composition, the Welch-Satterthwaite effective degrees of freedom and the coverage factor "
+        "are core.budget's. The metric names a quantity rather than an implementation, so a better "
+        "estimator of any single term does not change what was predicted."
     ),
 )
 
@@ -284,9 +283,9 @@ LANDE_SLOPE_SPEC = StudySpec(
                 threshold=0.0,
                 ci_excludes=0.0,
                 rationale=(
-                    "Delta z = eta G beta is derived from the natural-gradient step rather than "
-                    "transplanted, so a slope indistinguishable from zero would say the "
-                    "derivation does not describe what a real optimiser does to real "
+                    "Section 3.1.3 derives Delta z = eta G beta from the natural-gradient step "
+                    "rather than transplanting it, so a slope indistinguishable from zero would "
+                    "say the derivation does not describe what a real optimiser does to real "
                     "behavioural features. That is a publishable result about how policy "
                     "optimisation differs from natural selection, which is why it is registered "
                     "in the direction that can fail."

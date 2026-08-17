@@ -1,4 +1,4 @@
-"""The Observable runner is the enforcement point for the three gates.
+"""The Observable runner is the enforcement point for the three gates (section 2.8.1).
 
 These tests are the executable definition of "the gates are enforced in the kernel, not by
 convention" (R5). A measurement that requires a capability the signal does not declare is refused
@@ -49,12 +49,13 @@ def test_capability_gate_refuses_before_work():
 
 
 def test_estimate_turns_the_capability_gate_into_a_refusal_with_a_remedy():
-    """The same gate through the `estimate` entry point, which returns rather than raises.
+    """The same gate through the section 4.2 entry point, which returns rather than raises.
 
     `run` is the 2.0.1 `Observable` path, typed `-> Evidence`, and raising there is right for a
-    caller who made a programming error. `estimate` is typed `-> Reading`, and a refusal is a value
-    with a remedy and never an exception. A missing capability is the commonest thing a capability
-    report exists to warn about in advance, so it is anticipated by definition.
+    caller who made a programming error. `estimate` is typed `-> Reading`, and section 6.1 says a
+    refusal is a value with a remedy and never an exception. A missing capability is the commonest
+    thing a capability report exists to warn about in advance, so it is anticipated by definition.
+    SPEC-ERRATA E27.
     """
 
     class NeedsGrad(mb.BaseObservable):

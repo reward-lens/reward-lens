@@ -1,4 +1,4 @@
-"""``CircuitJaccard`` (E05): how much two models' reward circuits overlap.
+"""``CircuitJaccard`` (E05): how much two models' reward circuits overlap (section 2.8).
 
 If two reward models attend to the same components to form a preference, their circuits overlap; if
 they route the preference through different components, they do not, even when they agree on the
@@ -70,7 +70,7 @@ class CircuitJaccard(BaseObservable):
         "circuit-Jaccard did not exist, so this is a new construction on the same attribution",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.circuit_overlap"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     substrates = NEURAL_SUBSTRATES
@@ -86,7 +86,7 @@ class CircuitJaccard(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_top_k", "baseline.same_model_split_half")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",

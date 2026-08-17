@@ -14,8 +14,8 @@ more of the right one, and the fix is a different measure. Those two failures ca
 actions and a single scalar cannot distinguish them, so every reward component needs a noise and an
 angle. Nothing in current tooling reports the second.
 
-**What a per-component angle is measured against, which the source does not say and which decides
-whether the number means anything.** The contract-level congruity has a natural reference:
+**What a per-component angle is measured against, which the specification does not say and which
+decides whether the number means anything.** The contract-level congruity has a natural reference:
 `cos(angle(M' alpha, B'))` can reach 1, so `1 - congruity` is a distortion. A single component's
 cosine cannot. With `m` components each covering its own task, a clean component's direction is a
 coordinate axis and its cosine to `B'` is `B_i / ||B'||`, which for `m` equally valued tasks is
@@ -159,7 +159,7 @@ class NoiseAngleRow:
     component: str
     noise: float
     shrinkage: float
-    #: `cos(angle(m_i, B'))`, the source's object.
+    #: `cos(angle(m_i, B'))`, the specification's object.
     congruity: float
     #: `B_i / ||B'||`, what this component would score if it responded only to its own task. The
     #: reference the cosine has to be read against, because a single component's cosine cannot
@@ -381,7 +381,7 @@ class NoiseAndAngle(DecisionInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "N8"
     deviations = (
-        "the source gives the whole-contract congruity cos(angle(M' alpha, B')) and asserts "
+        "the specification gives the whole-contract congruity cos(angle(M' alpha, B')) and asserts "
         "that every component needs two numbers, without saying what the per-component angle is. "
         "It is taken here as the cosine between the i-th row of M, the gradient of that "
         "component's score in effort space, and B'. That makes it independent of the weight, which "
@@ -391,18 +391,18 @@ class NoiseAndAngle(DecisionInstrument):
         "equally valued tasks. So distortion is measured against that reference rather than "
         "against 1, and the consequence is exact: a diagonal sensitivity matrix has a distortion "
         "of zero for every component, by construction. The contract-level distortion stays the "
-        "source's 1 - congruity, which does have 1 as its reference",
+        "specification's 1 - congruity, which does have 1 as its reference",
         "the precise and congruent verdicts are floors applied to measurements, not measurements. "
         "Both floors are this module's own, both are constructor arguments, and both numbers "
         "travel on every reading so a reader can apply different ones without recomputing",
-        "the catalogue carries no N8 record and no registered quantity rows. "
-        "`quantities.as_catalogue_rows()` emits the proposed record",
+        "the catalogue carries no N8 record and Appendix A no quantity rows, for the reason "
+        "SPEC-ERRATA E23 gives. `quantities.as_catalogue_rows()` emits the proposed record",
     )
 
     quantity = "reward.component_congruity"
-    #: The other quantity this instrument reports. `Instrument.quantity` is singular and the whole
-    #: point of N8 is that a component needs two numbers, so the second is declared here and the
-    #: payload carries both.
+    #: The other quantity this instrument reports. `Instrument.quantity` is singular in section 4.2
+    #: and the whole point of N8 is that a component needs two numbers, so the second is declared
+    #: here and the payload carries both.
     also_reports: tuple[str, ...] = ("reward.component_noise",)
     requires = NOISE_ACCESS
     invariance = "reward.affine"

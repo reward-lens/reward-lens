@@ -1,18 +1,18 @@
 """F5, the selection covector and its spectrum, and the variance spike that decided its rung.
 
-The objective-derived readouts order by cost and availability, and the score-function
+Section 3.8 orders the objective-derived readouts by cost and availability, and the score-function
 form `s_l = E[(r - b) grad_{h_l} log pi]` is the general tier: the derivative is taken through the
 policy rather than through `r`, so the grader can be a compiler, a test harness, a tournament or a
-wall-clock timer and nothing needs to be differentiable except the policy. Its variance is also the
-largest technical risk in the whole approach, and nothing may be built on it until a
-variance-versus-`K` curve has been measured.
+wall-clock timer and nothing needs to be differentiable except the policy. Section 3.8 also says,
+in the same breath, that its variance is the largest technical risk in the specification and that
+nothing may be built on it until a variance-versus-`K` curve has been measured.
 
-**The curve was measured and it came back no-go.** With every standard reduction technique
-applied (group-mean baselines, antithetic sampling, control variates), the covector's relative
+**The curve was measured and it came back no-go.** With every reduction technique the specification
+names applied (group-mean baselines, antithetic sampling, control variates), the covector's relative
 standard error at `K = 64` is **1.075**, and the mean cosine between two independent estimates of the
 same direction is **0.145**. The two registered thresholds were `rse < 1.0` and `cosine > 0.5`, fixed
 before the first number was produced. Both fail. The full curve, the ablation ladder and the reason
-are in `P8_RESOLUTION` below. So **F5 ships at rung 3, the differentiable
+are in `P8_RESOLUTION` below and in the design note. So **F5 ships at rung 3, the differentiable
 surrogate `dr/dh_l`**, which on the same subject at the same `K` has a relative standard error of
 0.021 and a split-half direction cosine of 0.9998: fifty-one times less noise and a direction that
 reproduces.
@@ -34,7 +34,7 @@ score-function form: `dr/dh_l` is the direction that raises the *reward's* value
 `s_l` is the direction that raises the expected reward by moving the *policy*, and they coincide only
 when the grader is a linear head on the model being studied.
 
-**Four caveats travel with every dimensionality number here**, and they are not
+**Four caveats travel with every dimensionality number here** (section 3.7), and they are not
 decoration. The participation ratio is linear, so it undercounts curvature and a spectrum spread
 across eight directions may still be one curved manifold. It depends on conditioning, so a value
 computed across prompts is not the value within a task. It is preprocessing-sensitive: on this
@@ -45,7 +45,7 @@ that bit hardest here and is measured rather than cited: at `K = 4` the stable r
 moment reads 2.69 of 8 and the same matrix estimated from the whole pool reads **6.05**. A reading
 taken at a realistic group size would have reported concentration in a spectrum that is nearly flat.
 
-**Report stable rank and participation ratio, never numerical rank.** A matrix is full
+**Report stable rank and participation ratio, never numerical rank** (section 3.7). A matrix is full
 numerical rank as soon as no singular value is exactly zero, which is generic for anything touched by
 floating-point arithmetic, and it says nothing about the shape of the spectrum. The participation
 ratio here is the **moment-ratio convention**, `PR = (sum lambda_i)^2 / sum lambda_i^2`. The other
@@ -119,7 +119,7 @@ from reward_lens.stats.baselines import DetectionTask, auroc, is_scored, run_ban
 P8_RSE_THRESHOLD = 1.0
 P8_COSINE_THRESHOLD = 0.5
 
-#: Every number below was measured against
+#: Every number below came from `spike_variance.py` against
 #: `trl-internal-testing/tiny-Qwen3ForCausalLM` in float32 on CPU: 8 prompts, 256 rollouts per prompt
 #: per pool, 12 new tokens at temperature 1.0, the fixture's own `len(text)/50` length grader, the
 #: gradient of the summed completion log-probability with respect to `Site(1, "resid_post")` pooled
@@ -225,8 +225,8 @@ def p8_study(repo_dir: str | None = None, frozen_at: str | None = None) -> Any:
     """The frozen study P8 resolves under, built and hashed at call time.
 
     The study is written out in full rather than loaded, so an edit to a registered field changes
-    the `StudyID` and a later reader can see that it changed. The prediction was registered before
-    this instrument existed, and this is the record of it.
+    the `StudyID` and a later reader can see that it changed. `PREDICTIONS.md` is the commitment and
+    this is the record; if the two disagree, the document was edited after the fact.
 
     The kill criterion is the prediction's own negation and it fired. That is the outcome the spike
     was run to produce, and a fired kill criterion here is a plan change rather than a failure.
@@ -307,8 +307,8 @@ def p8_study(repo_dir: str | None = None, frozen_at: str | None = None) -> Any:
             ),
         ),
         notes=(
-            "Registered before this instrument existed. The thresholds were fixed before the "
-            "first number was produced."
+            "Frozen as row P8 of PREDICTIONS.md at c746e9f, before this instrument existed. The "
+            "thresholds were fixed before the first number was produced."
         ),
     )
     return freeze(spec, repo_dir=repo_dir, frozen_at=frozen_at)
@@ -360,7 +360,7 @@ def stable_rank(matrix: np.ndarray) -> float:
     """`srank(A) = ||A||_F^2 / ||A||_2^2`, on a symmetric positive semi-definite matrix.
 
     Bounded in `[1, d]` and invariant under an orthogonal change of basis, which is why it is the
-    statistic to report and numerical rank is not. Returns NaN on a zero matrix rather
+    statistic section 3.7 asks for and numerical rank is not. Returns NaN on a zero matrix rather
     than 1, because a matrix with no energy in it has no shape to report.
     """
     ev = _eigenvalues(matrix)
@@ -430,8 +430,8 @@ def selection_covector(
 ) -> np.ndarray:
     """`s_l = E[(r - b) g_l]`, averaged within groups and then across them. Shapes `(P, K)`, `(P, K, d)`.
 
-    **The pooling convention is load-bearing and the usual statement of the estimator omits it.**
-    `grad_{h_l} log pi` is written as though it were a `d`-vector, and it is a `(T, d)` object until a
+    **The pooling convention is load-bearing and the specification does not state it.** Section 3.8
+    writes `grad_{h_l} log pi` as though it were a `d`-vector, and it is a `(T, d)` object until a
     convention turns it into one. Summing over positions is the only choice that makes it a score:
     it is the derivative of `log pi` with respect to a constant offset added to the layer-`l`
     residual at every position, which is a genuine shared parameter, so `E[g] = 0` holds exactly and
@@ -450,7 +450,7 @@ def selection_covector(
         raise ValueError(
             f"unknown baseline {baseline!r}; the three are 'none', 'group_mean' and "
             f"'leave_one_out'. The group-mean baseline is the whole of the variance reduction the "
-            f"spike found to work, so 'none' is a deliberate ablation and not a default."
+            f"W5.2 spike found to work, so 'none' is a deliberate ablation and not a default."
         )
     return ((r - b)[..., None] * g).mean(axis=-2).mean(axis=0)
 
@@ -463,7 +463,7 @@ def selection_second_moment(
 ) -> np.ndarray:
     """`M_l = E[(r - b)^2 g_l g_l^T]`, the rung-1 object: a dictionary ordered by pressure.
 
-    Ordered by pressure rather than by variance, which is the whole argument for it: the
+    Ordered by pressure rather than by variance, which is the whole argument of section 3.8: the
     Jacobian-lens result is that causal relevance and explained variance are close to orthogonal in a
     transformer's residual stream, so a basis selected by reconstruction error is optimising a
     functional nearly unrelated to the one that matters.
@@ -500,7 +500,7 @@ def whitened_spectrum(
     is what separates "this direction carries pressure" from "this direction carries variance".
 
     ``ridge`` is a fraction of `trace(G)/d` added to `G`'s diagonal and it is **returned rather than
-    hidden**, because the `lambda` in `(F + lambda I)^-1` has to be reported and a
+    hidden**, because section 3.1.3 asks for the `lambda` in `(F + lambda I)^-1` to be reported and a
     reading that hides it cannot be checked for the stability it also has to claim. The damping is
     not cosmetic here: `G` is a sample second moment and is singular whenever the pooled rollout
     count is below `d`.
@@ -538,7 +538,7 @@ def required_pooled_n(observed_rse: float, observed_n: int, target_rse: float = 
 @register_payload
 @dataclass
 class SelectionGeometry:
-    """The covector, the spectrum, and the two dimensionality statistics that are defensible.
+    """The covector, the spectrum, and the two dimensionality statistics section 3.7 permits.
 
     Kept as a payload rather than a dict because `pr_convention`, `whitened_ridge` and `apparatus`
     are the three fields a caller would drop and each one is a number the reading is not
@@ -592,7 +592,7 @@ F5_BASELINES: tuple[BaselineID, ...] = (
 
 #: `LINEAR_RESPONSE` is the catalogue's own `envelope_requires` for F5 and it is measured by F2's
 #: selection-explained fraction. `ABOVE_LOD` is added here and the addition is deliberate: the whole
-#: content of the spike is a detection limit on this estimator, and an instrument that measured
+#: content of the W5.2 spike is a detection limit on this estimator, and an instrument that measured
 #: its own floor and then did not declare the condition that checks it would be reporting the floor
 #: in a docstring and enforcing nothing.
 COVECTOR_ENVELOPE = EnvelopeSpec(
@@ -615,7 +615,7 @@ COVECTOR_ACCESS: AccessMatrix = {
 class _SelectionInstrument(BaseObservable):
     """Shared machinery for F5's four quantities: compute once, emit under four ids.
 
-    Four instruments rather than one because an instrument gets exactly one `quantity`,
+    Four instruments rather than one because section 4.2 gives an instrument exactly one `quantity`,
     and a per-sequence covector ranked against a dimensionless stable rank is the unit error the
     field is for. The arithmetic runs once in `_geometry` and each subclass names the id it emits
     under.
@@ -624,7 +624,7 @@ class _SelectionInstrument(BaseObservable):
     version = "1.0"
     #: Gradients and activations both: the covector needs the first and the baseline comparison
     #: projects items onto directions, which needs the second. Either one alone makes this
-    #: white-box, so the `IncrementalValidity` is mandatory.
+    #: white-box under section 6.4, so the `IncrementalValidity` is mandatory.
     capabilities = Capability.GRADIENTS | Capability.ACTIVATIONS
     #: The covector and the top direction are components in one model's residual-stream basis, so a
     #: cross-model comparison needs a shared frame and gate 2 raises without one. That is a
@@ -632,14 +632,14 @@ class _SelectionInstrument(BaseObservable):
     #: coordinates: `M -> Q M Q^T` leaves every eigenvalue, the stable rank and the participation
     #: ratio exactly where they were.
     gauge_status = GaugeStatus.COVARIANT
-    faithful_to = "selection covector, spectrum not rank"
+    faithful_to = "3.8 selection covector, 3.7 spectrum not rank"
     deviations = (
-        "grad_{h_l} log pi is usually written as a d-vector and it is a (T, d) object until a "
+        "section 3.8 writes grad_{h_l} log pi as a d-vector and it is a (T, d) object until a "
         "pooling convention is chosen; this sums over positions, which is the only convention "
         "under which E[g] = 0 holds and s_l is exactly the derivative of E[r] with respect to a "
         "constant offset at layer l",
         "the catalogue's envelope for F5 names LINEAR_RESPONSE alone; ABOVE_LOD is added because "
-        "the spike measured a detection limit on this estimator and a floor that is not a "
+        "the W5.2 spike measured a detection limit on this estimator and a floor that is not a "
         "declared condition is not enforced anywhere",
         "the whitened generalised problem is solved with a ridge on G, reported as "
         "`whitened_ridge`, because G is a sample second moment and is singular below d pooled "
@@ -653,7 +653,7 @@ class _SelectionInstrument(BaseObservable):
     invariance = "repr.basis"
     #: Asserted on the stable rank, which is the scalar `check_invariance` is handed. An orthogonal
     #: change of basis maps `M` to `Q M Q^T` and leaves the Frobenius and spectral norms alone, so
-    #: the ratio does not move. Written in the mapping form rather than as a bare
+    #: the ratio does not move. Written in the mapping form E55 added rather than as a bare
     #: `Relation`, because this instrument's payload genuinely transforms two ways and only one of
     #: them is a value relation: the covector and the top direction rotate with the basis, which is
     #: what `gauge_status` above declares and gate 2 enforces, while every scalar on the payload is
@@ -743,7 +743,7 @@ class _SelectionInstrument(BaseObservable):
                     f"the smallest group holds {min(sizes)} rollouts, and a group-relative baseline "
                     f"needs at least two. Without a baseline the estimator's relative standard "
                     f"error at K = 64 was {P8_RESOLUTION['rse_by_k']['no_baseline']['64']:.2f} on "
-                    f"the spike, against {P8_RESOLUTION['rse_by_k']['group_mean_baseline']['64']:.2f} "
+                    f"the W5.2 spike, against {P8_RESOLUTION['rse_by_k']['group_mean_baseline']['64']:.2f} "
                     f"with one."
                 ),
                 remedy=(
@@ -788,10 +788,10 @@ class _SelectionInstrument(BaseObservable):
                     reason=RefusalReason.BELOW_LOD,
                     detail=(
                         f"the score-function covector is being asked for on {n_pooled} pooled "
-                        f"rollouts. The variance spike measured its relative standard error at "
+                        f"rollouts. The W5.2 variance spike measured its relative standard error at "
                         f"K = 64 as {P8_RESOLUTION['rse_k64']:.3f} over "
-                        f"{P8_RESOLUTION['n_prompts'] * 64} pooled rollouts with every standard "
-                        f"reduction technique applied, and the mean cosine between "
+                        f"{P8_RESOLUTION['n_prompts'] * 64} pooled rollouts with every reduction "
+                        f"technique the specification names applied, and the mean cosine between "
                         f"two independent estimates of the direction as "
                         f"{P8_RESOLUTION['cosine_k64']:.3f}. Below "
                         f"{self.pooled_n_floor} pooled rollouts the estimator's own dispersion is "
@@ -892,9 +892,10 @@ class _SelectionInstrument(BaseObservable):
                 n=len(items),
                 method=(
                     f"the relative standard error and the split-half cosine on this payload are "
-                    f"the spike's measured values for this estimator at K = 64 on "
+                    f"the W5.2 spike's measured values for this estimator at K = 64 on "
                     f"{P8_RESOLUTION['subject']}, not a per-reading interval. A per-reading "
-                    f"interval needs the bootstrap this instrument does not run inline."
+                    f"interval needs the bootstrap this instrument does not run inline; ask for "
+                    f"`spike_variance` if you need one on your own subject."
                 ),
             ),
             baselines=bank_scores,
@@ -1018,8 +1019,8 @@ class _SelectionInstrument(BaseObservable):
                 remedy=(
                     "supply `texts` so the string-match baseline can run, and check that the "
                     "subject's forward returns activations at this site so the placebo encoder can "
-                    "build a direction. The coherent irrelevant direction is mandatory rather "
-                    "than nice, because a vampires-versus-werewolves direction "
+                    "build a direction. Section 3.8 makes the coherent irrelevant direction "
+                    "mandatory rather than nice, because a vampires-versus-werewolves direction "
                     "suppressed deployment-time hacking exactly as well as the direction that was "
                     "supposed to be the reward-hacking one."
                 ),
@@ -1161,8 +1162,8 @@ def _activations(subject: Any, items: Sequence[Any], site: Site) -> Any:
 def _logit_lens_direction(subject: Any, readout: str, d: int) -> np.ndarray:
     """The vanilla logit lens: the readout's own unembedding row, unprojected.
 
-    This is the direction the shipped library read before the selection covector existed, and it is
-    a mandatory baseline for exactly that reason: an objective-derived direction that does not beat
+    This is the direction the shipped library read before any of section 3.8 existed, and it is a
+    mandatory baseline for exactly that reason: an objective-derived direction that does not beat
     the unembedding row has not earned the backward pass it cost.
     """
     try:
@@ -1271,7 +1272,7 @@ def _says(rung: int, moment: np.ndarray, covector: np.ndarray, n: int, site: Sit
         f"At {site}, {which} over {n} rollouts gives stable rank {srank:.2f} of {d} and a top "
         f"direction carrying {share:.0%} of the pressure, at covector norm "
         f"{float(np.linalg.norm(covector)):.4g}. Stable rank is biased downwards at small samples: "
-        f"on the spike the same matrix read 2.69 at K = 4 and 6.05 pooled over 2,048 rollouts, "
+        f"on the W5.2 spike the same matrix read 2.69 at K = 4 and 6.05 pooled over 2,048 rollouts, "
         f"so a spectrum read at a realistic group size reports concentration that is not there."
     )
 

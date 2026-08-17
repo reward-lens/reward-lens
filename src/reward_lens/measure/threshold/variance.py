@@ -258,7 +258,7 @@ def arl0(threshold: float, drift: float = 0.5) -> float:
 def cusum_threshold(target_arl0: float, drift: float = 0.5) -> float:
     """Invert ``arl0``: the threshold ``h`` giving one false alarm per ``target_arl0`` steps.
 
-    At ``target_arl0 = 1000`` and ``drift = 0.5`` this returns 5.75; the source quotes 5.71
+    At ``target_arl0 = 1000`` and ``drift = 0.5`` this returns 5.75; the specification quotes 5.71
     for the same design, which is the same number to the precision the approximation supports
     (5.71 scores an ARL of 960 under this form).
     """

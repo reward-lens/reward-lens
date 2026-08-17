@@ -1,13 +1,13 @@
-"""A2 Distortion v2: per-dimension reward distortion.
+"""A2 Distortion v2: per-dimension reward distortion (Appendix A2).
 
-Formal definition, A2. ``D(P) = (curvature/sensitivity of r along the P direction) × (1 −
+Formal definition: Appendix A2. ``D(P) = (curvature/sensitivity of r along the P direction) × (1 −
 coverage(P))``, with ``coverage(P)`` supplied by KUI's mediation term (A1). This is the Wang-Huang
 per-dimension distortion object (faithful_to Wang-Huang 2603.28063): the reward is distorted along a
 property when it is sensitive to that property yet the property is not covered by the intended
 criteria, so the sensitivity is spurious. High sensitivity that is fully covered is intended pricing,
 not distortion; low sensitivity is no distortion regardless of coverage.
 
-This is the v2 that A2 distinguishes from v1's coverage statistic. v1 (E10) computed a
+This is the v2 that Appendix A2 distinguishes from v1's coverage statistic. v1 (E10) computed a
 coverage disparity while citing Wang-Huang's distortion index; that statistic survives under its honest
 name in ``coverage_disparity.py`` and is not this object. Deviation from A2: sensitivity defaults to the
 linear proxy ``|w_r · v_P|`` for a unit direction; passing a reward-Hessian quadratic form ``v_Pᵀ H
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def linear_sensitivity(directions: np.ndarray, w_r: np.ndarray) -> np.ndarray:
-    """Per-dimension linear sensitivity ``|w_r · v_P|`` for unit-normalized directions (A2).
+    """Per-dimension linear sensitivity ``|w_r · v_P|`` for unit-normalized directions (Appendix A2).
 
     The first-order change in reward per unit step along each property direction. ``directions`` is
     ``(K, d)``; returns the ``(K,)`` vector of sensitivities. This is the cheap proxy for A2's
@@ -56,7 +56,7 @@ def distortion_per_dimension(
     sensitivity: Sequence[float],
     coverage: Sequence[float],
 ) -> np.ndarray:
-    """Per-dimension distortion ``D(P) = sensitivity(P) × (1 − coverage(P))`` (A2).
+    """Per-dimension distortion ``D(P) = sensitivity(P) × (1 − coverage(P))`` (Appendix A2).
 
     ``coverage`` is KUI's mediation term in ``[0, 1]`` (how priced/covered the property is). A property
     that is sensitive but uncovered (``coverage → 0``) carries its full sensitivity as distortion; a
@@ -99,7 +99,7 @@ class Distortion(BaseObservable):
         "coverage is KUI's mediation term (A1); this index consumes it rather than recomputing it",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.distortion_index"
     #: The reward direction is read off the head; the property directions and their coverage come
     #: from earlier measurements by the concept layer and by KUI.
@@ -120,8 +120,8 @@ class Distortion(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_direction", "baseline.zero_coverage")
     rung = 0
-    #: A white-box reading owes an `IncrementalValidity` and this instrument cannot produce
-    #: one. The id is checkable and the prose is the argument.
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
+    #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",
         "the reading is one distortion per property direction, K numbers over a battery the caller "

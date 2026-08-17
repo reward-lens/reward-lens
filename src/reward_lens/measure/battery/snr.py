@@ -1,4 +1,4 @@
-"""``PromptSNR`` (E16): the reward's discriminative signal against its noise floor.
+"""``PromptSNR`` (E16): the reward's discriminative signal against its noise floor (section 2.8).
 
 A reward model is only useful where its preference signal rises above the noise in its own scores. E16
 frames this as a signal-to-noise ratio: the signal is how strongly the reward separates chosen from
@@ -75,7 +75,7 @@ class PromptSNR(BaseObservable):
         "noise with data.corruptions robustness-SNR paraphrases, deferred here to a working port",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.prompt_snr"
     requires: AccessMatrix = {Component.GRADER: Access.QUERY}
     substrates = ANY_SUBSTRATE

@@ -1,6 +1,6 @@
 """One potential function. `K(lambda) = log E_0[e^{lambda r}]` and every ratio that comes off it.
 
-The frontier layer is a single object with several faces. For the exponential tilt family
+Section 3.0 is a single object with several faces. For the exponential tilt family
 ``pi_lambda(y) proportional to pi_0(y) e^{lambda r(y)}`` the cumulant generating function
 
     K(lambda) = log E_0[e^{lambda r}]
@@ -34,7 +34,7 @@ estimator.
 **Nothing in this module is the ancestor's job twice.** ``loops.tilt`` already does self-normalised
 importance sampling over this family for the feature-level question (which feature drifts, and how
 fast). It raises ``ESSGuardError`` when the weights degenerate, because there the degeneracy is a
-guard on a prediction. Here the degeneracy is the reading: the whole argument of the horizon is that
+guard on a prediction. Here the degeneracy is the reading: section 3.0.1's whole argument is that
 the point at which the weights collapse is a publishable number. So this module computes ESS as a
 quantity rather than as a guard, and the refusals live in the instruments. What is genuinely shared
 is nine lines of arithmetic, and the two differ in what they return at the end of it.
@@ -47,7 +47,7 @@ from typing import Sequence
 
 import numpy as np
 
-#: The Kish ESS floor, as a fraction of n, that the horizon uses by default. It is a
+#: The Kish ESS floor, as a fraction of n, that section 3.0.1 states as the default. It is a
 #: default and not a constant: an instrument may be constructed with a different floor and reports
 #: whichever one it used. What it may not do is move silently.
 DEFAULT_ESS_FLOOR = 0.05
@@ -65,7 +65,7 @@ def logsumexp(x: np.ndarray) -> float:
     """`log sum exp(x)`, with the max subtracted. Written out rather than imported.
 
     scipy has this and it is correct. It is written here because the max subtraction is the one
-    explicit numerical commitment this layer makes, and a reader checking that commitment should
+    numerical commitment section 3.0 makes explicitly, and a reader checking that commitment should
     be able to see it rather than take an import on trust.
     """
     m = float(np.max(x))
@@ -127,7 +127,7 @@ class Potential:
             g = np.asarray(gold, dtype=np.float64).ravel()
             if g.size != r.size:
                 raise ValueError(
-                    f"the gold channel has {g.size} scores and the proxy has {r.size}. The tilt "
+                    f"the gold channel has {g.size} scores and the proxy has {r.size}. Section 3.0 "
                     f"needs both channels on the *same* n rollouts; two independent samples do not "
                     f"give a joint distribution and nothing here is estimable from them."
                 )
@@ -226,7 +226,7 @@ class Potential:
     def stationarity(self, lam: float) -> float:
         """`d/dlambda E_lambda[g] = Cov_lambda(g, r)`. The function whose root is the turn.
 
-        The tilt's own identity, and the quantity arXiv 2506.19248 states as its Theorem 3. Where
+        Section 3.0's identity, and the quantity arXiv 2506.19248 states as its Theorem 3. Where
         this crosses zero from above, `E_lambda[g]` stops rising, which is the turn in the gold
         curve for this particular gold signal `g`.
         """
@@ -239,9 +239,9 @@ class Potential:
         Two things follow from it and both are worth stating.
 
         At ``lambda = 0`` it is ``kappa_3(g, r, r)``, so a single Newton step from zero gives
-        ``lambda* = -Cov_0(g, r) / kappa_3(g, r, r)``. That closed-form cumulant expression is a
-        convenience, and this is the precise sense in which it is one: it is the first iterate of
-        the root-finder, not a different result.
+        ``lambda* = -Cov_0(g, r) / kappa_3(g, r, r)``. That is the closed-form cumulant expression
+        section 3.0.2 calls a convenience, and this is the precise sense in which it is one: it is
+        the first iterate of the root-finder, not a different result.
 
         Its sign is also the second-derivative test. A root with a negative slope is a maximum of
         `E_lambda[g]`, which is the turn worth reporting; a root with a positive slope is a

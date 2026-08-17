@@ -1,4 +1,4 @@
-"""D7, the grader card: thirteen readings about one grader, on one page.
+"""D7, the grader card: thirteen readings about one grader, on one page (section 5.D).
 
 A card is a composition, and the thing it composes is `Reading`, which is `Evidence | Refusal`.
 That is the whole design and every other decision in this module follows from it.
@@ -63,7 +63,7 @@ from reward_lens.measure.base import BaseObservable, Context, PreflightResult, r
 from reward_lens.measure.card.fields import CARD_FIELDS, CardInputs, FieldSpec
 
 # ---------------------------------------------------------------------------
-# What the card asks for
+# What section 5.D asks for
 # ---------------------------------------------------------------------------
 
 #: D7's `access_min`, verbatim: "GRADER:QUERY+REPLICATE and source where available".
@@ -71,7 +71,7 @@ from reward_lens.measure.card.fields import CARD_FIELDS, CardInputs, FieldSpec
 #: This is **reported against and not gated on**, and the distinction is the point of the
 #: instrument. A reader below this line still gets a card; what they get is a card whose fields
 #: refuse, each naming what would let it read. Turning the minimum into a wholesale refusal would
-#: make the card unavailable to exactly the reader called Profile A, whose entire
+#: make the card unavailable to exactly the reader section 2.3 calls Profile A, whose entire
 #: deliverable this is. So `requires` is empty, every field declares its own access, and the
 #: shortfall against this line is a rendered row rather than a gate.
 D7_ACCESS_MIN: AccessMatrix = {Component.GRADER: Access.QUERY | Access.REPLICATE}
@@ -371,7 +371,7 @@ class CardReading:
     access: str
     fields: tuple[CardField, ...]
     #: Access D7 asks for and this reader does not have, per component. Empty means the reader
-    #: meets D7's stated minimum.
+    #: meets section 5.D's stated minimum.
     access_shortfall: Mapping[str, str] = field(default_factory=dict)
     access_min: str = ""
     #: What the card's own envelope check found, in words.
@@ -476,7 +476,7 @@ class CardReading:
     def render(self, *, include_sensitive: bool = False, trust: TrustLevel | None = None) -> str:
         """One page.
 
-        ``include_sensitive`` is the explicit request the dual-use rule requires. It does
+        ``include_sensitive`` is the explicit request section 5.D's dual-use rule requires. It does
         not override the payload's own gate: a `FPCatalogue` with no recorded `DisclosureDecision`
         still raises `DisclosureRequired`, because the flag on this call says the reader wants the
         exploit content and the decision says somebody accountable agreed to release it, and those
@@ -680,10 +680,10 @@ def _extra_refusal(spec: FieldSpec, exc: ExtraRequiredError) -> Refusal:
 
     `ACCESS_INSUFFICIENT` is the least wrong of the sixteen and it is not a comfortable fit. The
     reader's access to the *grader* is fine; what is missing is a package. It is used because
-    the test for which reason applies is whether the remedy is answerable where the reader is
+    E30's test for which reason applies is whether the remedy is answerable where the reader is
     standing or upstream, and one pip install is as answerable-where-you-stand as a remedy gets.
     The statistics carry ``missing_extra`` so a card can group on the real cause rather than on the
-    reason name.
+    reason name, and a seventeenth reason is requested in this package's build report.
     """
     return Refusal(
         instrument=spec.attr,
@@ -758,7 +758,7 @@ class GraderCard(BaseObservable):
     want to know what it would contain and what it would cost, which needs no grader call.
 
     Kill condition, from the catalogue: **if nobody reads one.** That is a fact about adoption
-    rather than about the instrument, and what the instrument itself can control is that the page
+    rather than about the instrument, and the thing under this builder's control is that the page
     is short, that no field is silently absent, and that every refusal on it names something the
     reader can go and do.
     """
@@ -770,13 +770,13 @@ class GraderCard(BaseObservable):
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
     #: Nothing, and this is a decision rather than an omission. See `D7_ACCESS_MIN`: a card that
-    #: refuses wholesale below D7's access minimum is unavailable to the reader it is for.
+    #: refuses wholesale below section 5.D's access minimum is unavailable to the reader it is for.
     requires: AccessMatrix = {}
     #: The catalogue prints OPEN for both of these. A card is a composition of readings and every
     #: substrate admits some subset of the thirteen, so all six are declared rather than left
     #: unrestricted, and the same for the four phases: a card is asked before a purchase, during a
-    #: run, after one, and of a deployed artifact. Both are proposed as catalogue fills rather than
-    #: left as an empty set meaning "not stated".
+    #: run, after one, and of a deployed artifact. Both are proposed as catalogue fills in this
+    #: package's build report rather than left as an empty set meaning "not stated".
     substrates = frozenset(Substrate)
     phases = frozenset(Phase)
     envelope = D7_ENVELOPE
@@ -787,8 +787,9 @@ class GraderCard(BaseObservable):
     invariance_relation = INVARIANT
     baselines = CARD_BASELINES
     rung = 0
-    #: There is no theory object a composite artifact instantiates. Saying so is the honest
-    #: answer; naming the catalogue record here would make a provenance claim into a citation.
+    #: There is no Appendix A theory object a composite artifact instantiates. Saying so is the
+    #: honest answer; naming the catalogue record here would make a provenance claim into a
+    #: citation.
     faithful_to: str | None = None
     deviations: tuple[str, ...] = (
         "the access matrix is empty where the catalogue prints `GRADER:QUERY+REPLICATE and source "
@@ -948,7 +949,7 @@ class GraderCard(BaseObservable):
             priced=priced,
         )
 
-    # -- the estimate path --------------------------------------------------
+    # -- the section 4.2 estimate path --------------------------------------
 
     def measure(self, ctx: Context) -> Evidence:
         card = self._computed if self._computed is not None else self.compose(ctx)

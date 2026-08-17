@@ -1,6 +1,6 @@
 """The join: four books, two independent predictions of `Δz`, and the residual between them.
 
-The effect book measures `Δz_obs` directly. Cause and capacity together predict
+Section 3.1.5. The effect book measures `Δz_obs` directly. Cause and capacity together predict
 `Δz_pred = η · G · C⁻¹ · S`. The difference is the reconciliation residual
 
     ρ = Δz_obs − Δz_pred
@@ -27,9 +27,9 @@ library exists to make impossible.
 
 **On the covariance operator.** `C` is the **within-group** covariance, both features centred inside
 their own prompt group with the pooled `n - G` denominator, matching `Cov_group(A, f)` in
-`measure.ledger.price`. That is the operator the identity means, and it is not the pooled
-covariance: between the two sits prompt-to-prompt heterogeneity, which is a property of the task
-distribution rather than of the policy. Mixing a within-group `S` with a pooled `C` does
+`measure.ledger.price`. SPEC-ERRATA E17 settles that this is the operator §3.1.2 means, and it is
+not the pooled covariance: between the two sits prompt-to-prompt heterogeneity, which is a property
+of the task distribution rather than of the policy. Mixing a within-group `S` with a pooled `C` does
 not solve `S = Cβ` on either operator. Every reading names the operator it used.
 """
 
@@ -54,12 +54,13 @@ from reward_lens.measure.ledger.price import (
 
 @runtime_checkable
 class MetricGLike(Protocol):
-    """`G = J F⁻¹ Jᵀ`, the covariance a parameter move can actually reach.
+    """`G = J F⁻¹ Jᵀ`, the covariance a parameter move can actually reach (§3.1.3).
 
     This is `measure.efficiency.MetricG` written as a Protocol, field for field, so that the real
     dataclass satisfies it structurally with no adapter and no import. It exists because F4 and F3
-    were written against an interface fixed in advance rather than one after the other, and a
-    Protocol is how that is expressed in the type system rather than in a comment.
+    were written in the same wave against an interface fixed in advance (BUILD_NOTES D13) rather
+    than one after the other, and a Protocol is how that is expressed in the type system rather
+    than in a comment.
 
     ``damping`` is the `λ` in `(F + λI)⁻¹` and it is a field rather than a parameter, because a
     reading that hides its regularisation cannot be checked for the stability it also has to claim.
@@ -78,10 +79,10 @@ class MetricGLike(Protocol):
 
 @runtime_checkable
 class StepCostLike(Protocol):
-    """One step of F3's cost book, as `measure.efficiency.StepCost`.
+    """One step of F3's cost book, as `measure.efficiency.StepCost` (BUILD_NOTES D13).
 
-    Read here only for the cost consistency check: `KL_min(Δz_obs) ≤ D_t` must hold, and a
-    violation is an instrument bug rather than a finding. `kl_min` is not recomputed here. The
+    Read here only for the cost consistency check of §3.1.5: `KL_min(Δz_obs) ≤ D_t` must hold, and
+    a violation is an instrument bug rather than a finding. `kl_min` is not recomputed here. The
     cost book owns it, recomputing it would be a second implementation of the same quadratic form,
     and a check that recomputes the thing it is checking is not a check.
     """
@@ -108,8 +109,8 @@ class BasisMismatch(ValueError):
 class FeatureCovariance:
     """`C = Cov_group(f, f)` pooled over a window, with what decides whether to invert it.
 
-    ``conditioning`` is `n_D = Σλ / λ_max`, the effective dimension that ships beside every `β`.
-    It is not the condition number: `n_D` counts how many directions carry comparable variance
+    ``conditioning`` is `n_D = Σλ / λ_max`, the effective dimension §3.1.2 asks to ship beside every
+    `β`. It is not the condition number: `n_D` counts how many directions carry comparable variance
     and falls toward 1 when one direction dominates, which is the failure mode that makes `C⁻¹S`
     unstable. Both are reported because they answer different questions.
 
@@ -218,9 +219,9 @@ class SelectionGradient:
 
     ``ridge`` is `δ` in `(C + δ·(tr C / k)·I)⁻¹S`, scaled by the mean eigenvalue so that one value
     of `δ` means the same thing on features recorded in characters and on features recorded in
-    words. Swept on real data, the answer is flat over `δ` from 0 to 1e-2 and by `δ = 1` the
-    solution has collapsed onto `S / (δ·tr C / k)`, which is `S` rescaled and has stopped being a
-    gradient. So the default is zero and any non-zero value is reported.
+    words. SPEC-ERRATA E17 sweeps it on real data: the answer is flat over `δ` from 0 to 1e-2 and
+    by `δ = 1` the solution has collapsed onto `S / (δ·tr C / k)`, which is `S` rescaled and has
+    stopped being a gradient. So the default is zero and any non-zero value is reported.
 
     **`S` and `β` can differ in sign, and both belong on the page.** `S` is the marginal
     association and `β` is the direct effect conditional on the measured basis. Reporting a
@@ -417,7 +418,7 @@ def _response_jacobian(
 
 
 def _aligned_columns(g_names: Sequence[str], sample_names: Sequence[str]) -> list[int]:
-    """The join key check: same names, same order, element for element."""
+    """The join key check of BUILD_NOTES D19: same names, same order, element for element."""
     if tuple(g_names) != tuple(sample_names):
         raise BasisMismatch(
             f"G is in basis {list(g_names)} and the ledger is in basis {list(sample_names)}. "
@@ -528,9 +529,9 @@ def reconcile_series(
             )
         if ridge:
             notes.append(
-                f"beta was solved under ridge delta = {ridge:g} toward (tr C / k) I. The answer "
-                f"is flat to delta = 1e-2 and has collapsed onto a rescaled S by delta = 1, so "
-                f"read the ridge as part of the estimate."
+                f"beta was solved under ridge delta = {ridge:g} toward (tr C / k) I. SPEC-ERRATA "
+                f"E17 measures the answer flat to delta = 1e-2 and collapsed onto a rescaled S by "
+                f"delta = 1, so read the ridge as part of the estimate."
             )
         out.append(
             StepReconciliation(
@@ -570,9 +571,9 @@ def reconcile_series(
 class CostConsistency:
     """`KL_min(Δz_obs) ≤ D_t` over a window. A violation is an instrument bug, not a finding.
 
-    The reason for the inequality: `KL_min` is the minimum information cost of the behavioural
-    change that was actually observed, and the optimiser spent `D_t` achieving it, so spending
-    less than the minimum is arithmetically impossible. If it happens, either `G` is
+    §3.1.5 states the inequality and §3.1.4 states why: `KL_min` is the minimum information cost of
+    the behavioural change that was actually observed, and the optimiser spent `D_t` achieving it,
+    so spending less than the minimum is arithmetically impossible. If it happens, either `G` is
     mis-estimated or the natural-gradient approximation has failed, and F3's own kill condition
     fires. That is F3's number to defend; this checks it at the join because the join is where the
     two books meet and a check that only one side runs is a check one side can drop.
@@ -620,7 +621,7 @@ def cost_consistency(costs: Sequence[StepCostLike] | None) -> CostConsistency:
             max_efficiency=float("nan"),
             checked=False,
             detail=(
-                "no cost series was supplied, so the cost inequality was not tested. "
+                "no cost series was supplied, so the inequality of section 3.1.5 was not tested. "
                 "Pass F3's `cost_series` output to check it; the reconciliation residual does not "
                 "depend on it and is reported without it."
             ),

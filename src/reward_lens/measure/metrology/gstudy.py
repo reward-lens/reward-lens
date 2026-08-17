@@ -36,11 +36,11 @@ real crossed design of 800 objects by 4 grader draws:
     what it reports now:              7.99
 
 On the eleven open reward models of series A, at K = 4 over 1,763 groups, rung 3 moved from a mean
-of 1.910 to 2.558 and rung 0 from 2.986 to 4.000. The Kish count has not gone away: it is a real
-statement about how unevenly a group spends its gradient, so it travels beside the reading as
-`EffectiveSize.shape_factor` with its own bootstrap interval. It is a property of the reward
-distribution and not of the grader, which is why multiplying it into a grader's effective group
-size was the error.
+of 1.910 to 2.558 and rung 0 from 2.986 to 4.000. SPEC-ERRATA E41 item 2, adjudicated in
+`BUILD_STATE.md`. The Kish count has not gone away: it is a real statement about how unevenly a
+group spends its gradient, so it travels beside the reading as `EffectiveSize.shape_factor` with its
+own bootstrap interval. It is a property of the reward distribution and not of the grader, which is
+why multiplying it into a grader's effective group size was the error.
 
 **Kill condition, from the catalogue.** If r0 and r3 agree within their intervals on five graders,
 the ladder is decoration and only r0 ships. That is a real test and it is in
@@ -470,7 +470,7 @@ class EffectiveSize:
     At a reliability of 0.5 the group carries eight independent observations of sixteen; the old
     rule reported 5.6. The mechanism is that adding noise pushes the observed score distribution
     toward Gaussian, and the Kish shape factor of a Gaussian is `2/pi = 0.6366`, so the first factor
-    fell for the same reason the second one did.
+    fell for the same reason the second one did. SPEC-ERRATA E41 item 2.
 
     **The shape factor is still here and it is still worth reading.** `shape_factor` is the Kish
     count divided by K: 1.0 when every rollout sits the same distance from the group mean and
@@ -514,7 +514,7 @@ class EffectiveSize:
     kish_ci_low: float = math.nan
     kish_ci_high: float = math.nan
     #: False when the reliability came from a decomposition with no positive variance in it at all,
-    #: so every quantity on it is zero over zero. The same defect class `GaugeRR` guards against.
+    #: so every quantity on it is zero over zero. The same defect class E41 fixed in `GaugeRR`.
     determined: bool = True
 
     @property
@@ -847,7 +847,7 @@ class EffectiveGroupSize(MetrologyInstrument):
     to 2.558 and rung 0 from 2.986 to 4.000. The Kish count is still reported, as
     `EffectiveSize.shape_factor` with its own interval, because it is a real statement about how
     evenly a group spends its gradient. It is not a property of the grader, which is why it is no
-    longer multiplied into a grader's effective group size.
+    longer multiplied into a grader's effective group size. SPEC-ERRATA E41 item 2.
 
     Kill condition: if r0 and r3 agree within their intervals on five graders, the ladder is
     decoration and only r0 ships.
@@ -868,7 +868,7 @@ class EffectiveGroupSize(MetrologyInstrument):
         "grader noise twice, because the Kish count is computed on scores that already contain it. "
         "The Kish ESS is still computed on every reading and reported beside it as `shape_factor` "
         "with its own bootstrap interval, using the absolute centred scores |r_i - rbar| because a "
-        "group drives learning through its contrasts",
+        "group drives learning through its contrasts. SPEC-ERRATA E41 item 2",
         "the interval covers the reliability factor's rater-panel jackknife and the spread of the "
         "group sizes, and not the sampling uncertainty of the individual variance components. On a "
         "design with few objects the omitted term is not negligible and the interval is too narrow",
@@ -986,8 +986,8 @@ class EffectiveGroupSize(MetrologyInstrument):
             reliability_se=se,
         )
         if not reading.determined:
-            # An all-zero decomposition must not render as a gauge that resolves two billion
-            # levels. The same input reaches here as a reliability of exactly 0.0 and an
+            # E41 stopped an all-zero decomposition from rendering as a gauge that resolves two
+            # billion levels. The same input reaches here as a reliability of exactly 0.0 and an
             # effective group size of exactly 0.0, which reads as "your grader destroys every one
             # of your rollouts" when the truth is that nothing in the design varied at all.
             return Refusal(
@@ -1018,7 +1018,7 @@ class EffectiveGroupSize(MetrologyInstrument):
         return reading
 
     def uncertainty(self, computed: EffectiveSize) -> Uncertainty | None:
-        """The interval on the Evidence rather than only in the payload.
+        """The interval the acceptance clause asks for, on the Evidence rather than only in the payload.
 
         `n_effective` is filled with the reading itself, which is what that field means: this
         instrument's entire job is to say how many independent observations the group is worth.

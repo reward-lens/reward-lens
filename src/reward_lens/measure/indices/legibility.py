@@ -1,6 +1,6 @@
-"""A15 Legibility frontier and tacit residual.
+"""A15 Legibility frontier and tacit residual (Appendix A15).
 
-Formal definition, A15. Read interpretation as rate-distortion. Build a program
+Formal definition: Appendix A15. Read interpretation as rate-distortion. Build a program
 ``r̂_K = Σ w_i π_i`` from predicates ``π_i`` of description length at most ``K``, fit to the model's
 scores, and measure ``fidelity(K) =`` the ranking agreement of ``r̂_K`` with the true reward ``r``. The
 frontier ``fidelity(K)`` rises with the description-length budget ``K``; its knee ``K*`` is the point of
@@ -53,7 +53,7 @@ def legibility_frontier(
     *,
     knee_tol: float = 0.02,
 ) -> dict[str, object]:
-    """The legibility frontier, its knee ``K*``, and the tacit residual (A15).
+    """The legibility frontier, its knee ``K*``, and the tacit residual (Appendix A15).
 
     ``predicates`` is ``(n, P)`` predicate activations, ``costs`` their description lengths, ``reward``
     the ``(n,)`` scores. For each budget ``K`` the cheapest predicates with cumulative cost ``≤ K`` are
@@ -135,7 +135,7 @@ class Legibility(BaseObservable):
         "dictionary)",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.legibility_frontier"
     #: The grader is scored on the view; the predicate library and its description lengths come
     #: from the concept layer's difference dictionary.
@@ -173,9 +173,9 @@ class Legibility(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """The predicate library and its costs, or a refusal. A budget sweep with no costs is an arbitrary subset.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.predicates is None or self.costs is None:

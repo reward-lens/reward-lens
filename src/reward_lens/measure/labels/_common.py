@@ -17,8 +17,8 @@ does.
 to `make_evidence`, and the reference is what caps the trust. The kernel's `make_evidence` already
 takes `reference=` and already applies `compute_trust`'s cap; `Context.emit` simply does not forward
 it, and the trust level is part of the Evidence content id, so patching it afterwards would leave
-the id disagreeing with the content. Until `emit` forwards the reference, this helper does what
-`emit` does, gate for gate, plus the two fields `emit` drops.
+the id disagreeing with the content. The exact patch to `measure/base.py` is in the build report.
+Until it lands this helper does what `emit` does, gate for gate, plus the two fields `emit` drops.
 """
 
 from __future__ import annotations

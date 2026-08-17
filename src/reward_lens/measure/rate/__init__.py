@@ -1,12 +1,12 @@
 """Rate: how fast the loop is moving, and whether the assumptions that survive slow motion hold.
 
-Three modules. `regime` measures the twelve regime conditions from a record. `adiabaticity`
+Three modules. `regime` measures the twelve conditions of section 2.4 from a record. `adiabaticity`
 is H1 rung 0, the number that decides one of those twelve: `Ad = tau_relax * |d log lambda / dt|`,
 the relaxation time against the driving rate. `transition` is H4, the fitted width of a behavioural
 transition, which is the **unit every lead time in this library is reported in**.
 
 They belong together because they all read the same thing, which is the speed of the driver against
-the speed the system can follow. What is left is the compute half: the two-run
+the speed the system can follow. What is left for section 3.4 is the compute half: the two-run
 collapse test (H2), the rate-extrapolated hysteresis area (H3), and the perturb-and-hold relaxation
 time that is rung 1 of `run.tau_relax`. All three are registered as rungs with their access and
 their cost and none is built.
@@ -15,7 +15,7 @@ Two instruments here estimate `run.tau_relax` at rung 0 and they disagree. `regi
 coefficient by ordinary least squares and says in its own docstring that the fit is biased low and
 therefore toward licensing; `adiabaticity` removes that bias by bootstrap and takes its verdict on
 the upper end of the resulting interval. `adiabaticity.tau_transfer` publishes the difference as a
-chain term rather than reconciling it, which is what M11 does for two rungs of one
+section 2.8 chain term rather than reconciling it, which is what M11 does for two rungs of one
 ladder and is the same argument for two estimators at one rung.
 
 Torch-free by construction. Everything here reads a `Run` and returns a `Reading`, and a preflight
@@ -41,7 +41,7 @@ from reward_lens.measure.rate.adiabaticity import (
     tau_transfer,
 )
 
-# The compute-gated rate instruments: the code ships, the runbook and the
+# Phase 6's rate instruments. They are compute-gated studies: the code ships, the runbook and the
 # price ship, and no result does, because none of them has been run. Exported here so the estimator
 # ladder and the capability report can see them without importing a submodule by hand.
 from reward_lens.measure.rate.collapse import (

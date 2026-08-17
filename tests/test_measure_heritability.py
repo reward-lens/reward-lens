@@ -1,6 +1,6 @@
 """C2's numerics: `h² = G_ii/C_ii`, the Hansen-Houle indices, and realised heritability.
 
-Every property asserted here is one the derivation guarantees, checked against a planted
+Every property asserted here is one the derivation in §3.1.3 guarantees, checked against a planted
 `G` where the answer is known in closed form rather than against a reference implementation. The
 three that matter are the bound `C ⪰ G` (Cauchy-Schwarz on the score-function directions), the
 bound `a(β) = c/e ∈ [0, 1]` (Cauchy-Schwarz again, on `G` and `G⁻¹`), and the exactness of the
@@ -62,7 +62,7 @@ def test_h2_is_bounded_in_zero_one_for_every_admissible_G() -> None:
     for _ in range(40):
         N = psd(rng, 4)
         G = psd(rng, 4)
-        C = G + N  # C - G = N is PSD by construction, which is exactly the derivation's conclusion
+        C = G + N  # C - G = N is PSD by construction, which is exactly §3.1.3's conclusion
         got = heritability(G, C, tuple("abcd"))
         assert isinstance(got, HeritabilityReading)
         assert np.all(got.h2 >= -1e-12)

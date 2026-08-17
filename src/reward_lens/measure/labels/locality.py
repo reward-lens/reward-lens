@@ -439,7 +439,7 @@ def register() -> None:
             run=signal_locality,
         )
     )
-    # Rung 1 is specified and not built. `run=None` is how that is recorded: the
+    # Rung 1 is specified and not built. `run=None` is how section 2.5 says to record that: the
     # capability report prints the rung, its access, and its cost, and says it has no
     # implementation. This is the open white-box experiment, registered so it is nameable.
     register_estimator(

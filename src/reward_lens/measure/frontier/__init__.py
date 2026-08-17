@@ -1,12 +1,12 @@
 """Level 0, the frontier: what would happen if we optimised, answered before anything is optimised.
 
-The layer develops one potential function, ``K(lambda) = log E_0[e^{lambda r}]``, and everything
+Section 3.0 develops one potential function, ``K(lambda) = log E_0[e^{lambda r}]``, and everything
 in this package is a derivative of it or a ratio built from its weights. Five readings come out,
 carried by five instruments over four catalogue records:
 
 - **N1** `GoldVersusKL`, `frontier.gold_vs_kl`. The reward-versus-gold curve, out to the horizon.
 - **N2** `VisibilityHorizon`, `frontier.visibility_horizon`. Where the tilt extrapolation goes
-  blind, in nats. This is the piece of the layer that is genuinely unoccupied.
+  blind, in nats. This is the piece section 3.0.2 identifies as genuinely unoccupied.
 - **N3** `RewardTailIndex`, `frontier.tail_index`. The `LIGHT_TAILED` precondition the layer rests on,
   measured rather than assumed, with a stability protocol and a refusal below the exceedance count a
   defensible estimate needs.
@@ -16,8 +16,8 @@ carried by five instruments over four catalogue records:
 
 The whole layer needs a callable grader and a gold channel on the same n base-policy rollouts, and
 nothing else: no GPU, no policy checkpoint, no record, no gradients. That is the entire content of
-the claim that the frontier is estimable before any optimisation is run, for any substrate,
-including a closed API. It is the only layer in this library that answers a question
+section 3.0's claim that the frontier is estimable before any optimisation is run, for any
+substrate, including a closed API. It is the only layer in this library that answers a question
 before training happens, and it imports no torch.
 
 Two things about it are worth knowing before reading a number out of it.

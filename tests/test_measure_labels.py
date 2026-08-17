@@ -806,7 +806,7 @@ def test_every_instrument_declares_a_registered_quantity_and_passes_lint():
 
 @pytest.mark.parametrize("cls", INSTRUMENTS, ids=lambda c: c.name)
 def test_generated_invariance_check_for_each_instrument(cls):
-    """The generated test. Four of the five declare `none`; L1 declares `units`."""
+    """Appendix B's generated test. Four of the five declare `none`; L1 declares `units`."""
     inst = cls()
     group = "trivial" if inst.invariance == "none" else inst.invariance
     report = check_invariance(inst, group, InvariancePayload(), run=lambda i, p: 0.0)

@@ -1,6 +1,6 @@
 """The `units` group's assertion, made executable for series I.
 
-All four instruments here are registered under `units`, whose registered assertion is not a numeric
+All four instruments here are registered under `units`, whose Appendix B assertion is not a numeric
 relation at all: a comparison across a unit boundary raises `UNIT_MISMATCH` rather than silently
 converting. `check_invariance` routes that group to `check_unit_refusal`, which needs a comparison
 to assert on, and this is it.
@@ -9,7 +9,7 @@ The pair that matters in this series is real rather than contrived, and it is th
 package is most likely to invite. `gate.mccrary_statistic` is a z and `gate.bunching_elasticity` is
 dimensionless, and both of them answer a question a reader will phrase as "how hard is the policy
 pushing on this gate". Ranking one against the other, or reporting the larger of the two as the
-worse gate, is the unit error that is the most common silent failure in this literature.
+worse gate, is the unit error section 6.1 calls the most common silent failure in this literature.
 A z of 8 and an elasticity of 0.02 are not a large number and a small one, and there is no factor
 between them: one says the density is discontinuous and the other says what the discontinuity
 implies about behaviour.

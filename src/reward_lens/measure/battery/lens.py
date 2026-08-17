@@ -1,6 +1,6 @@
-"""``LensCrystallization`` (E02): where preference forms across depth.
+"""``LensCrystallization`` (E02): where preference forms across depth (section 2.8, 5).
 
-The reward lens projects the residual stream at each layer onto the reward direction to read the
+The reward-lens projects the residual stream at each layer onto the reward direction to read the
 reward the model would assign if it stopped there. For a preference pair the differential lens is the
 chosen-minus-rejected projection at each layer; it traces when the model starts distinguishing the
 two completions. The crystallization layer is the first layer at which that differential reaches half
@@ -92,7 +92,7 @@ class LensCrystallization(BaseObservable):
         "(post-embedding) to n_layers-1, matching v1's RewardLens exactly",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.crystallization_depth"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     substrates = NEURAL_SUBSTRATES
@@ -128,7 +128,7 @@ class LensCrystallization(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.final_layer_only", "baseline.random_direction")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_SUBJECT_WITH_SIGNAL",

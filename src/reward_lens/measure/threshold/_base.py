@@ -14,7 +14,7 @@ another's underscore is a dependency that is invisible at the point where it bre
 part is thirty lines of dispatch.
 
 Every instrument in this package declares `Capability.NONE` and reads a record through the access
-matrix, so `run()`'s `CapabilityError` branch is unreachable from `estimate`.
+matrix, so `run()`'s `CapabilityError` branch (SPEC-ERRATA E27) is unreachable from `estimate`.
 """
 
 from __future__ import annotations
@@ -76,8 +76,8 @@ RECORD_PHASES = frozenset({Phase.IN_RUN, Phase.POST_RUN})
 #:
 #: `on_violation` is "downgrade" rather than "refuse", and the choice is deliberate. A drifting
 #: grader does not make the density uncomputable, and refusing on it would withhold the reading on
-#: exactly the runs where a gate is most likely to have been retuned, which is refusing where the
-#: quantity is still defined. The quantity stays defined, its trust caps at EXPLORATORY, and the
+#: exactly the runs where a gate is most likely to have been retuned, which is SPEC-ERRATA E29's
+#: failure in a new place. The quantity stays defined, its trust caps at EXPLORATORY, and the
 #: violated condition is recorded on the reading.
 GATE_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.STATIONARY_GRADER}),
@@ -150,9 +150,9 @@ class ThresholdInstrument(BaseObservable):
         quantity off `ctx._observable`, and `run()` is the only place in the kernel that sets it. A
         no-signal branch that calls `measure` directly therefore emits `observable="anonymous"`,
         `observable_version="0"`, `gauge=INVARIANT` and `quantity=""`, whatever the instrument
-        declared. That is a known defect arriving by a different road: `emit` was made to forward
-        the quantity, and the path every record-only instrument actually takes never gives it one
-        to forward. Measured on the shipped `ClipAccounting`, which declares
+        declared. That is E35's defect arriving by a different road: E35 made `emit` forward the
+        quantity, and the path every record-only instrument actually takes never gives it one to
+        forward. Measured on the shipped `ClipAccounting`, which declares
         `estimator.clip_fraction_effect` and emits `observable='anonymous', quantity=''`. Reported
         for the three sibling runners in `estimator/`, `controls/` and `frontier/`, which have the
         same branch; fixed here.
@@ -179,9 +179,9 @@ class ThresholdInstrument(BaseObservable):
         `BaseObservable.preflight` computes the cap for `on_violation="downgrade"` and nothing in
         the library applies it, so the emitted trust is whatever `compute_trust` decides from
         calibration and registration alone. Grepped across the tree, the only consumer is
-        `measure.card.card._envelope_note`, which renders a sentence about it. Recorded here rather
-        than worked around, because capping a trust level from inside an instrument would mean
-        bypassing `make_evidence`, which is the one place that decides it.
+        `measure.card.card._envelope_note`, which renders a sentence about it. Recorded here and in
+        the W4.5 report rather than worked around, because capping a trust level from inside an
+        instrument would mean bypassing `make_evidence`, which is the one place that decides it.
         """
         pre = self.preflight(ctx)
         if not pre.ok and pre.refusal is not None:

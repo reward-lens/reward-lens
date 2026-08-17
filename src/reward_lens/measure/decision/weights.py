@@ -114,7 +114,7 @@ def optimal_weights_diagonal(
     """`alpha_i = B_i / (1 + r C_ii sigma_i^2)`, the diagonal case, written out.
 
     Kept as its own function rather than folded into the general solve, because it is the form the
-    source states and the form a reader recognises, and having both lets a test assert they
+    specification states and the form a reader recognises, and having both lets a test assert they
     agree wherever both apply. They do, to machine precision.
     """
     b = np.asarray(benefit, dtype=np.float64).ravel()
@@ -704,7 +704,7 @@ class OptimalWeights(DecisionInstrument):
     gauge_status = GaugeStatus.COVARIANT
     faithful_to = "N5"
     deviations = (
-        "the source states the formula at M = I, which is not scale free: rescaling a "
+        "the specification states the formula at M = I, which is not scale free: rescaling a "
         "component's score sends sigma^2 to a^2 sigma^2 while the 1 in the denominator does not "
         "move, so the diagonal form applied to raw reward model scores is a units error rather "
         "than an approximation. The general form alpha* = [M C''^-1 M' + r Sigma]^-1 M C''^-1 B' "
@@ -714,10 +714,11 @@ class OptimalWeights(DecisionInstrument):
         "the uncertainty of a recommendation whose other four parameters were stated rather than "
         "measured, and an interval carrying only the measured part would read as the uncertainty "
         "of the whole. The sweep is the interval this instrument has",
-        "the catalogue carries no N5 record and no registered quantity for it. The record and "
-        "the quantity row proposed here fill that gap, and `quantities.as_catalogue_rows()` "
-        "emits them",
-        "the source's own reduction of the perfectly-substitutable case is incomplete. "
+        "the catalogue carries no N5 record, because Part 9 assigns no work package to section "
+        "3.5.2 and Appendix A registers no quantity for it. SPEC-ERRATA E23 records the omission "
+        "and lands the frontier half; the record and the quantity row proposed here are the rest, "
+        "and `quantities.as_catalogue_rows()` emits them",
+        "the specification's own reduction of the perfectly-substitutable case is incomplete. "
         "C_11 = C_12 = C_22 gives a Schur complement of exactly zero and a numerator of B_1 - B_2, "
         "so the optimum is exactly zero when the two tasks are equally valuable and is a knife "
         "edge with unbounded surplus when they are not. Both cases are computed and flagged rather "

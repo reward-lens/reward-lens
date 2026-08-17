@@ -1,6 +1,6 @@
-"""A4 Tail index: the right-tail exponent of the reward.
+"""A4 Tail index: the right-tail exponent of the reward (Appendix A4).
 
-Formal definition, A4. A Hill / peaks-over-threshold estimate of the right-tail exponent of
+Formal definition: Appendix A4. A Hill / peaks-over-threshold estimate of the right-tail exponent of
 ``r`` under the base policy ``π_0`` (aggregate), and of each feature's contribution to ``r``
 (per-feature). This is the reward-thermodynamics diagnostic (faithful_to Kwa 2407.14503): the shape of
 the reward's upper tail decides whether optimization has a finite safe budget.
@@ -207,7 +207,7 @@ class TailIndex(BaseObservable):
         "per-feature tail is on the feature values as the proxy for each feature's contribution to r",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.tail_index"
     #: Scores come from the grader on the view. The per-feature enrichment additionally captures
     #: activations, and it is skipped rather than refused when the signal does not offer them.

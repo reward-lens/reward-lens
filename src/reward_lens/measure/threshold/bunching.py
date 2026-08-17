@@ -837,7 +837,7 @@ def gate_response(
     the reading tracks if each sample's largest excess mass is at its own gate.
 
     **Two identical samples mean the gate never applied**, which is void condition 8 rather than a
-    failed kill test. A contrast that did not reach the trainer produces a tidy
+    failed kill test (SPEC-ERRATA E24). A contrast that did not reach the trainer produces a tidy
     null with no anomaly in it anywhere, and a null is the result a reader is least likely to
     interrogate, so it is refused here rather than reported as a negative.
     """

@@ -1,4 +1,4 @@
-"""The four nulls B1 is indefensible without, ordered by decisiveness.
+"""The four nulls B1 is indefensible without, ordered by decisiveness (section 3.6).
 
 A curl mass of 0.214 with no null behind it is a number, not a finding. The paper most often cited
 against a topological reading of cycles does not show that cycles are measurement error, it assumes
@@ -77,10 +77,10 @@ def _refuse_replications(instrument: str, observed: float, what: str) -> Refusal
     """The one refusal both replication-gated nulls return, with the n it needs in it.
 
     `ACCESS_INSUFFICIENT` rather than a regime violation, and the choice is deliberate. Replications
-    are an access level: the access ladder puts repeated queries of the same input at
-    GRADER:REPLICATE, one rung above the GRADER:QUERY that produced a single verdict per pair. So
-    the remedy is an instruction about what to go and get rather than a diagnosis, which is what a
-    remedy is for.
+    are an access level: ASSAY's access ladder puts repeated queries of the same input at
+    GRADER:REPLICATE, one rung above the GRADER:QUERY that produced a single verdict per pair. So the
+    remedy is an instruction about what to go and get rather than a diagnosis, which is what §6.1
+    asks a remedy to be.
     """
     return Refusal(
         instrument=instrument,
@@ -194,7 +194,7 @@ def _spearman_brown(half: float) -> float:
     as -1 does. What was corrupted is every reported coefficient and interval, including the case
     where the gradient control passes and the number therefore ships as meaningful. A negative value
     still means what it meant, that there is no reliable variance here and that is the finding, and
-    its magnitude was never interpretable.
+    its magnitude was never interpretable. SPEC-ERRATA E42.
     """
     if half <= -1.0 + 1e-12:
         return -1.0

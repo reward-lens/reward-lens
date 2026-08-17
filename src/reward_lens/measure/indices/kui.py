@@ -1,6 +1,6 @@
-"""A1 KUI: the Knowledge-Utilization Index.
+"""A1 KUI: the Knowledge-Utilization Index (Appendix A1).
 
-Formal definition, A1. For a property ``P`` in a battery of properties:
+Formal definition: Appendix A1. For a property ``P`` in a battery of properties:
 
   - ``decode(P)`` = percentile-within-battery of a calibrated probe's balanced accuracy for ``P`` from
     the activations ``h`` (how legibly the reward model represents ``P``).
@@ -16,7 +16,7 @@ reward can see but does not currently charge for. ``KUI(P) < 0`` means priced-be
 This is Orgad-style knowledge/behaviour dissociation made grader-side (faithful_to Orgad-style
 dissociation).
 
-This module fixes the v1 unit bug named in A1: v1 computed ``decodability − mediation`` on raw
+This module fixes the v1 unit bug named in Appendix A1: v1 computed ``decodability − mediation`` on raw
 incommensurable scales (a balanced accuracy minus a cosine), a subtraction with no meaning. Here both
 axes are pushed to their percentile-within-battery first, so the difference is between two ranks in
 ``[0, 1]`` and the plane is the honest object. Deviation from A1: mediation uses the cheap linear proxy
@@ -67,7 +67,7 @@ class Property:
 
 
 def linear_mediation_proxy(direction: np.ndarray, w_r: np.ndarray) -> float:
-    """The cheap linear mediation proxy ``|cos(w_P, w_r)|`` (A1).
+    """The cheap linear mediation proxy ``|cos(w_P, w_r)|`` (Appendix A1).
 
     A property whose direction is nearly parallel to the reward direction is one the reward prices
     heavily; a direction orthogonal to ``w_r`` moves the reward not at all under a linear head. The
@@ -89,7 +89,7 @@ def kui_plane(
 
     ``KUI = (decode_pct − mediate_pct) / √2`` is the signed perpendicular distance from the diagonal
     ``decode = mediate``, positive for represented-but-unpriced properties. Standardizing both axes to
-    ranks in ``[0, 1]`` before subtracting is the whole point (A1's unit-bug fix); the raw
+    ranks in ``[0, 1]`` before subtracting is the whole point (Appendix A1's unit-bug fix); the raw
     balanced accuracy and raw cosine never meet on the same scale. Returns the two percentile axes and
     the KUI vector, all length ``m`` (the battery size).
     """
@@ -160,7 +160,7 @@ class KUI(BaseObservable):
         "fix); a singleton battery is undefined and reported as such",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.knowledge_utilization"
     #: The reward direction is read off the head; the property battery, with its decodabilities and
     #: directions, is a recorded measurement from the concept layer.
@@ -181,8 +181,8 @@ class KUI(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_direction", "baseline.decodability_only")
     rung = 0
-    #: A white-box reading owes an `IncrementalValidity` and this instrument cannot produce
-    #: one. The id is checkable and the prose is the argument.
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
+    #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",
         "the reading is a plane over a battery of properties, one point per property, and both of its "

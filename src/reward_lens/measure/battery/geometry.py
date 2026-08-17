@@ -1,4 +1,4 @@
-"""``MultiObjectiveGeometry`` (E18): the geometry of a multi-objective reward head.
+"""``MultiObjectiveGeometry`` (E18): the geometry of a multi-objective reward head (section 2.8).
 
 A multi-objective reward model such as ArmoRM carries one reward direction per objective (nineteen
 for ArmoRM). The geometry of those directions, the pairwise cosines between objectives, is what tells
@@ -87,7 +87,7 @@ class MultiObjectiveGeometry(BaseObservable):
         "cosines are raw-coordinate (RAW_ONLY), meaningful within one model only",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.objective_geometry"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     #: NEURAL_SCALAR only. A multi-objective head is a matrix of criterion rows; a GenRM has a
@@ -107,7 +107,7 @@ class MultiObjectiveGeometry(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_direction_pair", "baseline.row_mean_composite")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",

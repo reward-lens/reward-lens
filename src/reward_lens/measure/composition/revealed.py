@@ -132,7 +132,7 @@ AFRIAT_ENVELOPE = EnvelopeSpec(
     justification=(
         "a census over a comparison record. The index counts which recorded verdicts can be "
         "ordered by one utility and asserts nothing about the process that produced them, so no "
-        "regime can make the count wrong. No regime condition is recorded for B2."
+        "regime can make the count wrong. ASSAY line 1653 prints `Env none` for B2."
     ),
 )
 
@@ -1294,8 +1294,8 @@ class AfriatIndex(BaseObservable):
         "produces a margin in reward units. The number is reported as computed and the mismatch is "
         "an open question for the registry rather than something resolved here.",
     )
-    #: The access matrix. The catalogue prints GRADER:RECORD plus comparison data, and comparison
-    #: data is what a grader record holds.
+    #: The access matrix, section 4.2's `requires`. The catalogue prints GRADER:RECORD plus
+    #: comparison data, and comparison data is what a grader record holds.
     requires = {Component.GRADER: Access.RECORD}
     substrates = frozenset({Substrate.NEURAL_GEN, Substrate.PROCEDURAL})
     #: The catalogue's phase column is OPEN for B2. An empty set is no restriction, which is the

@@ -1,6 +1,6 @@
 """H1 rung 1: `tau_relax` by perturb-and-hold, which is the measurement the quantity is defined by.
 
-The relaxation time is defined as a protocol and not as a fit: nudge the policy, hold the
+Section 3.4 defines the relaxation time as a protocol and not as a fit: nudge the policy, hold the
 schedule where it is, and count the steps the observable takes to come back. Rung 0, in
 `adiabaticity.py`, reads a lag-1 coefficient off a series that was never perturbed and is free. This
 is the one that costs a held arm per episode, and it is the one the definition names.
@@ -54,7 +54,7 @@ and `CONTROL` on the optimizer, which is the compute this package is gated on, a
 this module deliberately does not re-register it: the registry refuses to redefine a live name to a
 different value, and reaching across a package boundary to mutate another module's entry at import
 time is worse than an entry that is one field out of date. `PERTURB_AND_HOLD_IMPL` names the entry
-this implements.
+this implements, and the one-line change that wires them together is a request in the build report.
 """
 
 from __future__ import annotations
@@ -666,7 +666,7 @@ def relaxation_time_from_hold(
 
 
 def rung_transfer(rung0_tau: float, rung1: PerturbRelaxation) -> Transfer:
-    """The free rung against the protocol rung, as a chain term.
+    """The free rung against the protocol rung, as a section 2.8 chain term.
 
     This is what the estimator ladder is for and it is the case M11 was written about: one quantity,
     two rungs, the same run, and the disagreement published rather than reconciled. Rung 0's fit
@@ -681,7 +681,7 @@ def rung_transfer(rung0_tau: float, rung1: PerturbRelaxation) -> Transfer:
         n=rung1.n_quantitative,
         method=(
             "two rungs of run.tau_relax on one run: the bias-corrected early lag-1 fit of "
-            "rate/adiabaticity.py against the perturb-and-hold protocol. The cheap "
+            "rate/adiabaticity.py against the perturb-and-hold protocol of section 3.4. The cheap "
             "rung summarises whatever the real memory is with one first-order time constant; the "
             "expensive one measures the return directly and needs no such assumption."
         ),
@@ -738,12 +738,12 @@ class PerturbAndHold(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to: str | None = "H1"
     deviations: tuple[str, ...] = (
-        "the definition says 'count the steps the observable takes to return'. A count needs a "
+        "section 3.4 says 'count the steps the observable takes to return'. A count needs a "
         "threshold for having returned; this fits a three-parameter exponential and reports its "
         "time constant, which uses the whole recovery rather than the first crossing of an "
         "arbitrary band.",
-        "the pooled value is a geometric rather than an arithmetic mean over episodes. Nothing "
-        "fixes a pooling convention, and an arithmetic mean of time constants is "
+        "the pooled value is a geometric rather than an arithmetic mean over episodes. The "
+        "specification says nothing about pooling and an arithmetic mean of time constants is "
         "dominated by the longest episode.",
     )
 

@@ -1,4 +1,4 @@
-"""``PatchGrid`` (E15): causal patch effects across components and heads.
+"""``PatchGrid`` (E15): causal patch effects across components and heads (section 2.8, 2.6).
 
 Attribution is observational: a component can carry a large contribution yet not be causally necessary
 because other components compensate. Activation patching answers the causal question by splicing a
@@ -12,9 +12,8 @@ activation and measures ``original_differential - patched_differential``. The pa
 :class:`~reward_lens.interventions.patch.ComponentPatch` / ``HeadPatch``, an Intervention whose
 fingerprint enters the Evidence subject, so a patched number cannot masquerade as a clean one. The
 head-granularity path is what E15 uses to find the strongest attention head; that headline is
-recorded in ``fixtures/e_parity/golden.json`` and its recompute at 8B is GPU-gated (it needs the 8B
-model's ``w_r`` and forwards), so on this hardware the head grid runs on the tiny model as a
-correctness check, not as the 8B result.
+held in a private E-parity fixture and its recompute at 8B is GPU-gated (it needs the 8B
+model's ``w_r`` and forwards). This public source therefore does not claim a reproduced 8B result.
 """
 
 from __future__ import annotations
@@ -67,7 +66,7 @@ class PatchGrid(BaseObservable):
         "is the fp32 head projection, which matches the native head to head-in-fp32 tolerance",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.component_patch_effect"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD | Access.MUTATE}
     substrates = NEURAL_SUBSTRATES
@@ -83,7 +82,7 @@ class PatchGrid(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.self_patch", "baseline.random_component_patch")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_SUBJECT_WITH_SIGNAL",

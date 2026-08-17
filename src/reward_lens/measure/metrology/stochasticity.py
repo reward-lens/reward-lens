@@ -1,4 +1,4 @@
-"""A6's two quantities, each declared by the instrument that computes it.
+"""A6's two quantities, each declared by the instrument that computes it (section 5.A).
 
 A6 reports two numbers from one repeated-scoring design, and until this module they shared one
 registry id. They cannot. The spread is **covariant** under `reward.affine`: rescale a grader's
@@ -9,14 +9,14 @@ even a sign flip leaves the modal verdict's probability alone because that proba
 them, and `Instrument.quantity` is one field, so one instrument would have to lie the same way one
 level up. Two quantities, two instruments.
 
-That is not a bookkeeping preference. Declaring the spread invariant is exactly the mistake the
-split exists to prevent, and it fails loudly now. On the 24-by-5 panel in
+That is not a bookkeeping preference. Declaring the spread invariant is exactly the mistake
+SPEC-ERRATA E13 exists to prevent, and it fails loudly now. On the 24-by-5 panel in
 `tests/acceptance/test_a6_split.py`, sigma declared invariant under `reward.affine` misses by 5.388
 against a tolerance of 9.454e-08, weight 2 misses by 36.1 and weight 0.5 by 3.886. Weight 1 lands at
 1.776e-15. There is exactly one right answer, the two neighbouring answers are ruled out by three
 orders of magnitude each, and the `Relation` type is what lets the generated test ask the question at
-all. With the status on the group alone, the only available assertion is equality and every one of
-those four declarations passes.
+all. With the status on the group, as section 2.6 prints it, the only available assertion is equality
+and every one of those four declarations passes.
 
 **Why the covariance is a live problem rather than a formality.** The eleven open reward models in
 the campaign store have raw standard deviations from 0.0538 to 17.05 on one shared bank of 7,052
@@ -77,14 +77,14 @@ from reward_lens.measure.metrology.distribution import (
     repeats_for_majority,
 )
 
-#: One baseline, not two. The source reads "Base assume determinism, and show the error that
-#: induces", and the clause after the comma is an instruction about how to report the baseline
-#: rather than a second comparator. A list split on the wrong separator reads as more rigour than
-#: the instrument has, in the exact field `lint_instrument` reads.
+#: One baseline, not two. ASSAY line 1640 prints "Base assume determinism, and show the error that
+#: induces", and the clause after the comma is an instruction about how to report the baseline rather
+#: than a second comparator. E26 is the erratum for lists that got split on the wrong separator and
+#: then read as more rigour than the instrument has, in the exact field `lint_instrument` reads.
 STOCHASTICITY_BASELINES: tuple[BaselineID, ...] = ("baseline.assume_determinism",)
 
 #: Both instruments declare both groups. `reward.affine` is the group that separates the two
-#: quantities and is what each registry row carries; `group.permutation` is A6's own catalogue cell
+#: quantities and is what each registry row carries; `group.permutation` is A6's own cell in Part 5
 #: and is a separate true statement that no single registry row can hold. Declaring both means both
 #: generated tests run, which is two checks for the price of one honest declaration.
 STOCHASTICITY_GROUPS = "reward.affine, group.permutation"
@@ -220,10 +220,10 @@ class GraderScoreSigma(ControlInstrument):
     envelope = EnvelopeSpec(
         unconditional=True,
         justification=(
-            "No regime condition is recorded for A6. This reads the grader's own output "
-            "distribution under a design the caller controls, so there is no assumption about the "
-            "run for a regime to violate. The scope limit is in the kill condition rather than in "
-            "an envelope: on a deterministic scalar head the reading is zero and correct."
+            "ASSAY line 1640 prints `Env none`. This reads the grader's own output distribution "
+            "under a design the caller controls, so there is no assumption about the run for a "
+            "regime to violate. The scope limit is in the kill condition rather than in an "
+            "envelope: on a deterministic scalar head the reading is zero and correct."
         ),
     )
     invariance = STOCHASTICITY_GROUPS
@@ -237,7 +237,7 @@ class GraderScoreSigma(ControlInstrument):
     #: supports is the form the type forbids. Three instruments have recorded a second true relation
     #: in a comment rather than declare it (`indices/chi.py`, `battery/lens.py`,
     #: `indices/teacher_compatibility.py`), and each of those is a generated test that does not run.
-    #: The fix is one annotation in `measure/base.py`.
+    #: The fix is one annotation in `measure/base.py` and it is the integrator's file.
     invariance_relation = {  # type: ignore[assignment]
         # Var(a·r + b) = a²·Var(r), so the standard deviation scales by |a|: weight 1. The
         # implemented `reward.affine` generator draws a ~ LogUniform(0.1, 10), which is strictly
@@ -257,7 +257,7 @@ class GraderScoreSigma(ControlInstrument):
         "A6 is one catalogue entry and this is one of two instruments discharging it. The spread "
         "and the flip rate transform differently under `reward.affine`, which one "
         "`invariance_group` field and one `Instrument.quantity` field cannot both express",
-        "The catalogue records `group.permutation` for A6. That is true and it is not the "
+        "Part 5 line 1640 prints `Grp group.permutation` for A6. That is true and it is not the "
         "group that constrains this reading's value, so `reward.affine` is declared beside it and "
         "the registry row for `grader.score_sigma` carries the affine group alone",
     )
@@ -431,9 +431,9 @@ class GraderFlipRate(ControlInstrument):
     envelope = EnvelopeSpec(
         unconditional=True,
         justification=(
-            "No regime condition is recorded for A6. A pairwise verdict's stability is a property "
-            "of the grader and of the design that varied it, and no regime of a training run makes "
-            "a measured flip rate wrong. The scope limit is the kill condition: a deterministic "
+            "ASSAY line 1640 prints `Env none`. A pairwise verdict's stability is a property of the "
+            "grader and of the design that varied it, and no regime of a training run makes a "
+            "measured flip rate wrong. The scope limit is the kill condition: a deterministic "
             "grader never flips, the reading is zero, and that is the answer rather than a failure."
         ),
     )

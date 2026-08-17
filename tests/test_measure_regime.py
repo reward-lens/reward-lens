@@ -1,7 +1,7 @@
-"""The regime reading, condition by condition.
+"""W2.7 — the regime reading, condition by condition.
 
 Two things are being tested and the second one is the harder one. The first is that each of the
-twelve regime conditions reads `True` on a record built to satisfy it and `False` on one
+twelve conditions of section 2.4 reads `True` on a record built to satisfy it and `False` on one
 built to violate it. The second is that each reads `None` when its input is genuinely absent,
 because a `False` that means "I could not tell" is the defect this whole module exists to prevent
 and it is invisible in any test that only checks the two easy states.
@@ -180,7 +180,7 @@ def read(run: Run, condition: RegimeCondition, **kwargs):
 def test_all_twelve_conditions_are_present_in_every_reading():
     """Absent means never measured and present-with-None means measured and indeterminate.
 
-    The regime reading maps every condition, so this producer always emits twelve. The
+    Section 2.4's reading maps every condition, so this producer always emits twelve. The
     consequence is deliberate and it is strict: `EnvelopeSpec.classify` counts a present-with-None
     as a failure rather than as an unchecked box, so an instrument requiring LINEAR_RESPONSE is
     refused on a record where nobody computed Lambda.
@@ -321,7 +321,7 @@ def test_a_trending_series_does_not_masquerade_as_a_slow_relaxation():
 def test_linear_response_is_undetermined_without_lambda_and_says_whose_job_it_is():
     cr = read(make_run([step(0), step(1)]), RegimeCondition.LINEAR_RESPONSE)
     assert cr.holds is None
-    assert "F2" in cr.detail and "selection.explained_fraction" in cr.detail
+    assert "W4.3" in cr.detail and "selection.explained_fraction" in cr.detail
 
 
 def test_linear_response_reads_the_supplied_lambda():
@@ -357,7 +357,7 @@ def _mixed_groups(n_degenerate: int, n_live: int, *, unknown: int = 0) -> list[G
 
 
 def test_the_statistic_is_the_degenerate_fraction_against_the_stated_threshold():
-    """The worked report prints "degenerate group fraction 0.04 (threshold 0.20)"."""
+    """Section 4.5 line 1458 prints "degenerate group fraction 0.04 (threshold 0.20)"."""
     cr = read(make_run([step(0, groups=_mixed_groups(1, 24))]), RegimeCondition.GROUP_NONDEGENERATE)
     assert cr.threshold == 0.20
     assert cr.statistic == pytest.approx(0.04)
@@ -399,7 +399,7 @@ def test_unrecorded_spread_that_cannot_change_the_verdict_still_answers():
 
 
 def test_near_policy_holds_at_the_stated_staleness_bound():
-    """The worked report prints "max staleness 2 steps (threshold 8)"."""
+    """Section 4.5 line 1459 prints "max staleness 2 steps (threshold 8)"."""
     g = group("g0", trajectories=[traj("a", staleness=2), traj("b", staleness=1)])
     cr = read(make_run([step(0, groups=[g])]), RegimeCondition.NEAR_POLICY)
     assert cr.threshold == 8.0
@@ -486,7 +486,7 @@ def test_stationary_grader_is_undetermined_with_neither_a_standard_nor_a_schedul
 
 
 class _FakeSum:
-    """A score-tree node in shape only, to check the structural walk without importing the real one.
+    """A score-tree node in shape only, to check the structural walk without importing W2.2.
 
     The walk is deliberately not typed against `reward_lens.record.scores`, so the test is not
     either. What it pins is the contract the walk relies on: a `name`, numeric parameters under
@@ -1060,7 +1060,7 @@ def test_every_measured_by_target_resolves_in_the_registry():
     id resolved. So an envelope naming an unregistered quantity constructed cleanly and read as
     rigour. The earlier version of this test pinned the gap to the module's declared list precisely
     so that the day the rows landed it would fail and the declaration would be deleted rather than
-    drift; they landed, it failed, and the declaration is gone.
+    drift; wave 3 landed them, it failed, and the declaration is gone.
 
     What replaces it is stronger than the pin: `EnvelopeSpec.__post_init__` now rejects a
     `measured_by` id that does not resolve, so this cannot silently reopen.
@@ -1083,8 +1083,8 @@ def test_every_measured_by_target_resolves_in_the_registry():
 def test_the_generated_invariance_test_passes_under_the_declared_group():
     """`run.regime` declares `none`, which resolves to the trivial group.
 
-    The report is a pass and it is vacuous, which the report itself says: no registered transformation
-    acts on a set of verdicts. It is recorded here so the gate is visibly met and
+    The report is a pass and it is vacuous, which the report itself says: no transformation in
+    Appendix B acts on a set of verdicts. It is recorded here so the gate is visibly met and
     visibly weak, and the non-vacuous check that is available follows immediately below.
     """
     inst = RunRegime(make_run([step(0)]))
@@ -1101,7 +1101,7 @@ def test_the_verdicts_do_not_move_under_an_affine_rescaling_of_the_reward():
     by a positive factor and re-deriving the group statistics must leave both verdicts alone, and a
     reading that moved here would be reading a level rather than a contrast.
 
-    The epsilon is rescaled with the reward, which is not a convenience. E13 records
+    The epsilon is rescaled with the reward, which is not a convenience. SPEC-ERRATA E13 records
     that the GRPO advantage is not affine-invariant for a fixed positive epsilon, and the same
     caveat lands here: the degeneracy verdict is invariant under the group only if the trainer's
     epsilon is in reward units. A record whose epsilon is a fixed 1e-8 against a reward rescaled by

@@ -72,7 +72,7 @@ class ControlDesign:
     statistic: str = ""
     ess: float | None = None
     #: Anything else the two arms have to share, compared by equality. Engine, revision, seed
-    #: policy, prompt order: the `CouplingSpec` fields belong here until that type exists.
+    #: policy, prompt order: the `CouplingSpec` fields of §6.6 belong here until that type exists.
     coupling: Mapping[str, Any] = field(default_factory=dict)
 
     @property

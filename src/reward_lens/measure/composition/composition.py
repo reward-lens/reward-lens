@@ -1,10 +1,10 @@
 """B3: what the reward is actually made of, and what it would be without a piece.
 
 Two instruments, because the catalogue names two quantities and they are answered by different
-work. `CompositionTree` reads the shape and reports `grader.composition`: which composition
-primitives this run actually used, how many of them a `Mapping[str, float]` of weights could not have
-expressed, and what each node is worth one at a time. `CounterfactualComposition` re-evaluates the
-recorded tree with a node removed and reports `grader.counterfactual_score`.
+work. `CompositionTree` reads the shape and reports `grader.composition`: which of section 3.3's
+composition primitives this run actually used, how many of them a `Mapping[str, float]` of weights
+could not have expressed, and what each node is worth one at a time. `CounterfactualComposition`
+re-evaluates the recorded tree with a node removed and reports `grader.counterfactual_score`.
 
 Neither of them re-implements anything. `record/scores.py` is the substrate: it owns the eight node
 types, `evaluate`, `counterfactual`, `replay_advantages` and the four refusals they produce. This
@@ -106,7 +106,9 @@ class CompositionInstrument(BaseObservable):
 
     `measure.frontier._base` and `measure.controls._base` have this shape for this reason and are
     not imported, because reaching into another package's private module is a dependency that is
-    invisible at the point where it breaks. This one is shared *within* the package by B3 and B4.
+    invisible at the point where it breaks. This one is shared *within* the package by B3 and B4,
+    which are the same wave and the same author, and it lives here rather than in a `_base.py`
+    because the package `__init__` and any new private module belong to the integrator.
     """
 
     #: Set by `estimate` for the duration of one call so `measure` does not recompute.
@@ -168,9 +170,9 @@ class CompositionInstrument(BaseObservable):
 # What a weights dict can and cannot say
 # ---------------------------------------------------------------------------
 
-#: The two node types a `Mapping[str, float]` of weights represents without loss. Every other
-#: observed primitive is a shape a dict cannot hold, which is that argument stated as a type rather
-#: than as a paragraph.
+#: The two node types a `Mapping[str, float]` of weights represents without loss. Everything else in
+#: section 3.3's list of observed primitives is a shape a dict cannot hold, which is the argument of
+#: that section stated as a type rather than as a paragraph.
 EXPRESSIBLE_BY_WEIGHTS: tuple[type, ...] = (Leaf, WeightedSum)
 
 #: Each inexpressible primitive, and the published composition it was drawn from. The text is the
@@ -207,7 +209,7 @@ WEIGHTS_DICT_BASELINE: BaselineID = "baseline.weights_dict_components"
 B3_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
-        "the source reads 'leaves recorded, not just the total', which is a "
+        "ASSAY line 1656 prints 'leaves recorded, not just the total', which is a "
         "record-completeness requirement rather than a regime condition. Re-evaluating a recorded "
         "tree on recorded leaves is arithmetic over what is on disk: no regime of the run that "
         "produced it can make the arithmetic wrong, and a record that did not keep its per-leaf "
@@ -228,7 +230,7 @@ ALL_SUBSTRATES = frozenset(
 
 #: B3 reads a record and it reads the recorded estimator, because the reading is in advantage space.
 #: `spec/CATALOGUE.yaml` prints only `GRADER:RECORD with per-leaf scores`, transcribed from a
-#: one-line cell; the estimator half is real and is declared here. It is not a stricter gate
+#: one-line Part 5 cell; the estimator half is real and is declared here. It is not a stricter gate
 #: than the arithmetic needs: without a recorded `EstimatorSpec` there is no advantage to compare.
 B3_ACCESS: dict[Component, Access] = {
     Component.GRADER: Access.RECORD,
@@ -305,10 +307,10 @@ def offset_node(tree: ScoreTree, node: str, constant: float) -> ScoreTree:
 def default_offset_node(tree: ScoreTree) -> str | None:
     """Where a per-prompt constant enters this composition, when nobody said.
 
-    The outermost `WeightedSum` is the task reward in every published composition surveyed, which is
-    exactly what "a constant added to the task reward" means, and it is the node an override sits
-    above. Falling back to the first scoring leaf covers the single-component case,
-    which is what both real records shipped here actually contain.
+    The outermost `WeightedSum` is the task reward in every published composition in section 3.3,
+    which is exactly what "a constant added to the task reward" means, and it is the node an
+    override sits above. Falling back to the first scoring leaf covers the single-component case,
+    which is what both real records reachable from this build actually contain.
     """
     for node in walk(tree):
         if isinstance(node, WeightedSum):
@@ -329,7 +331,7 @@ def default_offset_node(tree: ScoreTree) -> str | None:
 class CompositionSummary:
     """What the reward is made of, counted.
 
-    ``n_inexpressible`` is the headline and it is the whole argument as an integer: the number
+    ``n_inexpressible`` is the headline and it is section 3.3's argument as an integer: the number
     of distinct composition primitives in this reward that a `Mapping[str, float]` of weights cannot
     represent. Zero means a weights dict would have lost nothing and the whole tree machinery is
     overhead on this run, which is a finding and should be reported as one. Anything above zero
@@ -787,9 +789,9 @@ def null_leak(
 class CounterfactualReading:
     """The counterfactual, its baseline, and how far the composition is from its declared group.
 
-    ``result`` is the substrate's own `CounterfactualResult` held unchanged, so the numbers this
-    instrument reports and the numbers the substrate computed are the same objects rather than two
-    derivations that could drift.
+    ``result`` is W2.2's own `CounterfactualResult` held unchanged, so the numbers this instrument
+    reports and the numbers the substrate computed are the same objects rather than two derivations
+    that could drift.
 
     ``score_scale_fraction_moved`` is the mandatory baseline. The same comparison, on the deployed
     composition's own score scale, before the estimator centred anything. When it is much larger
@@ -1010,7 +1012,7 @@ class CompositionTree(CompositionInstrument):
     """B3's first half: what the reward is actually made of.
 
     Rung 0 and free. It reads the recorded tree and reports the inventory, the one-at-a-time
-    ablation deltas, and the count that carries the argument: how many of the composition
+    ablation deltas, and the count that carries section 3.3's argument: how many of the composition
     primitives in this reward a `Mapping[str, float]` of weights could not have expressed. The
     baseline is that mapping, counted, so the comparison is a number rather than a claim.
 

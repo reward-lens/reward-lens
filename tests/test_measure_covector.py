@@ -1,7 +1,7 @@
 """Unit tests for F5's arithmetic: the two dimensionality statistics, and the estimator's identity.
 
 The arithmetic here is small and every piece of it has a closed form on a matrix chosen to have one,
-which is the point: the spike measured an estimator's noise on a real policy, and it can only
+which is the point: the W5.2 spike measured an estimator's noise on a real policy, and it can only
 be believed if the estimator itself is right. The score identity in `test_score_identity_holds` is
 the one that would catch a wrong pooling convention, and it is checked against the analytic answer
 rather than against another implementation.
@@ -51,7 +51,7 @@ def test_stable_rank_of_the_identity_is_d():
 
 
 def test_stable_rank_is_full_rank_and_still_near_one():
-    """The whole argument in one assertion.
+    """The whole of section 3.7 in one assertion.
 
     A matrix with 99% of its Frobenius mass in one direction has full numerical rank, because no
     eigenvalue is exactly zero, and a stable rank near 1. Reporting the rank would call this

@@ -1,4 +1,4 @@
-"""Unit tests: A3, A4, A6 and A7.
+"""W3.2b unit tests: A3, A4, A6 and A7.
 
 Three kinds of test, and the middle one is the one that catches real errors.
 
@@ -697,7 +697,7 @@ def test_an_instrument_with_no_data_refuses_rather_than_raising(instrument: obje
 
 
 def test_relative_error_excludes_a_facet_main_effect_and_absolute_includes_it():
-    """E43. The two are different numbers and the module argues for the relative one.
+    """SPEC-ERRATA E43. The two are different numbers and the module argues for the relative one.
 
     A facet main effect shifts every rollout in a group by the same amount, so it cancels out of a
     group-centred contrast. `from_facets` used to sum every component outside the universe, which is

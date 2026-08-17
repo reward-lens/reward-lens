@@ -5,9 +5,9 @@ in measured order. The catalogue's kill condition is "nothing; a bad number here
 which is the only entry in the catalogue that says so, and it is why this instrument has no path
 that suppresses a row.
 
-**The reference gate.** C3's envelope line in the source reads "`REFERENCE_UNCERTIFIED` must
-not fire", which names a `RefusalReason` rather than a `RegimeCondition`, and the catalogue carries
-the unconditional justification instead. So the reference requirement is not
+**The reference gate.** C3's envelope line in the specification reads "`REFERENCE_UNCERTIFIED` must
+not fire", which names a `RefusalReason` rather than a `RegimeCondition`; SPEC-ERRATA E29 records
+that and the catalogue carries the unconditional justification. So the reference requirement is not
 an envelope condition here, it is a refusal: a recovery number is a calibration against a planted
 key, and a key with no measured uncertainty of its own cannot calibrate anything. `u_homogeneity is
 None` means nobody checked whether two plants with different seeds give the same answer, and the
@@ -54,18 +54,18 @@ from reward_lens.measure.selection.table import (
 )
 from reward_lens.policy.selection import MethodClass
 
-#: A recovery table describes methods scored against a planted key that is already in hand. The
-#: twelve regime conditions are all properties of a training run and none of them can make a rank
+#: A recovery table describes methods scored against a planted key that is already in hand. Section
+#: 2.4's twelve conditions are all properties of a training run and none of them can make a rank
 #: statistic over candidates wrong. The precondition that does bite is that the reference is
-#: certified, and that is a refusal rather than a regime condition.
+#: certified, and that is a refusal rather than a regime condition (SPEC-ERRATA E29).
 RECOVERY_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
         "a rank statistic of methods against a planted key already in hand. It asserts nothing "
         "about any training process, so no regime of one can make it wrong. The condition that does "
         "bite, that the reference material carries an uncertainty of its own, is a "
-        "REFERENCE_UNCERTIFIED refusal rather than a RegimeCondition: the source's Env "
-        "column names a RefusalReason there."
+        "REFERENCE_UNCERTIFIED refusal rather than a RegimeCondition: the specification's Env "
+        "column names a RefusalReason there, which SPEC-ERRATA E29 records."
     ),
 )
 
@@ -81,8 +81,8 @@ RECOVERY_BASELINES: tuple[str, ...] = (
 class InstrumentRecoveryTable(SelectionInstrument):
     """C3. Every localisation method against one planted key, losses included.
 
-    White-box: the panel reads activations, so an `IncrementalValidity` record is mandatory on the
-    reading and this instrument supplies one. **The bar is decorrelation plus
+    White-box: the panel reads activations, so section 6.4 makes an `IncrementalValidity` record
+    mandatory on the reading and this instrument supplies one. **The bar is decorrelation plus
     signal, not superiority**, and this is the instrument in the library whose whole subject is
     comparing methods, so its incremental record is built from the panel itself: the own score is
     the best claimable white-box row, the baseline is the best row that read no internals, and the
@@ -297,8 +297,8 @@ class InstrumentRecoveryTable(SelectionInstrument):
                 reason=RefusalReason.NO_MATCHED_CONTROL,
                 detail=(
                     "the panel has no measured white-box row, or no measured row that read nothing "
-                    "internal, so there is no increment to record and one is mandatory on a "
-                    "white-box reading"
+                    "internal, so there is no increment to record and section 6.4 makes one "
+                    "mandatory on a white-box reading"
                 ),
                 remedy=(
                     "add at least one method that reads internals and at least one that does not. "

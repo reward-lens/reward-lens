@@ -12,17 +12,17 @@ version rather than invisible. The spec below is written out in full and its has
 acceptance test, so a later edit fails a test rather than passing quietly.
 
 **The window fit is local and it is not the canonical one.** Expressing a lead time as a fraction of
-a transition width needs the transition fitted, and the canonical estimator for that is not in the
-library yet. `transition_window` here is a four-parameter logistic least squares on the rate series,
-validated in this package's own tests against a planted transition. When the canonical estimator
-lands, this should be deleted and the prediction rescored against it; the frozen metric names the
-quantity rather than the implementation, so that substitution does not change the prediction.
+a transition width needs the transition fitted, and the estimator §3.4 and W4.5 own for that is not
+in the library yet. `transition_window` here is a four-parameter logistic least squares on the rate
+series, validated in this package's own tests against a planted transition. When W4.5's lands, this
+should be deleted and the prediction rescored against theirs; the frozen metric names the quantity
+rather than the implementation, so that substitution does not change the prediction.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import TYPE_CHECKING, Any, Mapping, Sequence
 
 import numpy as np
 
@@ -30,6 +30,10 @@ from reward_lens.stats.baselines.series import gradnorm_peak, smooth
 from reward_lens.stats.changepoint import ChangePoint, cusum
 from reward_lens.studies.freeze import FrozenStudy, freeze
 from reward_lens.studies.spec import Hypothesis, KillCriterion, Prediction, StudySpec, SubjectQuery
+
+if TYPE_CHECKING:  # a type-only edge, so the ledger's adapter does not import its predictions
+    from reward_lens.core.reading import Refusal
+    from reward_lens.measure.ledger.imported import ImportedRun
 
 
 @dataclass(frozen=True)
@@ -186,11 +190,11 @@ def onset_of(
     detector. The returned step index is in the series' own step units rather than in array
     positions, because the two differ whenever the series is sampled every `n` steps.
 
-    The CUSUM defaults are `stats.changepoint`'s own, and they imply one false alarm every 469 steps
-    under Siegmund's approximation. That is not a rate anybody chose, and the fix is to solve
-    `ARL(0) = ARL_0` for the threshold instead. The defaults are used here so that the comparator and
-    the claim run under identical settings; when that fix lands, both sides move together and the
-    comparison is unaffected.
+    The CUSUM defaults are `stats.changepoint`'s own, which SPEC-ERRATA E18 records as implying one
+    false alarm every 469 steps under Siegmund's approximation. That is not a rate anybody chose, and
+    W4.7 replaces it by solving `ARL(0) = ARL_0` for the threshold. The defaults are used here so
+    that the comparator and the claim run under identical settings; when W4.7 lands, both sides move
+    together and the comparison is unaffected.
     """
     y = np.asarray(series, dtype=np.float64).ravel()
     if smooth_window > 1:
@@ -213,8 +217,8 @@ def gradnorm_onset(
     The catalogue names "the gradient-norm peak". A peak is a late statistic: it fires where the
     change is largest rather than where it began, so scoring a CUSUM on `Λ` against a peak on the
     gradient norm compares an onset detector against a magnitude detector and the onset detector wins
-    by construction. The same objection applies to I5's variance-level baseline and the fix is the
-    same: run the comparator as a CUSUM as well and take **whichever is earlier**.
+    by construction. SPEC-ERRATA E18 records the same objection for I5's variance-level baseline and
+    the fix is the same: run the comparator as a CUSUM as well and take **whichever is earlier**.
     """
     y = np.asarray(series, dtype=np.float64).ravel()
     axis = (
@@ -329,7 +333,7 @@ LAMBDA_LEAD_TIME_SPEC = StudySpec(
     version=1,
     notes=(
         "Frozen before the labelled series was read. The transition window is fitted by the local "
-        "four-parameter logistic in this module; rescore against a fitted estimator once one lands. "
+        "four-parameter logistic in this module; when W4.5's estimator lands, rescore against it. "
         "The metric names a quantity and not an implementation, so that substitution does not "
         "change what was predicted."
     ),
@@ -339,6 +343,141 @@ LAMBDA_LEAD_TIME_SPEC = StudySpec(
 def freeze_prediction(repo_dir: str | None = None, frozen_at: str | None = None) -> FrozenStudy:
     """Freeze the `Λ` lead-time prediction. The StudyID stamps readings taken under it REGISTERED."""
     return freeze(LAMBDA_LEAD_TIME_SPEC, repo_dir=repo_dir, frozen_at=frozen_at)
+
+
+# ---------------------------------------------------------------------------
+# The erratum, which does not edit the spec above
+# ---------------------------------------------------------------------------
+
+#: What the registration above got wrong about the artifact it names, established afterwards.
+#:
+#: The `extra` block of `LAMBDA_LEAD_TIME_SPEC` declares `reward_column: training_passed`,
+#: `group_column: problem_id` and `step_column: rollout_index`. All three are wrong on the datasets
+#: the same block names, and the E1 preflight established each separately: the reward is a
+#: composition of two components of which one is published only as an indicator of itself, the
+#: optimiser's group is a contiguous run of rows rather than a semantic problem id, and the file
+#: index is one step behind the trainer's log.
+#:
+#: **The spec is not edited and its hash does not move.** A frozen registration is a record of what
+#: was predicted and by whom, and rewriting one after seeing the answer is the failure the freeze
+#: exists to prevent. What a registration cannot do is keep being *executed* once its declared
+#: columns are known to name the wrong quantities, because then it scores something nobody
+#: registered while carrying the authority of something somebody did. So the erratum travels beside
+#: the row, `check_declared_columns` refuses the execution, and a re-registration is a new spec with
+#: a new hash and an honest note that it was written after the data was seen.
+LAMBDA_LEAD_TIME_ERRATUM: Mapping[str, Any] = {
+    "spec_id": "f2-lambda-lead-time",
+    "spec_version": 1,
+    "status": "retired for execution, retained as a record",
+    "established_by": "experiments/e1_preflight",
+    "columns_declared": {
+        "reward_column": "training_passed",
+        "group_column": "problem_id",
+        "step_column": "rollout_index",
+    },
+    "columns_as_established": {
+        "reward_column": (
+            "no single column carries the reward; it is 1 * thinking_format + 4 * training_passed "
+            "and the format component is published as a binary indicator of a quarter-valued score"
+        ),
+        "group_column": (
+            "no column carries the optimiser's group; it is a contiguous run of num_generations "
+            "rows within an eval file, and problem_id merges two of them on three files"
+        ),
+        "step_column": (
+            "rollout_index is the eval file index, which is one behind the trainer's logged step"
+        ),
+    },
+    "consequence": (
+        "readings taken under this registration score training_passed rather than the reward, over "
+        "a partition the optimiser did not use. The sign of R3's conclusion survives the "
+        "correction and the magnitudes move."
+    ),
+}
+
+
+def check_declared_columns(
+    spec: StudySpec, run: "ImportedRun", *, instrument: str = "check_declared_columns"
+) -> "Refusal | None":
+    """Whether a frozen spec's declared columns still name what the artifact turned out to hold.
+
+    `None` is the pass. Anything else is a refusal a runner returns rather than proceeding.
+
+    This is the general form of a problem that looked specific. A registration written before the
+    artifact was understood names columns, and a column name is a claim about semantics that
+    nothing checks. When the semantics turn out otherwise there are two bad options and one good
+    one: editing the frozen spec destroys the record of what was predicted, running it anyway
+    scores the wrong quantity under a registered study id, and refusing the execution keeps both
+    the record and the honesty. The check is the third.
+
+    It is deliberately conservative about what counts as a contradiction. A declared reward column
+    that is a component of the established composition rather than the whole of it is still wrong,
+    because a component is not the reward, and that is the case this was written for.
+    """
+    from reward_lens.core.reading import Refusal, RefusalReason
+
+    declared = dict(getattr(spec.subjects, "extra", {}) or {})
+    problems: list[str] = []
+
+    reward_column = declared.get("reward_column")
+    if reward_column is not None:
+        columns = [c.column for c in run.reward.components if c.weight != 0.0]
+        if [reward_column] != columns:
+            problems.append(
+                f"the spec declares `reward_column: {reward_column}` and the reward on this "
+                f"artifact is a composition over {columns}"
+                + (
+                    f", of which {reward_column!r} is one component"
+                    if reward_column in columns
+                    else ""
+                )
+            )
+
+    group_column = declared.get("group_column")
+    if group_column is not None and group_column != run.columns.semantic_id:
+        problems.append(
+            f"the spec declares `group_column: {group_column}` and this artifact names no "
+            f"optimiser group column at all"
+        )
+    elif group_column is not None:
+        problems.append(
+            f"the spec declares `group_column: {group_column}`, which is the semantic problem "
+            f"identifier on this artifact and not the optimiser's group; the group is a contiguous "
+            f"run of {run.generations} rows recovered from the row order"
+        )
+
+    step_column = declared.get("step_column")
+    if step_column is not None and run.alignment is not None and run.alignment.offset != 0:
+        problems.append(
+            f"the spec declares `step_column: {step_column}`, which is on the "
+            f"{run.axis.value} axis and sits {run.alignment.offset} behind the "
+            f"{run.alignment.target.value} axis every trainer-logged quantity is on"
+        )
+
+    if not problems:
+        return None
+    return Refusal(
+        instrument=instrument,
+        reason=RefusalReason.PLAN_NOT_CLOSED,
+        detail=(
+            f"the frozen spec {spec.id!r} names columns that do not carry what it assumed on "
+            f"{run.name!r}: " + "; ".join(problems)
+        ),
+        remedy=(
+            "Do not edit the frozen spec: it is the record of what was predicted, and rewriting it "
+            "after the answer is known is what the freeze prevents. Register a new version naming "
+            "the established semantics, state on it that it was written after the data was seen, "
+            "and record an erratum beside the original. Readings already taken under the original "
+            "keep the trust level they were given and carry the erratum with them."
+        ),
+        statistics={
+            "spec": spec.id,
+            "spec_version": getattr(spec, "version", None),
+            "run": run.name,
+            "declared": declared,
+            "n_problems": len(problems),
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -356,7 +495,7 @@ def freeze_prediction(repo_dir: str | None = None, frozen_at: str | None = None)
 #: accumulator crosses within seven points, and the reported "onset at step 11" is the detector
 #: using the future to define normal. With a pre-transition baseline it instead fires at the end of
 #: its own baseline window on an isolated spike inside the early noise band. Under the shipped
-#: defaults (drift 0.5, threshold 5.0) the detector already fires one false alarm every 469
+#: defaults (drift 0.5, threshold 5.0) SPEC-ERRATA E18 already computes one false alarm every 469
 #: steps on a Gaussian series, and a sliding-window `Λ` is neither Gaussian nor homoskedastic.
 #:
 #: So the same transition fit is applied to `Λ` itself and the two midpoints are compared. It is
@@ -488,6 +627,7 @@ def score_lead_time(
 
 
 __all__ = [
+    "LAMBDA_LEAD_TIME_ERRATUM",
     "LAMBDA_LEAD_TIME_SPEC",
     "LeadTimeResult",
     "METRIC_BASELINE_LEAD",
@@ -496,6 +636,7 @@ __all__ = [
     "METRIC_MIDPOINT_LEAD",
     "METRIC_WIDTH",
     "TransitionWindow",
+    "check_declared_columns",
     "freeze_prediction",
     "gradnorm_onset",
     "onset_of",

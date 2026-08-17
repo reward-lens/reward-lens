@@ -1,6 +1,6 @@
-"""A10 Dark reward: the fraction of reward variance through no named channel.
+"""A10 Dark reward: the fraction of reward variance through no named channel (Appendix A10).
 
-Formal definition, A10. Dark reward is the fraction of ``Var(r)`` not causally mediated by any
+Formal definition: Appendix A10. Dark reward is the fraction of ``Var(r)`` not causally mediated by any
 named channel (criterion or feature). It is a card statistic: the reward variance a full accounting of
 the intended criteria still cannot explain, the leakage capacity theory (S5) predicts grows with
 ``K/d_eff`` as the reward tries to carry more criteria than its effective dimension supports (A9).
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def dark_reward(reward: np.ndarray, named_contributions: np.ndarray) -> float:
-    """Fraction of ``Var(r)`` not explained by the named channels: ``1 − R²`` (A10).
+    """Fraction of ``Var(r)`` not explained by the named channels: ``1 − R²`` (Appendix A10).
 
     Regresses the reward on the named-channel contributions (``n × K``) and returns one minus the
     fraction of variance explained. All variance captured by the channels gives ``0`` (nothing dark);
@@ -83,7 +83,7 @@ class DarkReward(BaseObservable):
         "uses steering-measured channel contributions and is the production path",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.dark_fraction"
     #: The grader is scored on the view; the named-channel contributions come from an earlier
     #: measurement by the concept or criterion layer.
@@ -113,9 +113,9 @@ class DarkReward(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """The channel decomposition or a refusal. Dark reward is a residual and needs something to be dark against.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.named_contributions is None:

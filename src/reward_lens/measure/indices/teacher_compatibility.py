@@ -1,6 +1,6 @@
-"""A3 TeacherCompatibility: the induced reward variance ``w_rᵀ Σ_π w_r``.
+"""A3 TeacherCompatibility: the induced reward variance ``w_rᵀ Σ_π w_r`` (Appendix A3).
 
-Formal definition, A3. ``TC(rm, π) = Var_{y∼π}(w_rᵀ h(y)) = w_rᵀ Σ_π w_r``, the variance of
+Formal definition: Appendix A3. ``TC(rm, π) = Var_{y∼π}(w_rᵀ h(y)) = w_rᵀ Σ_π w_r``, the variance of
 the reward projection over the on-policy activation distribution, decomposable by layer and by
 spectral mode. This is Razin's teacher-induced variance (faithful_to Razin 2503.15477): a reward
 model whose scores barely move across a policy's samples is a poor teacher for that policy no matter
@@ -10,7 +10,7 @@ diagonal of the χ response identity (A12): ``TC = Cov_0(r, r) = Var(r)``.
 
 Deviations from A3: none in the scalar. The layer decomposition reads each captured residual site's
 reward projection variance, and the spectral decomposition splits ``w_rᵀ Σ w_r`` over the eigenbasis
-of ``Σ`` (an exact, basis-free split of the same total), which A3 names "decomposable by
+of ``Σ`` (an exact, basis-free split of the same total), which Appendix A3 names "decomposable by
 layer/feature" without fixing the feature basis; the eigenbasis is the canonical choice and is noted
 here as the concrete reading.
 """
@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 
 def teacher_compatibility(w_r: np.ndarray, activations: np.ndarray) -> float:
-    """The induced reward variance ``TC = w_rᵀ Σ_π w_r`` (A3).
+    """The induced reward variance ``TC = w_rᵀ Σ_π w_r`` (Appendix A3).
 
     Equivalently ``Var_y(w_rᵀ h(y))``: project every activation onto the reward direction and take the
     population variance of the resulting scores. The two forms agree exactly because the variance of a
@@ -62,7 +62,7 @@ def teacher_compatibility(w_r: np.ndarray, activations: np.ndarray) -> float:
 def teacher_compatibility_spectral(
     w_r: np.ndarray, activations: np.ndarray
 ) -> tuple[float, np.ndarray, np.ndarray]:
-    """Split ``w_rᵀ Σ w_r`` over the eigenbasis of ``Σ`` (A3, the feature decomposition).
+    """Split ``w_rᵀ Σ w_r`` over the eigenbasis of ``Σ`` (Appendix A3, the feature decomposition).
 
     Writes the total as ``Σ_k λ_k (w_r · u_k)²`` for eigenpairs ``(λ_k, u_k)`` of the on-policy
     covariance ``Σ``. Each term is the contribution of one principal direction of the activation
@@ -85,7 +85,7 @@ def teacher_compatibility_spectral(
 def teacher_compatibility_by_layer(
     w_r: np.ndarray, activations_by_site: dict[Any, np.ndarray]
 ) -> dict[str, float]:
-    """Per-site induced variance (A3, the layer decomposition).
+    """Per-site induced variance (Appendix A3, the layer decomposition).
 
     Applies ``teacher_compatibility`` at each captured residual site with the same reward direction,
     tracing where across depth the policy's samples spread the reward. The keys are the string forms of
@@ -128,7 +128,7 @@ class TeacherCompatibility(BaseObservable):
         "canonical basis-free reading of A3's 'decomposable by feature'",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.induced_variance"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     substrates = NEURAL_SUBSTRATES
@@ -165,8 +165,8 @@ class TeacherCompatibility(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_direction", "baseline.score_variance")
     rung = 0
-    #: A white-box reading owes an `IncrementalValidity` and this instrument cannot produce
-    #: one. The id is checkable and the prose is the argument.
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
+    #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",
         "the reading is one variance of the reward projection over the view, plus its decomposition "

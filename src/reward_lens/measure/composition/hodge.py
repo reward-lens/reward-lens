@@ -1,4 +1,4 @@
-"""B1. The combinatorial Hodge decomposition of a grader's comparison flow.
+"""B1. The combinatorial Hodge decomposition of a grader's comparison flow (section 3.6).
 
 Given items as vertices and observed comparisons as edges, the edge flow ``Y`` is antisymmetric and
 the space it lives in splits three ways::
@@ -75,11 +75,11 @@ from reward_lens.measure.base import BaseObservable, Context, run
 Edge = tuple[int, int]
 Triangle = tuple[int, int, int]
 
-#: Replications per pair the nulls need: at least 11 per pair, which is also A6's measured
-#: requirement that eleven repeats let a majority vote match a fifty-trial reference at 95%. Below
-#: this the split-half and the parametric bootstrap refuse and name it. It is a sample-size
-#: requirement rather than a regime condition, so it is a refusal with a stated n and not an
-#: envelope entry.
+#: Replications per pair the nulls need, from ASSAY §5.B ("at least 11 replications per pair for the
+#: nulls") and A6's measured requirement that eleven repeats let a majority vote match a fifty-trial
+#: reference at 95%. Below this the split-half and the parametric bootstrap refuse and name it. It is
+#: a sample-size requirement rather than a regime condition, so it is a refusal with a stated n and
+#: not an envelope entry: SPEC-ERRATA E29 settles that for B1's envelope and E23 for the general rule.
 MIN_REPLICATIONS_FOR_NULLS = 11
 
 #: The Haldane-Anscombe continuity correction added to each side of a pair before the logit. Without
@@ -597,19 +597,19 @@ def split_flow(flow: ComparisonFlow, *, with_betti: bool = True) -> HodgeSplit:
 # B1, as an instrument
 # ---------------------------------------------------------------------------
 
-#: B1's envelope is unconditional, and the reason is worth stating rather than assuming. The
-#: catalogue entry prints "Env at least 11 replications per pair for the nulls", which is a
-#: sample-size requirement: it makes the *nulls* unavailable and it does not make the decomposition
-#: wrong. So it is a refusal with a stated n, which the nulls return, rather than a regime
-#: condition, which would withhold the reading.
+#: B1's envelope is unconditional, and the reason is worth stating rather than assuming. The Part 5
+#: entry prints "Env at least 11 replications per pair for the nulls", which is a sample-size
+#: requirement: it makes the *nulls* unavailable and it does not make the decomposition wrong. So it
+#: is a refusal with a stated n, which the nulls return, rather than a regime condition, which would
+#: withhold the reading. SPEC-ERRATA E29 makes exactly this correction to B1's catalogue record.
 CURL_MASS_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
         "the decomposition is exact linear algebra on an observed edge flow: the three components "
         "are orthogonal and their energies sum to the flow's energy in every regime, so no property "
         "of the run that produced the comparisons can make the split wrong. The eleven-replications "
-        "requirement in the catalogue entry gates the nulls and is returned as a refusal naming n, "
-        "which is a sample size and not a regime condition."
+        "requirement in the Part 5 entry gates the nulls and is returned as a refusal naming n, "
+        "which is a sample size and not a regime condition (SPEC-ERRATA E29)."
     ),
 )
 
@@ -681,7 +681,7 @@ class CurlMass(BaseObservable):
         self.n_draws = int(n_draws)
         self._computed: Any = None
 
-    # -- the estimate path ----------------------------------------------------
+    # -- the section 4.2 estimate path ---------------------------------------
 
     def compute(self) -> Any:
         """The split and every null the data can support. Returns a payload or a `Refusal`."""

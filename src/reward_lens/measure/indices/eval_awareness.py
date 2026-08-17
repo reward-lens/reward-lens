@@ -1,6 +1,6 @@
-"""A17 Eval-awareness: does the reward recognize benchmark inputs.
+"""A17 Eval-awareness: does the reward recognize benchmark inputs (Appendix A17).
 
-Formal definition, A17. The balanced accuracy of a probe discriminating benchmark-style from
+Formal definition: Appendix A17. The balanced accuracy of a probe discriminating benchmark-style from
 organic inputs from the reward model's activations, plus the causal ``Δr`` from steering that direction
 (does recognition inflate the score?). A reward that can tell a benchmark item from an organic one has a
 handle an optimizer can pull, and if steering the recognition direction moves the reward, the reward is
@@ -57,7 +57,7 @@ def eval_awareness_probe(
     *,
     seed: int = 0,
 ) -> dict[str, float]:
-    """Held-out balanced accuracy of a linear benchmark-vs-organic probe (A17).
+    """Held-out balanced accuracy of a linear benchmark-vs-organic probe (Appendix A17).
 
     Splits the samples in half, fits a mean-difference direction ``μ_bench − μ_organic`` on the train
     half, thresholds projections at the midpoint of the class-mean projections, and reports balanced
@@ -65,7 +65,7 @@ def eval_awareness_probe(
     of overfitting to noise. ``activations`` is ``(n, d)``; ``is_benchmark`` is a 0/1 label vector.
     Returns the balanced accuracy and the split sizes.
 
-    ``test_index`` and ``test_score`` are returned beside them because the incremental-validity
+    ``test_index`` and ``test_score`` are returned beside them because §6.4's incremental-validity
     record needs the correlation between this probe's per-item *errors* and a black-box baseline's,
     and no summary can produce that. The index is into the caller's own item order, so the caller can
     line the same items up for the baseline bank; handing back the projections without it would make
@@ -130,7 +130,7 @@ class EvalAwareness(BaseObservable):
         "path (interventions)",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.eval_awareness"
     #: Activations are captured from the grader; the benchmark/organic labels and the steering delta
     #: come from the data plane and from an earlier intervention arm.
@@ -168,9 +168,9 @@ class EvalAwareness(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """The labels or a refusal. A probe with no labels is not a probe.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.is_benchmark is None:
@@ -203,8 +203,8 @@ class EvalAwareness(BaseObservable):
 
         null = shuffle_null(acts, y, _stat, n=min(self.null_draws, 500), seed=self.seed)
 
-        # This reading opens the network, so it owes an account of what that bought over the
-        # black-box bank on the same items. Only the held-out half is eligible, because the
+        # Section 6.4: this reading opens the network, so it owes an account of what that bought
+        # over the black-box bank on the same items. Only the held-out half is eligible, because the
         # probe's train half is in-sample for the probe and not for the baselines, and comparing the
         # two there would hand the probe a fitted advantage the record has no field to declare.
         record, notes = self._incremental(ctx, probe, y)
@@ -225,7 +225,7 @@ class EvalAwareness(BaseObservable):
         )
 
     def _incremental(self, ctx: Context, probe: dict, y: np.ndarray) -> tuple[Any, dict]:
-        """The incremental record on the probe's held-out half, or None with why it is absent.
+        """The §6.4 record on the probe's held-out half, or None with the reason it is absent.
 
         The texts come from the view rather than from the caller, because the whole question is
         whether a method that read the activations beat one that read only the text, and a bank run

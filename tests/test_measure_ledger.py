@@ -1,8 +1,8 @@
-"""Unit and property tests for the Price ledger and the selection-explained fraction.
+"""Unit and property tests for W4.3: the Price ledger and the selection-explained fraction.
 
 Four kinds of test are required before an instrument merges and all four are here: hand-computed
 values, the generated invariance test, hypothesis property tests, and refusal tests that assert the
-reason **and** the remedy string. The clause lives in
+reason **and** the remedy string. The acceptance clause lives in
 `tests/acceptance/test_w4_3_ledger.py`.
 """
 
@@ -106,7 +106,7 @@ def test_the_within_group_covariance_matches_the_number_worked_out_by_hand():
 def test_the_pooled_denominator_is_n_minus_g_not_n_minus_one():
     """Two identical groups of four. Each contributes 50; the denominator is 8 - 2 = 6.
 
-    This is the operator E17 settles on: within-group, pooled. Centring inside each
+    This is the operator SPEC-ERRATA E17 settles on: within-group, pooled. Centring inside each
     group costs one degree of freedom per group, and using `n - 1` here would understate the
     covariance by 6/7 on this data.
     """
@@ -142,7 +142,12 @@ def test_the_two_operators_agree_on_the_advantage_and_disagree_on_the_raw_reward
     features = np.asarray([[10.0], [20.0], [110.0], [120.0]])
     groups = np.asarray([0, 0, 1, 1])
     rewards = np.asarray([1.0, 2.0, 101.0, 102.0])
-    advantages = advantages_from_rewards(rewards, groups, std_epsilon=0.0)
+    # The population form is this fixture's own convention, chosen so the toy numbers come out
+    # exact. It is stated rather than inherited because no trainer produced these rewards, and the
+    # operator comparison below is invariant to the choice in any case.
+    advantages = advantages_from_rewards(
+        rewards, groups, std_normalised=True, std_ddof=0, std_epsilon=0.0
+    )
 
     within_a = selection_differential(features, advantages, groups, ("f",)).value[0]
     pooled_a = float(np.cov(features[:, 0], advantages, ddof=1)[0, 1])
@@ -243,19 +248,21 @@ def _random_series(rng, n_steps=15, k=3, n=8):
 
 def test_the_advantage_reconstruction_reproduces_the_z_score_the_trainer_computed():
     rewards = [1.0, 2.0, 3.0, 4.0]
-    got = advantages_from_rewards(rewards, [0, 0, 0, 0], std_epsilon=0.0)
-    want = (np.asarray(rewards) - 2.5) / np.asarray(rewards).std()
+    got = advantages_from_rewards(rewards, [0, 0, 0, 0], std_normalised=True, std_ddof=1)
+    want = (np.asarray(rewards) - 2.5) / np.asarray(rewards).std(ddof=1)
     assert got == pytest.approx(want)
 
 
 def test_a_null_reward_reconstructs_to_nan_and_never_to_zero():
-    got = advantages_from_rewards([1.0, np.nan, 3.0], [0, 0, 0], std_epsilon=0.0)
+    got = advantages_from_rewards([1.0, np.nan, 3.0], [0, 0, 0], std_normalised=True, std_ddof=1)
     assert math.isnan(got[1])
     assert np.isfinite(got[0]) and np.isfinite(got[2])
 
 
 def test_an_all_fail_group_reconstructs_to_zero_advantages_which_is_what_the_trainer_did():
-    got = advantages_from_rewards([0.0, 0.0, 0.0, 0.0], [0] * 4, std_epsilon=1e-4)
+    got = advantages_from_rewards(
+        [0.0, 0.0, 0.0, 0.0], [0] * 4, std_normalised=True, std_ddof=1, std_epsilon=1e-4
+    )
     assert got == pytest.approx(np.zeros(4))
 
 
@@ -296,7 +303,11 @@ def _differential_under(payload: InvariancePayload) -> float:
     features = np.asarray(payload.extra["features"], dtype=np.float64)
     groups = np.asarray(payload.group_ids)
     advantages = advantages_from_rewards(
-        payload.scores, groups, std_epsilon=payload.extra["std_epsilon"]
+        payload.scores,
+        groups,
+        std_normalised=True,
+        std_ddof=1,
+        std_epsilon=payload.extra["std_epsilon"],
     )
     return float(selection_differential(features, advantages, groups, ("f",)).value[0])
 
@@ -317,7 +328,7 @@ def test_the_selection_differential_is_invariant_under_an_affine_rescaling_of_th
     The tolerance is set from the estimator's own epsilon rather than from a constant. At
     `std_epsilon = 0` the invariance is exact; at a positive epsilon the numerator scales by `a`
     while the denominator goes to `a·std + eps` rather than `a·(std + eps)`, which is the caveat
-    E13 measured at 1e-7 for `eps = 1e-8`.
+    SPEC-ERRATA E13 measured at 1e-7 for `eps = 1e-8`.
     """
     report = check_invariance(
         _differential_under,
@@ -348,7 +359,7 @@ def test_the_epsilon_in_the_denominator_is_what_makes_that_invariance_approximat
 
 
 def test_lambda_declares_the_units_group_and_its_assertion_is_a_refusal():
-    """The `units` group's generated assertion is not a numeric relation, so `check_invariance`
+    """The `units` group's Appendix B assertion is not a numeric relation, so `check_invariance`
     routes it to `check_unit_refusal` and the real test is that a comparison across a unit boundary
     refuses. `selection.explained_fraction` is dimensionless and a logprob gap is per token."""
     for instrument in (_lambda_instrument(), _eta_instrument()):
@@ -424,7 +435,7 @@ def test_the_differential_scales_linearly_in_the_feature_and_ignores_a_feature_s
 )
 def test_a_reconstructed_advantage_sums_to_zero_within_every_group(rewards):
     groups = np.repeat(np.arange(2), 4)
-    a = advantages_from_rewards(rewards, groups, std_epsilon=1e-8)
+    a = advantages_from_rewards(rewards, groups, std_normalised=True, std_ddof=1, std_epsilon=1e-8)
     for label in (0, 1):
         block = a[groups == label]
         assert float(np.nansum(block)) == pytest.approx(0.0, abs=1e-9)

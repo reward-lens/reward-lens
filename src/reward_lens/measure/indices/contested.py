@@ -1,4 +1,4 @@
-"""Contested direction: the axis annotators disagree along (S11 machine psychology).
+"""Contested direction: the axis annotators disagree along (Appendix A, S11 machine psychology).
 
 Where preferences are contested, a single scalar reward cannot represent everyone (T7); the useful
 object is the direction in representation space along which the disagreement lives. Given, per pair, the
@@ -13,11 +13,11 @@ split on pull ``c`` toward the representation change that distinguishes them; un
 nothing. The magnitude of the alignment says how much of the disagreement is linearly organized along a
 single axis versus scattered.
 
-This module has no single theory-object letter; it is the contested-direction diagnostic S11
-consumes. Deviation: the pure function is the covariance-direction recovery on supplied ``Δh`` and
-disagreement; the production path reads ``Δh`` from the signal and disagreement from the data
-plane's annotator records. The direction is COVARIANT, so a cross-signal comparison of contested
-directions needs a shared frame.
+This module has no single Appendix A letter; it is the contested-direction diagnostic S11 consumes.
+Deviation: the pure function is the covariance-direction recovery on supplied ``Δh`` and disagreement;
+the production path reads ``Δh`` from the signal and disagreement from the data plane's annotator
+records. The direction is COVARIANT, so a cross-signal comparison of contested directions needs a shared
+frame.
 """
 
 from __future__ import annotations
@@ -89,11 +89,11 @@ class Contested(BaseObservable):
     gauge_status = GaugeStatus.COVARIANT
     faithful_to = None
     deviations = (
-        "no single theory-object letter; the contested-direction diagnostic for S11 (annotator "
+        "no single Appendix A letter; the contested-direction diagnostic for S11 (annotator "
         "disagreement, T7). Direction is COVARIANT and frame-gated for cross-signal comparison.",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.contested_axis"
     #: Both inputs are recorded: the per-pair activation difference from an earlier capture and the
     #: annotator disagreement from the data plane. Nothing here calls the grader.
@@ -112,8 +112,8 @@ class Contested(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.shuffled_disagreement", "baseline.random_direction")
     rung = 0
-    #: A white-box reading owes an `IncrementalValidity` and this instrument cannot produce
-    #: one. The id is checkable and the prose is the argument.
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
+    #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_BLACK_BOX_ON_THESE_ITEMS",
         "the instrument consumes an (n, d) activation-difference matrix and an (n,) disagreement "
@@ -135,9 +135,9 @@ class Contested(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """Both arrays or a refusal. A contested direction is a covariance and needs two vectors.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.delta_h is None or self.disagreement is None:

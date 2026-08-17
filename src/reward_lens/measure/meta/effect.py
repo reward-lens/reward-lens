@@ -1,4 +1,4 @@
-"""M2, the instrument effect: what measuring this run cost the run.
+"""M2, the instrument effect: what measuring this run cost the run (§2.7).
 
 No competitor has published an overhead number of any kind. That is the whole opportunity and it is
 also the whole risk: a monitor that changed the run it was watching produced a reading of a
@@ -22,7 +22,7 @@ count instead gives the mean over the whole run, which is a different and usuall
 any run whose tap warmed up or was disabled partway.
 
 **The unit is two units and the registry says so.** `instrument.effect` prints `ms, bytes` and
-carries `dimension: OPEN` for that reason. Both halves are measured
+carries `dimension: OPEN` for that reason, recorded as SPEC-ERRATA E15. Both halves are measured
 here and reported separately rather than combined into a composite nobody can interpret, and the
 time half is what composes into an uncertainty budget, because it is the half that has a stated
 sensitivity: `InstrumentEffect.as_term` turns the p99 fraction of grader time into a Type B

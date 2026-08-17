@@ -267,17 +267,17 @@ def sep_distance(flow: ComparisonFlow, *, rung: int = 1) -> SepDistance | Refusa
     )
 
 
-#: B5's envelope is unconditional, and the catalogue line is the reason it needed correcting: the
-#: source reads "Env `SCALAR_REPRESENTABLE` under test". B5's own quantity *is* the distance from
-#: scalar representability, so requiring the condition would make the instrument refuse in exactly
-#: the case it exists to report on.
+#: B5's envelope is unconditional and the catalogue's Part 5 line is the reason it needed correcting.
+#: ASSAY line 1662 prints "Env `SCALAR_REPRESENTABLE` under test". B5's own quantity *is* the
+#: distance from scalar representability, so requiring the condition would make the instrument refuse
+#: in exactly the case it exists to report on. SPEC-ERRATA E29 records the fix.
 SEP_DISTANCE_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
         "the quantity is the distance from scalar representability, so `SCALAR_REPRESENTABLE` is "
-        "this instrument's output rather than its precondition. The sandwich is an inequality "
-        "between two functionals of the observed kernel and holds pointwise, so no regime can make "
-        "it false."
+        "this instrument's output rather than its precondition (SPEC-ERRATA E29). The sandwich is "
+        "an inequality between two functionals of the observed kernel and holds pointwise, so no "
+        "regime can make it false."
     ),
 )
 

@@ -1,6 +1,6 @@
-"""A7 RRS: the Receipt Reliance Score.
+"""A7 RRS: the Receipt Reliance Score (Appendix A7).
 
-Formal definition, A7. ``RRS =`` the fraction of the corruption reward effect (the
+Formal definition: Appendix A7. ``RRS =`` the fraction of the corruption reward effect (the
 falsify-receipt versus falsify-narrative arms) causally attributable to receipt spans, via span patching
 plus attention forensics from the scoring position (faithful_to N1, the trajectory reward forensics
 program). A reward that grounds its judgment in the receipts (tool outputs, citations, logs) moves most
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 def receipt_reliance(dr_receipt: float, dr_total: float) -> float:
-    """The receipt reliance score ``RRS = Δr_receipt / Δr_total`` (A7).
+    """The receipt reliance score ``RRS = Δr_receipt / Δr_total`` (Appendix A7).
 
     ``dr_total`` is the whole corruption reward effect; ``dr_receipt`` is the part attributable to the
     receipt spans (the falsify-receipt arm, or the receipt-span patch). Their ratio is the causal
@@ -72,7 +72,7 @@ class ReceiptReliance(BaseObservable):
         "production path (interventions + attribution)",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.receipt_reliance"
     #: Both arm deltas are recorded measurements from an earlier span-patching experiment.
     requires: AccessMatrix = {Component.RECORD: Access.RECORD}
@@ -97,9 +97,9 @@ class ReceiptReliance(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """Both corruption arms, or a refusal. A ratio needs a denominator.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.dr_receipt is None or self.dr_total is None:

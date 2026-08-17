@@ -10,8 +10,8 @@ scalar with respect to an *activation at a site*, which is `d_model`-dimensional
 lens and the reward-Hessian instruments want. `F = E[∇_θ log π ∇_θ log πᵀ]` is over *parameters* and
 is `|θ|`-dimensional, so it is a different object and there was no existing implementation of it to
 reuse. Nothing here duplicates the runtime's `hvp`; it never forms a Hessian and never takes a
-second derivative. It arguably belongs on `PolicySubject` rather than in `measure/`, and moving it
-there is left open.
+second derivative. It arguably belongs on `PolicySubject` rather than in `measure/`, and that is a
+request in this package's report rather than an edit outside its path set.
 
 **The tokenisation caveat, because it is real and it is measurable.** The GRPO record carries turn
 text and `Turn.token_ids` is `None`, so the completion has to be re-tokenised from its string. On
@@ -42,10 +42,10 @@ def sequence_scores(
 ) -> np.ndarray:
     """`(n, |θ|)` of `∇_θ Σ_i log π(y_i | y_<i, x)`, one row per `(prompt, completion)` pair.
 
-    The sequence log-probability, not the per-token mean: `F` and `J` are expectations of
+    The sequence log-probability, not the per-token mean: `F` and `J` in §3.1.3 are expectations of
     per-*sequence* quantities, and a length-normalised score would be the gradient of a different
     functional. `update.kl_spent` and `update.kl_min` are registered per sequence for the same
-    reason, and mixing the two is the unit error that is the commonest silent failure here.
+    reason, and mixing the two is the unit error §6.1 calls the commonest silent failure here.
 
     Memory is `n · |θ| · 8` bytes for the returned array, so 157 MB for eight rollouts of a
     2.45M-parameter policy in float64 and 448 GB for eight rollouts of a 7B one. Pass

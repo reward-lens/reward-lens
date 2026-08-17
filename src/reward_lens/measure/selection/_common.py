@@ -2,16 +2,16 @@
 
 Four things every instrument in this package needs and none of them belongs in six copies.
 
-`SELECTION_SUBSTRATES` and the two access matrices are the instrument declarations that genuinely
+`SELECTION_SUBSTRATES` and the two access matrices are the section-4.2 declarations that genuinely
 are the same across the package. Anything with a plausible default is left to the subclass, because
 a plausible default is indistinguishable from a decision and `lint_instrument` is what turns an
 undeclared field into a finding.
 
-`emit_white_box` is the one piece of real machinery. An `IncrementalValidity` record is mandatory
-on every white-box reading and `lint_reading` enforces it, so an instrument in this package that
-forgets one does not merge. `Context.emit` takes the record directly, so this is a thin wrapper
-whose whole job is to make forgetting hard: it takes the record as a required argument rather than
-an optional one.
+`emit_white_box` is the one piece of real machinery. Section 6.4 makes an `IncrementalValidity`
+record mandatory on every white-box reading and `lint_reading` enforces it, so an instrument in this
+package that forgets one does not merge. `Context.emit` takes the record directly (SPEC-ERRATA E44
+put it there), so this is a thin wrapper whose whole job is to make forgetting hard: it takes the
+record as a required argument rather than an optional one.
 """
 
 from __future__ import annotations
@@ -96,11 +96,11 @@ def emit_white_box(
     reference: Any = None,
     subject_extra: dict[str, Any] | None = None,
 ) -> Evidence:
-    """`Context.emit` with the two fields this package must never omit, made required.
+    """`Context.emit` with the two section-4.2 fields this package must never omit, made required.
 
-    ``incremental`` is positional-only in spirit: the record is mandatory on every white-box
-    reading, `lint_reading` fails the instrument without one, and the way to stop that being a
-    recurring review comment is to make the argument impossible to leave out. ``baselines``
+    ``incremental`` is positional-only in spirit: section 6.4 makes the record mandatory on every
+    white-box reading, `lint_reading` fails the instrument without one, and the way to stop that
+    being a recurring review comment is to make the argument impossible to leave out. ``baselines``
     is the same rule one lint rule earlier: a claim with no dumb baseline is not a claim.
 
     ``reference`` is forwarded because C3 calibrates against a reference material and the trust cap

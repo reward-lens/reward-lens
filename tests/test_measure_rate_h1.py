@@ -197,7 +197,7 @@ def test_the_bias_correction_reduces_the_error_where_the_bias_is_large(phi_true)
     correction takes the bias from -0.035, -0.056, -0.083 and -0.124 at phi = 0, 0.3, 0.6 and 0.85
     down to +0.004, +0.007, +0.006 and -0.010, and it costs a little variance at low phi: root mean
     squared error improves from 0.148 to 0.137 at phi = 0.6 and worsens from 0.147 to 0.156 at
-    phi = 0. Those numbers come from a replicate count this test does not run.
+    phi = 0. Those numbers and their replicate counts are in the build report.
     """
     raw, corrected = [], []
     for s in range(40):
@@ -226,7 +226,7 @@ def test_the_measured_bias_is_reported_beside_the_corrected_coefficient():
 def test_the_relaxation_time_interval_covers_the_planted_one():
     """30 replicates at n = 50 and phi = 0.6, nominal 0.95. Asserted at 0.80.
 
-    The wider measurement is separate: over 200 replicates the realised coverage of this
+    The wider measurement is in the build report: over 200 replicates the realised coverage of this
     interval is 0.86 to 0.93 at n = 20 and 0.93 to 0.98 at n = 120, so it under-covers at small n.
     Under-coverage makes the upper bound on `Ad` optimistic, which is stated on the instrument.
     """
@@ -530,7 +530,7 @@ def test_the_ladder_carries_a_rung_one_that_is_priced_and_not_built():
         rungs = {e.rung: e for e in ladder(quantity)}
         assert set(rungs) == {0, 1}
         assert rungs[1].run is None
-        assert "Not built." in rungs[1].cost.note
+        assert "Not built; W6.2" in rungs[1].cost.note
         assert rungs[1].requires[Component.POLICY] is Access.MUTATE
         assert rungs[1].requires[Component.OPTIMIZER] is Access.CONTROL
         assert rungs[0].requires == {Component.RECORD: Access.RECORD}

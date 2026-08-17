@@ -198,7 +198,7 @@ AGENT_KNOWS_THE_CONTRACT = Assumption(
 #: The five, in the order they are printed. Order is by how far each one is from the reader's
 #: setting: the contract form first, then the noise law, then the agent's preferences, then the
 #: timing, then the one about what the agent knows, which is the one an RL reader will recognise
-#: as false and the one the source itself calls interesting rather than fatal.
+#: as false and the one the specification itself calls interesting rather than fatal.
 ASSUMPTIONS: tuple[Assumption, ...] = (
     LINEAR_CONTRACT,
     GAUSSIAN_NOISE,

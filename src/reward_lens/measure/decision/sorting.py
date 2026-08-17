@@ -38,7 +38,7 @@ contract is a capacity pool, so comparing one contract against two would compare
 two unless the capacity is held fixed. It is, by the correction `C -> k C`: splitting one pool into
 `k` gives each stage a `k`-times steeper cost curve, which is exactly the condition that spending a
 given total effort costs the same whether it is spent in one stage or spread over `k`. With that
-correction the comparison across `k` is honest, and it produces the source's own claim as a
+correction the comparison across `k` is honest, and it produces the specification's own claim as a
 theorem rather than as a slogan: **splitting is exactly neutral when the components are identical and
 strictly pays as soon as their noise differs at all.** For one noiseless component and one with
 `x = r C n`, the two-stage value beats the one-stage value by a factor of `(1 + x)^2 / (1 + 2x)`,
@@ -576,7 +576,7 @@ class SortingCutoff(DecisionInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "N7"
     deviations = (
-        "the source names a cutoff and does not say what is being maximised over what. The "
+        "the specification names a cutoff and does not say what is being maximised over what. The "
         "objective here is the summed contract value with the capacity correction C -> k C, which "
         "makes a given total effort cost the same however many stages it is spread over. Without "
         "that correction every comparison across the number of contracts compares one agent "
@@ -589,13 +589,13 @@ class SortingCutoff(DecisionInstrument):
         "rather than assumed, by enumerating every partition at the stated number of contracts and "
         "comparing. Above the enumeration limit only the interval scan runs and the reading records "
         "that the check did not happen",
-        "the catalogue carries no N7 record and no registered quantity rows. "
-        "`quantities.as_catalogue_rows()` emits the proposed record",
+        "the catalogue carries no N7 record and Appendix A no quantity rows, for the reason "
+        "SPEC-ERRATA E23 gives. `quantities.as_catalogue_rows()` emits the proposed record",
     )
 
     quantity = "reward.sorting_cutoff"
-    #: The other quantity this instrument reports. `Instrument.quantity` is singular and N7
-    #: produces two, so the second is declared here and the payload carries both.
+    #: The other quantity this instrument reports. `Instrument.quantity` is singular in section 4.2
+    #: and N7 produces two, so the second is declared here and the payload carries both.
     also_reports: tuple[str, ...] = ("reward.information_coefficient",)
     requires = NOISE_ACCESS
     invariance = "reward.affine"

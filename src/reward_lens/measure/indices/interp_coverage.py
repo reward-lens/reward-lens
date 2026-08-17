@@ -1,6 +1,6 @@
-"""A11 Interpretability coverage: reward through interpretable features vs error nodes.
+"""A11 Interpretability coverage: reward through interpretable features vs error nodes (Appendix A11).
 
-Formal definition, A11. The fraction of reward routed through interpretable features versus
+Formal definition: Appendix A11. The fraction of reward routed through interpretable features versus
 reconstruction/error nodes, read off attribution graphs. It is the honest single-number successor to
 E04's indictment: instead of asserting that a reward is or is not interpretable, it reports what
 fraction of the reward the interpretable features actually carry, with the reconstruction/error nodes
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 def interp_coverage(feature_contributions: np.ndarray, error_contributions: np.ndarray) -> float:
-    """Fraction of reward magnitude carried by interpretable features vs error nodes (A11).
+    """Fraction of reward magnitude carried by interpretable features vs error nodes (Appendix A11).
 
     ``= Σ|feature| / (Σ|feature| + Σ|error|)`` over the attribution node contributions. All reward
     through named features gives ``1`` (fully covered); all through reconstruction/error nodes gives
@@ -75,7 +75,7 @@ class InterpCoverage(BaseObservable):
         "the production path (attribution subsystem)",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "instrument.interp_coverage"
     #: Both contributions come from an attribution graph built earlier. Nothing here touches the
     #: grader.
@@ -87,15 +87,15 @@ class InterpCoverage(BaseObservable):
         measured_by=MEASURED_BY,
         on_violation="refuse",
     )
-    #: A ratio of contribution masses that were themselves computed upstream. No invariance
-    #: group acts on it once the graph is fixed, so `trivial` is the answer rather than an
+    #: A ratio of contribution masses that were themselves computed upstream. No group in
+    #: Appendix B acts on it once the graph is fixed, so `trivial` is the answer rather than an
     #: omission, and its generated test passes vacuously.
     invariance = "trivial"
     invariance_relation = INVARIANT
     baselines = ("baseline.random_feature_split", "baseline.error_nodes_only")
     rung = 0
-    #: A white-box reading owes an `IncrementalValidity` and this instrument cannot produce
-    #: one. The id is checkable and the prose is the argument.
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
+    #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_PER_ITEM_VERDICT",
         "the reading is a single coverage fraction: the share of attribution mass carried by named "
@@ -115,9 +115,9 @@ class InterpCoverage(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """Both halves of the attribution split, or a refusal. One half makes the coverage 1 by construction.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.feature_contributions is None or self.error_contributions is None:

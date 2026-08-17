@@ -1,4 +1,4 @@
-"""E1, the estimator specification, recorded: what transform actually ran.
+"""E1, the estimator specification, recorded: what transform actually ran (section 5.E).
 
 Everyone assumes they know this. The details differ per framework and per version, and everything
 downstream is conditioned on them. TRL 1.9.2 divides by ``std + 1e-4`` in one aggregation branch
@@ -72,7 +72,7 @@ RECORD_ACCESS: dict[Component, Access] = {
     Component.ESTIMATOR: Access.RECORD,
 }
 
-#: The fields the transform table says change what a downstream number means. `extra` is
+#: The fields section 3.2's transform table says change what a downstream number means. `extra` is
 #: not among them: it is the converter's escape hatch and nothing may condition on it silently.
 DECISIVE_FIELDS: tuple[str, ...] = (
     "family",
@@ -137,7 +137,7 @@ FRAMEWORK_DEFAULTS: dict[str, dict[str, Any]] = {
     },
     # `verifiers` at commit edafab85. `score_group` writes
     # `state["advantage"] = aggregated_rewards[i] - avg_reward` at `rubrics/rubric.py:409`: mean
-    # centring, no standard-deviation division, no clip. With no division there is
+    # centring, no standard-deviation division, no clip. SPEC-ERRATA E7. With no division there is
     # no divisor to declare, so `std_ddof` is None and that is a statement rather than a gap.
     "verifiers/score_group": {
         "group_centred": True,
@@ -594,7 +594,7 @@ class RecordedEstimator(EstimatorInstrument):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = "E1"
     deviations = (
-        "the reading separates `undeclared` from `ambiguous`, which the transform table "
+        "the reading separates `undeclared` from `ambiguous`, which section 3.2's transform table "
         "does not. `EstimatorSpec.clip_low = None` means either 'this trainer does not clip' or "
         "'nobody recorded whether it does', and reporting both as absent would license arithmetic "
         "in the second case that is only valid in the first",
@@ -610,7 +610,7 @@ class RecordedEstimator(EstimatorInstrument):
     envelope = ESTIMATOR_SPEC_ENVELOPE
     #: `none` in the registry, which resolves to the trivial group. It is a declaration rather than
     #: an omission: an affine rescaling of the reward does not act on a record of which transform
-    #: ran, and saying so is the honest answer.
+    #: ran, and saying so is the honest answer (SPEC-ERRATA E11).
     invariance = "trivial"
     invariance_relation = INVARIANT
     baselines = SPEC_BASELINES

@@ -416,8 +416,8 @@ class ErasureCost(SelectionInstrument):
     a specification: `EC50`, `E_max`, the cooperativity `n`, and `TI = TD50/ED50`.
 
     White-box: the eraser is fitted on captured activations and mounted into the forward pass, so
-    an `IncrementalValidity` record is mandatory and is supplied from the baseline bank on the same
-    items.
+    section 6.4's `IncrementalValidity` is mandatory and is supplied from the baseline bank on the
+    same items.
 
     What it cannot do, three lines in. It measures a projection applied to a forward pass. Whether
     the concept comes back under further training is C5 and is not measured here; whether the
@@ -571,7 +571,7 @@ class ErasureCost(SelectionInstrument):
                 detail=(
                     "this is a white-box reading and no IncrementalValidity record was supplied, so "
                     "nothing records what opening the network bought over the black-box bank. "
-                    "The record is mandatory and lint rule four enforces it"
+                    "Section 6.4 makes the record mandatory and lint rule four enforces it"
                 ),
                 remedy=(
                     "run `stats.baselines.run_bank` on the same items, hand the per-item margins to "

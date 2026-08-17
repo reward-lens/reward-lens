@@ -1,4 +1,4 @@
-"""``DirectLinearAttribution`` (E03/E04): per-component reward decomposition.
+"""``DirectLinearAttribution`` (E03/E04): per-component reward decomposition (section 2.8.2).
 
 Because the residual stream is a sum of component outputs and the reward is a linear read of the final
 residual, the reward differential of a preference pair decomposes exactly into signed per-component
@@ -80,7 +80,7 @@ class DirectLinearAttribution(BaseObservable):
         "the component ranking, which is what E04's Spearman faithfulness uses",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.component_attribution"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     substrates = NEURAL_SUBSTRATES
@@ -96,7 +96,7 @@ class DirectLinearAttribution(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_direction", "baseline.uniform_attribution")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_SUBJECT_WITH_SIGNAL",

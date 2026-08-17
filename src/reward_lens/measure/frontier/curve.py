@@ -1,6 +1,6 @@
 """N1, the reward-versus-gold frontier, out to the horizon and not one nat further.
 
-The claim is that the whole curve of ``E_lambda[g]`` against ``KL(pi_lambda || pi_0)``
+Section 3.0's claim is that the whole curve of ``E_lambda[g]`` against ``KL(pi_lambda || pi_0)``
 exists before any optimisation is run. From n base-policy rollouts scored by both the proxy ``r``
 and a gold channel ``g``, with ``w_i = exp(lambda r_i)``, both axes are ratios of weighted means:
 
@@ -72,7 +72,7 @@ from reward_lens.measure.frontier.potential import (
     percentile_interval,
 )
 
-#: The access this layer needs, in full: "GRADER: QUERY, POLICY: QUERY, GOLD: QUERY on the same n
+#: Section 3.0's access line, verbatim: "GRADER: QUERY, POLICY: QUERY, GOLD: QUERY on the same n
 #: samples. Nothing else."
 FRONTIER_ACCESS: dict[Component, Access] = {
     Component.GRADER: Access.QUERY,
@@ -125,7 +125,7 @@ def hedgetune(
 
     This is HedgeTune, reimplemented on our own weights so that the comparison in every reading is
     two estimators on one sample rather than two papers on two samples. The function whose root it
-    finds is the stationarity condition of the tilt, which is arXiv 2506.19248's Theorem 3:
+    finds is the stationarity condition of section 3.0, which is arXiv 2506.19248's Theorem 3:
     ``d/dlambda E_lambda[g] = Cov_lambda(g, r)``.
 
     Bisection first, because it cannot diverge and the bracket is bounded above by the horizon
@@ -577,7 +577,7 @@ class GoldVersusKL(FrontierInstrument):
                 remedy=(
                     "pass `reward=` and `gold=`, both scored on the same n base-policy rollouts in "
                     "the same order. Two independent samples do not give a joint distribution and "
-                    "nothing in this layer is estimable from them. With only the proxy, "
+                    "nothing in section 3.0 is estimable from them. With only the proxy, "
                     "`VisibilityHorizon` and `RewardTailIndex` still run."
                 ),
                 statistics={"missing": missing},

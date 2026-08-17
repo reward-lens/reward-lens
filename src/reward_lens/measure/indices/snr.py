@@ -1,4 +1,4 @@
-"""Robustness SNR: reward signal against perturbation noise (a robustness diagnostic).
+"""Robustness SNR: reward signal against perturbation noise (Appendix A, robustness diagnostic).
 
 The robustness signal-to-noise ratio asks whether a reward's differences between conditions survive the
 noise it shows under meaning-preserving perturbation. It is v1's ``PromptSNR`` as an index: cluster the
@@ -12,7 +12,7 @@ induces. A high SNR means the reward's between-condition ordering is stable unde
 near or below one means paraphrase noise swamps the signal, and any ranking read off the reward is
 fragile.
 
-This module has no single theory-object letter; it is the robustness statistic the cards and the
+This module has no single Appendix A letter; it is the robustness statistic the cards and the
 adversarial-robustness science (S13) consume. Deviation: the pure function is the variance-ratio
 arithmetic on supplied grouped scores; the production path scores paraphrase clusters through the
 signal.
@@ -92,11 +92,11 @@ class RobustnessSNR(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to = None
     deviations = (
-        "no single theory-object letter; this is v1's PromptSNR as an index (robustness "
-        "diagnostic for S13). The pure function is the variance-ratio arithmetic on grouped scores.",
+        "no single Appendix A letter; this is v1's PromptSNR as an index (robustness diagnostic for "
+        "S13). The pure function is the variance-ratio arithmetic on grouped scores.",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.robustness_snr"
     requires: AccessMatrix = {Component.GRADER: Access.QUERY}
     substrates = ANY_SUBSTRATE
@@ -121,9 +121,9 @@ class RobustnessSNR(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """The cluster labels or a refusal. Without them there is no within-group variance to divide by.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.groups is None:

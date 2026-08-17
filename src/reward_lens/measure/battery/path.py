@@ -1,4 +1,4 @@
-"""``PathEffect`` (E15): two-hop head-level path patching.
+"""``PathEffect`` (E15): two-hop head-level path patching (section 2.8, 2.6).
 
 Direct patching tells you a component matters; path patching tells you whether its effect flows
 through a particular downstream path. The sender is an attention head, the receiver a downstream
@@ -15,7 +15,7 @@ the 8B model's reward head and forwards); here the mechanism runs on the tiny mo
 check. The sender and receiver default to the first head into the last layer and can be set through
 ``ctx.regime['sender']`` / ``ctx.regime['receiver']``.
 
-**The head projection is read through a protocol.** This instrument used to reach
+**The head projection is read through a protocol.** Until W5.1 this instrument reached
 ``signal.runtime.adapter.get_attn_o_proj(signal.runtime.adapter.get_layers(signal.runtime.model)[layer])``,
 four attribute hops past the last protocol call, through an architecture-adapter ABC an instrument has
 no business knowing about and into the module tree the runtime exists to hide. It worked and it meant
@@ -75,7 +75,7 @@ class PathEffect(BaseObservable):
         "spliced at the receiver's resid_pre exactly as v1's PathPatcher did",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.path_effect"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD | Access.MUTATE}
     substrates = NEURAL_SUBSTRATES
@@ -91,7 +91,7 @@ class PathEffect(BaseObservable):
     invariance_relation = INVARIANT
     baselines = ("baseline.random_sender_head", "baseline.direct_patch")
     rung = 0
-    #: An `IncrementalValidity` is required on every white-box reading and this
+    #: Section 6.4 requires an `IncrementalValidity` on every white-box reading and this
     #: instrument cannot produce one. The id is checkable and the prose is the argument.
     incremental_exemption = (
         "NO_SUBJECT_WITH_SIGNAL",

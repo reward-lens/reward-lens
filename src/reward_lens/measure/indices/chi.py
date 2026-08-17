@@ -1,13 +1,13 @@
 """A12 χ and C1's susceptibility triple: ``S``, ``β = C⁻¹S`` and ``Gβ``, always together.
 
 The first half of this module is the shipped index ``χ_i = Cov_0(f_i, r)``, unchanged. The second
-half is the correction it needs: a marginal covariance read as an influence is a selection
+half is the correction §3.1.2 calls for: a marginal covariance read as an influence is a selection
 *differential*, and the direct push is the coefficient vector of the multiple regression of fitness
-on all traits jointly. Both ship, side by side, because the policy is to report `S` as primary and
-`β` as the direct-effect estimate with its suppressor caveat attached, and because the two
+on all traits jointly. Both ship, side by side, because §3.1.2's policy is to report `S` as primary
+and `β` as the direct-effect estimate with its suppressor caveat attached, and because the two
 literatures that meet here reached that same conclusion forty years and two fields apart.
 
-Formal definition, A12. For a feature bank ``{f_i}`` evaluated on base-policy samples,
+Formal definition: Appendix A12. For a feature bank ``{f_i}`` evaluated on base-policy samples,
 ``χ_i = Cov_0(f_i, r)`` is the covariance of feature ``i`` with the reward under the base policy
 ``π_0``. This is the fluctuation-dissipation identity for the exponential tilt family
 ``π_λ ∝ π_0 exp(λ r)``: to first order, ``d E_λ[f_i]/dλ |_{λ=0} = Cov_0(f_i, r)``, so ``χ_i`` is the
@@ -33,7 +33,7 @@ expanded about zero optimisation pressure, where a run in progress sits at ``θ_
 expansion about a regime nobody trains in, and that is a property of the index rather than of the
 implementation: nothing about the numbers below is wrong, they are answers to a question one step
 removed from the one a practitioner is asking. The ledger form ``Δz = η·Cov_group(A, f) + ρ``, which
-re-expands about the current step, is a separate instrument.
+re-expands about the current step, is a separate instrument and a separate work package.
 
 **And ``χ`` is a selection differential, not a selection gradient.** In the language this mathematics
 comes from, ``S = Cov(f, A)`` is the *marginal* association between a trait and fitness, and it
@@ -45,21 +45,22 @@ spectrum below may be there because it rides on another feature, and ranking on 
 tell you. The registry records this as a bias statement rather than a footnote, so anything consuming
 the reading carries it too.
 
-**Which covariance operator ``C`` is, and why the answer changes the reading.** `C` is "the observed
-feature covariance under the policy's own sampling distribution", which on any group-relative record
-admits two readings that do not agree. *Pooled* is the covariance over all rollouts; *within-group*
-centres each feature inside its own prompt group first, and between them sits prompt-to-prompt
-heterogeneity, which is a property of the task distribution rather than of the policy. The ledger
-settles it: its sampling distribution is "the policy's own group at step `t`" and it writes the
-differential as ``Cov_group(A, f_i)``, the same object. So `C` is within-group, and a `β` from a
-within-group `S` against a pooled `C` is not solving `S = Cβ` at all. Every reading here carries the
-operator it used, because a `β` whose operator is unstated is not reproducible.
+**Which covariance operator ``C`` is, and why the answer changes the reading.** §3.1.2 defines `C`
+as "the observed feature covariance under the policy's own sampling distribution", which on any
+group-relative record admits two readings that do not agree. *Pooled* is the covariance over all
+rollouts; *within-group* centres each feature inside its own prompt group first, and between them
+sits prompt-to-prompt heterogeneity, which is a property of the task distribution rather than of the
+policy. §3.1.1's table settles it: the ledger's sampling distribution is "the policy's own group at
+step `t`" and it writes the differential as ``Cov_group(A, f_i)``, the same object §3.1.2 names. So
+`C` is within-group, and a `β` from a within-group `S` against a pooled `C` is not solving `S = Cβ`
+at all. Every reading here carries the operator it used, because a `β` whose operator is unstated is
+not reproducible. SPEC-ERRATA E17.
 
 **And ``β`` is reported twice, in raw units and variance-standardised, because only one of them can
-be ranked.** `β` in the features' own units is what ``Δz = ηGβ`` consumes. It is also not
-comparable across features: on the campaign bank `len_chars` is counted in characters and
-`hedging_rate` is a proportion, so the ordering of raw `|β|` is an ordering of units. The
-variance-standardised form ``β̃_i = sd(f_i)·β_i`` is the response in
+be ranked.** `β` in the features' own units is what ``Δz = ηGβ`` consumes and it is the estimator
+§3.1.2 defines. It is also not comparable across features: on the campaign bank `len_chars` is
+counted in characters and `hedging_rate` is a proportion, so the ordering of raw `|β|` is an
+ordering of units. The variance-standardised form ``β̃_i = sd(f_i)·β_i`` is the response in
 standard deviations of the feature per unit of reward, it is what Lande and Arnold's own worked
 examples use, and it is the one a ranking is made on. Both ship on every reading.
 """
@@ -93,7 +94,7 @@ if TYPE_CHECKING:
 
 
 def susceptibility(features: np.ndarray, reward: np.ndarray) -> np.ndarray:
-    """The susceptibility spectrum ``χ_i = Cov_0(f_i, r)`` (A12).
+    """The susceptibility spectrum ``χ_i = Cov_0(f_i, r)`` (Appendix A12).
 
     ``features`` is ``(n, k)`` and ``reward`` is ``(n,)``; returns the ``(k,)`` vector of covariances
     between each feature and the reward, using the population (biased) covariance so a planted
@@ -185,7 +186,7 @@ class Chi(BaseObservable):
     This instrument does not declare ``LINEAR_READOUT``. It reaches the readout only through
     ``final_activations``, which uses the readout's *site* to decide where to capture and never
     touches its vector, and a site exists on every readout whether or not it is linear. The
-    declaration was dropped after an audit of all fourteen sites in ``measure/``.
+    declaration was dropped in W1.5 after an audit of all fourteen sites in ``measure/``.
     """
 
     name = "Chi"
@@ -220,7 +221,7 @@ class Chi(BaseObservable):
         ),
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "selection.differential_S"
     #: The catalogue's access_min for this quantity is ``GRADER: RECORD`` for S, which is the right
     #: floor for an estimator reading a logged bank. This implementation is not that estimator: it
@@ -242,10 +243,10 @@ class Chi(BaseObservable):
     #: this is covariant with weight 1 under `reward.affine` and not invariant. The catalogue cell
     #: names `repr.basis` beside it, under which χ *is* invariant, because an orthogonal map acting
     #: on both the activations and the bank leaves every inner product alone. Both are declared:
-    #: `resolve_relation` has always read a mapping from group id to `Relation`, and the annotation
-    #: on `BaseObservable.invariance_relation` used to forbid the form the kernel implements, so
-    #: only the group that constrains the value could be stated and the second was a comment. It is
-    #: a declaration now.
+    #: `resolve_relation` has always read a mapping from group id to `Relation`, and until
+    #: SPEC-ERRATA E55 the annotation on `BaseObservable.invariance_relation` forbade the form the
+    #: kernel implements, so only the group that constrains the value could be stated and the second
+    #: was a comment. It is a declaration now.
     #:
     #: The `repr.basis` half holds **only for a bank whose directions transform with the
     #: representation**, which is what a concept-layer bank is: `h → Qh` and `w → Qw` leave every
@@ -326,10 +327,9 @@ class Chi(BaseObservable):
 # C1: the susceptibility triple
 # ---------------------------------------------------------------------------
 
-#: The two sampling distributions the definition of `C` admits. `within_group` is the one the
-#: ledger settles on and the default everywhere here; `pooled` is what a flat bank with no group
-#: structure has, and it is a legitimate answer for that subject rather than a fallback for a
-#: missing argument.
+#: The two sampling distributions §3.1.2's phrase admits. `within_group` is the one §3.1.1 settles
+#: on and the default everywhere here; `pooled` is what a flat bank with no group structure has, and
+#: it is a legitimate answer for that subject rather than a fallback for a missing argument.
 OPERATORS = ("within_group", "pooled")
 
 
@@ -338,10 +338,10 @@ class FeatureCovariance:
     """``C = Cov(f, f)`` under a named sampling distribution, with what decides whether to invert it.
 
     ``conditioning`` is `n_D = Σλ/λ_max` on the **correlation** matrix rather than on `C` itself.
-    Both are dimensionless and the formula does not say which, and the choice is not cosmetic: on a
-    bank whose features are counted in characters and in proportions, `λ_max` of the raw covariance
-    is the character variance and `n_D` reads 1.0019 out of 7 no matter how the features are
-    correlated. The number exists to flag the multicollinearity that makes `C⁻¹`
+    Both are dimensionless and §3.1.2 prints the formula without saying which, and the choice is not
+    cosmetic: on a bank whose features are counted in characters and in proportions, `λ_max` of the
+    raw covariance is the character variance and `n_D` reads 1.0019 out of 7 no matter how the
+    features are correlated. The number exists to flag the multicollinearity that makes `C⁻¹`
     untrustworthy, and only the correlation form measures that. ``conditioning_raw`` carries the
     literal reading of the formula beside it so the choice is auditable rather than silent.
 
@@ -385,7 +385,7 @@ class FeatureCovariance:
 
     @property
     def conditioning_raw(self) -> float:
-        """The same formula applied to `C` itself, which is the literal reading of it."""
+        """The same formula applied to `C` itself, which is what §3.1.2 prints."""
         return _n_d(self.matrix)
 
     @property
@@ -751,8 +751,8 @@ def susceptibility_triple(
 # The instruments
 # ---------------------------------------------------------------------------
 
-#: C1's envelope, verbatim from the catalogue record. `LINEAR_RESPONSE` because `S = Cβ` is a
-#: first-order expansion and nothing here is true outside it; `GROUP_NONDEGENERATE`
+#: C1's envelope, verbatim from the catalogue record. `LINEAR_RESPONSE` because `S = Cβ` is the
+#: first-order expansion §3.1.1 licenses and nothing here is true outside it; `GROUP_NONDEGENERATE`
 #: because a group with no score spread contributes no contrast to either `S` or `C`.
 TRIPLE_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.LINEAR_RESPONSE, RegimeCondition.GROUP_NONDEGENERATE}),
@@ -794,14 +794,14 @@ class _TripleInstrument(BaseObservable):
     distribution and the reading says which.
 
     What these instruments cannot do, and it is structural. Without ``group_ids`` there is no
-    within-group operator to compute, so a flat bank is read pooled and the reading says so; that
-    operator needs a record that knows which rollouts answered which prompt. And none of them
-    produces `G`, so `Gβ` is present only when a caller supplies one.
+    within-group operator to compute, so a flat bank is read pooled and the reading says so;
+    §3.1.1's operator needs a record that knows which rollouts answered which prompt. And none of
+    them produces `G`, so `Gβ` is present only when a caller supplies one.
     """
 
     capabilities = Capability.ACTIVATIONS | Capability.SCORES
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "the selection differential and gradient"
+    faithful_to = "3.1.2"
     substrates = NEURAL_SUBSTRATES
     phases = GRADER_STUDY_PHASES
     envelope = TRIPLE_ENVELOPE
@@ -916,8 +916,8 @@ class _TripleInstrument(BaseObservable):
         payload["caveats"] = [TABLE_2_FALLACY, PATTERN_VERSUS_FILTER]
         # `estimate` calls `measure` directly rather than going through `measure.base.run`, so
         # nothing else sets `ctx._observable` and `emit` would otherwise write the reading as
-        # `anonymous` with `quantity=""`. The previous value is restored rather than cleared, so a
-        # nested call keeps its own identity.
+        # `anonymous` with `quantity=""`. SPEC-ERRATA E51. The previous value is restored rather
+        # than cleared, so a nested call keeps its own identity.
         previous = ctx._observable
         ctx._observable = self  # type: ignore[assignment]
         try:
@@ -953,8 +953,8 @@ class SelectionGradientIndex(_TripleInstrument):
     #: `Cov(f, a·r + b) = a·Cov(f, r)` and `C` does not move, so `β` scales by `a`: covariant with
     #: weight 1 under `reward.affine`, exactly as `χ` is. Under `repr.basis` an orthogonal map on
     #: the activations and the bank leaves every feature value alone, so `β` is invariant there.
-    #: Both are declared through the mapping form of `invariance_relation`, which
-    #: `resolve_relation` reads.
+    #: Both are declared through the mapping form of `invariance_relation`, which `resolve_relation`
+    #: reads and which SPEC-ERRATA E55 made expressible in the annotation.
     invariance = "reward.affine"
     invariance_relation = {"reward.affine": COVARIANT_LINEAR, "repr.basis": INVARIANT}
     rung = 1

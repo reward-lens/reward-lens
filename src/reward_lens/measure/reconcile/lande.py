@@ -1,6 +1,6 @@
 """F6: the Lande slope, which is the load-bearing assumption of Level 1 made checkable.
 
-`Δz = η G β` is Lande's equation, derived from the natural-gradient step rather than
+`Δz = η G β` is Lande's equation, derived in §3.1.3 from the natural-gradient step rather than
 transplanted. Everything at Level 1 rests on it. Regressing observed `Δz` on `η G β` across a
 window and reporting the slope with an interval is the test: **Lande holds at slope 1, and a slope
 near zero retires Level 1.** If it fails, that failure is a publishable result about how policy
@@ -38,7 +38,7 @@ import numpy as np
 # `_through_origin` and `_clustered_slope_se` are F2's, imported rather than rewritten. The two
 # fits differ only in their regressor, so a second copy of the arithmetic would be a second place
 # for the through-origin convention and the clustering level to drift apart. Promoting them to
-# public names in `measure.ledger.explained` is left open.
+# public names in `measure.ledger.explained` is a request in this package's report.
 from reward_lens.measure.ledger.explained import _clustered_slope_se, _through_origin
 from reward_lens.measure.reconcile.books import StepReconciliation
 

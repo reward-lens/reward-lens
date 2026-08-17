@@ -461,7 +461,7 @@ def test_a_gate_move_check_with_one_position_refuses_for_want_of_a_control():
 
 
 def test_the_emitted_evidence_carries_the_declared_quantity():
-    """E35's fix, reaching this package: `emit` forwards the quantity off the instrument.
+    """SPEC-ERRATA E35's fix, reaching this package: `emit` forwards the quantity off the instrument.
 
     Without it every row in every store carries `quantity=""` while its instrument declares one, so
     the unit machinery has nothing to key on and a McCrary z can be ranked against an elasticity.
@@ -488,7 +488,7 @@ def test_preflight_names_the_checks_it_could_not_run_rather_than_passing_them():
 
 
 def test_a_drifting_grader_downgrades_the_gate_reading_rather_than_withholding_it():
-    """E29's lesson: over-requiring withholds the reading on exactly the interesting runs.
+    """SPEC-ERRATA E29's lesson: over-requiring withholds the reading on exactly the interesting runs.
 
     A gate that was retuned mid-run is the case where a bunching estimate is most worth having and
     least trustworthy. `GATE_ENVELOPE` declares `on_violation="downgrade"`, so preflight passes with

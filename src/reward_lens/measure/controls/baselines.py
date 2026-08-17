@@ -77,7 +77,7 @@ class DumbBaselineBank(ControlInstrument):
     )
 
     quantity = "baseline.best_score"
-    #: The field is `requires`, not `access`. Declared under the wrong name, this was a
+    #: The section 4.2 field is `requires`, not `access`. Declared under the wrong name, this was a
     #: plain class attribute nothing read: `declared_access` looks up `requires` and returned an
     #: empty matrix, so preflight checked nothing on this instrument.
     requires = {Component.RECORD: Access.RECORD}

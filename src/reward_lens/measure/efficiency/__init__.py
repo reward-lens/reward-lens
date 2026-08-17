@@ -1,7 +1,7 @@
-"""F3, the cost book: the KL budget, the efficiency, and where the nats went.
+"""F3, the cost book: the KL budget, the efficiency, and where the nats went (§3.1.4).
 
-Three objects and two entry points, over an interface fixed in advance so that
-`measure.reconcile`'s reconciliation could be written against it.
+Three objects and two entry points, and the interface is D19's, fixed before the wave so that
+W5.6's reconciliation could be written against it concurrently.
 
     from reward_lens.measure.efficiency import metric_g, cost_series, MetricG, StepCost
 

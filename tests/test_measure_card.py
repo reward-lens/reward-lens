@@ -4,7 +4,7 @@ Nothing here reaches the network. The subject is a small verifier written to a t
 proves the composition runs, that every field is present in both directions, and that the three
 rules the card exists to enforce are enforced by the code rather than by the docstrings.
 
-The clause, on a real public verifier, is in `tests/acceptance/test_w4_d7_card.py`.
+The acceptance clause, on a real public verifier, is in `tests/acceptance/test_w4_d7_card.py`.
 """
 
 from __future__ import annotations
@@ -243,7 +243,7 @@ def _d7_record() -> dict[str, Any]:
 def test_the_card_has_exactly_the_thirteen_fields_the_catalogue_names() -> None:
     """The `says` line is the field list, and drift in either direction is a failure.
 
-    A fourteenth field is a card claiming something the catalogue did not ask for; a twelfth is a
+    A fourteenth field is a card claiming something section 5.D did not ask for; a twelfth is a
     quantity that silently stopped being reported, which is the failure mode this whole artifact
     exists to remove.
     """
@@ -312,7 +312,7 @@ def test_a_field_that_refuses_cannot_be_built_without_a_remedy() -> None:
 
 
 # ---------------------------------------------------------------------------
-# The RECORD_INCOMPLETE / ACCESS_INSUFFICIENT split (E30)
+# The RECORD_INCOMPLETE / ACCESS_INSUFFICIENT split (SPEC-ERRATA E30)
 # ---------------------------------------------------------------------------
 
 
@@ -524,7 +524,7 @@ def test_less_access_refuses_a_superset_of_what_more_access_refuses(inputs: Card
 
 
 def test_the_stated_access_minimum_is_reported_and_not_gated_on() -> None:
-    """A reader below the card's access minimum still gets a card. That is the whole instrument."""
+    """A reader below section 5.D's minimum still gets a card. That is the whole instrument."""
     assert GraderCard.requires == {}
     assert D7_ACCESS_MIN == {Component.GRADER: Access.QUERY | Access.REPLICATE}
     reading = grader_card(CardInputs(), access={})
@@ -550,7 +550,7 @@ def test_the_card_payload_round_trips_through_the_value_codec(full_card: Any) ->
 
 
 # ---------------------------------------------------------------------------
-# The generated invariance property test
+# The generated invariance property test (Appendix B)
 # ---------------------------------------------------------------------------
 
 

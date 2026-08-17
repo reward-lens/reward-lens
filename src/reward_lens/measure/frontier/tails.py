@@ -5,9 +5,9 @@ exists, and for a reward whose upper tail is regularly varying with index ``gamm
 at any positive lambda. So `LIGHT_TAILED` is not a technicality attached to the frontier: it is the
 condition under which the frontier's x-axis is a number rather than a divergent integral.
 
-The estimator here is Hill, with a stability protocol, and the sample size it needs is specific: a
-defensible estimate needs roughly 30,000 prompts at ``q = 0.95`` to give about 1,570 exceedances,
-and below that this instrument refuses rather than reporting a number from 200 prompts.
+Section 3.0.1 asks for the Hill estimator, with a stability protocol, and is specific about the
+sample size: a defensible estimate needs roughly 30,000 prompts at ``q = 0.95`` to give about 1,570
+exceedances, and below that this instrument refuses rather than reporting a number from 200 prompts.
 The refusal is not an envelope violation. The tail index stays perfectly well defined on a small
 bank; what is unavailable is the estimate, so the refusal names the n it needs and carries the
 wide-interval plot as a bound.
@@ -16,7 +16,7 @@ wide-interval plot as a bound.
 
     gamma_hat(k) = (1/k) sum_{i=1}^{k} [ log X_(i) - log X_(k+1) ]
 
-over the k largest order statistics is the standard choice, and it is what the one real
+over the k largest order statistics is what section 3.0.1 names, and it is what the one real
 measurement in the literature is: a Hill estimate around 0.20 on an open reward model, described as
 consistent with light-tailed error. Reporting it is what makes this instrument comparable to that
 measurement. It has two properties worth stating rather than working around.
@@ -68,9 +68,9 @@ from reward_lens.core.types import (
 from reward_lens.measure.frontier._base import FrontierInstrument
 from reward_lens.measure.frontier.horizon import ALL_SUBSTRATES
 
-#: The exceedance count a defensible tail estimate needs. The requirement is stated as "roughly
-#: 30,000 prompts at q = 0.95 to get 1,570 exceedances", and 30,000 at 0.95 is 1,500 rather than
-#: 1,570, so the two halves of that sentence differ by 5%. The exceedance count is
+#: The exceedance count section 3.0.1 puts a defensible tail estimate at. The section's own
+#: sentence is "roughly 30,000 prompts at q = 0.95 to get 1,570 exceedances", and 30,000 at 0.95 is
+#: 1,500 rather than 1,570, so the two halves of that sentence differ by 5%. The exceedance count is
 #: the binding requirement and the prompt count is derived from it, because the count is what the
 #: estimator's variance depends on and the prompt count depends on the quantile chosen.
 MIN_EXCEEDANCES = 1570
@@ -81,9 +81,9 @@ DEFAULT_TAIL_QUANTILE = 0.95
 #: Above this, the light-tailed assumption is reported as failing. It is a **default rather than a
 #: measurement**, and it is the one number in this package that should be argued about before it is
 #: relied on. Two facts bracket it. Strictly, the moment generating function exists only for
-#: gamma <= 0, so any positive index at all breaks the tilt layer. Practically, the one cited
-#: measurement is a Hill estimate of about 0.20 called consistent with light-tailed error, so a
-#: bound that rejects 0.20 would contradict the measurement this layer relies on. 0.25 admits
+#: gamma <= 0, so any positive index at all breaks the tilt layer. Practically, section 3.0.1's one
+#: cited measurement is a Hill estimate of about 0.20 called consistent with light-tailed error, so
+#: a bound that rejects 0.20 would contradict the measurement the section relies on. 0.25 admits
 #: that measurement and rejects the finite-variance boundary at gamma = 0.5.
 DEFAULT_GAMMA_MAX = 0.25
 

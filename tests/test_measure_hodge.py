@@ -1,4 +1,4 @@
-"""Unit tests: the Hodge decomposition, the four nulls, and the sup-norm bound.
+"""W3.3a unit tests: the Hodge decomposition, the four nulls, and the sup-norm bound.
 
 Three constructions decide whether a Hodge implementation is correct, and nothing else does. A flow
 that is literally the gradient of a potential must come back gradient mass one. A three-cycle with

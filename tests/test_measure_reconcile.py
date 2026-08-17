@@ -110,7 +110,7 @@ def test_the_cost_protocol_accepts_a_structurally_matching_object():
 
 
 def test_the_real_efficiency_types_satisfy_the_protocols():
-    """The interface D19 fixed, checked against what the cost book shipped rather than assumed."""
+    """The interface D19 fixed, checked against what W4.4 actually shipped rather than assumed."""
     from reward_lens.measure.efficiency.cost import StepCost
     from reward_lens.measure.efficiency.metric import MetricG
 

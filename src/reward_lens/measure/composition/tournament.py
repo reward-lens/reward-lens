@@ -38,7 +38,7 @@ majority digraph, Kemeny on the margin-weighted one. Inside a strongly connected
 most eight alternatives that computation is solved exactly by enumeration, which covers every real
 group size this instrument has been pointed at. Above eight it returns a bracket, from a greedy
 ordering above and an arc-disjoint cycle packing below, and the reading says which of the two
-happened. Neither is registered as a quantity because the catalogue carries no row for either.
+happened. Neither is registered as a quantity because Appendix A carries no row for either.
 
 The catalogue's rung 2 for B6 is the Copeland-versus-Slater disagreement, and **no scalar
 disagreement rate is reported**, here or in the registry. Both rules tie routinely: over 3,000
@@ -125,7 +125,7 @@ TOURNAMENT_ENVELOPE = EnvelopeSpec(
     justification=(
         "a census over a comparison record: it counts which alternatives beat which, and asserts "
         "nothing about the process that produced the verdicts, so no regime can make the count "
-        "wrong. B6's source entry prints no Env column and the catalogue records it as OPEN; this "
+        "wrong. Part 5's B6 entry prints no Env column and the catalogue records it as OPEN; this "
         "is the reading of that gap, and it is a positive claim rather than a default."
     ),
 )
@@ -304,7 +304,7 @@ def kemeny(cs: ComparisonSet, *, exact_max: int = 8) -> Any:
 
     Named and provided rather than skipped, because the only difference from `slater` is the weight
     on each arc: Slater counts a reversed verdict once, Kemeny counts it by the margin it reverses.
-    Reported nowhere by default, because the catalogue registers no quantity for it.
+    Reported nowhere by default, because Appendix A registers no quantity for it.
 
     The arc weight is the **total** margin over the rows recording that pair, not their mean:
     reversing a pair in the consensus ranking reverses every observation of it, so a pair observed
@@ -803,9 +803,9 @@ class CondorcetRate(_B6Instrument):
     invariance = "group.permutation"
     invariance_relation = INVARIANT
     deviations = (
-        "The catalogue's B6 record names `grader.condorcet` alongside `grader.condorcet_rate`; the "
-        "first is an alternate spelling, was never registered, and has since been removed from the "
-        "record. Only the registered id is estimated here.",
+        "The catalogue's B6 record names `grader.condorcet` alongside `grader.condorcet_rate`; "
+        "errata E14 found the first an alternate spelling and declined to register it, and E29 "
+        "removed it from the record. Only the registered id is estimated here.",
         "The quantity's `definition` field is OPEN in the registry. The convention used is that "
         "the rate counts prompts where a Condorcet winner is present; the complement travels on "
         "the same reading under `no_condorcet_rate`.",

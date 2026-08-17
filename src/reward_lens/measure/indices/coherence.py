@@ -1,6 +1,6 @@
-"""A9 Coherence and Contamination: cross-criterion geometry.
+"""A9 Coherence and Contamination: cross-criterion geometry (Appendix A9).
 
-Formal definition, A9. For a reward with criterion directions ``{v_k}`` (ArmoRM's nineteen
+Formal definition: Appendix A9. For a reward with criterion directions ``{v_k}`` (ArmoRM's nineteen
 objectives, a rubric's criteria):
 
   - Coherence ``μ_jk = v_j · v_k`` on unit-normalized directions is the Gram matrix of the criteria.
@@ -171,7 +171,7 @@ class Coherence(BaseObservable):
         "cross-signal criterion comparison would be COVARIANT and frame-gated",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.criterion_coherence"
     requires: AccessMatrix = {Component.GRADER: Access.FORWARD}
     #: NEURAL_SCALAR only. The criterion directions are rows of a multi-objective head; a GenRM has

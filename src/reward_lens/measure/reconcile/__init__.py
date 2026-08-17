@@ -1,8 +1,8 @@
-"""F4, the reconciliation residual budgeted, and F6, the Lande slope.
+"""W5.6: F4, the reconciliation residual budgeted, and F6, the Lande slope.
 
-The four books give two independent predictions of the same thing. The effect book measures
+The four books of §3.1 give two independent predictions of the same thing. The effect book measures
 `Δz_obs`. Cause and capacity together predict `Δz_pred = η·G·C⁻¹·S`. The difference is the
-reconciliation residual, and it is not noise: it is a budget with named terms, and the
+reconciliation residual, and §3.1.5 says it is not noise: it is a budget with named terms, and the
 question is whether `Var(ρ)` is accounted for by `Σ u_i²`. A closed budget characterises the
 instrument, an open one names an unmodelled term, and either outcome is publishable.
 
@@ -12,7 +12,7 @@ whole story and the one worth testing rather than assuming.
 
 **What this package does not compute.** `G` is `measure.efficiency`'s book and arrives as an
 argument; `Δz`, `S` and `η` are `measure.ledger`'s and are read from it. The join key is the feature
-basis and it is `StepSample.names`, compared element for element. Everything here
+basis and it is `StepSample.names`, compared element for element (BUILD_NOTES D19). Everything here
 is the arithmetic between those books plus the uncertainty budget, and the budget machinery is
 `core.budget`'s.
 

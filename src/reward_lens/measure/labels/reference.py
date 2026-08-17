@@ -145,7 +145,7 @@ class DoseResponseFit:
     characterises nothing, and the ratio says so by going to infinity rather than by looking small.
 
     The inverse-prediction variance is that factor times a design term, and the design term is where
-    two separate objections turn out to be one:
+    two findings from the statistical review turn out to be one:
 
         (s/|b|)² · [ 1 + 1/n + (x0 - xbar)²/Sxx ]
                      ^   ^^^^^^^^^^^^^^^^^^^^^^^
@@ -156,8 +156,8 @@ class DoseResponseFit:
     the plant-to-plant scatter about the line. So a certificate that reports `u_bb` must take
     ``u_char_at(..., individual=False)`` or the same variance is counted twice, and a certificate
     that does not report `u_bb` must take ``individual=True`` or nobody carries it at all. Shipping
-    the flat ratio is wrong under both, which is why the two objections pointed in opposite
-    directions and were both right.
+    the flat ratio is wrong under both, which is why the review's two findings pointed in opposite
+    directions and were both right. SPEC-ERRATA E42 items 6 and the `1 + 1/n` documentation entry.
     """
 
     slope: float
@@ -300,7 +300,7 @@ def dose_response_characterisation(
     # The inverse-prediction uncertainty at the centre of the sweep, individual form. This used to
     # be the bare ratio `s_resid/|slope|`, which is a scatter rather than a characterisation
     # uncertainty and is `sqrt(1 + 1/n)` too small: 13.40% low at the three-dose floor, read the
-    # other way round the correct value is 15.47% above it.
+    # other way round the correct value is 15.47% above it. SPEC-ERRATA E42's `1 + 1/n` item.
     u_char = (
         (s_resid / abs(slope)) * math.sqrt(1.0 + 1.0 / n)
         if slope != 0.0 and math.isfinite(s_resid)
@@ -733,7 +733,7 @@ def compose_chain(
 # The instrument
 # ---------------------------------------------------------------------------
 
-#: A certificate describes the reference material itself. The twelve envelope conditions are all
+#: A certificate describes the reference material itself. Section 2.4's twelve conditions are all
 #: properties of a training run, and none of them can make a spread across seeds wrong. The one
 #: precondition that does bite is that siblings differ only in the seed, and that is checked in
 #: `between_seed_homogeneity` by partitioning on the pipeline rather than asserted here.

@@ -559,12 +559,12 @@ class RateExtrapolatedHysteresis(BaseObservable):
     gauge_status = GaugeStatus.INVARIANT
     faithful_to: str | None = "H3"
     deviations: tuple[str, ...] = (
-        "the area is 'fitted from at least three rates' with no functional form stated. The "
+        "section 3.4 says 'fitted from at least three rates' and states no functional form. The "
         "form here is A0 + c v^alpha with alpha fixed at 1 below five rates, which is the "
         "first-order expansion about zero rather than any of the model-specific exponents in the "
         "dynamic-hysteresis literature.",
         "the interval is widened by the Birge ratio when the seed replicates under-explain the "
-        "scatter about the fit. Nothing asks for this; it was added after a "
+        "scatter about the fit. Nothing in section 3.4 asks for this; it was added after a "
         "single-well responder with no bistability produced an interval of width zero around a fit "
         "artifact and was called genuine.",
     )

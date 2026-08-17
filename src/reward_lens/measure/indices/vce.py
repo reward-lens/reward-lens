@@ -1,6 +1,6 @@
-"""A14 VCE: Value Convergence Excess.
+"""A14 VCE: Value Convergence Excess (Appendix A14).
 
-Formal definition, A14. ``VCE = align(canonicalized reward subspaces across an RM pair) −
+Formal definition: Appendix A14. ``VCE = align(canonicalized reward subspaces across an RM pair) −
 align(matched capability subspaces, same layers and metric)``, read against the RUM-identifiability null
 (faithful_to PRH 2405.07987, signed against it). The platonic representation hypothesis says
 capabilities converge as models scale; VCE asks whether values converge beyond that. If two reward
@@ -66,7 +66,7 @@ def value_convergence_excess(
     null_draws: int = 1000,
     seed: int = 0,
 ) -> dict[str, float]:
-    """VCE and its null-anchored reading (A14).
+    """VCE and its null-anchored reading (Appendix A14).
 
     ``VCE = reward_alignment − capability_alignment``. When ``d`` and ``k`` are given, draws the
     RUM-identifiability null for ``(d, k)`` and reports its mean and 95th percentile, plus whether the
@@ -118,7 +118,7 @@ class VCE(BaseObservable):
         "subspace alignments are computed upstream (geometry.subspace) and are COVARIANT",
     )
 
-    # -- the observable declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.value_convergence_excess"
     #: Both alignment scalars are recorded upstream by ``geometry.subspace`` in a shared frame.
     requires: AccessMatrix = {Component.RECORD: Access.RECORD}
@@ -158,9 +158,9 @@ class VCE(BaseObservable):
     def preflight(self, ctx: Context) -> PreflightResult:
         """Both alignments, or a refusal. An excess needs something to be in excess of.
 
-        The injected input is absent, which makes this a `Refusal` rather than an Evidence
-        carrying a note. Nothing has to be computed to know it, so the question belongs
-        here: `estimate` returns this refusal before `measure` is reached, and the
+        The injected input is absent, which section 6.1 makes a `Refusal` rather than an
+        Evidence carrying a note. Nothing has to be computed to know it, so the question
+        belongs here: `estimate` returns this refusal before `measure` is reached, and the
         capability report gets it with no work at all.
         """
         if self.reward_alignment is None or self.capability_alignment is None:

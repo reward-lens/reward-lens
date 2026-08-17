@@ -1,7 +1,7 @@
 """A1, A2 and A5 as instruments: declarations, refusals, invariance, and the readings.
 
 The arithmetic is tested in `test_stats_gtheory.py`. This file tests the three things that make an
-arithmetic function an instrument in this library: that it carries all six required
+arithmetic function an instrument in this library: that it carries all six of section 4.2's
 declarations and passes `lint_instrument`; that every anticipated failure comes back as a `Refusal`
 carrying a reason **and** a remedy rather than as an exception, a `None` or a zero; and that each
 one passes the property test its declared invariance group generates.
@@ -121,7 +121,7 @@ def groups():
 
 
 # ---------------------------------------------------------------------------
-# The six required declarations
+# The six declarations of section 4.2
 # ---------------------------------------------------------------------------
 
 
@@ -160,11 +160,11 @@ def test_the_registry_carries_no_definition_for_any_of_them_and_this_package_sup
 
     It was written the other way round. Five registered quantities printed `definition: OPEN`, the
     definitions lived in this package as `Quantity` objects because `spec/QUANTITIES.yaml` was not
-    this package's file to write, and the assertion existed so that **when the rows landed this test
+    the builder's file to write, and the assertion existed so that **when the rows landed this test
     would fail** and the duplicate would be deleted rather than left to drift against the registry.
 
-    It fired exactly as designed when A1's correction landed `grader.effective_group_size` and the
-    other four followed. Inverted rather than deleted, on
+    It fired exactly as designed at wave 6, when A1's correction landed
+    `grader.effective_group_size` and the other four followed. Inverted rather than deleted, on
     D12's precedent: deleting it would leave nothing watching a pair of definitions that can now
     silently disagree, and a one-shot alarm becomes a standing guard for the cost of changing the
     assertions. What it checks now is that the registry is the source of truth and that the module's
@@ -189,13 +189,13 @@ def test_a1_declares_the_envelope_condition_the_catalogue_names():
 
 
 def test_a2_declares_mask_stable_and_says_where_the_crossing_requirement_went():
-    """The design says "fully crossed design; MASK_STABLE" and the catalogue kept only the second.
+    """ASSAY prints "fully crossed design; MASK_STABLE" and the catalogue kept only the second.
 
     This began as a guard asserting `DESIGN_CROSSED` did **not** exist, so that landing the member
     would fail here loudly rather than leaving A2 quietly declaring less than it needs. The member
-    landed as E49, so the guard has fired and it is inverted rather than deleted, which is the same
-    move E25's `py.typed` check made for the same reason: a check that has served its purpose
-    becomes a standing check on the other side of the change.
+    landed in wave 5 as SPEC-ERRATA E49, so the guard has fired and it is inverted rather than
+    deleted, which is the same move E25's `py.typed` check made for the same reason: a check that
+    has served its purpose becomes a standing check on the other side of the change.
 
     **A2's envelope has not been migrated yet and this asserts that gap rather than hiding it.**
     The member exists and the catalogue row names it; moving the code-level envelope over is a
@@ -206,7 +206,7 @@ def test_a2_declares_mask_stable_and_says_where_the_crossing_requirement_went():
     """
     assert A2_ENVELOPE.requires == frozenset({RegimeCondition.MASK_STABLE})
     assert any(c.name == "DESIGN_CROSSED" for c in RegimeCondition), (
-        "DESIGN_CROSSED was added by E49 and this test tracks A2 catching up to it"
+        "DESIGN_CROSSED was added in wave 5 (E49) and this test tracks A2 catching up to it"
     )
     assert RegimeCondition.DESIGN_CROSSED not in A2_ENVELOPE.requires, (
         "A2's envelope now requires DESIGN_CROSSED, so the precondition-and-deviation workaround "
@@ -382,7 +382,7 @@ def test_a5_emits_no_interval_of_its_own_and_says_so_by_returning_none(design3):
 
 @pytest.mark.parametrize("cls", INSTRUMENTS)
 def test_a_refusal_never_arrives_as_an_exception_from_estimate(cls):
-    """A refusal is a value. `estimate` on an empty instrument returns one."""
+    """Section 6.1: a refusal is a value. `estimate` on an empty instrument returns one."""
     out = cls().estimate(Context())
     assert isinstance(out, Refusal)
     assert out.remedy.strip()
@@ -401,7 +401,7 @@ def test_a1_rung_zero_is_k_and_says_it_is_a_ceiling_rather_than_a_measurement(gr
     Gaussian rewards and `0.75K` here. That number is real and is still reported, as
     `shape_factor`, but it is a statement about how evenly the group spends its gradient rather
     than about the grader, and reporting it as the effective group size read as "your grader costs
-    you a quarter of your rollouts" on a grader with no measurement error at all. E41.
+    you a quarter of your rollouts" on a grader with no measurement error at all. SPEC-ERRATA E41.
     """
     r = EffectiveGroupSize(groups=groups).compute()
     assert r.rung == 0

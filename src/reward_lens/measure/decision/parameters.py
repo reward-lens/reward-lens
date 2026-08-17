@@ -11,7 +11,7 @@ and it is the same failure the whole library is built against. So every paramete
 `ParameterSource`, no parameter has a plausible default, and an instrument asked for a reading that
 depends on an `UNKNOWN` parameter returns a refusal naming which one and what would close it.
 
-**The units trap, which is not in the source and is the most consequential thing here.** The
+**The units trap, which is not in the specification and is the most consequential thing here.** The
 diagonal formula `alpha_i = B_i / (1 + r C_ii sigma_i^2)` is not scale-free. Rescale a component's
 score by `a` and its variance goes to `a^2 sigma^2`, while the `1` in the denominator does not move,
 so the recommended weight changes by something other than the `1/a` that a change of units demands.

@@ -1,4 +1,4 @@
-"""``BiasBattery`` (E06): standardized reward biases with an honest sample size.
+"""``BiasBattery`` (E06): standardized reward biases with an honest sample size (section 2.8, 2.4.2).
 
 A reward bias is a reward difference the grader assigns to a surface change that should not matter:
 more length, more confidence, more markdown. The battery measures, per axis, the standardized effect
@@ -75,7 +75,7 @@ class BiasBattery(BaseObservable):
         "sample size is the lineage-honest ESS (stats.ess), not the raw pair count",
     )
 
-    # -- the declarations --------------------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "grader.surface_bias_d"
     requires: AccessMatrix = {Component.GRADER: Access.QUERY}
     substrates = ANY_SUBSTRATE

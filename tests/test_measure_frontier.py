@@ -1,6 +1,6 @@
 """Unit tests for Level 0: the closed forms, the identities, the refusals and the group.
 
-A Gaussian reward is the best test this layer has, because every object at this level has a closed
+A Gaussian reward is the best test this layer has, because every object in section 3.0 has a closed
 form under it and none of them involve a fit. For ``r ~ N(mu, sigma^2)``:
 
     K(lambda)  = lambda mu + lambda^2 sigma^2 / 2
@@ -298,8 +298,9 @@ def test_hill_cannot_represent_the_light_tailed_case_it_is_being_asked_about():
     """Hill's support is `gamma > 0`, so a Gaussian gets a small positive number and not zero.
 
     This is the reason the light-tailed verdict is taken from Pickands. It also puts the one
-    cited measurement in perspective: an exactly Gaussian tail produces a Hill estimate in the
-    same neighbourhood as the 0.20 reported as "consistent with light-tailed error", so 0.20 is consistent with a tail that is not heavy at all.
+    measurement section 3.0.1 cites in perspective: an exactly Gaussian tail produces a Hill
+    estimate in the same neighbourhood as the 0.20 that section calls "consistent with
+    light-tailed error", so 0.20 is consistent with a tail that is not heavy at all.
     """
     reading = measure_tail_index(np.random.default_rng(9).normal(0.0, 1.0, 200_000), resamples=60)
     assert reading.hill_gamma > 0.0
@@ -407,7 +408,7 @@ def test_the_frontier_refuses_without_a_gold_channel_and_says_what_still_runs():
 
 
 def test_the_tail_index_refuses_below_the_exceedance_count_and_names_the_n_it_needs():
-    """The stated number: a defensible index needs about 1,570 exceedances at q = 0.95."""
+    """Section 3.0.1's own number: a defensible index needs about 1,570 exceedances at q = 0.95."""
     out = RewardTailIndex(gaussian(200, seed=17), resamples=40).estimate(_ctx())
     assert isinstance(out, Refusal) and out.reason is RefusalReason.ABOVE_LOD_BELOW_LOQ
     assert out.is_bounded and isinstance(out.partial.value, TailReading)

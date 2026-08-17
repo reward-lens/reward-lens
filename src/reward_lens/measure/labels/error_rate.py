@@ -610,7 +610,7 @@ LABEL_ERROR_ENVELOPE = EnvelopeSpec(
         "a count over an audited sample. It counts what the auditors found and asserts nothing "
         "about the process that produced the labels, so no regime can make the count wrong. The "
         "one precondition that does bite, that the audit sample and the scored set are the same "
-        "population, is not among the twelve envelope conditions and is carried on the audit "
+        "population, is not among section 2.4's twelve conditions and is carried on the audit "
         "itself as `population` so a mismatch is visible rather than assumed away."
     ),
 )

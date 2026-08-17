@@ -1,4 +1,4 @@
-"""Shared helpers for the measurement battery.
+"""Shared helpers for the measurement battery (section 2.8).
 
 The battery Observables read a reward signal's internals on preference pairs, so they all need the
 same few operations: split a view of pairs into a chosen side and a rejected side, capture activations
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
-# The declarations the battery shares
+# The section 4.2 declarations the battery shares
 # ---------------------------------------------------------------------------
 
 #: How each regime condition this battery depends on is measured, named by quantity id. Every
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 #: ``ABOVE_LOD`` is measured by the substrate limit of detection (M1), the grader's disagreement
 #: with itself, which is the floor a patch effect or a reward delta has to clear before it is a
 #: measurement rather than noise. ``LINEAR_RESPONSE`` is measured by the selection-explained
-#: fraction Lambda (F2), which is the quantity named for that condition.
+#: fraction Lambda (F2), which is what section 2.4 names for it.
 #:
 #: The same table appears in ``measure/indices/_support.py``. It is duplicated rather than shared
 #: because ``measure.battery`` requires the white-box extra at import and the index library is
@@ -133,18 +133,27 @@ def capture_sites(
     items: list[Any],
     sites: tuple[Site, ...],
     *,
+    position: "PositionSpec | None" = None,
     full_sequence: bool = False,
     dtype: str = "float32",
 ) -> dict[Site, "torch.Tensor"]:
     """Capture ``sites`` for ``items`` in one forward, returning ``dict[Site, tensor]``.
 
-    With ``full_sequence=False`` (the default) each tensor is the final-token activation ``(B, d)``
-    (or ``(B, d_head)`` for a head site); with ``full_sequence=True`` it is the whole sequence
-    ``(B, T, d)``, which the patching mechanics need for a source activation. fp32 by default.
+    With ``full_sequence=False`` (the default) each tensor is the activation at ``position``
+    ``(B, d)`` (or ``(B, d_head)`` for a head site); with ``full_sequence=True`` it is the whole
+    sequence ``(B, T, d)``, which the patching mechanics need for a source activation. fp32 by
+    default.
+
+    ``position`` defaults to `PositionSpec("final")`, which is what all twenty-two existing call
+    sites want and what this function used to hard-code with no way to say otherwise. The design
+    reads at the last prompt token, which is not the final token of a prompt-plus-completion
+    sequence, and that coordinate was unreachable through this path (BLK-005). Pass
+    `PositionSpec("explicit", detail=index)` for one index across the batch or
+    `PositionSpec("explicit", detail=[i0, i1, ...])` for one per row.
     """
     spec = CaptureSpec(
         sites=sites,
-        position=PositionSpec("final"),
+        position=PositionSpec("final") if position is None else position,
         full_sequence=full_sequence,
         dtype=dtype,
     )

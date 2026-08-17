@@ -3,8 +3,8 @@
 Two rates, and they are not the same rate. An **abstention** is a grader call that produced no
 score. A **silent zero** is the subset of those where the framework wrote a number in its place and
 carried on, so a grader with a working abstention channel has a silent-zero rate of exactly zero
-and an abstention rate that is not. A survey of the abstention column across fifteen grader
-interfaces found four of them with no such channel at all: `verifiers` catches any exception from a
+and an abstention rate that is not. Appendix C reads the abstention column across fifteen grader
+interfaces and four of them have no such channel at all: `verifiers` catches any exception from a
 reward function and sets `ans = 0.0` (`rubrics/rubric.py:204-217`), veRL's `math_reward` prints the
 exception and returns 0.0, its `math_verify` wrapper returns `timeout_score`, and SWE-bench scores
 an empty test suite as resolved. TRL is the counter-example and the model here: `None` maps to NaN,
@@ -80,9 +80,9 @@ ZEROS_AS_SCORES_BASELINE: BaselineID = "baseline.zeros_counted_as_scores"
 B4_ENVELOPE = EnvelopeSpec(
     unconditional=True,
     justification=(
-        "No regime condition is recorded for B4. It is a defect census over a record: it counts "
-        "what is there and asserts nothing about the process that produced it, so no regime of the "
-        "run can make the count wrong."
+        "ASSAY line 1659 prints `Env none`. It is a defect census over a record: it counts what is "
+        "there and asserts nothing about the process that produced it, so no regime of the run can "
+        "make the count wrong."
     ),
 )
 
@@ -92,8 +92,8 @@ B4_ENVELOPE = EnvelopeSpec(
 #: only thing that can see a grader swallowing its own exception.
 B4_ACCESS: dict[Component, Access] = {Component.GRADER: Access.RECORD}
 
-#: All four. `spec/CATALOGUE.yaml` carries `phases: OPEN` for B4; the source it was transcribed
-#: from reads `Sub/Ph all`, and that decides it.
+#: All four. `spec/CATALOGUE.yaml` carries `phases: OPEN` for B4; ASSAY line 1659 prints `Sub/Ph
+#: all`, which is the source the OPEN was transcribed from and which decides it.
 ALL_PHASES = frozenset({Phase.PRE_RUN, Phase.IN_RUN, Phase.POST_RUN, Phase.DEPLOYED})
 
 #: So `SilentZeroRate.over(...)` is typed as a `SilentZeroRate` rather than as the shared base.
@@ -489,8 +489,8 @@ class _CensusInstrument(CompositionInstrument):
     phases = ALL_PHASES
     envelope = B4_ENVELOPE
     #: `spec/QUANTITIES.yaml` declares `none` for both quantities and this is what that resolves to
-    #: (`core.quantity.TRIVIAL_GROUP`). It is a decision rather than an omission: no affine
-    #: rescaling of the reward changes how many grader calls failed. The generated test
+    #: (`core.quantity.TRIVIAL_GROUP`, SPEC-ERRATA E11). It is a decision rather than an omission:
+    #: no affine rescaling of the reward changes how many grader calls failed. The generated test
     #: passes with nothing acting on the reading, which is the honest outcome rather than a
     #: manufactured one. The resolved spelling is declared rather than the catalogue's, because
     #: `check_invariance` takes a registered group id and `none` is not one.
@@ -623,9 +623,9 @@ class SilentZeroRate(_CensusInstrument):
 class AbstentionRate(_CensusInstrument):
     """How often the grader declined to score at all.
 
-    Registered separately because it is not the silent-zero rate: the silent zero is the subset
-    where a number was substituted. The abstention rate is a first-class reported quantity, and
-    the catalogue registered only its subset.
+    Registered separately under SPEC-ERRATA E29 because it is not the silent-zero rate: the silent
+    zero is the subset where a number was substituted. Section 3.3 calls the abstention rate a
+    first-class reported quantity and Appendix A registered only its subset.
     """
 
     name = "AbstentionRate"

@@ -1,15 +1,16 @@
 """The `units` group's assertion, made executable for series E.
 
-Two of the six instruments here are registered under `units`, whose assertion is not a
+Two of the six instruments here are registered under `units`, whose Appendix B assertion is not a
 numeric relation at all: a comparison across a unit boundary raises `UNIT_MISMATCH` rather than
 silently converting. `check_invariance` routes that group to `check_unit_refusal`, which needs a
 comparison to assert on, and this is it.
 
 The pair that matters in this series is real rather than contrived. `estimator.noise_share` is a
 dimensionless share of gradient power and `policy.train_infer_logprob_mismatch` is in nats per
-token. Subtracting one from the other, or ranking them against each other, is the most common
-silent failure in this literature. The second of those two was once mis-decomposed as per-sequence
-in the registry, which had made it byte-identical to `update.kl_spent`.
+token. Subtracting one from the other, or ranking them against each other, is the unit error
+section 6.1 calls the most common silent failure in this literature, and SPEC-ERRATA E15 records
+that the second of those two was mis-decomposed as per-sequence in the registry, which had made it
+byte-identical to `update.kl_spent`.
 
 The units are read out of the registry rather than restated here. A unit written down twice is a
 unit that can disagree with itself, and the registry is the contract.

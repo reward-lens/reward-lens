@@ -1,8 +1,11 @@
 """Six quantities N5 to N8 need, proposed here and **not registered**.
 
-`spec/CATALOGUE.yaml` carries N1 to N4 and stops. The contract layer has five formulas behind it and
-no catalogue rows at all, and the quantity rows are the part not to write into the registry
-unilaterally, because registering a quantity is a decision about what the library claims to measure.
+`spec/CATALOGUE.yaml` carries N1 to N4 and stops. SPEC-ERRATA E23 records why: the specification
+develops the contract layer over forty lines and five formulas in section 3.5.2, Part 9 assigns it no
+work package, and Appendix A gives it no rows. E23 landed the first half of the amendment, the
+frontier; this is the second half, and the quantity rows are the part a builder must not write into
+the registry unilaterally, because registering a quantity is a decision about what the library claims
+to measure.
 
 So the proposals live here as data. Nothing runs at import: `register_proposed()` exists so a test
 can show the four instruments are lint-clean apart from the missing registration, `as_yaml_rows()`
@@ -273,7 +276,8 @@ def as_yaml_rows() -> str:
     """The six proposals in `spec/QUANTITIES.yaml`'s own field order, ready to paste.
 
     Emitted rather than hand-written so the rows cannot drift from the `Quantity` objects the
-    instruments are linted against.
+    instruments are linted against. The `errata` field is set to E23, which is the entry that
+    records series N as an omission from Part 9 and Appendix A and lands the frontier half.
     """
     lines: list[str] = []
     for q in PROPOSED:
@@ -293,11 +297,12 @@ def as_yaml_rows() -> str:
         lines.extend(_folded("definition", q.definition))
         lines.extend(_folded("interpretation", q.interpretation))
         lines.extend(_support_yaml(q.support))
+        lines.append("  errata: E23")
     return "\n".join(lines)
 
 
-#: The four instrument records, as data, in `spec/CATALOGUE.yaml`'s field order. Held here as data
-#: rather than as prose so `as_catalogue_rows` can emit them and a test can assert that every
+#: The four instrument records, as data, in `spec/CATALOGUE.yaml`'s field order. Held here rather
+#: than only in a report so `as_catalogue_rows` can emit them and a test can assert that every
 #: quantity each record names is one this module actually proposes.
 CATALOGUE_RECORDS: tuple[dict[str, Any], ...] = (
     {
@@ -340,6 +345,7 @@ CATALOGUE_RECORDS: tuple[dict[str, Any], ...] = (
             "instrument collapses into a restatement of B'."
         ),
         "wedge": True,
+        "work_package": "W3.9",
     },
     {
         "id": "N6",
@@ -375,6 +381,7 @@ CATALOGUE_RECORDS: tuple[dict[str, Any], ...] = (
             "formality."
         ),
         "wedge": True,
+        "work_package": "W3.9",
     },
     {
         "id": "N7",
@@ -413,6 +420,7 @@ CATALOGUE_RECORDS: tuple[dict[str, Any], ...] = (
             "never pays and the instrument reports a cutoff nobody should act on."
         ),
         "wedge": True,
+        "work_package": "W3.9",
     },
     {
         "id": "N8",
@@ -453,6 +461,7 @@ CATALOGUE_RECORDS: tuple[dict[str, Any], ...] = (
             "information beyond B' and only the noise half of the pair ships."
         ),
         "wedge": True,
+        "work_package": "W3.9",
     },
 )
 
@@ -505,6 +514,13 @@ def as_catalogue_rows() -> str:
         lines.extend(_folded("kill_condition", str(rec["kill_condition"])))
         lines.append(f"  wedge: {'true' if rec['wedge'] else 'false'}")
         lines.append("  status: planned")
+        lines.append("  caliper_ancestor: null")
+        lines.append(f"  work_package: {rec['work_package']}")
+        lines.append("  source_lines:")
+        lines.append("    assay:")
+        lines.append("    - 1091")
+        lines.append("    - 1129")
+        lines.append("    caliper: null")
     return "\n".join(lines)
 
 
