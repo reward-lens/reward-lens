@@ -276,6 +276,10 @@ class GStudy:
     universe: Mapping[str, float] = field(default_factory=dict)
     #: What the caller called the object and the facets, for rendering. Purely cosmetic.
     labels: Mapping[str, str] = field(default_factory=dict)
+    #: Which mean squares each component was built from, as `{component: {term: coefficient}}`.
+    #: Recorded so the conditioning of the subtraction that produced a component can be measured
+    #: rather than guessed, which is what `significant_digits` reads.
+    contrasts: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.design not in _TERMS:
@@ -294,6 +298,55 @@ class GStudy:
     def facets(self) -> tuple[str, ...]:
         """The facets of measurement, excluding the object. `('r',)` or `('r', 'o')`."""
         return tuple(f for f in ("r", "o") if f in self.levels)
+
+    @property
+    def significant_digits(self) -> dict[str, float]:
+        """Decimal digits surviving the mean-square subtraction that produced each component.
+
+        A method-of-moments component is a difference of mean squares, and when its true value is
+        near zero those mean squares are near-equal, so the difference cancels and the answer is
+        made of whatever the operands' last bits happened to be. The condition number of that
+        subtraction is the sum of the absolute contributions over the absolute result, and
+        `log10` of the reciprocal is roughly what float64 has left.
+
+        This was worth adding because the failure that exposed it was not the property test that
+        found it. On a design with a single non-zero cell every mean square is `v^2 / (n_p n_r)`
+        exactly, so `sigma2(p)` is exactly zero and comes back as one unit in the last place of a
+        number of order `1e7`. Whether that ULP lands above or below zero decides whether the
+        component is reported as truncated, and it changes sign when the whole design is multiplied
+        by a constant. A reader was being told that a design could not resolve a component when the
+        design resolves it exactly, and the reason was the last bit of a subtraction.
+        """
+        out: dict[str, float] = {}
+        raw = self.components.raw_dict()
+        ms = self.mean_squares.ms
+        for name, contrast in self.contrasts.items():
+            if name not in raw:
+                continue
+            weight = sum(abs(c) * abs(float(ms.get(term, 0.0))) for term, c in contrast.items())
+            result = abs(float(raw[name]))
+            if weight == 0.0:
+                out[name] = math.inf
+                continue
+            if result == 0.0:
+                out[name] = 0.0
+                continue
+            kappa = weight / result
+            out[name] = max(0.0, 16.0 - math.log10(kappa)) if kappa > 0 else math.inf
+        return out
+
+    @property
+    def indistinguishable_from_zero(self) -> tuple[str, ...]:
+        """Components with less than one decimal digit left after the cancellation.
+
+        Named alongside `ComponentSet.truncated_names` rather than folded into it, because the two
+        say different things. A truncated component came back negative and its true value is near
+        zero. One of these has no significant digits at all, so its sign carries no information and
+        neither does its magnitude, and reporting it as an estimate of anything would be false
+        precision of exactly the kind a variance table invites.
+        """
+        digits = self.significant_digits
+        return tuple(sorted(n for n, d in digits.items() if d < 1.0))
 
     @property
     def fixed(self) -> tuple[str, ...]:
@@ -346,7 +399,7 @@ class GStudy:
         # a hypothetical slip: `rater` and `occasion` are the labels `crossed_pro` assigns by
         # default and carries on `GStudy.labels`, so they are the natural mistaken call, and on the
         # worked example it moves a headline reliability from 0.531 to 0.843 while looking like it
-        # worked.
+        # worked. SPEC-ERRATA E42.
         unknown = sorted(k for k in sizes if k not in self.facets)
         if unknown:
             known = ", ".join(sorted(self.facets))
@@ -368,7 +421,7 @@ class GStudy:
                 # then `min(1, n'/N) * sigma2(a)/n'` where the derivation gives `sigma2(a)/N`: the
                 # clamp saves the ratio and the surviving `1/n'` understates the universe-score
                 # variance anyway. Reproduced on a 40x11 design at tau understated 34.4%. Every
-                # existing test passed matching sizes, so the path was untested.
+                # existing test passed matching sizes, so the path was untested. SPEC-ERRATA E42.
                 out[f] = min(float(self.levels[f]), universe)
             else:
                 out[f] = float(n)
@@ -563,7 +616,16 @@ class GStudy:
             f"n_{f} = {self.levels[f]}" for f in ("p", *self.facets) if f in self.levels
         )
         fixed = f"  fixed facets: {', '.join(self.fixed)}" if self.fixed else ""
-        return "\n".join(x for x in (head, self.components.render(), fixed) if x)
+        lost = self.indistinguishable_from_zero
+        conditioning = (
+            f"  {len(lost)} component(s) have no significant digits left after the mean-square "
+            f"subtraction that produced them: {', '.join(lost)}. Their mean squares are equal to "
+            f"within the precision of the arithmetic, so the sign and the magnitude reported for "
+            f"them carry no information and neither does whether they were truncated."
+            if lost
+            else ""
+        )
+        return "\n".join(x for x in (head, self.components.render(), fixed, conditioning) if x)
 
 
 @dataclass(frozen=True)
@@ -689,6 +751,11 @@ def crossed_pr(
         levels={"p": int(n_p), "r": int(n_r)},
         mean_squares=ms,
         labels={"p": object_label, "r": facet_label},
+        contrasts={
+            "p": {"p": 1.0 / n_r, "pr,e": -1.0 / n_r},
+            "r": {"r": 1.0 / n_p, "pr,e": -1.0 / n_p},
+            "pr,e": {"pr,e": 1.0},
+        },
     )
 
 
@@ -742,6 +809,24 @@ def crossed_pro(
         levels={"p": int(n_p), "r": int(n_r), "o": int(n_o)},
         mean_squares=ms,
         labels={"p": object_label, "r": a, "o": b},
+        contrasts={
+            "p": {
+                k: v / (n_r * n_o)
+                for k, v in {"p": 1.0, "pr": -1.0, "po": -1.0, "pro,e": 1.0}.items()
+            },
+            "r": {
+                k: v / (n_p * n_o)
+                for k, v in {"r": 1.0, "pr": -1.0, "ro": -1.0, "pro,e": 1.0}.items()
+            },
+            "o": {
+                k: v / (n_p * n_r)
+                for k, v in {"o": 1.0, "po": -1.0, "ro": -1.0, "pro,e": 1.0}.items()
+            },
+            "pr": {"pr": 1.0 / n_o, "pro,e": -1.0 / n_o},
+            "po": {"po": 1.0 / n_r, "pro,e": -1.0 / n_r},
+            "ro": {"ro": 1.0 / n_p, "pro,e": -1.0 / n_p},
+            "pro,e": {"pro,e": 1.0},
+        },
     )
 
 

@@ -15,8 +15,8 @@ not run is recorded as a refusal with a remedy rather than dropped, because a cl
 the black-box comparator and a claim that ran it and won look identical from the outside unless
 the refusal is written down.
 
-`lint_claim` is the enforcement. A claim with no baselines fails it, which is the rule "a claim
-without a baseline fails lint" made executable.
+`lint_claim` is the enforcement. A claim with no baselines fails it, which is the W3.7 acceptance
+clause "a claim without a baseline fails lint" made executable.
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ from reward_lens.stats.baselines.text import (
     scaffold_hash,
 )
 
-#: The bank, in the order it is reported in. Keyed by `BaselineID` so an instrument's ``baselines``
+#: The bank, in the order §5.M prints it. Keyed by `BaselineID` so an instrument's ``baselines``
 #: tuple names entries that exist rather than strings somebody typed.
 BASELINES: dict[BaselineID, Baseline] = {
     b.id: b  # type: ignore[misc]
@@ -111,11 +111,11 @@ class ClaimLintFinding:
 def claim_baselines(claim: Any) -> Mapping[BaselineID, float] | None:
     """Find a claim's baseline mapping, wherever the claim keeps it.
 
-    Two shapes are accepted because the library currently has two. `Evidence` carries a
-    ``baselines: Mapping[BaselineID, float]`` field directly; what does not yet exist is a path
-    that fills it, because `Context.emit` builds Evidence from a value and does not know about
-    baselines. So instruments carry them in ``value["baselines"]`` and a populated payload beats an
-    empty field until the emit path catches up.
+    Two shapes are accepted because the library currently has two. §4.2 puts
+    ``baselines: Mapping[BaselineID, float]`` directly on `Evidence`, and that field now exists;
+    what does not yet exist is a path that fills it, because `Context.emit` builds Evidence from a
+    value and does not know about baselines. So instruments carry them in ``value["baselines"]``
+    and a populated payload beats an empty field until the emit path catches up.
 
     Returning None means the claim has no place for a baseline mapping at all, which is a
     different finding from having an empty one.
@@ -139,7 +139,7 @@ def lint_claim(
     *,
     require: Sequence[BaselineID] = ALL_SIX,
 ) -> list[ClaimLintFinding]:
-    """A claim with no dumb baseline fails. This is that rule, executable.
+    """A claim with no dumb baseline fails. This is the W3.7 clause, executable.
 
     Three rules. A claim carrying no baseline mapping at all fails, because there is nowhere for
     the comparison to have happened. A claim carrying an empty one fails, because an empty mapping

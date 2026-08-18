@@ -1,4 +1,4 @@
-"""Anytime-valid sequential statistics: Ville, stitching, e-merging, e-BH.
+"""Anytime-valid sequential statistics: Ville, stitching, e-merging, e-BH (section 3.4).
 
 The one fact this module is built on is Ville's inequality (Ville 1939). For a nonnegative
 supermartingale ``M`` with ``E[M_0] = 1``,
@@ -189,11 +189,12 @@ def merge_e(e_values: Sequence[float], *, dependence: str = "arbitrary") -> Merg
     *time* within one channel: the running product of per-step betting factors is a test
     martingale.
 
-    The distinction is load-bearing for J3. E-values are often said to "multiply legally under
+    The distinction is load-bearing for J3. Section 3.4 says e-values "multiply legally under
     arbitrary dependence"; they do not. Entropy decline, prediction saturation and episode-length
     pinning are strongly dependent channels, so multiplying their e-values inflates the evidence by
     a factor that can reach the number of channels and is not bounded in general. Over time within
-    one channel the product is right; across channels at one time the mean is right.
+    one channel the product is right; across channels at one time the mean is right. SPEC-ERRATA
+    E48.
     """
     e = np.asarray(e_values, dtype=np.float64).ravel()
     e = e[np.isfinite(e)]

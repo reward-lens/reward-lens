@@ -1,4 +1,4 @@
-"""``reward_lens.stats`` — the epistemics engine.
+"""``reward_lens.stats`` — the epistemics engine (section 2.11).
 
 This is the layer that turns measurements into defensible claims: it holds the
 numerical machinery the three gates rely on, and it enforces invariant I2 (a

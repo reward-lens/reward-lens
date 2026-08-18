@@ -212,7 +212,7 @@ def kish_ess(weights: Sequence[float] | np.ndarray) -> float:
     # Before the sign check, because `nan < 0.0` is False and a NaN would slip past it. A NaN
     # weight used to return 0.0, which is the same answer this function gives for a genuinely
     # degenerate design, so a corrupt input and a real result were indistinguishable. An infinite
-    # weight returned NaN. Neither is a weight.
+    # weight returned NaN. Neither is a weight. SPEC-ERRATA E41.
     if not np.all(np.isfinite(w)):
         bad = int(np.count_nonzero(~np.isfinite(w)))
         raise ValueError(
@@ -279,7 +279,7 @@ def group_effective_size(scores: Sequence[float] | np.ndarray) -> float:
     group to about `0.34`. Even the textbook-tidy case of K equally spaced distinct scores tends to
     `0.75K`. An earlier version of this docstring claimed "K distinct scores spread symmetrically
     give K", which is false: the symmetric four-point set `(-2, -1, 1, 2)` gives 3.6. That claim
-    was untested and it is the anchor a reader would have calibrated on.
+    was untested and it is the anchor a reader would have calibrated on. SPEC-ERRATA E41.
 
     So a reading of 0.64K on a perfect grader with no measurement error at all is the expected
     result and is a statement about the **shape of the reward distribution**, not about the grader.
@@ -311,7 +311,7 @@ def icc_oneway(groups: Sequence[Sequence[float] | np.ndarray]) -> float:
     the harmonic mean is 2.6667; substituting the plain mean group size instead gives an ICC of
     0.7966 where the correct value is 0.8106. The expression above is the one that makes `MSB` have
     the right expectation under unequal group sizes, and it collapses to `k` exactly when they are
-    equal.
+    equal. SPEC-ERRATA E41.
 
     Not truncated at zero, deliberately: a negative ICC(1) is informative, and `design_effect_ess`
     accepts it. Callers who need a non-negative correlation should say so at their own call site
@@ -374,7 +374,7 @@ class GaugeRR:
     writes EV and AV as standard deviations, so `repeatability` here is `EV^2` and not `EV`: on the
     worked case with EV = 2 and AV = 1 they read 4.0 and 1.0. The sibling fields carry a `sigma_`
     prefix and these do not, which is the only signal of the change and is a thin one. Take the
-    square root before comparing against a published EV or AV.
+    square root before comparing against a published EV or AV. SPEC-ERRATA E41.
     """
 
     sigma_part: float
@@ -399,11 +399,12 @@ class GaugeRR:
         gauge; it is not a gauge. Reported separately from `acceptable` because "perfect" and
         "nothing was measured" have to be distinguishable, and before this existed they were not:
         an all-zero decomposition rendered as a gauge resolving 2,147,483,647 distinct levels.
+        SPEC-ERRATA E41.
 
         Zero *gauge* variance is a different case and is **not** undetermined: a deterministic
         program verifier replayed and agreeing every time really does have no measurement error, and
         `ndc` is then genuinely infinite. What was wrong there was the rendering, not the verdict.
-        See `ndc_unbounded`.
+        See `ndc_unbounded`. SPEC-ERRATA E45.
         """
         return math.isfinite(self.sigma_total) and self.sigma_total > 0.0
 
@@ -416,7 +417,7 @@ class GaugeRR:
         lines above the truncation says "Infinity is the honest value"; the sentence converted it to
         a finite count. D7 hit this on a real deterministic verifier while assembling the grader
         card, which is the wedge's headline artifact and the first place anybody outside this
-        project will look.
+        project will look. SPEC-ERRATA E45.
         """
         return self.determined and not math.isfinite(self.ndc)
 
@@ -430,7 +431,7 @@ class GaugeRR:
         case: over twenty thousand random part-and-gauge splits there are cases where %GRR passes
         and ndc fails, and none the other way. Both are kept because they are both AIAG rules and a
         reader looking for one should find it, but nobody should believe the %GRR term is adding a
-        constraint.
+        constraint. SPEC-ERRATA E41.
 
         Undetermined is not acceptable. A degenerate decomposition returns False rather than the
         True that `0.0 <= 30` and a sentinel ndc used to produce between them.
@@ -553,17 +554,147 @@ def gauge_rr(
     )
 
 
+# ---------------------------------------------------------------------------
+# Pooling by effective rank
+# ---------------------------------------------------------------------------
+#
+# The third form of "how many independent observations is this worth", and the one that was missing.
+# `kish_ess` counts how evenly weights are spread and `design_effect_ess` divides by the design
+# effect of a known correlation; both are about observations. This one is about **columns**. When a
+# quantity is pooled over p features and those features move together, the pooled estimate does not
+# have p independent pieces of information in it and dividing its standard error by `sqrt(p)` claims
+# precision that is not there.
+#
+# The design's rule, verbatim: "The participation ratio is measured on this run's own movement
+# matrix, in the pre-transition window named in advance, and the pooling factor is its square root."
+# Its own worked figures: a participation ratio of 3.870 against a naive feature count of 12, so
+# pooling by `sqrt(12) = 3.464` where `sqrt(3.870) = 1.967` is correct is a factor of 1.76 of false
+# precision, and the project's trap register names that as the most likely source of an overstated
+# result.
+#
+# The window is a required argument and there is no default. The ratio is strongly non-stationary,
+# 3.870 over a full run against 1.233 over one hundred-step slice, which is a factor of 1.8 on the
+# factor itself; a default window would be a determinant of every interval in the ledger chosen by
+# this module rather than registered.
+
+
+@dataclass(frozen=True)
+class PoolingFactor:
+    """The pooling factor for a movement matrix, with the naive one beside it.
+
+    ``factor`` is what a standard error is divided by: the square root of ``participation_ratio``.
+    ``naive_factor`` is ``sqrt(n_features)``, the rule this replaces, and ``false_precision`` is the
+    ratio of the two, which is how much precision the naive rule claims and does not have. Both are
+    reported because the correction is the finding, and a corrected number with no uncorrected one
+    beside it is not checkable.
+
+    ``window`` is the half-open step range the ratio was measured on, or None for the whole series,
+    and it is on the record because the ratio is non-stationary and a factor with no window attached
+    cannot be reproduced. ``underdetermined`` is set when the window holds fewer steps than the
+    matrix has columns, where the participation ratio is bounded by the step count rather than by
+    the data and cannot be read as an effective dimension.
+    """
+
+    factor: float
+    participation_ratio: float
+    n_features: int
+    naive_factor: float
+    false_precision: float
+    window: tuple[int, int] | None
+    n_steps: int
+    underdetermined: bool
+
+
+def rank_pooling_factor(
+    movement: np.ndarray,
+    *,
+    window: tuple[int, int] | None,
+) -> PoolingFactor:
+    """The pooling factor of a movement matrix: the square root of its participation ratio.
+
+    ``movement`` is ``(n_steps, n_features)``, one row per step. ``window`` is a half-open
+    ``(start, stop)`` step range, or None for the whole series, and it has no default: the
+    participation ratio is strongly non-stationary and a window chosen by this function would be a
+    determinant of every interval in the ledger that nobody registered.
+
+    The participation ratio is the moment ratio on the **squared** singular values,
+    ``(sum s^2)^2 / sum s^4``, which is the package's stated convention and is what
+    `geometry.hessian.participation_ratio` computes when it is handed a spectrum. Computed here from
+    the singular values directly rather than by forming the Gram matrix, because squaring the matrix
+    squares its condition number and the small singular values are exactly the ones this statistic
+    is sensitive to.
+
+    `n` equally-sized modes give a ratio of `n` and a factor of `sqrt(n)`, so on a genuinely
+    isotropic movement matrix this agrees with pooling by the feature count. It departs from it
+    exactly when the features move together, which is when the naive rule is wrong.
+
+    Raises on a movement matrix with no movement in it, rather than returning a factor of zero:
+    dividing an interval half-width by zero is not a wider interval, it is a NaN in a ledger.
+    """
+    m = np.asarray(movement, dtype=np.float64)
+    if m.ndim == 1:
+        m = m[:, None]
+    if m.ndim != 2:
+        raise ValueError(f"a movement matrix is (n_steps, n_features); got shape {m.shape}")
+    if not np.all(np.isfinite(m)):
+        raise ValueError(
+            "the movement matrix carries non-finite entries; a pooling factor computed over them "
+            "would be NaN in every interval it multiplies"
+        )
+    n_total, n_features = m.shape
+    if n_features == 0 or n_total == 0:
+        raise ValueError(f"the movement matrix is empty; got shape {m.shape}")
+
+    if window is None:
+        start, stop = 0, n_total
+    else:
+        start, stop = int(window[0]), int(window[1])
+        if start < 0 or stop > n_total:
+            raise ValueError(
+                f"the window {(start, stop)} runs outside the series, which has {n_total} steps. "
+                f"Clipping it silently would report a factor for a window nobody named"
+            )
+        if stop <= start:
+            raise ValueError(f"the window {(start, stop)} is empty or reversed")
+
+    block = m[start:stop]
+    n_steps = int(block.shape[0])
+    singular = np.linalg.svd(block, compute_uv=False)
+    lam = singular**2
+    total = float(lam.sum())
+    if total <= 0.0:
+        raise ValueError(
+            "the movement matrix has no movement in the requested window, so there is no effective "
+            "rank to pool by. A factor of zero would divide an interval half-width by nothing"
+        )
+    ratio = float(total**2 / float((lam**2).sum()))
+    factor = float(np.sqrt(ratio))
+    naive = float(np.sqrt(n_features))
+    return PoolingFactor(
+        factor=factor,
+        participation_ratio=ratio,
+        n_features=int(n_features),
+        naive_factor=naive,
+        false_precision=naive / factor,
+        window=None if window is None else (start, stop),
+        n_steps=n_steps,
+        underdetermined=n_steps < n_features,
+    )
+
+
 __all__ = [
     "GRR_ACCEPTABLE",
     "GRR_MARGINAL",
     "NDC_MINIMUM",
     "ComponentSet",
     "GaugeRR",
+    "PoolingFactor",
     "VarianceComponent",
     "design_effect_ess",
     "gauge_rr",
     "group_effective_size",
     "icc_oneway",
     "kish_ess",
+    "rank_pooling_factor",
     "truncate_at_zero",
 ]

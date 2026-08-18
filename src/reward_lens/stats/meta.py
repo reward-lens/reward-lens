@@ -1251,8 +1251,8 @@ def proportion_meta(
 # the whole of Rucker et al. (2008): I2 moves with the precision of the included studies, and in
 # machine learning precision is a budget decision, so a registered `study.i2` would be a quotable id
 # for a number that is partly a statement about somebody's item count. It stays a field on
-# `Heterogeneity` with its caveat attached and does not become a first-class quantity. Anyone who
-# disagrees will find the row trivial to add, and this comment is the argument to overturn.
+# `Heterogeneity` with its caveat attached and does not become a first-class quantity. If the
+# integrator disagrees, the row is trivial to add and this comment is the argument to overturn.
 
 _OPEN_UNIT = Unit(dimension="OPEN", per="OPEN", scale="OPEN", as_printed="effect")
 _SQ_OPEN_UNIT = Unit(dimension="OPEN", per="OPEN", scale="OPEN", as_printed="effect^2")
@@ -1320,8 +1320,8 @@ PROPOSED: tuple[Quantity, ...] = (POOLED_EFFECT, TAU2, PREDICTION_INTERVAL_RATIO
 #: meta-analysis needs published effect sizes and variances, not a model, a grader or a run.
 PROPOSED_MIN_ACCESS: dict[str, str] = {q.id: "design" for q in PROPOSED}
 
-#: No catalogued instrument owns these yet. M10 is the nearest neighbour and estimates the rest of
-#: the `study.*` family, so the instrument list is left empty rather than guessed at.
+#: No Part 5 instrument owns these yet. M10 is the nearest neighbour and estimates the rest of the
+#: `study.*` family, so the instrument list is left for the integrator rather than guessed at.
 PROPOSED_INSTRUMENTS: dict[str, tuple[str, ...]] = {q.id: () for q in PROPOSED}
 
 

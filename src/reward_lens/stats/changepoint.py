@@ -1,4 +1,4 @@
-"""Online changepoint and onset detection.
+"""Online changepoint and onset detection (DESIGN section 2.11).
 
 The recorder needs to answer "when did this feature start drifting?" before the reward and KL
 curves visibly move, which is the whole point of the flight recorder: catch the onset early. Two

@@ -27,10 +27,11 @@ self-consistent.
 from __future__ import annotations
 
 import math
+from pathlib import Path
 
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck, example, given, settings
 from hypothesis import strategies as st
 
 from reward_lens.stats.gtheory import (
@@ -517,19 +518,60 @@ def test_components_are_invariant_under_a_location_shift(values, shift):
     values=st.lists(_finite, min_size=12, max_size=12),
     scale=st.floats(min_value=0.05, max_value=20.0, allow_nan=False, allow_infinity=False),
 )
+@example(values=[0.0] * 11 + [2198.0], scale=5.0)
+@example(
+    values=[7500.0, 1e4, -2500.0, 1e4, -2500.0, 1e4, -2500.0, 1e4, 0.0, 0.0, 0.0, 0.0],
+    scale=19.99,
+)
+@example(values=[1e4, 1e4, -1e4, 1e4, 1e4, -1e4, -1e4, -1e4, 1e4, 1e4, -1e4, 1e4], scale=20.0)
 @SLOW
 def test_components_scale_by_the_square_under_a_reward_rescaling(values, scale):
     """`r -> a*r` scales every component by `a^2`, so every share is unchanged.
 
     This is the `reward.affine` covariance of a variance and the invariance of a share, checked at
     the arithmetic layer rather than only through the generated instrument test.
+
+    **The tolerance is scaled to the mean squares and not to the component**, and that is the
+    substance of this docstring rather than housekeeping. A component is a *difference* of mean
+    squares, so the error floor on it is set by their magnitude and not by its own. When the true
+    component is exactly zero, `pytest.approx`'s relative term has nothing to multiply and the whole
+    assertion collapses onto its absolute floor, which was 1e-9 against operands of order 1e7: that
+    is an agreement to better than one unit in the last place, and no float64 implementation
+    delivers it.
+
+    The three pinned examples are why the tolerance rather than the arithmetic is what changed.
+    They live here rather than in a gitignored `.hypothesis` directory, which is where the first one
+    was found and where CI would have met it only by luck.
+
+    On a design with a single non-zero cell every mean square is `v^2 / (n_p n_r)` exactly, so
+    `sigma2(p)` is exactly zero and comes back as one ULP of a number of order 1e7. That much a
+    better-conditioned formulation would fix, and one exists: computing the component as a mean
+    cross-product rather than as a difference of mean squares returns exactly zero here. It is not
+    what is wrong. The second pinned example is the demonstration: `x * scale` is evaluated in this
+    test body, in float64, before the estimator is called, and on that input the rescaled matrix has
+    a genuinely non-zero component. An estimator of *infinite* precision, handed the matrix this
+    test constructs, returns 2.909e-07 against an expected 0.0 and fails the old assertion by 291x.
+    No change to `gtheory.py` reaches that, because the error is introduced before `gtheory.py` runs.
+
+    So the property is exact in the reals and holds in floating point only away from the set where
+    the mean squares cancel, which is the "valid only under stated conditions" classification rather
+    than a code defect. What the failure did expose is a real reporting defect, and it is fixed in
+    the module rather than here: `GStudy.indistinguishable_from_zero` names a component with no
+    significant digits left, so one whose sign flips under a rescaling can no longer be quoted as an
+    established zero. `test_a_component_with_no_significant_digits_is_named_rather_than_quoted`
+    is that guarantee.
     """
     x = np.asarray(values, dtype=np.float64).reshape(6, 2)
     base = crossed_pr(x)
     scaled = crossed_pr(x * scale)
+    # Eight units in the last place of the largest mean square the component was differenced out
+    # of. Measured rather than chosen: over six thousand in-strategy draws the largest error seen
+    # is 0.281 of this budget, so it is tight enough to keep catching a real defect and loose
+    # enough not to fire on the format's own floor.
+    floor = 8 * np.finfo(float).eps * max(abs(v) for v in scaled.mean_squares.ms.values())
     for name in base.components.names:
         assert scaled.components.raw_dict()[name] == pytest.approx(
-            base.components.raw_dict()[name] * scale**2, rel=1e-6, abs=1e-9
+            base.components.raw_dict()[name] * scale**2, rel=1e-6, abs=max(1e-9, floor)
         )
     if base.components.total > 1e-9:
         for name in base.components.names:
@@ -604,7 +646,7 @@ def test_component_set_names_what_it_does_not_have():
 
 
 # ---------------------------------------------------------------------------
-# The statistical review's findings on this module (E41)
+# The fresh-context statistical review's findings on this module (SPEC-ERRATA E41)
 # ---------------------------------------------------------------------------
 
 
@@ -717,7 +759,7 @@ def test_a_d_study_size_for_a_facet_that_does_not_exist_raises():
 
 
 def test_zero_gauge_variance_renders_as_unbounded_and_never_as_the_int32_sentinel():
-    """E45, the case E41 missed, and the fix is to the rendering not the verdict.
+    """SPEC-ERRATA E45, the case E41 missed, and the fix is to the rendering not the verdict.
 
     E41 guarded the all-zero decomposition. A design with real part variance and no measured gauge
     variance still printed the int32 sentinel, because ndc is `1.41 * sigma_part / 0`. D7 hit it on
@@ -746,3 +788,89 @@ def test_zero_gauge_variance_renders_as_unbounded_and_never_as_the_int32_sentine
     # without pretending the verdict itself is absent.
     assert g.repeatability is None
     assert "no replication" in g.verdict()
+
+
+# ---------------------------------------------------------------------------
+# Conditioning: what the rescaling property failure actually exposed
+# ---------------------------------------------------------------------------
+
+
+def test_a_component_with_no_significant_digits_is_named_rather_than_quoted():
+    """The reporting defect behind the rescaling failure, fixed where it lived.
+
+    On a design with a single non-zero cell, `MS_p`, `MS_r` and `MS_pr,e` are all exactly
+    `v^2 / (n_p n_r)`, so `sigma2(p)` and `sigma2(r)` are exactly zero and come back as a unit in
+    the last place of a number of order 1e7. Which side of zero that ULP falls on decides whether
+    the component prints as truncated, and multiplying the whole design by five moves it. A reader
+    was being told that the design could not resolve a component it resolves exactly, and being
+    told it differently depending on the units the rewards were in.
+    """
+    x = np.asarray([0.0] * 11 + [2198.0]).reshape(6, 2)
+    base, scaled = crossed_pr(x), crossed_pr(x * 5.0)
+
+    # The flag that moves under a rescaling, which is the symptom.
+    assert base.components.truncated_names == ("r",)
+    assert scaled.components.truncated_names == ()
+
+    # The flag that does not, which is the repair.
+    assert base.indistinguishable_from_zero == ("p", "r")
+    assert scaled.indistinguishable_from_zero == ("p", "r")
+    for study in (base, scaled):
+        assert study.significant_digits["p"] < 1.0
+        assert study.significant_digits["r"] < 1.0
+        # The residual is not a difference of anything, so it keeps every digit it had.
+        assert study.significant_digits["pr,e"] > 15.0
+        assert "no significant digits left" in study.render()
+
+
+def test_a_well_conditioned_decomposition_names_nothing():
+    """The diagnostic has to be quiet on a design that resolves its components, or it is noise."""
+    x = np.asarray(
+        [[10.0, 11.0], [20.0, 21.0], [30.0, 29.0], [40.0, 41.0], [50.0, 49.0], [60.0, 61.0]]
+    )
+    study = crossed_pr(x)
+    assert study.indistinguishable_from_zero == ()
+    assert study.significant_digits["p"] > 10.0
+    assert "no significant digits" not in study.render()
+
+
+def test_the_three_facet_fitter_carries_the_same_diagnostic():
+    """`sigma2(p)` there is a four-term alternating sum, so it cancels harder rather than less."""
+    cube = np.asarray([0.0] * 11 + [7.0]).reshape(3, 2, 2)
+    study = crossed_pro(cube)
+    assert "p" in study.indistinguishable_from_zero
+    assert study.significant_digits["pro,e"] > 15.0
+
+
+def test_the_failing_draws_are_pinned_in_this_file_and_not_only_in_the_hypothesis_database():
+    """`.hypothesis/` is gitignored, so a counterexample that lives only there is found by luck.
+
+    Three draws are pinned rather than one, and the second is the one that decides the
+    classification: on it the rescaled matrix has a genuinely non-zero component, so an estimator
+    of infinite precision fails the old assertion. Losing that example would let somebody
+    reintroduce the old tolerance and conclude from the first example alone that the arithmetic was
+    at fault.
+    """
+    source = Path(__file__).read_text(encoding="utf-8")
+    assert source.count("@example(") >= 3
+    assert "values=[0.0] * 11 + [2198.0], scale=5.0" in source
+    assert "19.99" in source
+
+
+def test_a_discovered_counterexample_is_not_left_sitting_in_the_gitignored_database():
+    """The general version of the test above, for every property test in the suite at once.
+
+    Hypothesis writes a `.hypothesis/patches/*.patch` naming the `@example` it wants added the
+    moment it discovers a failure. A patch still sitting there is a counterexample somebody has
+    seen and nobody has pinned, and it will vanish on a fresh checkout.
+    """
+    patches = Path(__file__).resolve().parents[1] / ".hypothesis" / "patches"
+    if not patches.is_dir():
+        pytest.skip("no local hypothesis database in this tree")
+    pending = sorted(p.name for p in patches.glob("*.patch"))
+    assert not pending, (
+        "hypothesis has discovered failing examples and written patches for them: "
+        + ", ".join(pending)
+        + ". Add the `@example` to the test file; a counterexample that lives only in the "
+        "gitignored database is one CI will meet by luck."
+    )

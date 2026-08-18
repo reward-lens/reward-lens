@@ -923,9 +923,9 @@ def difference(a: PowerQuantity, b: PowerQuantity) -> Any:
     """Subtract two of M10's readings, or refuse when the units do not admit it.
 
     This is the `units` group's assertion made executable: a power is dimensionless and an MDE is
-    an effect, and subtracting one from the other is the unit error that is the most common silent
-    failure in this literature. The conversion factor between them is not a property of the unit,
-    so there is nothing to convert.
+    an effect, and subtracting one from the other is the unit error §4.2 calls the most common
+    silent failure in this literature. The conversion factor between them is not a property of the
+    unit, so there is nothing to convert.
     """
     if not a.unit.compatible_with(b.unit):
         return Refusal(

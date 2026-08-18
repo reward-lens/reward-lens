@@ -2,8 +2,8 @@
 
 A baseline is the score a claim has to beat before it is a claim. Not a sanity check you run at
 the end, not a footnote: the number that decides whether a reported detector found anything at
-all. The case that puts this at the foundation rather than at the end is a published one, and it
-is short. A probe was reported at AUC 0.998 on a hack-detection task. A zero-parameter string match
+all. The case that puts this in wave 1 rather than at the end is a published one, and it is
+short. A probe was reported at AUC 0.998 on a hack-detection task. A zero-parameter string match
 scores 100% on the same task. The author's own summary of the result is "the probe detects the
 hack, and the detection is empty."
 
@@ -14,9 +14,9 @@ constraint on this module: a baseline that is awkward to run does not get run, a
 runs gates nothing.
 
 Three pieces live here. `DetectionTask` is the input, defined as a small local protocol because
-these six need nothing from ``record/`` and should not depend on it. `BaselineScore` is the
-reading, and it carries per-item scores rather than only a summary, because the error correlation
-that `IncrementalValidity` needs cannot be recovered from a summary. `run_bank` and
+``record/`` does not exist yet and these six need nothing from it. `BaselineScore` is the reading,
+and it carries per-item scores rather than only a summary, because the error correlation that
+§6.4's `IncrementalValidity` needs cannot be recovered from a summary. `run_bank` and
 `compare_against_baselines` are the two calls a claim makes.
 
 **On what "matched" means.** The comparison does not use a hand-picked margin. Two methods are
@@ -26,7 +26,8 @@ chose. When the claim carries lineage labels the bootstrap resamples at the seed
 `stats.ess.cluster_bootstrap`, so cloning a stimulus fifty times does not buy a win.
 
 Attribution: the AUC 0.998 result, the string match that matches it, and the author's summary are
-a published finding by other people. Nothing in this module measured them.
+a published finding by other people, reported in the specification's §5.M. Nothing in this module
+measured them.
 """
 
 from __future__ import annotations
@@ -51,10 +52,10 @@ from reward_lens.stats.roc import roc_pr
 class DetectionTask:
     """One binary detection problem, in the only shape six dumb baselines need.
 
-    This is deliberately small. None of these six needs ``record/``: a baseline reads text, a
-    label, and at most one logged scalar per item. Keeping the input local rather than importing
-    the full record keeps the bank available to every claim, and the conversion from a `Run` to a
-    `DetectionTask` is one function at the call site.
+    This is deliberately small. ``record/`` is being built in a later wave and none of these six
+    needs it: a baseline reads text, a label, and at most one logged scalar per item. Defining the
+    input here rather than waiting keeps the bank available to every claim in wave 1, and the
+    conversion from a `Run` to a `DetectionTask` is one function somebody writes later.
 
     ``labels`` is the only required field. Everything else is a feature some subset of the bank
     reads, and a baseline whose feature is absent returns a refusal naming what to supply rather
@@ -133,8 +134,8 @@ class BaselineScore:
     """One baseline's reading, in a form comparable across all six.
 
     ``auroc`` is the headline and it is comparable because every baseline reduces to a per-item
-    score and the same rank statistic is applied to it. ``scores`` is kept because incremental
-    validity asks for the correlation between two methods' *errors*, and no summary produces that.
+    score and the same rank statistic is applied to it. ``scores`` is kept because §6.4 asks for
+    the correlation between two methods' *errors*, and no summary can produce that.
 
     ``n_parameters`` is the field that carries the argument. A string match with three literal
     markers and a TF-IDF logistic regression with 40,000 coefficients are both baselines, and a
@@ -334,14 +335,14 @@ def stratified_folds(
     positive and a negative variant leaks: the two near-identical members of a lineage fall into
     different folds, the model memorises the shared body, and the baseline reports the memorised
     label as out-of-sample skill. That is not hypothetical. On a synthetic corpus whose only
-    generalisable signal is chance, the ungrouped split returns AUROC 1.0; the same bug shows up
-    from the other side on 1,542 real receipt transcripts as 0.026, anti-predictive by the same
-    mechanism with the twin carrying the opposite label. Both are the same failure and both read
-    as a finding.
+    generalisable signal is chance, the ungrouped split returns AUROC 1.0; W3.6 hit the same bug
+    from the other side on 1,542 real receipt transcripts and got 0.026, anti-predictive by the
+    same mechanism with the twin carrying the opposite label. Both are the same failure and both
+    read as a finding.
 
     `DetectionTask.seed_labels` is the field to pass, and the comparison bootstrap already
     resamples at that level, so passing it here makes the split and the interval agree about what
-    an independent observation is.
+    an independent observation is. SPEC-ERRATA E36.
 
     Grouping is best-effort on balance and exact on containment: lineages are assigned largest
     first to whichever fold currently holds fewest items of that lineage's dominant class. Class
@@ -449,7 +450,7 @@ class BaselineBank:
         return max(candidates, key=lambda s: s.auroc) if candidates else None
 
     def as_mapping(self) -> dict[BaselineID, float]:
-        """The `{BaselineID: float}` shape `Evidence.baselines` carries."""
+        """The `{BaselineID: float}` shape §4.2 puts on `Evidence.baselines`."""
         return {k: v.auroc for k, v in self.scored().items()}
 
     def render(self) -> str:

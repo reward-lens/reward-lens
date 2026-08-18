@@ -2,8 +2,9 @@
 
 Every Observable that says one thing "aligns with", "predicts", or "exceeds"
 another owes a null: the value it would report if the relationship were absent.
-The null is a first-class object the runner attaches to the Evidence, so a
-reader can see the effect against its own noise floor instead of against zero.
+Section 2.11 makes the null a first-class object the runner attaches to the
+Evidence, so a reader can see the effect against its own noise floor instead of
+against zero.
 
 This module supplies the nulls the corpus actually uses:
 
