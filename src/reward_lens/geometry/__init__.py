@@ -1,4 +1,4 @@
-"""``reward_lens.geometry`` — frames, gauge, curvature, and the scalar bottleneck.
+"""``reward_lens.geometry`` — frames, gauge, curvature, and the scalar bottleneck (DESIGN section 2.7).
 
 The mathematical heart of cross-model validity. This subsystem turns three of the corpus's deepest
 programs into shared machinery: field theory (the reward Hessian spectrum), gauge (frames and
@@ -6,7 +6,7 @@ canonicalization), and capacity (the effective dimension). Its job is to make in
 executable, so that a cross-signal reward comparison measures a functional change rather than a
 coordinate change.
 
-Five modules:
+Six modules:
 
   - ``frame``: the `Frame` whitening artifact and `fit_frame` (Ledoit-Wolf shrinkage covariance,
     symmetric roots, null-subspace estimation), the per-(site, corpus) object that fixes the gauge.
@@ -19,6 +19,9 @@ Five modules:
     scalar head cannot express (T8).
   - ``subspace``: `cka`, `procrustes`, and null-anchored subspace / feature alignment, every number
     COVARIANT and frame-gated.
+  - ``drift``: `representation_drift` and `reading_drift`, Part 7.4's drift quantities between two
+    checkpoints on one fixed bank. The three `subspace` primitives take bare matrices; these take a
+    bank and a fitted direction, which is what a caller has. Three numbers, never collapsed into one.
 
 Importing this package pulls no torch. torch is needed only when `hessian_spectrum` or
 `flat_subspace` actually run on a real model through ``Runtime.hvp``, and even then it is imported
@@ -33,6 +36,13 @@ from reward_lens.core.extras import require_extra
 require_extra("white-box", subsystem="reward_lens.geometry")
 
 from reward_lens.geometry.canonical import AngleResult, canonicalize, effective_angle
+from reward_lens.geometry.drift import (
+    DriftRefused,
+    ReadingDrift,
+    RepresentationDrift,
+    reading_drift,
+    representation_drift,
+)
 from reward_lens.geometry.frame import (
     Frame,
     FrameArtifact,
@@ -54,8 +64,10 @@ from reward_lens.geometry.skew import PreferenceRankResult, PreferenceRankTest
 from reward_lens.geometry.subspace import (
     AlignmentResult,
     ProcrustesResult,
+    SpanFit,
     cka,
     hungarian_feature_alignment,
+    orthogonal_fit_on_span,
     procrustes,
     subspace_alignment,
 )
@@ -85,9 +97,17 @@ __all__ = [
     "PreferenceRankResult",
     # subspace comparison
     "cka",
+    "orthogonal_fit_on_span",
     "procrustes",
     "ProcrustesResult",
+    "SpanFit",
     "subspace_alignment",
     "hungarian_feature_alignment",
     "AlignmentResult",
+    # checkpoint drift
+    "representation_drift",
+    "reading_drift",
+    "RepresentationDrift",
+    "ReadingDrift",
+    "DriftRefused",
 ]
