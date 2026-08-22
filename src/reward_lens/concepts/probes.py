@@ -1,4 +1,4 @@
-"""The probe factory: linear concept probes with grouped CV and scorecard binding.
+"""The probe factory: linear concept probes with grouped CV and scorecard binding (section 2.5.2).
 
 A concept probe is a linear readout of a signal's activations, trained to predict whether a
 concept is present. The v1 primitive for a concept direction is the mean difference between the
@@ -23,9 +23,9 @@ in rather than leaving them to the caller.
   EXPLORATORY and leaves the gap as a visible TODO on the card. It never invents a calibration
   number, so a probe that was never graded cannot masquerade as one that was.
 
-The output is a persisted `Direction`: a named, sited, unit-normalized fp32 vector
+The output is a persisted `Direction` (section 2.5.1): a named, sited, unit-normalized fp32 vector
 that knows its training data and its calibration reference (or the honest absence of one). The
-direction is stored as Evidence so it is a first-class, provenance-carrying store citizen, the
+direction is stored as Evidence so it is a first-class, provenance-carrying store citizen (R8), the
 same live-object / registered-artifact split the geometry frame uses.
 
 The linear algebra is pure numpy, so the whole factory runs and is proven on CPU. The only place
@@ -62,19 +62,23 @@ _PROBE_VERSION = "1.0"
 
 
 # ---------------------------------------------------------------------------
-# The persisted Direction
+# The persisted Direction (section 2.5.1)
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Direction:
-    """A named, sited concept direction with its calibration reference.
+    """A named, sited concept direction with its calibration reference (section 2.5.1).
 
     ``vector`` is unit-normalized fp32 at ``site``. ``method`` records how it was estimated
-    (``"probe_lr"`` for a logistic probe, ``"contrast_mean"`` for the mean-difference primitive, and
-    so on) so a direction never loses the provenance of how it was made. ``train_data`` is the
+    (``"diff_in_means"`` for the difference of the two labelled populations' means, ``"probe_lr"``
+    for a logistic probe, ``"contrast_mean"`` for the paired mean-difference primitive, and so on)
+    so a direction never loses the provenance of how it was made. It is part of the hashed material
+    behind the `DirectionID`, so on the `fit_probe` path it is taken from the estimator that ran
+    rather than from the caller: an id that agrees with a false label is worse than no label.
+    ``train_data`` is the
     `DatasetID` of the captures it was fit on, because a direction that does not know its training
-    data cannot be reused honestly. ``calibration`` is the `CalibrationRef` from the answer-key
+    data cannot be reused honestly (R8). ``calibration`` is the `CalibrationRef` from the answer-key
     scorecard, or ``None`` when the probe was never graded against a planted structure; a direction
     with ``calibration is None`` can be used but taints downstream Evidence to EXPLORATORY.
 
@@ -106,7 +110,7 @@ class Direction:
 @register_payload
 @dataclass
 class DirectionArtifact:
-    """The serializable payload form of a `Direction`.
+    """The serializable payload form of a `Direction` (section 2.5.1, R8).
 
     A `Direction` holds a live `Site`; this artifact holds its canonical dict plus the fp32 vector,
     so it round-trips exactly through the evidence store's value codec. ``direction_evidence`` wraps
@@ -180,7 +184,7 @@ def direction_evidence(
     parents: tuple[str, ...] = (),
     n: int | None = None,
 ) -> Evidence:
-    """Wrap a `Direction` as COVARIANT Evidence so a fitted direction is a store citizen.
+    """Wrap a `Direction` as COVARIANT Evidence so a fitted direction is a store citizen (R8).
 
     A direction is a covariant quantity (it transforms with the residual-stream basis, gate 2), so
     the Evidence is typed COVARIANT and any cross-signal comparison of two directions will be forced
@@ -281,7 +285,7 @@ class SiteCaptures:
 def group_kfold_indices(
     groups: np.ndarray, n_splits: int, *, seed: int = 0
 ) -> list[tuple[np.ndarray, np.ndarray]]:
-    """Grouped k-fold split indices that never split a group across folds.
+    """Grouped k-fold split indices that never split a group across folds (section 2.5.2).
 
     Every distinct value in ``groups`` is a seed; all rows of one seed go to exactly one test fold.
     Groups are shuffled deterministically (by ``seed``) and dealt to the fold with the fewest rows so
@@ -381,6 +385,49 @@ def _fit_logreg(
     return _fit_logreg_numpy(x, y, sample_weight, l2)
 
 
+def _fit_diff_in_means(
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    sample_weight: np.ndarray,
+    l2: float,
+    solver: str,
+) -> tuple[np.ndarray, float]:
+    """Difference in means over the two labelled populations: the mass-mean direction.
+
+    ``coef`` is ``mean(x[y == 1]) - mean(x[y == 0])`` under ``sample_weight``, and the intercept
+    puts the zero of the score at the midpoint of the two weighted class means, so a positive score
+    means "nearer the positive population". It is the unsupervised counterpart of the logistic fit:
+    it reads the class shift and is blind to the covariance, where a logistic fit whitens by the
+    covariance and trades the class axis against the nuisance axes. The two are materially
+    different vectors on anisotropic activations, which is why they are separate estimators here
+    rather than two names for one.
+
+    ``l2`` and ``solver`` are accepted and unused. A mean difference has no penalty to set and no
+    solver to pick, and taking them keeps every entry in `_ESTIMATORS` callable through one
+    signature, so the sweep never has to know which estimator it is running.
+
+    Inverse-frequency class weights are constant within a class, so `_class_weights` leaves this
+    estimator's answer exactly unchanged: surviving class imbalance without reweighting is one of
+    the properties the mass-mean direction is chosen for. A class with no rows yields a zero vector
+    rather than a nan, matching what `_sweep_site` does with a single-class site.
+    """
+    del l2, solver  # a mean difference has neither; see the docstring
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y).ravel()
+    w = np.asarray(sample_weight, dtype=np.float64).ravel()
+    means: list[np.ndarray] = []
+    for cls in (0, 1):
+        m = y == cls
+        total = float(np.sum(w[m]))
+        if not m.any() or total <= 0:
+            return np.zeros(x.shape[1], dtype=np.float64), 0.0
+        means.append((w[m, None] * x[m]).sum(axis=0) / total)
+    coef = means[1] - means[0]
+    midpoint = 0.5 * (means[1] + means[0])
+    return coef, float(-midpoint @ coef)
+
+
 def _class_weights(y: np.ndarray, balance: bool) -> np.ndarray:
     """Per-row sample weights: inverse class frequency when balancing, else all ones."""
     y = np.asarray(y).ravel()
@@ -396,19 +443,69 @@ def _class_weights(y: np.ndarray, balance: bool) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
+# Which estimator ran, and the name it earns
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class _Estimator:
+    """A fitter and the ``method`` name a direction earns by having been fitted with it.
+
+    The label lives on the estimator rather than on the call, so it travels with the fit through
+    `_sweep_site` and onto the `SiteProbe` that carries the vector. `fit_probe` then reads the label
+    off the probe it chose. A caller selects an estimator by name and cannot supply a name for a
+    vector some other estimator produced, which is the property that makes ``method`` evidence
+    rather than annotation: it is hashed into the `DirectionID`, so a label the code did not earn
+    produces an artifact whose identity agrees with the lie.
+    """
+
+    method: str
+    fit: Callable[..., tuple[np.ndarray, float]]
+
+
+_ESTIMATORS: dict[str, _Estimator] = {
+    # Section 7.2 registers the difference in means as the primary estimator for the concept
+    # direction and logistic regression as the secondary. Both are fitted; both are reported.
+    "diff_in_means": _Estimator("diff_in_means", _fit_diff_in_means),
+    "probe_lr": _Estimator("probe_lr", _fit_logreg),
+    # The belief probe is the same logistic fitter under a name that says which of the two
+    # calibration standards the direction was held to (`concepts.beliefs.fit_belief_probe`).
+    "belief_lr": _Estimator("belief_lr", _fit_logreg),
+}
+
+
+def _resolve_estimator(method: str) -> _Estimator:
+    """The registered estimator ``method`` names, or a refusal naming what is available.
+
+    Refusing here is the point of the registry. Before it, ``method`` was a free string passed
+    verbatim into the direction's hashed material, so ``method="diff_in_means"`` returned a logistic
+    vector labelled as the registered primary and carrying an id that hashed as though it were one.
+    """
+    if method not in _ESTIMATORS:
+        raise ValueError(
+            f"fit_probe: no registered estimator named {method!r}; the registered estimators are "
+            f"{sorted(_ESTIMATORS)}. `method` selects the fitter and the direction's method is then "
+            "taken from the fitter that ran, so it cannot name an estimator that did not produce "
+            "the vector."
+        )
+    return _ESTIMATORS[method]
+
+
+# ---------------------------------------------------------------------------
 # Per-site sweep and the fit result
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class SiteProbe:
-    """One site's probe in the depth sweep.
+    """One site's probe in the depth sweep (section 2.5.2).
 
-    ``coef`` is the full-data logistic weight at ``site`` (the concept direction before
-    normalization); ``held_out_auc`` is the pooled out-of-fold AUC (each row scored by a fold that
-    did not train on it or on any of its clones); ``cv_auc_mean`` / ``cv_auc_std`` summarize the
-    per-fold AUCs. ``n_pos`` / ``n_neg`` are the class counts, surfaced so an imbalanced probe is
-    read as such rather than trusted blindly.
+    ``coef`` is the full-data weight at ``site`` (the concept direction before normalization) and
+    ``method`` names the estimator that produced it, written by the sweep from the `_Estimator` it
+    called rather than copied from the caller's argument; ``held_out_auc`` is the pooled
+    out-of-fold AUC (each row scored by a fold that did not train on it or on any of its clones);
+    ``cv_auc_mean`` / ``cv_auc_std`` summarize the per-fold AUCs. ``n_pos`` / ``n_neg`` are the
+    class counts, surfaced so an imbalanced probe is read as such rather than trusted blindly.
     """
 
     site: Site
@@ -419,14 +516,15 @@ class SiteProbe:
     cv_auc_std: float
     n_pos: int
     n_neg: int
+    method: str = "probe_lr"
 
 
 @dataclass(frozen=True)
 class ProbeFit:
-    """The result of `fit_probe`: the persisted direction plus its fit provenance.
+    """The result of `fit_probe`: the persisted direction plus its fit provenance (section 2.5.2).
 
-    ``direction`` is the persisted `Direction` (the headline artifact, from the best site).
-    ``evidence`` is that direction stored as Evidence. ``per_site`` is the depth curve, one
+    ``direction`` is the section 2.5.1 `Direction` (the headline artifact, from the best site).
+    ``evidence`` is that direction stored as Evidence (R8). ``per_site`` is the depth curve, one
     `SiteProbe` per swept site. ``calibration`` is the answer-key `CalibrationRef` (gate 1) or
     ``None``; ``scorecard_evidence`` is the answer-key ROC Evidence it points at, or ``None`` when
     the probe was not graded. ``held_out_auc`` and ``best_site`` are passthroughs of the chosen
@@ -451,6 +549,7 @@ def _oof_scores(
     y: np.ndarray,
     groups: np.ndarray,
     *,
+    estimator: _Estimator,
     cv: int,
     l2: float,
     balance: bool,
@@ -463,6 +562,10 @@ def _oof_scores(
     grouped by seed, no row is ever scored by a model that saw a clone of it. Returns the pooled
     out-of-fold score per row (``nan`` for a row whose fold could not be scored) and the list of
     per-fold AUCs.
+
+    ``estimator`` is the same one the full fit uses. Cross-validating one estimator and shipping
+    another's vector would report a held-out number for a probe nobody is going to use, which is
+    the half of a wrong estimator that a reader cannot see in the direction it returns.
     """
     n = x.shape[0]
     oof = np.full(n, np.nan, dtype=np.float64)
@@ -472,7 +575,9 @@ def _oof_scores(
         if np.unique(y_tr).size < 2:
             continue  # a fold with one class cannot train a discriminative probe; skip honestly
         w_tr = _class_weights(y_tr, balance)
-        coef, intercept = _fit_logreg(x[train_idx], y_tr, sample_weight=w_tr, l2=l2, solver=solver)
+        coef, intercept = estimator.fit(
+            x[train_idx], y_tr, sample_weight=w_tr, l2=l2, solver=solver
+        )
         scores = x[test_idx] @ coef + intercept
         oof[test_idx] = scores
         fold_aucs.append(float(roc_pr(scores, y[test_idx]).auc))
@@ -485,16 +590,21 @@ def _sweep_site(
     y: np.ndarray,
     groups: np.ndarray,
     *,
+    estimator: _Estimator,
     cv: int,
     l2: float,
     balance: bool,
     solver: str,
     seed: int,
 ) -> tuple[SiteProbe, np.ndarray]:
-    """Fit and cross-validate the probe at one site; return the `SiteProbe` and its OOF scores."""
+    """Fit and cross-validate the probe at one site; return the `SiteProbe` and its OOF scores.
+
+    The returned probe carries ``estimator.method``, so the name on the vector is written by the
+    only function that knows which fitter produced it.
+    """
     x = np.asarray(x, dtype=np.float64)
     oof, fold_aucs = _oof_scores(
-        x, y, groups, cv=cv, l2=l2, balance=balance, solver=solver, seed=seed
+        x, y, groups, estimator=estimator, cv=cv, l2=l2, balance=balance, solver=solver, seed=seed
     )
     finite = np.isfinite(oof)
     held_out_auc = float(roc_pr(oof[finite], y[finite]).auc) if np.any(finite) else float("nan")
@@ -503,7 +613,7 @@ def _sweep_site(
         coef = np.zeros(x.shape[1], dtype=np.float64)
         intercept = 0.0
     else:
-        coef, intercept = _fit_logreg(x, y, sample_weight=w_full, l2=l2, solver=solver)
+        coef, intercept = estimator.fit(x, y, sample_weight=w_full, l2=l2, solver=solver)
     fold_arr = np.asarray(fold_aucs, dtype=np.float64)
     probe = SiteProbe(
         site=site,
@@ -514,6 +624,7 @@ def _sweep_site(
         cv_auc_std=float(np.nanstd(fold_arr)) if fold_arr.size else float("nan"),
         n_pos=int(np.sum(y == 1)),
         n_neg=int(np.sum(y == 0)),
+        method=estimator.method,
     )
     return probe, oof
 
@@ -565,14 +676,20 @@ def fit_probe(
     target_tpr: float = 0.90,
     target_fpr: float = 0.05,
 ) -> ProbeFit:
-    """Train a linear concept probe with grouped CV and automatic scorecard binding.
+    """Train a linear concept probe with grouped CV and automatic scorecard binding (section 2.5.2).
 
     ``signal`` is either a `SiteCaptures` (the substrate-free path the proofs run on: activations,
     labels, and seed groups already in hand) or a live `RewardSignal`, in which case ``view`` (a
     DataView of pairs) and ``target`` (a ``(item, side) -> label`` callable) are captured into a
-    `SiteCaptures` at ``sites`` first. The probe is a logistic readout fit per site with seed-grouped
+    `SiteCaptures` at ``sites`` first. The probe is a linear readout fit per site with seed-grouped
     cross-validation, so no clone is ever scored by a model that trained on it; the site with the
     highest out-of-fold AUC becomes the returned `Direction`.
+
+    ``method`` selects the estimator from `_ESTIMATORS`: ``"diff_in_means"`` for the difference in
+    means over the two labelled populations, ``"probe_lr"`` (the default) for the logistic readout.
+    An unregistered name raises rather than being carried onto the direction, and the direction's
+    own ``method`` is taken from the estimator that ran, so a vector can never travel under another
+    estimator's name.
 
     Scorecard binding is automatic and honest. If an ``answer_key`` is supplied (or carried on the
     captures), the out-of-fold scores are graded against it and the resulting `CalibrationRef` is
@@ -586,8 +703,9 @@ def fit_probe(
         sites: Sites to sweep; defaults to every site in the captures.
         cv: Number of seed-grouped CV folds.
         name: The concept name; defaults to the target's or captures' name.
-        method: Stored on the direction (``"probe_lr"`` by default).
-        l2: Ridge strength on the logistic weight.
+        method: Which registered estimator to fit (``"probe_lr"`` by default). The direction's own
+            ``method`` comes from the estimator that ran, not from this argument.
+        l2: Ridge strength on the logistic weight. Ignored by estimators that have no penalty.
         class_balance: Weight the minority class up by inverse frequency.
         solver: ``"numpy"`` (deterministic IRLS) or ``"auto"`` (sklearn, numpy fallback).
         answer_key: The organism `AnswerKey` to grade against for calibration (gate 1).
@@ -597,8 +715,9 @@ def fit_probe(
         target_fpr: The false-positive rate of that same operating point.
 
     Returns:
-        A `ProbeFit` whose ``direction`` is the persisted `Direction`.
+        A `ProbeFit` whose ``direction`` is the persisted section 2.5.1 `Direction`.
     """
+    estimator = _resolve_estimator(method)
     captures = _as_captures(signal, view, target, sites, name=name)
     sweep_sites = sites or captures.sites
     if not sweep_sites:
@@ -615,6 +734,7 @@ def fit_probe(
             captures.features[site],
             captures.labels,
             captures.groups,
+            estimator=estimator,
             cv=cv,
             l2=l2,
             balance=class_balance,
@@ -646,10 +766,14 @@ def fit_probe(
         name=concept_name,
         site=best.site,
         vector=best.coef,
-        method=method,
+        # `best.method`, not `method`: the name on the direction is the one the estimator that
+        # produced `best.coef` earned. The two agree here by construction, and they agree because
+        # the code makes them, not because the caller was trusted.
+        method=best.method,
         train_data=captures.dataset_id,
         calibration=calibration,
         meta={
+            "estimator": best.method,
             "held_out_auc": best.held_out_auc,
             "cv_auc_mean": best.cv_auc_mean,
             "cv_auc_std": best.cv_auc_std,

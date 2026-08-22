@@ -1,4 +1,4 @@
-"""``reward_lens.attribution`` — reward decomposition (Direct Linear Attribution).
+"""``reward_lens.attribution`` — reward decomposition (Direct Linear Attribution, section 2.8.2).
 
 :mod:`reward_lens.attribution.dla` is the canonical, substrate-free implementation of the head- and
 component-level reward decomposition that the battery calls. It used to sit beside the v1

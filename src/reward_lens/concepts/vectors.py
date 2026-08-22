@@ -1,4 +1,4 @@
-"""Canonical concept-direction extraction and reward alignment (E08).
+"""Canonical concept-direction extraction and reward alignment (E08, section 2.8).
 
 A concept direction is the mean of per-example difference vectors ``h_pos - h_neg`` at a chosen
 site, unit-normalized. This is the same mean-difference estimator the v1 ``ConceptExtractor`` used;

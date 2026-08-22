@@ -1,4 +1,4 @@
-"""``reward_lens.concepts`` — directions, probes, dictionaries, and beliefs.
+"""``reward_lens.concepts`` — directions, probes, dictionaries, and beliefs (section 2.5).
 
 The concept subsystem turns activations into named, persisted directions and the calibrated probes
 that read them. Five layers sit here:
