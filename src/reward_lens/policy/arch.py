@@ -1,4 +1,4 @@
-"""Where a decoder stack keeps its blocks, resolved structurally rather than by family.
+"""Where a decoder stack keeps its blocks, resolved structurally rather than by family (§4.1).
 
 This is the replacement for the eleven-method ``ModelAdapter`` abstract base class and its six
 family subclasses. The v1 design asked "which architecture is this?" and dispatched to a class that

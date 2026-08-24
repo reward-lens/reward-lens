@@ -1,4 +1,4 @@
-"""The activation store, successor to v1's ``shared_cache``.
+"""The activation store (section 2.2.3), successor to v1's ``shared_cache``.
 
 The store is the content-addressed disk cache for captured activations. v1's ``ActivationFloor``
 keyed on ``(model, pair-set, side)``; the v3 key adds the site, the position spec, the dtype, and
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
-# The v1 .pt cache read adapter (E-parity)
+# The v1 .pt cache read adapter (E-parity, section 4.3.2)
 # ---------------------------------------------------------------------------
 
 
@@ -91,10 +91,10 @@ class V1Cache:
 
 
 def read_v1_cache(path: str | Path, device: str = "cpu") -> V1Cache:
-    """Load one v1 ``.pt`` shared-cache file into a :class:`V1Cache`.
+    """Load one v1 ``.pt`` shared-cache file into a :class:`V1Cache` (section 2.2.3, 4.3.2).
 
     The v1 format is a single ``torch.save`` dict of half-precision final-token tensors keyed by
-    layer, written by v1's own shared-cache writer. This reads exactly that structure back,
+    layer, written by ``experiments/utils/shared_cache.py``. This reads exactly that structure back,
     coercing layer keys to ``int`` and moving tensors to ``device`` (CPU by default so a single file
     can be inspected without a GPU). It loads one file, not the whole 2.5 GB campaign; the caller is
     expected to point it at a specific shard. Raises ``FileNotFoundError`` if the path is absent so a
@@ -224,8 +224,105 @@ def _safetensors_intact(path: Path) -> bool:
     return size == 8 + header_len + end
 
 
+@dataclass(frozen=True)
+class CacheStats:
+    """Hits and misses one ``ActivationStore`` instance has served since its counters were last reset.
+
+    A cache that silently serves the wrong entry looks exactly like a cache that is working: the
+    caller gets a tensor of the right shape and dtype and has no way to tell which subject produced
+    it. Comparing two returned tensors does not settle it either, because two genuinely distinct
+    subjects can return numerically close vectors and a comparison then passes for a reason that has
+    nothing to do with the cache. The counter is the direct observation: a read that recomputed
+    incremented ``misses``, a read that was served from an existing shard incremented ``hits``, and
+    no amount of luck in the values changes either number.
+
+    The counters are per-instance and in-memory, so a fresh `ActivationStore` over a warm directory
+    starts at zero and counts what *this* object did, not what the directory accumulated. They are
+    not synchronised; two threads sharing one store may lose an increment, which is acceptable for a
+    diagnostic and is why nothing gates on them.
+    """
+
+    hits: int = 0
+    misses: int = 0
+
+    @property
+    def total(self) -> int:
+        """Reads served, hits plus misses."""
+        return self.hits + self.misses
+
+    @property
+    def hit_rate(self) -> float | None:
+        """Fraction of reads served from cache, or ``None`` when nothing has been read yet."""
+        return None if self.total == 0 else self.hits / self.total
+
+
+#: Position kinds whose identity lives in ``PositionSpec.detail`` rather than in the kind name.
+#: ``explicit`` carries the token indices, ``judgment`` carries the verdict index the signal
+#: detected, ``span_ends`` carries the span kind the ends are taken from. For all three the kind
+#: string is the same for every read, so a key built from the kind alone is one key for the whole
+#: family (BLK-003). ``final`` and ``all`` resolve from the input, which is already in the key.
+_POSITION_KINDS_CARRYING_DETAIL = frozenset({"explicit", "judgment", "span_ends"})
+
+
+def _canonical_detail(detail: Any) -> Any:
+    """Reduce a ``PositionSpec.detail`` to a value a content hash can be taken over.
+
+    Order is preserved for sequences, because ``PositionSpec.resolve`` returns explicit indices in
+    the order given and the capture's rows come back in that order. Mapping keys are sorted.
+    Anything that is not a plain value, sequence or mapping is refused rather than hashed by
+    ``repr`` or by ``vars``: an object's address and an object's class name are both constant
+    across the things a cache key exists to separate, which is the failure this repair is closing.
+    """
+    if detail is None or isinstance(detail, (str, int, float, bool)):
+        return detail
+    if isinstance(detail, (list, tuple)):
+        return [_canonical_detail(item) for item in detail]
+    if isinstance(detail, dict):
+        return {
+            str(k): _canonical_detail(v)
+            for k, v in sorted(detail.items(), key=lambda kv: str(kv[0]))
+        }
+    raise ValueError(
+        f"a PositionSpec detail of type {type(detail).__name__} cannot enter the activation cache "
+        f"key: only values, sequences and mappings serialise canonically. Pass the resolved "
+        f"indices, or the configuration the signal used to resolve them, not the object."
+    )
+
+
+def _position_component(position: "str | Any | None") -> dict[str, Any]:
+    """The position half of the cache key: the kind **and** what the kind is configured with.
+
+    At `59a5f5a` this was ``getattr(spec.position, "kind", "final")`` and nothing else, so the two
+    reads Part 7.1 takes (the last prompt token, and ``T_pre`` generated tokens later) were one
+    entry. Both are ``explicit``.
+    """
+    if position is None:
+        return {"kind": "final", "detail": None}
+    if isinstance(position, str):
+        if position in _POSITION_KINDS_CARRYING_DETAIL:
+            raise ValueError(
+                f"position kind {position!r} carries its identity in PositionSpec.detail, so a "
+                f"bare kind string is not a position: every read of this kind would share one "
+                f"cache entry. Pass the PositionSpec."
+            )
+        return {"kind": position, "detail": None}
+    kind = getattr(position, "kind", None)
+    if kind is None:
+        raise ValueError(
+            f"cannot build a cache key from a position of type {type(position).__name__}: it has "
+            f"no 'kind'. Pass a PositionSpec, or a bare kind string for 'final' or 'all'."
+        )
+    detail = getattr(position, "detail", None)
+    if kind in _POSITION_KINDS_CARRYING_DETAIL and detail is None:
+        raise ValueError(
+            f"position kind {kind!r} was given no detail, so it is indistinguishable from every "
+            f"other {kind!r} read of the same input. Resolve it before caching."
+        )
+    return {"kind": str(kind), "detail": _canonical_detail(detail)}
+
+
 class ActivationStore:
-    """Content-addressed disk cache for captured activations.
+    """Content-addressed disk cache for captured activations (section 2.2.3).
 
     The key folds the model fingerprint, the dataset id or content hash, the site set, the position
     spec, the dtype, and the intervention fingerprint (``"none"`` for a clean run). Shards are
@@ -233,29 +330,60 @@ class ActivationStore:
     a cached shard memory-mapped or computes the capture via the signal and writes it back. fp16 is
     the default activation dtype; a spec asking for fp32 (covariance/whitening inputs) is honoured
     and stored fp32.
+
+    ``hits`` and ``misses`` count what ``get_or_compute`` did, and ``stats`` packages them. They are
+    the observable that tells a caller whether two reads of two subjects were two computations or
+    one computation served twice, which is not answerable from the returned tensors.
     """
 
     def __init__(self, root: str | Path | None = None):
         self.root = Path(root) if root is not None else get_settings().resolved_cache()
         self.root.mkdir(parents=True, exist_ok=True)
+        #: Reads ``get_or_compute`` served from an existing shard.
+        self.hits = 0
+        #: Reads ``get_or_compute`` had to compute because no shard existed for the key.
+        self.misses = 0
+
+    @property
+    def stats(self) -> CacheStats:
+        """The current hit/miss counts as a `CacheStats` snapshot."""
+        return CacheStats(hits=self.hits, misses=self.misses)
+
+    def reset_stats(self) -> None:
+        """Zero the hit and miss counters, so a caller can measure one phase of a sweep."""
+        self.hits = 0
+        self.misses = 0
 
     def key(
         self,
         model_fp: ModelFP,
         dataset: str,
         sites: tuple[Site, ...],
-        position: str,
+        position: "str | Any | None",
         dtype: str,
         intervention_fp: str = "none",
+        full_sequence: bool = False,
     ) -> str:
-        """Compute the content-addressed cache key."""
+        """Compute the content-addressed cache key (section 2.2.3).
+
+        ``position`` takes a ``PositionSpec``, or a bare kind string for the two kinds that carry
+        no configuration. Passing a ``PositionSpec`` is the calling convention: the kind alone is
+        not the position, and ``key`` refuses a bare ``"explicit"``, ``"judgment"`` or
+        ``"span_ends"`` for that reason (BLK-003). ``full_sequence`` mirrors ``CaptureSpec`` and
+        decides whether the shard holds every token position or only the resolved ones.
+
+        Adding those two components changes every key this method has ever produced. Shards
+        written under the old key are not read again; they are orphaned, not misread, which is the
+        only safe direction for a key repair.
+        """
         material = {
             "model_fp": str(model_fp),
             "dataset": dataset,
             "sites": [str(s) for s in sites],
-            "position": position,
+            "position": _position_component(position),
             "dtype": dtype,
             "intervention_fp": intervention_fp,
+            "full_sequence": bool(full_sequence),
         }
         return content_hash(material, "cap").split(":")[1]
 
@@ -346,15 +474,27 @@ class ActivationStore:
 
         On a cache hit the shard is returned memory-mapped; on a miss the signal computes the
         capture (``signal.capture``) and the result is written back under the content key before the
-        handle is returned. ``dataset_id`` defaults to the view's checksum where the data plane
+        handle is returned. ``dataset_id`` defaults to the view's checksum when the data plane (M2)
         provides one, else a hash of the view's repr, so the key is stable per data content.
+
+        Every call increments exactly one of ``self.hits`` or ``self.misses``. Those counters are the
+        only way a caller can tell a distinct capture from a reused one; the tensors cannot say.
         """
         model_fp = signal.meta.fingerprint
         dataset = dataset_id or _view_id(view)
-        position = getattr(spec.position, "kind", "final") if spec.position else "final"
-        key = self.key(model_fp, dataset, tuple(spec.sites), position, spec.dtype, intervention_fp)
+        key = self.key(
+            model_fp,
+            dataset,
+            tuple(spec.sites),
+            spec.position,
+            spec.dtype,
+            intervention_fp,
+            full_sequence=bool(getattr(spec, "full_sequence", False)),
+        )
         if self.has(model_fp, key):
+            self.hits += 1
             return self.get(model_fp, key)
+        self.misses += 1
         handle = signal.capture(view, spec)
         capture = next(iter(handle))
         self.put(
@@ -376,6 +516,7 @@ def _view_id(view: Any) -> str:
 
 __all__ = [
     "ActivationStore",
+    "CacheStats",
     "V1Cache",
     "read_v1_cache",
     "InMemoryCaptureHandle",

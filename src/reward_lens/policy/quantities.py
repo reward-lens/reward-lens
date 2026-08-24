@@ -7,10 +7,9 @@ either, because they are all namespaced to the wrong component: `grader.eval_awa
 closest in construction (a probe's held-out balanced accuracy) and it is a claim about a grader's
 prompts.
 
-So this package needs one row it cannot write, since `spec/QUANTITIES.yaml` is maintained for the
-library as a whole rather than per package. The row is defined here as data, `register_proposed`
-puts it in this process only, and `as_yaml_rows` emits it in the file's own field order so the
-amendment does not have to be retyped.
+So this package needs one row it cannot write, since `spec/QUANTITIES.yaml` belongs to the
+integrator. The row is defined here as data, `register_proposed` puts it in this process only, and
+`as_yaml_rows` emits it in the file's own field order so the amendment does not have to be retyped.
 That is the pattern `measure/decision/quantities.py` established and the reason it is a pattern: an
 instrument blocked on a registry row it does not own should still be runnable, testable and
 lintable, with the gap named rather than routed around.
@@ -135,12 +134,12 @@ __all__ = [
 def register_estimators() -> None:
     """Register C9's estimator, idempotently, now that the quantity row has landed.
 
-    The row is in `spec/QUANTITIES.yaml` now, so `register_proposed` is a no-op on a normal load
-    and stays only as the escape hatch it was written to be. What the row alone does not supply is
-    an `EstimatorEntry`, and lint rule two reads the estimator registry rather than the catalogue:
-    a quantity with a catalogue record and no estimator is still an open research target as far as
-    the docs build is concerned, and this one is not open. It is built, running, and produced the
-    first white-box reading in the library.
+    The row is in `spec/QUANTITIES.yaml` since wave 5's integration, so `register_proposed` is a
+    no-op on a normal load and stays only as the escape hatch it was written to be. What the row
+    alone does not supply is an `EstimatorEntry`, and lint rule two reads the estimator registry
+    rather than the catalogue: a quantity with a catalogue record and no estimator is still an open
+    research target as far as the docs build is concerned, and this one is not open. It is built,
+    running, and produced the first white-box reading in the library.
 
     Idempotent and re-callable for the reason recorded on the forecast ledger's equivalent: the
     estimator registry is a process-global that several test modules mutate by snapshotting and

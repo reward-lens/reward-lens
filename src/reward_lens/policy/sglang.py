@@ -1,4 +1,4 @@
-"""The SGLang policy: the same Plane A boundary, with the one difference that matters.
+"""The SGLang policy: the same Plane A boundary, with the one difference that matters (§8.3).
 
 SGLang is a second serving engine and it sits on the same side of the line as vLLM: sampling and
 log-probabilities out, no activations, no gradients. The five structural limits enumerated in

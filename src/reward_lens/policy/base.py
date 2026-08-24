@@ -1,14 +1,14 @@
-"""The policy as an openable object, symmetric with `signals/`.
+"""The policy as an openable object, symmetric with `signals/` (§2.1, §4.1).
 
-One structural claim, and this package is what it costs to believe it: **the grader and the policy
-are the same kind of object.** Both are usually networks with weights, activations and gradients;
-sometimes the grader is a program instead; sometimes the grader *is* the policy. An instrument that
-reads internals should not care which side of the loop it points at. So `policy/` sits beside
-`signals/` as a peer rather than under it, and a `PolicySubject` carries the same `Runtime` a
-`RewardSignal` carries, exposes readouts the same way, and captures activations through the same
-mount. What the package has to deliver is that the shipped lens and attribution instruments run
-against a policy with no change beyond the argument, and the way that is met is by not writing a
-second implementation of anything.
+Section 2.1 makes one structural claim and this package is what it costs to believe it: **the
+grader and the policy are the same kind of object.** Both are usually networks with weights,
+activations and gradients; sometimes the grader is a program instead; sometimes the grader *is*
+the policy. An instrument that reads internals should not care which side of the loop it points
+at. So `policy/` sits beside `signals/` as a peer rather than under it, and a `PolicySubject`
+carries the same `Runtime` a `RewardSignal` carries, exposes readouts the same way, and captures
+activations through the same mount. The acceptance clause for this package is that the shipped lens
+and attribution instruments run against a policy with no change beyond the argument, and the way
+that clause is met is by not writing a second implementation of anything.
 
 Four methods are the policy's own and have no grader analogue, which is why this is a peer and not
 an alias:
@@ -18,13 +18,13 @@ an alias:
 is what every off-policy correction, every KL term and every staleness check is built out of.
 ``grad_h`` differentiates a readout with respect to an activation site. ``token_gradients``
 differentiates it with respect to the input embeddings, one row per token, which is the per-token
-attribution the credit measure consumes.
+attribution the credit measure (W5.4) consumes.
 
 **Where gradients work, and where they cannot.** Everything here runs outside a serving engine, and
-that is not a limitation to be engineered away later, it is the line between Plane A and Plane B.
-Inference engines run under `torch.inference_mode()`, which is a documented hard block on autograd
-rather than a configuration: a tensor produced inside it carries no version counter and cannot
-enter a graph, so there is no flag that makes a backward pass work in-engine. Four more
+that is not a limitation to be engineered away later, it is the line §2.7 draws between Plane A and
+Plane B. Inference engines run under `torch.inference_mode()`, which is a documented hard block on
+autograd rather than a configuration: a tensor produced inside it carries no version counter and
+cannot enter a graph, so there is no flag that makes a backward pass work in-engine. Four more
 things are structurally unavailable in a paged-attention engine today and are listed in
 `reward_lens.policy.vllm` rather than here, because that module is where a caller who wants them
 will look. The design consequence is that `ServingPolicy` does not implement `PolicySubject`: it
@@ -52,7 +52,7 @@ from reward_lens.runtime.backend import SiteMap
 # how to read a network*, which is not a grader-side idea and is not duplicated here. They live in
 # `signals/base.py` because that is the package that needed them first; the import direction is the
 # one thing in this file that contradicts the peer claim, and moving them to a neutral module is a
-# change this package does not make.
+# request in this package's report rather than an edit it makes.
 from reward_lens.signals.base import (  # noqa: F401  (re-exported as this package's vocabulary)
     PositionSpec,
     Readout,
@@ -335,7 +335,7 @@ def runtime_provenance() -> dict[str, Any]:
 
 @runtime_checkable
 class PolicySubject(Protocol):
-    """A policy with white-box access, the peer of `RewardSignal`.
+    """A policy with white-box access, the peer of `RewardSignal` (§2.1, §4.1).
 
     The first block of members is identical to `RewardSignal`'s and that is the whole point: an
     instrument written against `meta`, `caps`, `runtime`, `readout`, `score`, `capture` and

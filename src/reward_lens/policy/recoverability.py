@@ -1,6 +1,6 @@
-"""`PolicyReadoutProbe`: what reading the policy's activations buys over reading its text.
+"""`PolicyReadoutProbe`: what reading the policy's activations buys over reading its text (§6.4).
 
-This is the library's first white-box reading in the strict sense: a reading produced by an
+This is the library's first white-box reading, in the sense §6.4 means: a reading produced by an
 instrument that opens the network, carrying an `IncrementalValidity` record whose `error_correlation`
 was measured rather than inferred. Every other white-box instrument in the battery emits
 `incremental=None`, which is why lint rule four ("a white-box instrument whose reading has
@@ -17,9 +17,9 @@ correlation between the probe's errors and the best baseline's.
 **The bar is decorrelation plus signal, not superiority.** A probe ten points worse than a length
 baseline and uncorrelated with it is worth more than one two points better and redundant, because
 the ensemble of the first pair beats either member and the ensemble of the second does not. That is
-the sentence this instrument exists to be able to return. On a run whose grader is a length
-function, the honest expected outcome is that the probe is redundant, and reporting that is the
-instrument working.
+§6.4's sentence and this instrument exists to be able to return it. On a run whose grader is a
+length function, the honest expected outcome is that the probe is redundant, and reporting that is
+the instrument working.
 
 **What it cannot do.** The probe is fitted on activations computed from *these* weights, and the
 completions were produced by whatever checkpoint the record was written from. If those differ, the
@@ -162,9 +162,9 @@ def _midpoint(scores: np.ndarray, labels: np.ndarray) -> float:
 class PolicyReadoutProbe(BaseObservable):
     """How much of a recorded outcome is linearly present in the policy's residual stream.
 
-    White-box: it needs `Access.FORWARD` on the policy and reads activations, so an
-    `IncrementalValidity` record is mandatory on its reading and this instrument supplies one
-    through `Context.emit(incremental=...)`.
+    White-box: it needs `Access.FORWARD` on the policy and reads activations, so §6.4 makes an
+    `IncrementalValidity` record mandatory on its reading and this instrument supplies one through
+    `Context.emit(incremental=...)`.
 
     What it cannot do, beyond the module docstring's two. The probe is linear, so a quantity the
     policy represents nonlinearly reads as absent, and "not linearly decodable" is routinely
@@ -178,7 +178,7 @@ class PolicyReadoutProbe(BaseObservable):
     version = "1.0"
     capabilities = Capability.ACTIVATIONS
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "incremental validity"
+    faithful_to = "6.4 incremental validity"
     deviations = (
         "the ridge penalty is fixed at alpha times the mean eigenvalue of the training Gram "
         "matrix rather than selected, so the probe takes one hyperparameter chosen in advance "
@@ -188,7 +188,7 @@ class PolicyReadoutProbe(BaseObservable):
         "estimator entry and is inherited unchanged here",
     )
 
-    # -- the instrument declarations ---------------------------------------
+    # -- the section 4.2 declarations --------------------------------------
     quantity = "policy.readout_recoverability"
     requires: AccessMatrix = {
         Component.POLICY: Access.FORWARD,

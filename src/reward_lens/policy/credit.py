@@ -1,4 +1,4 @@
-"""Credit as a conserved measure, not a per-token score (series G).
+"""Credit as a conserved measure, not a per-token score (§3.1.6, series G).
 
 The failed `VERIF-PRM` card asked a reward model to *estimate* where credit lay and scored AUC
 0.2821. Wrong question. In a live run credit assignment is not inferred, it is executed: the
@@ -77,9 +77,9 @@ if TYPE_CHECKING:  # pragma: no cover - torch is an extra, imported inside the f
 
 
 #: Roles whose tokens the loss is taken over, absent an explicit mask on the record. Every framework
-#: in scope masks environment tokens, and loss masking is a transform that changes what "per token"
-#: means, so this is a stated default rather than an inference: a caller who disagrees passes their
-#: own, and the value used is written onto the report.
+#: in scope masks environment tokens, and §3.2's table lists loss masking as a transform that changes
+#: what "per token" means, so this is a stated default rather than an inference: a caller who
+#: disagrees passes their own, and the value used is written onto the report.
 TRAINED_ROLES: tuple[str, ...] = ("assistant",)
 
 
@@ -208,8 +208,8 @@ def merge_empty(partition: Partition, *, into: str = "unattributed") -> Partitio
 # ---------------------------------------------------------------------------
 
 
-#: How the loss is normalised before the gradient is taken. Token-level versus sequence-level
-#: aggregation is a transform that changes what a downstream number means, and it is
+#: How the loss is normalised before the gradient is taken. §3.2's table lists token-level versus
+#: sequence-level aggregation as a transform that changes what a downstream number means, and it is
 #: `EstimatorSpec.aggregation` on the record. It is read rather than assumed because it does not
 #: cancel: `sequence` reweights rows by their own length and therefore moves the shares, not only
 #: the total.
@@ -617,7 +617,7 @@ def _model_of(policy: Any) -> Any:
     input embeddings) and **no method that differentiates with respect to the parameters**. This is
     the first instrument that needs `grad_theta`, so it reaches the module the way
     `policy.base.site_weights` already does, through `runtime.model`, and the missing protocol
-    method is not added here.
+    method is a request in this package's report rather than an edit it makes here.
     """
     runtime = getattr(policy, "runtime", policy)
     model = getattr(runtime, "model", None)
@@ -686,11 +686,11 @@ def disintegrate(
     in both directions when the native dtype is bfloat16 or float16, because float32 has strictly
     more of both exponent and mantissa, and it is the difference between a conservation error of
     1.56e-03 and one of 1.13e-07 on the reference record. Pass ``dtype=""`` to measure in the model's
-    own dtype, which is the right thing to do when the number you want is the numerics floor rather
-    than the credit.
+    own dtype, which is the right thing to do when the number you want is the numerics floor
+    (§4.7) rather than the credit.
 
     Returns a `Refusal` when the objective has no mass to disintegrate, which is a real case: a
-    group whose advantages are all zero (a degenerate group) produces an exactly zero
+    group whose advantages are all zero (a degenerate group, §3.2's E3) produces an exactly zero
     gradient, and every share of zero is undefined rather than uniform.
     """
     import torch
@@ -734,7 +734,7 @@ def disintegrate(
                 ),
                 remedy=(
                     "check the advantages: a group in which every rollout scored the same has an "
-                    "advantage of exactly zero on every token, which is a degenerate "
+                    "advantage of exactly zero on every token, which is section 3.2's degenerate "
                     "group rather than a measurement problem. Pool a window of steps, or read a "
                     "step whose group separated."
                 ),
@@ -820,7 +820,7 @@ def step_conservation(
 ) -> CreditReport | Refusal:
     """Disintegrate, then take a real optimizer step and check the parts sum to it.
 
-    This is the conservation check in one function. It runs the disintegration, snapshots every
+    This is the acceptance clause in one function. It runs the disintegration, snapshots every
     parameter, drives one `torch.optim.SGD` step on the negated objective at learning rate ``lr``,
     measures ``dtheta / eta``, compares it against the summed parts, and restores the snapshot.
 
@@ -1014,12 +1014,13 @@ def _decode_skyrl_tensor(blob: Mapping[str, Any] | None) -> np.ndarray | None:
 class SkyRLDump:
     """One `global_step_N_training_input.pkl`, read without importing SkyRL.
 
-    What is on disk and what is not, verified against source rather than against documentation. The
-    intended rung 0 is to consume SkyRL's own dump where it exists, but `dump_data_batch` is a bool
-    config field (`config.py:1085`) and the function is `dump_data` (`trainer.py:1238-1244`). The
-    sharper problem, which this reader reproduces: **`rewards` is popped at `trainer.py:436` and
-    `uids` at `:437`, five lines before the dump at `:441`.** So the dump carries the per-token
-    advantage tensor and neither the reward it came from nor the group it belongs to.
+    What is on disk and what is not, verified against source rather than against the specification.
+    §5.G rung 0 says "consume SkyRL's `dump_data_batch` where it exists", and SPEC-ERRATA E7 is
+    right that `dump_data_batch` is a bool config field (`config.py:1085`) and the function is
+    `dump_data` (`trainer.py:1238-1244`). E7 is also right about the sharper problem, and this
+    reader reproduces it: **`rewards` is popped at `trainer.py:436` and `uids` at `:437`, five lines
+    before the dump at `:441`.** So the dump carries the per-token advantage tensor and neither the
+    reward it came from nor the group it belongs to.
 
     That makes this a partial rung 0 rather than a free one, and the partiality is recoverable in
     one direction only. The group is recoverable: rows sharing a prompt are rows whose
@@ -1277,7 +1278,7 @@ def turn_mass(
     Refuses rather than substituting a token count when the per-token log-probabilities are absent.
     A share built from token counts is a different quantity wearing this one's name: it is the
     "uniform attribution over tokens" baseline this instrument is measured against, and returning it
-    here under the label `credit.by_turn` would be a silent downgrade of the quantity.
+    here under the label `credit.by_turn` would be the silent downgrade §6.1 exists to forbid.
     """
     turns_total = 0
     with_logprobs = 0
@@ -1372,7 +1373,7 @@ def turn_mass(
             ),
             remedy=(
                 "check the advantages: a step whose every group was degenerate carries an "
-                "advantage of exactly zero on every trajectory, which is a degenerate group rather "
+                "advantage of exactly zero on every trajectory, which is section 3.2's E3 rather "
                 "than a measurement problem. Read a step whose groups separated."
             ),
             statistics={"n_tokens_scored": tokens, "total_mass": total_mass},
@@ -1520,8 +1521,8 @@ class ImplicitPRM:
     def is_killed(self) -> bool:
         """G3's kill condition, evaluated either way it can fire.
 
-        Reporting that it fired is a result rather than a failure: the kill condition is "kill if
-        the induced function is constant", and a measured constant is the result.
+        Reporting that it fired closes the package rather than failing it: §5.G's own entry says
+        "kill if the induced function is constant", and a measured constant is the result.
         """
         return self.is_constant or self.is_degenerate
 
@@ -1582,7 +1583,7 @@ def implicit_prm(
             detail="at least one outcome reward is not finite",
             remedy=(
                 "a rollout whose grader abstained has no reward and must be excluded from the "
-                "group rather than counted as a zero; the record's `abstained` is that channel."
+                "group rather than counted as a zero; section 3.3's `abstained` is that channel."
             ),
             statistics={"rewards": finite},
         )
@@ -1736,21 +1737,21 @@ def implicit_prm(
 # ---------------------------------------------------------------------------
 
 
-#: `NO_COMPACTION` is declared for G1 "for any importance-weighted form". It is required
-#: unconditionally here rather than only for that form, and for a stronger reason: a compaction
-#: removes tokens from the trajectory *after* they were generated, so the id sequence this
-#: instrument tokenises is not the one the gradient was taken over, and every share is attributed
-#: to the wrong span rather than being merely biased.
+#: §5.G names `NO_COMPACTION` for G1 and gives it "for any importance-weighted form". It is required
+#: unconditionally here rather than only for that form, and the reason is stronger than the spec's:
+#: a compaction removes tokens from the trajectory *after* they were generated, so the id sequence
+#: this instrument tokenises is not the one the gradient was taken over, and every share is
+#: attributed to the wrong span rather than being merely biased.
 CREDIT_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.NO_COMPACTION}),
     measured_by={RegimeCondition.NO_COMPACTION: MEASURED_BY[RegimeCondition.NO_COMPACTION]},
     on_violation="refuse",
 )
 
-#: The catalogue leaves G2's envelope OPEN. `MASK_STABLE` is what it should be: the mask policy
-#: decides what "per token" means, so a turn decomposition taken across a window in which the mask
-#: changed is comparing two different quantities. That is this package's choice rather than the
-#: catalogue's.
+#: The catalogue leaves G2's envelope OPEN. `MASK_STABLE` is what it should be and the argument is
+#: in §3.2's own table: the mask policy decides what "per token" means, so a turn decomposition
+#: taken across a window in which the mask changed is comparing two different quantities. This is a
+#: choice this package made and it is in its report for ratification.
 TURN_ENVELOPE = EnvelopeSpec(
     requires=frozenset({RegimeCondition.MASK_STABLE}),
     measured_by={RegimeCondition.MASK_STABLE: MEASURED_BY[RegimeCondition.MASK_STABLE]},
@@ -1768,7 +1769,7 @@ PRM_ENVELOPE = EnvelopeSpec(
     on_violation="refuse",
 )
 
-#: G1's declared comparator: "uniform attribution over tokens". It is not one of M3's
+#: G1's declared comparator, from §5.G: "uniform attribution over tokens". It is not one of M3's
 #: six, so it is named alongside them rather than instead of them. Spelling it as a `baseline.*` id
 #: keeps it in the same namespace even though the bank does not hold it, and `credit_increment`
 #: constructs it explicitly.
@@ -1778,7 +1779,7 @@ CREDIT_BASELINES: tuple[str, ...] = ALL_SIX + (UNIFORM_ATTRIBUTION,)
 
 
 # ---------------------------------------------------------------------------
-# M9 on the white-box reading
+# M9 on the white-box reading (§6.4)
 # ---------------------------------------------------------------------------
 
 
@@ -1794,22 +1795,22 @@ def credit_increment(
 ) -> Any:
     """What the black-box bank already knew about where the credit was.
 
-    **The framing is a deliberate deviation from M9's default shape, because that shape does not fit
-    a definition.** M9 asks what an instrument adds to the ones already run, which presumes the
-    instrument is a predictor scored against an external criterion. The credit measure is not a
-    predictor: it is the exact disintegration of the step, and scoring it against itself would
-    return a perfect number that means nothing. So the criterion here **is** the white-box
-    measurement, and what is scored against it is every cheap method, the instrument's own
+    **The framing is a deviation from §6.4's default shape and it is deliberate, because the default
+    shape does not fit a definition.** M9 asks what an instrument adds to the ones already run,
+    which presumes the instrument is a predictor scored against an external criterion. The credit
+    measure is not a predictor: it is the exact disintegration of the step, and scoring it against
+    itself would return a perfect number that means nothing. So the criterion here **is** the
+    white-box measurement, and what is scored against it is every cheap method, the instrument's own
     record-only proxy included.
 
-    That inverts nothing about the question being asked. "What did opening the network buy?" is
-    answered directly: if the six dumb baselines recover which rollouts carried the gradient mass as
-    well as the advantage-weighted surprisal does, then the backward passes bought the ground truth
-    and not the localisation, and the instrument should say so. If they do not, the backward passes
-    are the only route to the quantity, which is the strongest case a white-box instrument can make
-    for itself.
+    That inverts nothing about the question §6.4 exists to ask. "What did opening the network buy?"
+    is answered directly: if the six dumb baselines recover which rollouts carried the gradient mass
+    as well as the advantage-weighted surprisal does, then the backward passes bought the ground
+    truth and not the localisation, and the instrument should say so. If they do not, the backward
+    passes are the only route to the quantity, which is the strongest case a white-box instrument
+    can make for itself.
 
-    ``proxy`` is the own-detector: one record-only score per rollout. ``n_tokens`` builds the
+    ``proxy`` is the own-detector: one record-only score per rollout. ``n_tokens`` builds §5.G's
     declared "uniform attribution over tokens" comparator. The label is whether a rollout's measured
     projected credit share is above the median of its own group, which keeps the comparison within
     the group the advantage was computed in rather than across steps with different scales.
@@ -1902,9 +1903,9 @@ def credit_increment(
 class CreditDisintegration(BaseObservable):
     """G1. Where this step's credit went, disintegrated, and whether the parts account for it.
 
-    White-box: it takes ``m + 1`` backward passes with respect to the parameters, so an
-    `IncrementalValidity` record is mandatory on the reading and this instrument supplies one
-    through `Context.emit(incremental=...)`.
+    White-box: it takes ``m + 1`` backward passes with respect to the parameters, so §6.4 makes an
+    `IncrementalValidity` record mandatory on the reading and this instrument supplies one through
+    `Context.emit(incremental=...)`.
 
     What it cannot do, beyond the module docstring's three. The disintegration is exact and it is
     exact about *the gradient*, not about the update: `sum mu = dtheta/eta` holds under plain SGD
@@ -1918,7 +1919,7 @@ class CreditDisintegration(BaseObservable):
     version = "1.0"
     capabilities = Capability.GRADIENTS
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "credit as a conserved measure"
+    faithful_to = "3.1.6 credit as a conserved measure"
     deviations = (
         "the catalogue gives G1 two quantities and this instrument declares `credit.measure`; "
         "`credit.conservation_error` travels on the payload as a first-class field rather than as "
@@ -1942,7 +1943,7 @@ class CreditDisintegration(BaseObservable):
     substrates = frozenset({Substrate.NEURAL_GEN})
     phases = frozenset({Phase.IN_RUN, Phase.POST_RUN})
     envelope = CREDIT_ENVELOPE
-    #: Two groups, two true relations, and both are declared here. Under
+    #: Two groups, two true relations, which is what SPEC-ERRATA E55 made declarable. Under
     #: `tokenization` the shares are **invariant**, and the reason is exact rather than approximate:
     #: log-probability is additive under a change of tokenisation that decodes to the same string,
     #: because `log pi(ab) = log pi(a) + log pi(b|a)`. So a share summed over a span defined on the
@@ -2041,7 +2042,7 @@ class TurnCredit(BaseObservable):
     """G2. Where the log-probability mass that received advantage sits, by turn and by tool call.
 
     Rung 0, and the whole of what a record supports on its own. Not white-box: it opens nothing and
-    differentiates nothing, so no `IncrementalValidity` goes on its reading, and that is the
+    differentiates nothing, so §6.4 puts no `IncrementalValidity` on its reading, and that is the
     correct asymmetry rather than an omission. The reading it produces is the cheap estimate of what
     `CreditDisintegration` measures exactly.
 
@@ -2056,14 +2057,14 @@ class TurnCredit(BaseObservable):
     version = "1.0"
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "the agentic form"
+    faithful_to = "3.1.6 the agentic form"
     deviations = (
         "the catalogue gives G2 two quantities and this instrument declares `credit.by_turn`; "
         "`credit.by_tool_call` travels on the same payload, because a tool-call share is the same "
         "disintegration read through a different index and computing it twice would let the two "
         "disagree",
         "the catalogue leaves G2's envelope OPEN and this instrument declares `MASK_STABLE`. The "
-        "argument is that the mask policy decides what 'per token' means, so a turn "
+        "argument is section 3.2's: the mask policy decides what 'per token' means, so a turn "
         "decomposition pooled across a window in which it changed compares two quantities",
     )
 
@@ -2082,10 +2083,10 @@ class TurnCredit(BaseObservable):
     phases = frozenset({Phase.IN_RUN, Phase.POST_RUN})
     envelope = TURN_ENVELOPE
     #: `none`, from the registry, which resolves to the trivial group. A share over turns is a
-    #: dimensionless normalised number and no invariance group acts on the turn index. The
+    #: dimensionless normalised number and no group in Appendix B acts on the turn index. The
     #: retokenisation argument that makes `credit.measure` invariant applies here too and the
-    #: registry does not say so, so this instrument follows the registry rather than declaring the
-    #: stronger relation on its own.
+    #: registry does not say so; that is a recommendation in this package's report rather than a
+    #: declaration it makes on its own.
     invariance = "none"
     invariance_relation = INVARIANT
     baselines = CREDIT_BASELINES
@@ -2148,7 +2149,7 @@ class ImplicitPRMReading(BaseObservable):
     version = "1.0"
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "the implicit process reward model"
+    faithful_to = "3.1.6 the implicit process reward model"
     deviations = (
         "the catalogue leaves G3's envelope OPEN and this instrument declares `NEAR_POLICY`, which "
         "bites at rung 1 only: a re-roll estimates the value under the policy doing the rolling, "
@@ -2231,7 +2232,7 @@ def register_estimators() -> None:
     open research target to the docs build, and three of these five are built and running.
 
     `credit.localiser_quality` (G4) and `credit.successor_representation` (G5) get nothing, on
-    purpose. G4 needs a re-roll capability and a labelled localiser and is not built here;
+    purpose. G4 needs a re-roll capability and a labelled localiser and is not in this work package;
     G5 is `OPEN` in the catalogue because the state abstraction for a language trajectory is
     undefined and defining it is the research content, not the implementation.
 

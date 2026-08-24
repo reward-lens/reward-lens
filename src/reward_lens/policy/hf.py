@@ -1,4 +1,4 @@
-"""The HuggingFace policy: a `PolicySubject` over a loaded causal language model.
+"""The HuggingFace policy: a `PolicySubject` over a loaded causal language model (§4.1).
 
 `HFPolicyRuntime` implements the six-method `Runtime` protocol against a decoder stack, so
 everything above `runtime` (every capture, every intervention mount, every instrument in the
@@ -13,7 +13,7 @@ with a hidden state is a scalar the model computes. So a policy's `Readout` is a
 difference of two rows, and projecting the residual stream at each layer onto it is the logit lens.
 That is not an analogy. `LensCrystallization` projects the residual at every layer onto the readout
 vector and reports the depth at which half the final differential has formed; run against a grader
-with its reward head it is the reward lens, and run against a policy with a two-token contrast it is
+with its reward head it is the reward-lens, and run against a policy with a two-token contrast it is
 the logit lens, and it is the same code with the subject as the only argument that changed. Section
 2.1's claim that the pivot between the two prior designs is an argument value rather than a pivot is
 either true here or nowhere.
@@ -58,6 +58,7 @@ from reward_lens.runtime.backend import (
     SiteMap,
     TokenBatch,
 )
+from reward_lens.runtime.hf import resolve_capture_positions
 from reward_lens.runtime.hooks import CaptureMount, LeafCutMount, mounted_interventions
 
 if TYPE_CHECKING:
@@ -256,8 +257,8 @@ class HFPolicyRuntime:
         ids = batch.input_ids.to(self.device)
         mask = batch.attention_mask.to(self.device)
         final_pos = self._final_positions(mask)
-        single_position = self._is_final_position(spec.position) and not spec.full_sequence
-        positions = final_pos if single_position else None
+        positions = resolve_capture_positions(spec, final_pos)
+        single_position = positions is not None
         mount = CaptureMount(
             self.model,
             self.arch,  # type: ignore[arg-type]  # hooks.py types this ModelAdapter; it calls three methods
@@ -276,7 +277,7 @@ class HFPolicyRuntime:
         finally:
             for handle in handles:
                 handle.remove()
-        positions_list = [[int(p)] for p in final_pos.tolist()] if single_position else []
+        positions_list = [[int(p)] for p in positions.tolist()] if single_position else []
         capture = Capture(tensors=mount.tensors, positions=positions_list, dtype=spec.dtype)
         raw = RawOutput(
             reward=None,
@@ -446,7 +447,7 @@ class HFPolicyRuntime:
 
 
 class HFPolicy:
-    """A causal language model as a `PolicySubject`.
+    """A causal language model as a `PolicySubject` (§2.1, §4.1).
 
     Build through `wrap_hf_policy` or `from_pretrained`. ``contrast`` names the two tokens whose
     logit difference is the policy's primary scalar readout; the readout is called ``decision``
@@ -692,7 +693,7 @@ class HFPolicy:
 
         For a direction readout this is the logit-lens curve along the sequence in a single forward.
         For ``logprob`` it is the running per-token log-probability of the item's own tokens, which
-        is the curve `credit.implicit_prm` reads.
+        is the curve `credit.implicit_prm` (W5.4's) reads.
         """
         import torch
 
@@ -1080,9 +1081,17 @@ def wrap_hf_policy(
         readouts.append(logit_readout(model, neg, last))
     readouts.append(logprob_readout(last))
 
+    # The fourth site of the same defect. This passed the literal ``"ArchitectureView"`` as the
+    # adapter id, so every policy this constructor has ever built folded one constant string into its
+    # fingerprint, exactly as the three grader-side sites folded the adapter's class name. The
+    # replacement describes the architecture that was walked and stays machine-independent: no path
+    # goes in, because a policy's identity is its weights and those are hashed directly (BLK-002).
+    arch_id = f"arch:layers={arch.n_layers},d={arch.d_model},heads={arch.n_heads}"
+    declared = str((lineage or {}).get("declared_base", "") or "")
+    policy_id = f"{declared}|{arch_id}" if declared else arch_id
     meta = PolicyMeta(
-        fingerprint=fingerprint(model, tokenizer, "ArchitectureView"),
-        adapter="ArchitectureView",
+        fingerprint=fingerprint(model, tokenizer, policy_id),
+        adapter=arch_id,
         architecture=arch_string,
         lineage=lineage or {"provenance_tier": "weights-verified"},
         template={"chat_template": getattr(tokenizer, "chat_template", None) is not None},

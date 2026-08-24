@@ -1,8 +1,8 @@
-"""Hook site addressing and mounting.
+"""Hook site addressing and mounting (section 2.2.1).
 
 This is the port of v1's hook mechanics (forward hooks per layer for resid/attn/mlp; o_proj
 pre-hooks for per-head capture; handles always removed in ``finally``) with the one structural
-change that matters: **captures and interventions share a single mounting path**. In v1,
+change the design demands: **captures and interventions share a single mounting path**. In v1,
 patching and caching were separate code paths, which is why an Observable could not be measured
 under an arbitrary Intervention. Here both a capture and an intervention are just a hook on a module
 resolved from the ``SiteMap``, installed by the same machinery and torn down in the same ``finally``.
@@ -62,7 +62,7 @@ def _rewrap(output: Any, new_hidden: "torch.Tensor") -> Any:
 
 
 class CaptureMount:
-    """Install capture hooks for a set of sites and collect their activations.
+    """Install capture hooks for a set of sites and collect their activations (section 2.2.1).
 
     Used as a context manager around a single forward pass::
 
@@ -183,7 +183,7 @@ class LeafCutMount:
     .requires_grad_(True)`` and stashes the leaf. The rest of the network then runs as a function of
     the leaf, so ``autograd.grad(scalar, leaf)`` gives the reward gradient at that site and a second
     ``create_graph=True`` pass gives Hessian-vector products. This is the mechanism behind the
-    runtime's ``grad`` and ``hvp``. The leaf is available as ``mount.leaf`` after the
+    runtime's ``grad`` and ``hvp`` (section 2.2.1). The leaf is available as ``mount.leaf`` after the
     forward.
     """
 
@@ -308,7 +308,7 @@ def mounted_interventions(
     interventions: Sequence[Any],
     signal: Any = None,
 ) -> Iterator[None]:
-    """Mount interventions on the same hook path captures use.
+    """Mount interventions on the same hook path captures use (section 2.6.1, R4).
 
     Each element is an ``Intervention``, an already-compiled ``CompiledIntervention``, or a
     single-site object with ``site`` and ``apply(hidden)``; see :func:`mount_points`. A pre-hook or

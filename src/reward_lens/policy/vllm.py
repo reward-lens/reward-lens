@@ -1,4 +1,4 @@
-"""The vLLM policy: sampling and log-probabilities, and nothing that needs a graph.
+"""The vLLM policy: sampling and log-probabilities, and nothing that needs a graph (§2.7, §8.3).
 
 A serving engine is a Plane A object. It is where the tokens come from, it is fast, and it is
 closed: what you can get out of it is what its API returns, and no amount of configuration turns it
@@ -8,8 +8,8 @@ actually satisfy and **does not implement the rest**. It has no `capture`, no `g
 that needs either gets a `Refusal` with a remedy from the capability gate rather than a slow path
 or, worse, a fast path that silently returns numbers taken off a detached tensor.
 
-That is deliberate, and it is the design point: the boundary between the two planes should be
-impossible to cross rather than expensive to cross. A backend that offered a degraded
+That is deliberate and it is the design point §2.7 makes: the boundary between the two planes
+should be impossible to cross rather than expensive to cross. A backend that offered a degraded
 `capture` would be a backend where the degradation is invisible in the reading.
 
 **The five things that are structurally unavailable in a paged-attention engine today.** These are
@@ -40,7 +40,8 @@ or `GENERATIVE`, it runs against either.
 
 **This module does not import vLLM.** It defines the contract and the refusal; the engine call is
 one method with a documented signature, and `vllm` is not a declared dependency of this package.
-Wiring an actual client would take a new dependency, and that is deliberately not done here.
+Wiring the actual client is a request in W5.1's report, because a new dependency is not a builder's
+decision.
 """
 
 from __future__ import annotations
@@ -165,12 +166,10 @@ class ServingPolicy:
     def __getattr__(self, name: str) -> Any:
         """Fail with the boundary, by name, for anything Plane B.
 
-        A bare `AttributeError` would be correct and useless: the caller would learn that a method
+        A plain `AttributeError` would be correct and useless: the caller would learn that a method
         is missing and not that it is missing on purpose and where the same measurement can be
-        taken. `EngineBoundary` *is* an `AttributeError`, so the message is carried without
-        breaking the one thing the language asks of `__getattr__`, which is that a name it will not
-        supply raises `AttributeError` and is therefore invisible to `hasattr`. This intercepts
-        only the five names that matter and lets everything else raise normally.
+        taken. This intercepts only the four names that matter and lets everything else raise
+        normally.
         """
         if name in ("capture", "grad_h", "token_gradients", "hvp", "with_interventions"):
             raise EngineBoundary(

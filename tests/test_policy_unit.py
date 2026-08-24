@@ -278,7 +278,7 @@ def test_any_head_slice_matches_the_column_block(policy, head):
 
 
 def test_generated_invariance_repr_basis():
-    """`PolicyReadoutProbe` under `repr.basis`, through the generated property test.
+    """`PolicyReadoutProbe` under `repr.basis`, through the generated property test of §2.6.
 
     The group rotates activations and readouts by a Haar-drawn orthogonal `Q`. The probe's reading
     is its out-of-fold accuracy, which is a function of the activations alone, so the payload

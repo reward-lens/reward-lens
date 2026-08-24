@@ -35,11 +35,11 @@ perfectly decodable and causally inert, and "linearly decodable" is routinely re
 direction that nobody ran cannot fail.
 
 **Why the estimators take arrays.** Every function here takes activations, rewards and labels as
-numpy, not a subject. The grader and the policy are the same kind of object, and the cheapest way
-to mean that is to have the estimators never learn which one they are looking at: whoever captured
-the activations already made that choice. `capture_at` is the thin helper that does the capturing,
-and it works against anything exposing the `capture` of `PolicySubject` or the
-`forward_with_cache_batch` of the shipped `RewardModel`.
+numpy, not a subject. Section 2.1's claim is that the grader and the policy are the same kind of
+object, and the cheapest way to mean it is to have the estimators never learn which one they are
+looking at: whoever captured the activations already made that choice. `capture_at` is the thin
+helper that does the capturing, and it works against anything exposing the `capture` of
+`PolicySubject` or the `forward_with_cache_batch` of the shipped `RewardModel`.
 """
 
 from __future__ import annotations
@@ -468,8 +468,8 @@ def behaviour_under(
     """Score items under an optional intervention, returning per-item values.
 
     The one place in this package that touches a subject's scoring surface, because
-    `with_interventions` already exists and returns something every scorer accepts unchanged: an
-    intervention does not need the scorer to know about it.
+    `with_interventions` already exists and returns something every scorer accepts unchanged. That
+    is section 2.6.1's design working: an intervention does not need the scorer to know about it.
 
     ``intervention`` is one intervention or a sequence of them. A sequence is the normal case for
     anything built by `interventions.rescue.knockout_and_rescue`, which returns one mountable object

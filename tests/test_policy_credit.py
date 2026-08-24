@@ -2,7 +2,7 @@
 
 The acceptance file points the instrument at the reference record and asserts the conservation
 clause. This file covers the arithmetic underneath it, the refusal paths, and the one generated
-property test the group requires: the credit measure declares `tokenization` INVARIANT and this is where
+property test §2.6 requires: the credit measure declares `tokenization` INVARIANT and this is where
 that claim is checked rather than asserted.
 """
 
@@ -76,7 +76,7 @@ def test_trained_positions_are_the_mask_shifted_into_target_coordinates():
 
 
 def test_the_three_aggregations_give_three_different_weightings():
-    """Token-level versus sequence-level aggregation is a real transform.
+    """§3.2's table lists token-level versus sequence-level aggregation as a real transform.
 
     They do not differ by a constant: `sequence` divides each row by its own trained count, so on a
     ragged batch it moves the shares and not only the total. Here the rows are equal length, so the
@@ -227,7 +227,7 @@ def test_a_one_dimensional_mask_is_not_a_part():
 
 
 # ---------------------------------------------------------------------------
-# The generated invariance test (`tokenization`)
+# The generated invariance test (section 2.6, Appendix B `tokenization`)
 # ---------------------------------------------------------------------------
 
 
@@ -250,7 +250,7 @@ def _span_share(payload: InvariancePayload) -> float:
 def _retokenisation_group() -> InvarianceGroup:
     """A `tokenization` generator that splits a token and splits its contribution with it.
 
-    The default generator for this group duplicates a token id and leaves everything else
+    Appendix B's default generator for this group duplicates a token id and leaves everything else
     alone, and its own docstring says an instrument that needs the real thing supplies its own. This
     is the real thing for a log-probability quantity, and the reason it is faithful rather than
     convenient is the chain rule: a finer tokeniser that splits `ab` into `a` then `b` satisfies
@@ -412,7 +412,7 @@ def test_turn_mass_refuses_when_the_advantage_is_everywhere_zero():
     out = turn_mass([trajectory])
     assert isinstance(out, Refusal)
     assert out.reason is RefusalReason.BELOW_LOD
-    assert "degenerate group rather than a measurement problem" in out.remedy
+    assert "E3" in out.remedy
 
 
 def test_a_trajectory_with_no_advantage_contributes_nothing_and_is_counted():
@@ -464,7 +464,7 @@ def test_mismatched_completions_and_rewards_refuse():
 
 
 def test_a_non_finite_reward_refuses_rather_than_counting_as_zero():
-    """The whole argument: grader failure is a distinct outcome and never a real zero."""
+    """§3.3's whole argument: grader failure is a distinct outcome and never a real zero."""
     out = implicit_prm([[1], [2]], [1.0, float("nan")])
     assert isinstance(out, Refusal)
     assert "abstained" in out.remedy

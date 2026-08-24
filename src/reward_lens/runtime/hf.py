@@ -1,4 +1,4 @@
-"""The HuggingFace runtime backend.
+"""The HuggingFace runtime backend (section 2.2.1).
 
 ``HFRuntime`` implements the six-method ``Runtime`` protocol against a loaded ``transformers`` model
 plus an adapter and a numerics policy. It ports v1's proven mechanics (the left-padded batched
@@ -9,7 +9,7 @@ spectroscopy, gradient-ascent hack generation, incentive Jacobians, and second-o
 
 Two design decisions make the readout exact and cheap. First, the reward is read by capturing the
 **input to the reward head** with a forward pre-hook (the exact tensor the head consumes) and
-projecting it onto the readout vector in fp32, rather than trusting the model's own head
+projecting it onto the readout vector in fp32 (R11), rather than trusting the model's own head
 output in the trunk dtype. On the tiny fp32 model this is bit-identical to the native logits; on a
 bf16 8B model it is the more correct value and supersedes v1's coerce-head-to-bf16 hack. Second,
 because a classifier pools the last token under causal attention, the head input at position ``t``
@@ -81,8 +81,70 @@ def auto_batch_size(
     return max(16, min(512, (raw // 16) * 16))
 
 
+def resolve_capture_positions(
+    spec: "CaptureSpec", final_pos: "torch.Tensor"
+) -> "torch.Tensor | None":
+    """The per-row token index to capture at, or `None` when the read is not single-position.
+
+    `CaptureMount._store` has always gathered one arbitrary index per row with
+    `hidden[batch_idx, pos]`. What was missing was any way for an index other than the last valid
+    token to arrive: a non-`final` kind set `positions=None` and `full_sequence=True`, so an
+    explicit index silently became a whole-sequence read and the caller got a `(B, T, d)` tensor
+    where it asked for one position (BLK-005).
+
+    ``explicit`` resolves here. ``detail`` is one index for the whole batch or one per row, and a
+    negative index counts back from that row's own last valid token, so `-1` is the final token
+    whatever the padding did. Anything outside the row's valid span raises: `_store` clamps, and a
+    clamp turns a wrong index into a plausible vector read at the wrong token.
+
+    ``all``, ``step_ends``, ``span_ends`` and ``judgment`` are genuinely multi-position and keep the
+    whole-sequence behaviour they have always had. `final` and `None` return `final_pos` unchanged,
+    which is what every one of the existing call sites passes.
+    """
+    import torch
+
+    if spec.full_sequence:
+        return None
+    position = spec.position
+    kind = "final" if position is None else getattr(position, "kind", "final")
+    if kind == "final":
+        return final_pos
+    if kind != "explicit":
+        return None
+
+    detail = getattr(position, "detail", None)
+    if detail is None:
+        raise ValueError(
+            "an explicit PositionSpec carries its indices in `detail`; got None. One index for the "
+            "batch or one per row"
+        )
+    raw = list(detail) if isinstance(detail, (list, tuple)) else [detail]
+    batch = int(final_pos.shape[0])
+    if len(raw) == 1:
+        raw = raw * batch
+    if len(raw) != batch:
+        raise ValueError(
+            f"an explicit PositionSpec gave {len(raw)} indices for {batch} rows. Pass one index or "
+            f"one per row; anything else pairs one row's position with another's tokens"
+        )
+    last = [int(p) for p in final_pos.tolist()]
+    resolved: list[int] = []
+    for row, (index, end) in enumerate(zip(raw, last)):
+        value = int(index)
+        if value < 0:
+            value = end + 1 + value
+        if not 0 <= value <= end:
+            raise ValueError(
+                f"row {row}: explicit position {int(index)} resolves to {value}, outside that "
+                f"row's valid span [0, {end}]. `CaptureMount` clamps, which would return a "
+                f"plausible vector read at the wrong token"
+            )
+        resolved.append(value)
+    return torch.as_tensor(resolved, dtype=final_pos.dtype, device=final_pos.device)
+
+
 class HFRuntime:
-    """A ``Runtime`` backed by a loaded HF model, an adapter, and a numerics policy.
+    """A ``Runtime`` backed by a loaded HF model, an adapter, and a numerics policy (section 2.2.1).
 
     Construct via ``signals.loaders.wrap_hf_model`` / ``from_tiny``, which resolve the adapter, the
     site map, the head module, and the policy. The runtime is signal-agnostic: it captures the
@@ -130,7 +192,7 @@ class HFRuntime:
         return final_positions(attention_mask)
 
     def collate(self, tokenized: Sequence[Any]) -> TokenBatch:
-        """Left-pad a list of ``TokenizedInput`` into a ``TokenBatch``.
+        """Left-pad a list of ``TokenizedInput`` into a ``TokenBatch`` (section 2.2.2).
 
         Left padding aligns the final (response-end) token at column ``T-1`` for every row, so a
         final-token readout reads the same relative position for the whole batch. ``meta`` carries
@@ -160,7 +222,7 @@ class HFRuntime:
     # -- protocol: forward --------------------------------------------------
 
     def forward(self, batch: TokenBatch) -> RawOutput:
-        """Run a forward pass, capturing the head-input hidden state.
+        """Run a forward pass, capturing the head-input hidden state (section 2.2.1).
 
         Returns a ``RawOutput`` whose ``extra["head_input"]`` is the ``(B, T, d)`` tensor the reward
         head consumes and ``extra["final_pos"]`` the ``(B,)`` last-valid indices. ``reward`` carries
@@ -211,7 +273,7 @@ class HFRuntime:
     def forward_with_capture(
         self, batch: TokenBatch, spec: CaptureSpec
     ) -> tuple[RawOutput, Capture]:
-        """Forward once, capturing the requested sites.
+        """Forward once, capturing the requested sites (section 2.2.1).
 
         Position resolution: for the default ``final`` (or ``None``) position the mount gathers the
         last-valid token and stores ``(B, d)`` per site; for any other position kind, or when
@@ -223,8 +285,8 @@ class HFRuntime:
         ids = batch.input_ids.to(self.device)
         mask = batch.attention_mask.to(self.device)
         final_pos = self._final_positions(mask)
-        single_position = self._is_final_position(spec.position) and not spec.full_sequence
-        positions = final_pos if single_position else None
+        positions = resolve_capture_positions(spec, final_pos)
+        single_position = positions is not None
         mount = CaptureMount(
             self.model,
             self.adapter,
@@ -243,7 +305,7 @@ class HFRuntime:
         finally:
             for handle in handles:
                 handle.remove()
-        positions_list = [[int(p)] for p in final_pos.tolist()] if single_position else []
+        positions_list = [[int(p)] for p in positions.tolist()] if single_position else []
         capture = Capture(tensors=mount.tensors, positions=positions_list, dtype=spec.dtype)
         raw = RawOutput(
             reward=None,
@@ -261,7 +323,7 @@ class HFRuntime:
 
     @contextlib.contextmanager
     def mounted(self, interventions: Sequence[Any]) -> Any:
-        """Mount interventions via the shared hook path; remove them on exit."""
+        """Mount interventions via the shared hook path; remove them on exit (section 2.6.1)."""
         with mounted_interventions(self.model, self.adapter, self.site_map, interventions):
             yield self
 
@@ -313,7 +375,7 @@ class HFRuntime:
         single ``(d,)`` vector is accepted and treated as ``K=1``); the return is ``(B, K, d)`` where
         entry ``[b, k]`` is ``H_b @ vecs[k]`` for item ``b``'s ``d x d`` reward Hessian at its final
         token. Passing ``vecs = I_d`` therefore materializes the dense Hessian for a single item,
-        which is exactly how the acceptance test checks this method against a finite-difference
+        which is exactly how the M1 acceptance test checks this method against a finite-difference
         reference. The head scalar is accumulated in fp32 regardless of trunk dtype.
         """
         import torch
