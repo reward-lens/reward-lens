@@ -1,11 +1,11 @@
-"""Signal loading and auto-discovery.
+"""Signal loading and auto-discovery (section 2.3.4).
 
 ``load_signal`` is the front door: given an HF id, a local path, or a ``SignalSpec``, it sniffs the
 loading convention (TRL ``AutoModelForSequenceClassification`` with ``num_labels=1``; OpenRLHF
 CausalLM plus ``value_head``/``score``; veRL ``AutoModelForTokenClassification`` last-valid-token;
 ad-hoc ``trust_remote_code`` heads), chooses the adapter and the numerics policy, fingerprints, and
 runs a conformance quick-check before handing back a ``RewardSignal``. Ambiguities are errors with
-candidate lists, never silent guesses.
+candidate lists, never silent guesses (liability 7).
 
 The real HF-hub load of the 8B/27B campaign models is GPU/download-gated: this machine has an 8 GB
 laptop GPU and cannot hold them, so ``load_signal`` implements the code path and marks it, but will
@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 
 from reward_lens.core.errors import ConformanceError
 from reward_lens.signals.adapters import (
+    adapter_label,
     build_site_map,
     is_multi_readout,
     resolve_adapter,
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class SignalSpec:
-    """A resolved request to load a signal.
+    """A resolved request to load a signal (section 2.3.4).
 
     ``source`` is an HF id or a local path; ``adapter`` and ``numerics`` override auto-detection when
     given; ``convention`` names the loading convention when the caller already knows it. ``device``
@@ -90,14 +91,19 @@ def wrap_hf_model(
 
     model.eval()
     torch_device = torch.device(device)
+    resolved_adapter_id = adapter_id or ""
     if adapter is None:
-        adapter = resolve_adapter(model, adapter_id or "")
-    adapter_name = type(adapter).__name__
+        adapter = resolve_adapter(model, resolved_adapter_id)
+    # Two values, not one. The label describes what the navigation found and lands in the metadata;
+    # ``adapter_id`` is this checkpoint's provenance and is what the fingerprint gets. Collapsing
+    # them into the adapter object's class name put the constant "GraderAdapter" into every
+    # and dropped the caller's id on the floor (BLK-002).
+    adapter_name = adapter_label(adapter)
     arch = architecture or _architecture_string(model)
     policy = numerics if numerics is not None else resolve_policy(arch)
 
     # Apply the numerics policy at the boundary: null the soft cap on the reward path (Gemma-2) and
-    # record what was disabled so SignalMeta.soft_cap carries it (E09).
+    # record what was disabled so SignalMeta.soft_cap carries it (R11, E09).
     disabled = policy.apply_to_config(getattr(model, "config", None))
     soft_cap = next(iter(disabled.values()), None) if disabled else None
 
@@ -108,7 +114,9 @@ def wrap_hf_model(
 
     site_map = build_site_map(adapter, model)
     head = reward_head_module(adapter, model)
-    fp = fingerprint(model, tokenizer, adapter_name)
+    fp = fingerprint(model, tokenizer, resolved_adapter_id)
+    lineage_record = dict(lineage or {"provenance_tier": "weights-verified"})
+    lineage_record.setdefault("adapter_id", resolved_adapter_id)
 
     runtime = HFRuntime(
         model=model,
@@ -124,7 +132,7 @@ def wrap_hf_model(
         fingerprint=fp,
         adapter=adapter_name,
         architecture=arch,
-        lineage=lineage or {"provenance_tier": "weights-verified"},
+        lineage=lineage_record,
         template={"chat_template": getattr(tokenizer, "chat_template", None) is not None},
         numerics_policy=policy.name,
         soft_cap=soft_cap,
@@ -165,7 +173,7 @@ def from_tiny(
     adapter, hooks, readout, grad, and hvp see the same module tree they will see on an 8B Skywork
     model; only the magnitudes differ. The tokenizer defaults to gpt2 (cached, fast, offset-capable);
     if gpt2 cannot be loaded offline, a minimal byte-level tokenizer is used so the tests still run
-    with no network.
+    with no network (section: hardware reality).
     """
     import torch
     from transformers import LlamaConfig, LlamaForSequenceClassification
@@ -203,7 +211,7 @@ def from_tiny(
 
 
 def load_signal(spec: "str | SignalSpec", **overrides: Any) -> ClassifierRM:
-    """Load a signal from an HF id, a local path, or a ``SignalSpec``.
+    """Load a signal from an HF id, a local path, or a ``SignalSpec`` (section 2.3.4).
 
     Sniffs the loading convention from the config architecture and head names, chooses the adapter
     and numerics policy, then loads the weights and delegates to ``wrap_hf_model``. The weight load
@@ -227,7 +235,8 @@ def load_signal(spec: "str | SignalSpec", **overrides: Any) -> ClassifierRM:
             f"loading {spec.source!r} from the HF hub is GPU/download-gated on this machine "
             f"(8 GB GPU, cannot hold the 8B/27B campaign models). The convention sniffed as "
             f"{convention!r} and the code path is implemented; set allow_download=True to attempt "
-            f"it on adequate hardware, or use wrap_hf_model/from_tiny for a local model."
+            f"it on adequate hardware, or use wrap_hf_model/from_tiny for a local model. "
+            f"(section 2.3.4, hardware reality)"
         )
     model, tokenizer = _load_weights(spec, convention)
     return wrap_hf_model(
@@ -273,7 +282,7 @@ def _sniff_convention(spec: "SignalSpec") -> str:
         f"cannot determine the loading convention for {spec.source!r}; architectures="
         f"{architectures}. Candidates: trl-sequence-classification, openrlhf-value-head, "
         f"verl-token-classification, adhoc-reward-model. Pass SignalSpec(convention=...) "
-        f"explicitly; no silent guesses."
+        f"explicitly (liability 7: no silent guesses)."
     )
 
 
@@ -338,7 +347,7 @@ def _quickcheck(signal: ClassifierRM) -> None:
 
     The full suite is ``signals.conformance.run_conformance``; this is the cheap subset that must
     pass before a freshly loaded signal is handed back, so a broken load (a dtype mismatch, a
-    mis-resolved head) fails loudly at load rather than deep in a study. Raises
+    mis-resolved head) fails loudly at load rather than deep in a study (liability 7). Raises
     ``ConformanceError`` on failure.
     """
     import numpy as np

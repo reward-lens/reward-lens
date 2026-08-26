@@ -1,8 +1,8 @@
-"""Shared machinery for the v3 signal adapters.
+"""Shared machinery for the v3 signal adapters (section 2.3.3).
 
-``ClassifierRM`` is the template. The seven remaining adapters (judge, process, implicit,
+M1 shipped ``ClassifierRM`` as the template. The seven remaining adapters (judge, process, implicit,
 rubric, trajectory, dense, ensemble) implement the same ``RewardSignal`` protocol and must reuse the
-same runtime, the same fp32 head-projection numerics, the same left-padded batching, the same
+same runtime, the same fp32 head-projection numerics (R11), the same left-padded batching, the same
 span carry-through, and the same Evidence assembly. Rather than copy ``ClassifierRM``'s hardening
 into each file, that hardening lives here once.
 
@@ -66,7 +66,7 @@ def split_item(item: Any) -> tuple[str, str, bool]:
     Accepts a ``(prompt, response)`` pair, a mapping with ``prompt``/``response`` (or ``text``), a
     raw string, or an object exposing ``.prompt``/``.chosen``/``.response``/``.text``. ``raw`` is
     True when the text is tokenized as-is (no template). Kept here so every adapter normalizes items
-    the same way before the typed ``DataView`` is universal.
+    the same way before the typed ``DataView`` (M2) is universal.
     """
     if isinstance(item, str):
         return "", item, True
@@ -101,7 +101,7 @@ def single_token_id(tokenizer: Any, word: str) -> int:
 
     Encodes the word and returns the last content id, which drops a leading BOS if the tokenizer
     adds one. Used to read the ``W_U[Yes] - W_U[No]`` direction off the unembedding for a generative
-    judge. Raises if the word does not encode to at least one token.
+    judge (section 2.3.3). Raises if the word does not encode to at least one token.
     """
     ids = tokenizer.encode(word) if hasattr(tokenizer, "encode") else tokenizer(word)["input_ids"]
     ids = list(ids)
@@ -116,7 +116,7 @@ def single_token_id(tokenizer: Any, word: str) -> int:
 
 
 def build_site_map(adapter: Any, model: "torch.nn.Module", d_model: int) -> Any:
-    """Resolve every logical ``Site`` an architecture exposes to a module path.
+    """Resolve every logical ``Site`` an architecture exposes to a module path (section 2.2.1).
 
     This mirrors ``signals.adapters.build_site_map`` but takes ``d_model`` explicitly rather than
     reading it off a reward-head weight, because a generative signal's model has an ``lm_head``, not
@@ -175,7 +175,7 @@ def build_hf_runtime(
     The one thing this parameterizes that ``wrap_hf_model`` does not is ``head_module``: the runtime
     installs its forward pre-hook on exactly this module to capture the tensor it consumes (the
     ``score`` head input for a classifier-style adapter, the ``lm_head`` input for a generative one),
-    which is what the fp32 readout projects. Everything else (adapter resolution, numerics
+    which is what the fp32 readout projects (R11). Everything else (adapter resolution, numerics
     policy, soft-cap disabling, fingerprint, pad token) is the same boundary work ``wrap_hf_model``
     does. Returns the pieces an adapter's constructor assembles into a signal.
     """
@@ -184,13 +184,17 @@ def build_hf_runtime(
     from reward_lens.runtime.fingerprint import fingerprint
     from reward_lens.runtime.hf import HFRuntime
     from reward_lens.runtime.precision import resolve_policy
-    from reward_lens.signals.adapters import resolve_adapter
+    from reward_lens.signals.adapters import adapter_label, resolve_adapter
 
     model.eval()
     torch_device = torch.device(device)
     if adapter is None:
         adapter = resolve_adapter(model, adapter_id)
-    adapter_name = type(adapter).__name__
+    # The label describes the navigation and goes in the metadata; ``adapter_id`` is the caller's
+    # provenance for this checkpoint and is what the fingerprint gets. Those were one value here,
+    # the adapter object's class name, which is the constant "GraderAdapter" on every path, so
+    # the caller's id never reached the fingerprint and every checkpoint shared one (BLK-002).
+    adapter_name = adapter_label(adapter)
     arch = architecture or _architecture_string(model)
     policy = numerics if numerics is not None else resolve_policy(arch)
 
@@ -204,7 +208,9 @@ def build_hf_runtime(
 
     d_model = int(head_module.weight.shape[-1])
     site_map = build_site_map(adapter, model, d_model)
-    fp = fingerprint(model, tokenizer, adapter_name)
+    fp = fingerprint(model, tokenizer, adapter_id)
+    lineage_record = dict(lineage or {"provenance_tier": "weights-verified"})
+    lineage_record.setdefault("adapter_id", adapter_id)
 
     runtime = HFRuntime(
         model=model,
@@ -219,7 +225,7 @@ def build_hf_runtime(
         fingerprint=fp,
         adapter=adapter_name,
         architecture=arch,
-        lineage=lineage or {"provenance_tier": "weights-verified"},
+        lineage=lineage_record,
         template={"chat_template": getattr(tokenizer, "chat_template", None) is not None},
         numerics_policy=policy.name,
         soft_cap=soft_cap,
@@ -248,7 +254,7 @@ def _architecture_string(model: Any) -> str:
 
 
 class SignalImplBase:
-    """Shared implementation of the ``RewardSignal`` protocol machinery.
+    """Shared implementation of the ``RewardSignal`` protocol machinery (section 2.3.2).
 
     Holds the runtime, meta, numerics policy, tokenizer, readouts, declared capabilities, and any
     mounted interventions. Provides the protocol methods every adapter shares (``readouts``,
@@ -289,7 +295,7 @@ class SignalImplBase:
     # -- readouts -----------------------------------------------------------
 
     def readouts(self) -> list[Readout]:
-        """The readouts this signal exposes."""
+        """The readouts this signal exposes (section 2.3.1)."""
         return list(self._readouts)
 
     def readout(self, name: str) -> Readout:
@@ -305,7 +311,7 @@ class SignalImplBase:
     # -- tokenization (span carry-through) ---------------------------------
 
     def _render(self, item: Any) -> tuple[str, tuple[tuple[int, int, str], ...], dict[str, Any]]:
-        """Render an item to ``(text, char_spans, meta)``.
+        """Render an item to ``(text, char_spans, meta)`` (section 2.3.2).
 
         The default is the classifier rendering: a ``user``/``assistant`` chat turn, or the raw text
         for a bare string. A subclass overrides this to build its own text (a judge's verdict prompt,
@@ -327,7 +333,7 @@ class SignalImplBase:
 
         ``response is None`` with ``add_generation_prompt=True`` produces a prompt that ends exactly
         where the model would begin its answer, which is the judgment position a generative judge
-        reads. Mirrors ``ClassifierRM._template`` for the response-present case so a
+        reads (section 2.3.3). Mirrors ``ClassifierRM._template`` for the response-present case so a
         classifier and a judge tokenize a shared prefix identically.
         """
         gen = (
@@ -346,7 +352,7 @@ class SignalImplBase:
         return f"User: {prompt}\nAssistant: {response}"
 
     def tokenize(self, item: Any) -> TokenizedInput:
-        """Tokenize an item, carrying character-to-token offsets and typed spans.
+        """Tokenize an item, carrying character-to-token offsets and typed spans (section 2.3.2).
 
         Delegates rendering to ``_render`` (adapter-specific) and owns the load-bearing part: request
         offset mapping from the fast tokenizer, then map any character spans on the item into token
@@ -395,7 +401,7 @@ class SignalImplBase:
     def project_final(
         self, tokenized: Sequence[TokenizedInput], vector: "torch.Tensor", bias: float = 0.0
     ) -> np.ndarray:
-        """Project the final head-input onto a readout direction in fp32, as a numpy array."""
+        """Project the final head-input onto a readout direction in fp32 (R11), as a numpy array."""
         import torch
 
         pooled = self._final_pooled(tokenized)
@@ -405,7 +411,7 @@ class SignalImplBase:
     def linear_prefix_curves(
         self, tokenized: Sequence[TokenizedInput], vector: "torch.Tensor", bias: float = 0.0
     ) -> tuple[list[np.ndarray], int]:
-        """Per-token reward curves for a linear/logit_diff readout.
+        """Per-token reward curves for a linear/logit_diff readout (section 2.3.2).
 
         Mirrors ``ClassifierRM.score_prefixes``: the head input at every valid position is projected
         onto the readout vector in one forward, and because a causal model pools under causal
@@ -455,7 +461,7 @@ class SignalImplBase:
     # -- capture ------------------------------------------------------------
 
     def capture(self, view: Any, spec: "CaptureSpec") -> "CaptureHandle":
-        """Capture activations at the spec's sites, returning a ``CaptureHandle``.
+        """Capture activations at the spec's sites, returning a ``CaptureHandle`` (section 2.3.2).
 
         Identical to ``ClassifierRM.capture``: collate the view into one left-padded batch and run
         ``forward_with_capture`` under any mounted interventions. The store-backed streaming path is
@@ -472,7 +478,7 @@ class SignalImplBase:
     # -- interventions ------------------------------------------------------
 
     def with_interventions(self, *ivs: Any) -> "SignalImplBase":
-        """Return a shallow clone with additional interventions mounted.
+        """Return a shallow clone with additional interventions mounted (section 2.6.1).
 
         Each intervention is compiled against this signal and appended to the mount list; the
         intervention fingerprints become part of every Evidence subject, so an intervened score can
@@ -597,7 +603,7 @@ def map_char_spans(
     offsets: tuple[tuple[int, int], ...],
     char_spans: tuple[tuple[int, int, str], ...],
 ) -> tuple[Span, ...]:
-    """Map character spans to token ``Span`` objects using the offset mapping."""
+    """Map character spans to token ``Span`` objects using the offset mapping (section 2.3.2)."""
     if not offsets or not char_spans:
         return ()
     out: list[Span] = []

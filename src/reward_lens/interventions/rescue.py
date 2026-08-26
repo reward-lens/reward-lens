@@ -368,6 +368,287 @@ def norm_matched_random(direction: Any, *, seed: int = 0) -> np.ndarray:
     return v / norm if norm > 0 else u
 
 
+# ---------------------------------------------------------------------------
+# The two control families that are drawn from inside a supplied subspace
+# ---------------------------------------------------------------------------
+#
+# `norm_matched_random` above draws over the full ambient dimension, and so did every other
+# random-direction generator in this package. Part 9.2 rules that draw out of the control family in
+# as many words: "A random direction from the full residual space is nearly orthogonal to everything
+# and therefore nearly free, and it is not a control." The ambient draw is still the right object for
+# the ambient control family and is left exactly as it was; what was missing was any way to draw
+# from inside a subspace somebody supplied.
+#
+# Two families are needed and they are different controls. The first asks "does any direction of
+# this norm inside the identified subspace do what the fitted one does". The second asks the sharper
+# question, "does any direction inside the subspace but orthogonal to the fitted one do it", and it
+# exists because if the whole subspace is behaviourally relevant then the first control loses by
+# construction and a control that cannot fail is decoration.
+#
+# **The subspace's construction is not decided here and must not be.** The design uses the phrase
+# "the identified subspace" eight times and defines it at none of them, and the wider corpus carries
+# two constructions that disagree with each other. `basis` is therefore a required argument: this
+# module knows how to draw from a subspace and does not know which subspace.
+#
+# Everything runs in float64. `unit_direction`, which the ambient draw uses, casts to float32, and
+# float32 cannot express the tolerances these controls are held to: a complement projection below
+# 1e-10 and a norm matched to 1e-12 are both under float32's resolution at these magnitudes.
+
+
+@dataclass(frozen=True)
+class SubspaceDraw:
+    """A control family drawn from inside a supplied subspace, with what it was drawn from.
+
+    ``directions`` is ``(n_draws, d_ambient)``, one control per row, each already rescaled to
+    ``target_norm``. The whole matrix is returned rather than a summary because Part 9.2 asks for
+    the distribution to be reported rather than summarised, and a percentile computed from a mean
+    and a spread is not that.
+
+    ``effective_rank`` is the rank of the space the draw actually explores, which is the rank of the
+    supplied basis for the subspace-matched family and one less for the target-orthogonal family.
+    ``degenerate`` is set when that space has rank one, which is the case where the family collapses
+    to a single direction up to sign: twenty draws from it are two point masses, and a percentile
+    read off them is a percentile read off two numbers. It is a flag rather than a refusal because
+    the draw is well defined; what is not well defined is the statistic somebody computes from it.
+
+    ``target_in_subspace_fraction`` is how much of the supplied direction survived projection into
+    the subspace, in norm. It is 1 when the fitted direction lies inside the registered subspace,
+    which is the case both controls are written for. Below 1 the target-orthogonal family is
+    orthogonal to the *projected* target rather than to the one that was passed, and a reader has to
+    know that before reading a percentile.
+    """
+
+    directions: np.ndarray
+    family: str
+    effective_rank: int
+    target_norm: float
+    seed: int
+    degenerate: bool
+    target_in_subspace_fraction: float
+
+    @property
+    def n_draws(self) -> int:
+        return int(self.directions.shape[0])
+
+
+def _orthonormal_span(basis: Any, *, d_expected: int) -> np.ndarray:
+    """An orthonormal basis for the column space of `basis`, with its numerical rank taken.
+
+    `geometry.subspace._orthonormalize` is the package's definition of this and is used rather than
+    a second QR written here, per the one-canonical-definition rule. It is imported at call time so
+    that `interventions` does not acquire an import-time dependency on the `white-box` extra, and
+    deliberately without a `try`/`except`: `ExtraRequiredError` subclasses `ImportError`, so
+    catching `ImportError` here would swallow the message that names the missing extra.
+
+    The QR result is then trimmed to the numerical rank, because a caller's construction is a span
+    and a span given by four vectors may have rank three. Keeping a null column would put draws
+    outside the subspace at the level of the QR's own rounding, which is the one error this whole
+    function exists to make impossible.
+    """
+    from reward_lens.geometry.subspace import _orthonormalize
+
+    b = np.asarray(basis, dtype=np.float64)
+    if b.ndim == 1:
+        b = b[:, None]
+    if b.ndim != 2:
+        raise RescueError(f"a subspace basis is a 2-D array of columns; got shape {b.shape}")
+    if b.shape[0] != d_expected:
+        raise RescueError(
+            f"the basis spans dimension {b.shape[0]} and the direction has dimension "
+            f"{d_expected}; a draw from a subspace of a different space is not a control"
+        )
+    rank = int(np.linalg.matrix_rank(b, tol=1e-10))
+    if rank == 0:
+        raise RescueError("the supplied basis has rank zero; there is no subspace to draw from")
+    q = _orthonormalize(b)
+    if q.shape[1] != rank:
+        # Rank-deficient generator: take the span from an SVD, which orders by singular value and
+        # lets the deficient directions be dropped rather than kept at rounding level.
+        u, s, _ = np.linalg.svd(b, full_matrices=False)
+        q = u[:, :rank]
+    return np.ascontiguousarray(q, dtype=np.float64)
+
+
+def _draw_in_coordinates(rank: int, n_draws: int, rng: np.random.Generator) -> np.ndarray:
+    """`n_draws` directions uniform on the unit sphere of a `rank`-dimensional space.
+
+    Gaussian then normalise, which is the same construction `stats.nulls._random_orthonormal_basis`
+    relies on for its Haar property and is uniform for the same reason: a spherical Gaussian has no
+    preferred direction, so dividing out the length leaves the uniform law on the sphere.
+
+    Drawn in the subspace's *own* coordinates and mapped out through an orthonormal basis, not as
+    `basis @ standard_normal(k)`. The second is the obvious way to write this and it is wrong in a
+    way that hides: it inherits the generator's conditioning, so a construction whose columns are
+    badly scaled concentrates the control family along the generator's dominant direction and the
+    control becomes easier to beat than it looks. Because an orthonormal basis is an isometry, the
+    uniform law in coordinates is the uniform law in the subspace.
+    """
+    g = rng.standard_normal((n_draws, rank))
+    norms = np.linalg.norm(g, axis=1, keepdims=True)
+    # A Gaussian draw hits the origin with probability zero, but a redraw is cheaper than a
+    # documented impossibility that turns into a NaN once every few billion draws.
+    while np.any(norms < 1e-300):
+        bad = (norms < 1e-300).ravel()
+        g[bad] = rng.standard_normal((int(bad.sum()), rank))
+        norms = np.linalg.norm(g, axis=1, keepdims=True)
+    return g / norms
+
+
+def _target_norm(direction: np.ndarray, norm: float | None) -> float:
+    if norm is not None:
+        if not np.isfinite(norm) or norm <= 0:
+            raise RescueError(f"an explicit control norm must be positive and finite; got {norm}")
+        return float(norm)
+    value = float(np.linalg.norm(direction))
+    if value < 1e-12:
+        raise RescueError(
+            "the direction has (near) zero norm, so there is no norm to match and no orientation "
+            "to be orthogonal to"
+        )
+    return value
+
+
+def _as_direction(direction: Any) -> np.ndarray:
+    d = np.asarray(direction, dtype=np.float64).reshape(-1)
+    if d.size == 0:
+        raise RescueError("the direction is empty")
+    if not np.all(np.isfinite(d)):
+        raise RescueError("the direction carries non-finite entries")
+    return d
+
+
+def subspace_matched_random(
+    direction: Any,
+    basis: Any,
+    *,
+    n_draws: int = 1,
+    seed: int = 0,
+    norm: float | None = None,
+) -> SubspaceDraw:
+    """`n_draws` norm-matched random directions drawn from inside the span of `basis`.
+
+    This is `C15`'s control family and Part 9.2 calls it the control that carries link 4's whole
+    argument. Each draw is uniform on the sphere of the subspace and rescaled to `norm`, which
+    defaults to the supplied direction's own norm; Part 9.2 rescales to the intervention's norm, so
+    pass it explicitly when the intervention's norm is not the fitted direction's.
+
+    `basis` is the construction of the identified subspace and it is required, not defaulted. The
+    design does not define it and two constructions in the corpus disagree, so a default here would
+    be this module choosing the rank that decides `C15`'s power. Columns need not be orthonormal or
+    independent; the span is taken and its numerical rank is used.
+
+    Rank one is allowed and flagged. A line is a perfectly good subspace to draw from, and twenty
+    draws from it are twenty rescaled copies of one direction up to sign, so `degenerate` is set and
+    the caller decides whether a percentile over that means anything.
+    """
+    u = _as_direction(direction)
+    q = _orthonormal_span(basis, d_expected=u.size)
+    rank = int(q.shape[1])
+    wanted = _target_norm(u, norm)
+    n = int(n_draws)
+    if n < 1:
+        raise RescueError(f"a control family needs at least one draw; got {n_draws}")
+    rng = np.random.default_rng(seed)
+    coordinates = _draw_in_coordinates(rank, n, rng)
+    directions = (coordinates @ q.T) * wanted
+    inside = q @ (q.T @ u)
+    return SubspaceDraw(
+        directions=directions,
+        family="subspace_matched",
+        effective_rank=rank,
+        target_norm=wanted,
+        seed=int(seed),
+        degenerate=rank < 2,
+        target_in_subspace_fraction=float(np.linalg.norm(inside) / np.linalg.norm(u)),
+    )
+
+
+def target_orthogonal_random(
+    direction: Any,
+    basis: Any,
+    *,
+    n_draws: int = 1,
+    seed: int = 0,
+    norm: float | None = None,
+) -> SubspaceDraw:
+    """`n_draws` norm-matched directions inside `basis`'s span and orthogonal to `direction`.
+
+    This is `C16`'s control family, and the design's note on it is that a search of the literature
+    found no published instance of it. It is the sharper of the two controls because it is the one
+    with a live failure mode: if the whole identified subspace is behaviourally relevant then draws
+    from it are also causal, and only the orthogonal ones can still lose.
+
+    Both halves matter and dropping either gives a different control. Orthogonal to the target over
+    the full ambient space is the nearly-free draw Part 9.2 rules out. Inside the subspace without
+    the orthogonality is the other family, `subspace_matched_random`.
+
+    **Raises at rank one.** The set of directions inside a line and orthogonal to a direction in it
+    is empty, and there is no honest vector to return: a zero vector, or a fallback to an ambient
+    draw, would hand `C16` twenty controls that are not the control it registered, and nothing
+    downstream could tell. At rank two the set is a single direction up to sign, which is drawable
+    and is flagged as `degenerate` rather than raised, because the draw is well defined even though
+    a percentile over it is not.
+
+    When `direction` does not lie inside the span, the orthogonality is to its projection, and
+    `target_in_subspace_fraction` on the result says how much of it survived.
+    """
+    u = _as_direction(direction)
+    q = _orthonormal_span(basis, d_expected=u.size)
+    rank = int(q.shape[1])
+    wanted = _target_norm(u, norm)
+    n = int(n_draws)
+    if n < 1:
+        raise RescueError(f"a control family needs at least one draw; got {n_draws}")
+    if rank < 2:
+        raise RescueError(
+            f"the supplied subspace has rank {rank}, and the set of directions inside a rank-1 "
+            f"subspace orthogonal to a direction in it is empty. There is no target-orthogonal "
+            f"control at this rank; register a construction of rank 2 or more, or report that this "
+            f"control is unavailable rather than substituting an ambient draw for it"
+        )
+
+    coefficients = q.T @ u
+    c_norm = float(np.linalg.norm(coefficients))
+    if c_norm < 1e-12:
+        raise RescueError(
+            "the direction has no component inside the supplied subspace, so 'orthogonal to the "
+            "target, inside the subspace' is the whole subspace and this is not the control it "
+            "claims to be. Check the construction the basis came from"
+        )
+    c_hat = coefficients / c_norm
+
+    rng = np.random.default_rng(seed)
+    coords = _draw_in_coordinates(rank, n, rng)
+    # Remove the target's component in the subspace's own coordinates, then renormalise. Drawing in
+    # the full subspace and projecting out is uniform on the orthogonal sphere: the Gaussian is
+    # isotropic, so its projection onto any hyperplane through the origin is an isotropic Gaussian
+    # on that hyperplane.
+    coords = coords - np.outer(coords @ c_hat, c_hat)
+    residual = np.linalg.norm(coords, axis=1, keepdims=True)
+    while np.any(residual < 1e-12):
+        bad = (residual < 1e-12).ravel()
+        fresh = _draw_in_coordinates(rank, int(bad.sum()), rng)
+        coords[bad] = fresh - np.outer(fresh @ c_hat, c_hat)
+        residual = np.linalg.norm(coords, axis=1, keepdims=True)
+    coords = coords / residual
+    # One more removal after the renormalisation, so the orthogonality holds to float64 rather than
+    # to whatever the division left behind. This is what buys the 1e-10 the closure proof asks for.
+    coords = coords - np.outer(coords @ c_hat, c_hat)
+    coords = coords / np.linalg.norm(coords, axis=1, keepdims=True)
+
+    directions = (coords @ q.T) * wanted
+    inside = q @ coefficients
+    return SubspaceDraw(
+        directions=directions,
+        family="target_orthogonal",
+        effective_rank=rank - 1,
+        target_norm=wanted,
+        seed=int(seed),
+        degenerate=(rank - 1) < 2,
+        target_in_subspace_fraction=float(np.linalg.norm(inside) / np.linalg.norm(u)),
+    )
+
+
 __all__ = [
     "Mounted",
     "RecordRemoved",
@@ -375,7 +656,10 @@ __all__ = [
     "RemovedCoordinate",
     "RescueError",
     "RescueSpec",
+    "SubspaceDraw",
     "knockout_and_rescue",
+    "subspace_matched_random",
+    "target_orthogonal_random",
     "mountable",
     "norm_matched_random",
 ]

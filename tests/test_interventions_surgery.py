@@ -1,4 +1,4 @@
-"""Proofs for the three activation/weight surgery interventions.
+"""Proofs for the three activation/weight surgery interventions (section 2.6.2).
 
 ``steer``, ``ablate``, and ``edit`` are linear-algebraic operations whose correctness is known by
 construction, so each is pinned here to floating-point tolerance rather than described in prose. The

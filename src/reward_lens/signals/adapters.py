@@ -1,10 +1,10 @@
-"""The grader-side half of model adaptation: reward heads, gating, capabilities.
+"""The grader-side half of model adaptation: reward heads, gating, capabilities (R3, §2.3.3).
 
-The navigation half lives in `policy/arch.py`, which resolves the block list, the token embedding
-and the attention output projection **structurally**, by asking where in a module tree the blocks
-are rather than which family this is, and that is what retired the eleven-method ``ModelAdapter``
-dispatch and its six family subclasses. Its own docstring names what it deliberately left behind,
-and this module is that: a reward head is not a navigation question.
+W5.1 took the navigation half. `policy/arch.py` resolves the block list, the token embedding and the
+attention output projection **structurally**, by asking where in a module tree the blocks are rather
+than which family this is, and that is what retired the eleven-method ``ModelAdapter`` dispatch and
+its six family subclasses. Its own docstring names what it deliberately left behind, and this module
+is that: a reward head is not a navigation question.
 
 Four grader-side facts have no structural answer and cannot be read off a decoder stack:
 
@@ -22,7 +22,7 @@ Four grader-side facts have no structural answer and cannot be read off a decode
     objective vector, and the gate is a function of the prompt. So the row mean of the nineteen
     directions is **not** the model's reward: it is one particular fixed gate, the uniform one, and
     treating it as the model's own is how a multi-objective grader gets silently collapsed to a
-    scalar. `is_gated_multi_objective` is what lets a caller tell the difference.
+    scalar (liability 6). `is_gated_multi_objective` is what lets a caller tell the difference.
   - **How a scalar comes out of a forward.** Three conventions, and the third is where it bites.
     A sequence classifier returns ``logits`` of shape (B, num_labels) and the reward is column 0.
     ArmoRM returns a custom output with ``.score``. InternLM2's reward model returns ``logits`` of
@@ -79,7 +79,7 @@ _SOFT_CAP_FIELDS = ("attn_logit_softcapping", "final_logit_softcapping")
 
 # The capability every classifier-family grader has: scalar scores, prefix scores, activation
 # capture, autograd and its second order, a linear readout. GENERATIVE/PAIRED_MODELS/SPAN_TYPES are
-# the judge/implicit/trajectory adapters' business and are not claimed here.
+# the judge/implicit/trajectory adapters' business (section 2.3.3) and are not claimed here.
 _CLASSIFIER_CAPS = (
     Capability.SCORES
     | Capability.PREFIX_SCORES
@@ -430,6 +430,42 @@ class GraderAdapter:
         return extract_reward_batch(output, inputs)
 
 
+def adapter_label(adapter: Any) -> str:
+    """A descriptive, stable label for the object a runtime navigates a model through.
+
+    This replaces the adapter object's class name, which three call sites wrote into ``SignalMeta.adapter``
+    and, worse, passed to `runtime.fingerprint` as the model's adapter id. That expression stopped
+    carrying information the moment family dispatch was removed: `resolve_adapter` returns a
+    `GraderAdapter` on every path, so the class name is the constant string ``"GraderAdapter"`` for
+    every checkpoint of every seed. As a description it said nothing; as the adapter component of a
+    fingerprint it made forty LoRA checkpoints over one base share one identity, which is BLK-002.
+
+    A label should carry what the navigation found. For an adapter that walked a tree, that is the
+    head convention, its row count, whether the rows are gated, and the shape of the architecture it
+    walked, all read off the checkpoint at construction. For a navigator this library did not build
+    (a caller may pass its own), it is a digest of the surface that object declares. That is less
+    specific than a class name would be, and it is deliberate: nothing downstream reads this string
+    for behaviour, and reintroducing a class name here under a different spelling would put the same
+    constant back into the same place.
+    """
+    view = getattr(adapter, "view", None)
+    if view is not None and hasattr(adapter, "head_rows"):
+        head = getattr(adapter, "head_name", None) or "none"
+        return (
+            f"grader:head={head},rows={int(getattr(adapter, 'head_rows', 0) or 0)},"
+            f"gated={'yes' if getattr(adapter, 'gated', False) else 'no'},"
+            f"layers={view.n_layers},d={view.d_model},heads={view.n_heads}"
+        )
+    import hashlib
+
+    cls = type(adapter)
+    surface = sorted(
+        name for name in dir(cls) if not name.startswith("_") and callable(getattr(cls, name, None))
+    )
+    digest = hashlib.blake2b("|".join(surface).encode("utf-8"), digest_size=6).hexdigest()
+    return f"custom:methods={len(surface)},surface={digest}"
+
+
 def resolve_adapter(model: "nn.Module", model_name: str = "") -> GraderAdapter:
     """Navigate a model once and return the adapter its runtime holds.
 
@@ -456,7 +492,7 @@ def resolve_adapter(model: "nn.Module", model_name: str = "") -> GraderAdapter:
 
 
 def capabilities_for(adapter: Any, model: "nn.Module | None" = None) -> Capability:
-    """The declared ``Capability`` set for a grader.
+    """The declared ``Capability`` set for a grader (R3).
 
     ``MULTI_READOUT`` is declared when the head has more than one row, read off the checkpoint. v1
     declared it for `ArmoRMAdapter` by ``isinstance`` and nothing else, which left QRM inconsistent
@@ -480,14 +516,14 @@ def is_multi_readout(adapter: Any, model: "nn.Module") -> bool:
     """Whether this signal exposes multiple readout rows (a non-scalar reward head).
 
     True for ArmoRM's nineteen objectives and for QRM's nineteen quantile rows alike. The row count
-    is read off the checkpoint, so a multi-objective model is never silently collapsed to a row
-    mean.
+    is read off the checkpoint, so a multi-objective model is never silently collapsed to a row mean
+    (liability 6).
     """
     return per_objective_directions(model) is not None
 
 
 def build_site_map(adapter: Any, model: "nn.Module") -> SiteMap:
-    """Resolve every logical ``Site`` this architecture exposes to a module path.
+    """Resolve every logical ``Site`` this architecture exposes to a module path (section 2.2.1).
 
     A `GraderAdapter` already carries the walk, so this returns its view's site map. Anything else
     is a v1 adapter, and the walk runs through `policy.arch.describe` on the model instead: there is
@@ -515,6 +551,7 @@ __all__ = [
     "ArchitectureError",
     "GraderAdapter",
     "Site",
+    "adapter_label",
     "build_site_map",
     "capabilities_for",
     "extract_reward_batch",
