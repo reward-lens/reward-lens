@@ -1,4 +1,4 @@
-"""Forecasting: the layer that makes every other measurement worth something.
+"""Forecasting: the layer that makes every other measurement worth something (Part 7).
 
 A measurement that cannot support a claim about the future cannot support a decision, so this is
 not a section of the science layer. It is what the rest of the library is for.

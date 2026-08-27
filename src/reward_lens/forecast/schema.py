@@ -1,4 +1,4 @@
-"""The forecast object, and the third clock it turns on.
+"""The forecast object, and the third clock it turns on (section 7.1).
 
 A measurement that cannot support a claim about the future cannot support a decision, so this
 package is not a section of the science layer. It is what makes the rest of the library worth
@@ -52,7 +52,7 @@ class ForecastError(RewardLensError):
 
 @dataclass(frozen=True)
 class InformationTime:
-    """When a thing became available to the forecaster. The third clock.
+    """When a thing became available to the forecaster. Section 7.2's third clock.
 
     There are three clocks in a training run and they are routinely confused. **Wall time** is when
     the bytes were written. **Run position** is which optimiser step produced them. **Information
@@ -414,7 +414,8 @@ class ResolutionRule:
     Mechanically evaluable is the whole requirement: a rule a person has to interpret is a rule the
     person can interpret in the direction the result went. `evaluate` takes the metric mapping the
     analysis produced and returns True, False, or `None` when the metric is absent, and the third
-    case is the one that matters. A missing metric is a void, never a miss.
+    case is the one that matters. A missing metric is a void, never a miss, which is W0.6's
+    four-line fix applied at the forecast layer rather than only at the study layer.
     """
 
     metric: str
@@ -452,8 +453,8 @@ class HorizonSpec:
     """How far ahead this reaches, and when it stops being answerable.
 
     ``kind`` is the unit the horizon is stated in. ``steps`` is the literature's unit and is not
-    comparable across runs; ``widths`` is a fraction of the fitted transition width, and is.
-    ``time`` is for a forecast about a calendar deadline rather than about a run.
+    comparable across runs; ``widths`` is section 3.4's unit, a fraction of the fitted transition
+    width, and is. ``time`` is for a forecast about a calendar deadline rather than about a run.
 
     ``expires_at`` is what makes a void possible. A forecast whose horizon has passed with no
     resolvable metric is void with a reason, not a miss, and without an expiry there is no instant
@@ -570,7 +571,7 @@ class DecisionSpec:
 
 
 class BaselineKind(enum.Enum):
-    """The four kinds that are mandatory. A forecast missing any of them is refused.
+    """The four kinds §7.3 makes mandatory. A forecast missing any of them is refused.
 
     They are four kinds rather than four named methods because each is a family: the dumb statistic
     for hacking onset is the gradient-norm peak, and for a text-level call it is a string match, and
@@ -642,7 +643,7 @@ class BaselineForecast:
 
 
 # ---------------------------------------------------------------------------
-# Lead time, in fractions of a fitted transition width
+# Lead time, in the unit of section 3.4
 # ---------------------------------------------------------------------------
 #
 # There is nothing here, and that is deliberate. Lead time is reported in fractions of a fitted
@@ -665,7 +666,7 @@ class BaselineForecast:
 
 @dataclass(frozen=True)
 class Forecast:
-    """One frozen prediction, plus what it takes to enforce it.
+    """One frozen prediction, section 7.1 verbatim plus what it takes to enforce it.
 
     Construct with `barrier.issue`, never directly. The direct constructor still enforces the
     mandatory baselines, because a check that can be dodged by calling the dataclass is not a check,

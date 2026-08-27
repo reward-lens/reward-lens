@@ -1,4 +1,4 @@
-"""The four mandatory forecast baselines, and the distribution-free null.
+"""The four mandatory forecast baselines, and the distribution-free null (section 7.3).
 
 `stats/baselines/` is the bank of six per-item **detection** comparators and it is closed; read it
 before writing a comparator. These are different objects and the difference is not cosmetic. A
@@ -9,7 +9,7 @@ comparator built for one says nothing about the other, so this module builds for
 the bank's discipline rather than its classes: a baseline that cannot run returns a refusal naming
 what to supply, never a silent absence.
 
-Four are mandatory, and a `Forecast` missing any of them cannot be constructed.
+Four are mandatory, §7.3, and a `Forecast` missing any of them cannot be constructed.
 
 The fifth thing here is not a baseline, it is a null: **records theory**. For an exchangeable series
 the probability that observation `t` is a record is exactly `1/t`, whatever the distribution, so the
@@ -177,11 +177,11 @@ def dumb_statistic(
     """The zero-or-one-parameter statistic that is free and already in the log.
 
     Which statistic is dumb depends on the target, which is why this takes one rather than picking.
-    For hacking onset the three candidates are a string match on the transcripts, the gradient-norm
-    peak (free, every trainer logs it, and one paper reports the behavioural transition occurring
-    *later* than the peak indicates), and the derivative of within-group reward variance from I5.
-    `dumb_statistic_from_gradnorm` builds the second directly from a logged series using the bank's
-    own peak finder, so the two agree by construction.
+    For hacking onset the three named in §7.3 are a string match on the transcripts, the
+    gradient-norm peak (free, every trainer logs it, and one paper reports the behavioural
+    transition occurring *later* than the peak indicates), and the derivative of within-group reward
+    variance from I5. `dumb_statistic_from_gradnorm` builds the second directly from a logged series
+    using the bank's own peak finder, so the two agree by construction.
     """
     if p is None:
         return BaselineForecast(

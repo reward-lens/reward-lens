@@ -1,4 +1,4 @@
-"""Resolution: `Resolved` or `Void`, and an expired forecast is never a miss.
+"""Resolution: `Resolved` or `Void`, and an expired forecast is never a miss (section 7.4).
 
 The only interesting decision in this module is the one it exists for. A forecast whose metric never
 arrived, or whose horizon passed with the question still open, has **not** been got wrong. Scoring
@@ -8,8 +8,9 @@ run where the effect was largest scores as a confident wrong call, and a card wh
 on a null scores as a lucky one.
 
 So resolution has three outcomes and not two, the third carries a reason, and the reason is on the
-ledger row: a missing metric at adjudication is `VOID` with a named reason, and a kill criterion
-whose metric is absent is `VOID`, never a non-firing.
+ledger row. This is W0.6's four-line fix, applied one layer up: a missing metric at adjudication is
+`VOID` with a named reason, and a kill criterion whose metric is absent is `VOID`, never a
+non-firing.
 
 The campaign is the worked case and it is why the count matters. Twenty-three directional calls were
 registered; sixteen resolved and seven went void, and one of the seven carried the campaign's most
@@ -42,7 +43,7 @@ class VoidReason(enum.Enum):
     non-resolution that the denominator has to show.
     """
 
-    #: The metric the rule names was not produced by the analysis.
+    #: The metric the rule names was not produced by the analysis. W0.6's condition.
     METRIC_ABSENT = "metric_absent"
     #: The horizon passed and the question is still open.
     EXPIRED = "expired"

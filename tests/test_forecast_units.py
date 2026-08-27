@@ -506,7 +506,7 @@ def test_property_murphy_identity_closes(probs, seed):
     assert 0.0 <= m.uncertainty <= 0.25 + 1e-12
 
 
-#: The draw that broke this property on a fresh `hypothesis` seed after a long run of passes.
+#: The draw that broke this property on a fresh `hypothesis` seed after four waves of passing.
 #: Recorded here rather than left in the gitignored `.hypothesis/` directory, where it survives
 #: exactly as long as one machine's working tree does. Thirteen forecasts, seven occupied bins of
 #: ten equal-width ones, and the old assertion read 0.2244 against 0.2078.
@@ -973,11 +973,11 @@ def test_the_header_of_a_ledger_that_beats_the_coin_says_so(tmp_path):
 
 
 def test_the_instrument_lints_clean_and_its_quantity_is_registered():
-    """The instrument is complete and its registry row has landed.
+    """The instrument is complete and its registry row landed at wave 5's integration.
 
     This began as the other assertion: with `forecast.brier_score` unregistered, `lint_instrument`
     reported exactly one finding naming that field, and the test registered the row in-process to
-    prove the other three declarations were real. It was then registered for real, along with
+    prove the other three declarations were real. The integrator registered it for real, along with
     the two Murphy terms it decomposes into and `forecast.decision_value`, so the test is inverted
     rather than deleted, on the precedent E25 set for the `py.typed` guard: a check that has served
     its purpose becomes a standing check on the other side of the change.
@@ -1008,7 +1008,7 @@ def test_the_instruments_generated_invariance_test_passes():
 
     A Brier score is a function of probabilities and binary outcomes. The reward gauge acts on
     scores, and no rescaling of a reward changes a probability that was written down before the
-    reward existed, so no registered group acts on this quantity. The generated test passes
+    reward existed, so no group in Appendix B acts on this quantity. The generated test passes
     vacuously and that is honest rather than empty: the failure the lint targets is not thinking
     about the question.
     """

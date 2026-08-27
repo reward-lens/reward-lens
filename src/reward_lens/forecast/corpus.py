@@ -1,4 +1,4 @@
-"""Backtesting as a first-class object: the run corpus and its splits.
+"""Backtesting as a first-class object: the run corpus and its splits (section 7.3).
 
 A forecaster is not validated on one run, and it is not validated by holding out items.
 
@@ -45,14 +45,20 @@ AISI_TRAPS: tuple[str, ...] = (
     "`subfolder=`. They are not branches and not merged weights, so the base model has to be loaded "
     "too and a `from_pretrained` on the repo alone gets you the base model with none of the "
     "training applied, silently.",
-    "The two rollout series are different lengths, 401 and 404 eval logs. Anything that zips them "
-    "positionally is off by three from wherever the extra logs sit.",
+    "The two rollout series are different lengths, 401 and 404 eval logs, and the second one's "
+    "index is not contiguous: it runs 0 to 403 with one value missing, so it carries 403 distinct "
+    "indices against 404 published files. Anything that zips them positionally is wrong, and "
+    "anything that assumes a contiguous index on the second is wrong past the gap.",
     "Labels are int64 carrying 1, 0 or null. A naive `.sum()` treats null as zero and reports a "
     "hack rate that is too low by the abstention rate; count the non-null denominator explicitly.",
     "`hack_config` is a JSON string, not a nested object. It has to be parsed before any field in "
     "it can be read, and a `.get` on the raw column returns None for every key.",
-    "`rollout_index` is per eval file, not per row. Joining on it across files collides every "
-    "index with every other file's, so the join key is the pair (eval file, rollout_index).",
+    "`rollout_index` is one value per eval file and sixty-four rows share each one, so it is the "
+    "step axis and joining on it alone is correct. It runs 0 to 400 on the first series, and eval "
+    "file `f` is the batch scored at logged step `f + 1`, so any join against a trainer-log "
+    "quantity needs that offset. This entry used to say the index collided across files and that "
+    "the join key was the pair (eval file, rollout_index); that describes a within-file row "
+    "counter, which is not what this column is.",
 )
 
 
@@ -105,11 +111,12 @@ class Fold:
 
 @dataclass(frozen=True)
 class RunCorpus:
-    """A population of runs to backtest against, and how to split it.
+    """A population of runs to backtest against, and how to split it (section 7.3).
 
     ``runs`` names the members. ``steps`` maps each run to its step axis, which the two temporal
-    splits need; a corpus with no step axis can only do `leave_one_run_out`, and asking it for a
-    walk-forward raises rather than inventing one.
+    splits need and which section 7.3's printed dataclass does not carry; a corpus with no step axis
+    can only do `leave_one_run_out`, and asking it for a walk-forward raises rather than inventing
+    one. That addition is recorded in this package's report.
 
     ``embargo_steps`` is the gap between train and test. It is not optional and it is not zero by
     accident: `__post_init__` refuses a temporal split with a zero embargo unless the caller says

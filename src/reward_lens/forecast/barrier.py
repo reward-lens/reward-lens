@@ -1,4 +1,4 @@
-"""The information barrier, enforced by type.
+"""The information barrier, enforced by type (section 7.2).
 
 This is the same mechanism as `Blind[T]` applied to time instead of to labels, and it catches at
 construction the failure mode that every prospective-monitoring method read in the scan has in
@@ -16,7 +16,7 @@ needs a forecast constructs a valid one, which costs a line and is the only way 
 anything: an override exists to be used on the afternoon somebody is in a hurry, which is precisely
 the afternoon the leak happens.
 
-Two conditions, two errors, for the same reason distinct refusal reasons stay distinct. An ancestor
+Two conditions, two errors, for the reason SPEC-ERRATA E30 gives about refusal reasons. An ancestor
 that postdates the issue is a leak and the remedy is to issue earlier or drop the input. An ancestor
 the store cannot resolve is not a leak, it is an unverifiable claim, and the remedy is to append the
 parent so the barrier can check it. Those point in different directions, so they are not the same
@@ -98,7 +98,7 @@ def _envelopes(store: EvidenceStore) -> dict[str, Any]:
     `EvidenceStore` exposes no public iterator over raw envelopes: `__iter__`, `get` and `find` all
     go through `evidence_from_envelope`, which decodes the payload. `record/convert/store.py` needed
     the same thing and guards it the same way, so adding a public accessor upstream removes both
-    branches rather than breaking them.
+    branches rather than breaking them. The requested patch is in this package's report.
     """
     public = getattr(store, "envelopes", None)
     if callable(public):
@@ -250,11 +250,12 @@ def issue(
     or after ``at`` raises `ForecastLeakageError` naming the offending id and both timestamps. There
     is no override.
 
-    ``store`` is not optional. The barrier's promise is a statement about ancestors, and ancestors
-    live in a store; a signature that cannot reach one can check the inputs it was handed and
-    nothing behind them, which is exactly the depth at which the published failures happen. It is a
-    required keyword rather than a default to the process-wide store, because silently walking a
-    different DAG than the caller meant is the one way this check can pass while meaning nothing.
+    ``store`` is the one addition to section 7.2's printed signature and it is not optional. The
+    barrier's promise is a statement about ancestors, and ancestors live in a store; a signature
+    that cannot reach one can check the inputs it was handed and nothing behind them, which is
+    exactly the depth at which the published failures happen. It is a required keyword rather than
+    a default to the process-wide store, because silently walking a different DAG than the caller
+    meant is the one way this check can pass while meaning nothing.
 
     The mandatory baselines are enforced by `Forecast.__post_init__`, so a forecast issued here is
     barrier-clean and comparator-complete or it does not exist.

@@ -1,4 +1,4 @@
-"""The calibration ledger, published.
+"""The calibration ledger, published (section 7.5).
 
 Append-only, public, and it prints its own worst result at the top.
 
@@ -513,9 +513,9 @@ class CalibrationLedger:
 # ---------------------------------------------------------------------------
 
 #: The quantity this instrument estimates. **Not yet registered** in `spec/QUANTITIES.yaml`: the
-#: registry carries no `forecast.*` row, and adding a quantity id is a decision for whoever
-#: maintains the registry. Until it lands, `lint_instrument` reports exactly one finding on this
-#: instrument and it is this one.
+#: registry carries no `forecast.*` row and a quantity id is a maintainer decision, not a builder's.
+#: The proposed row is in this package's report. Until it lands, `lint_instrument` reports exactly
+#: one finding on this instrument and it is this one.
 FORECAST_BRIER_QUANTITY = "forecast.brier_score"
 
 #: The envelope. Scoring a resolved ledger is a census: it counts rows that already exist and
@@ -528,7 +528,7 @@ LEDGER_ENVELOPE = EnvelopeSpec(
         "a census over resolved forecasts. It counts calls that were frozen before their outcomes "
         "and reports the arithmetic on them, so no regime of the run can make the count wrong. The "
         "two things that could make it wrong are both closed elsewhere and neither is one of "
-        "the twelve regime conditions: an input that postdates its own forecast is impossible "
+        "section 2.4's twelve conditions: an input that postdates its own forecast is impossible "
         "because `issue` refuses to build one, and a score pooled over two reference classes is "
         "visible because every row carries the class it was conditional on."
     ),
@@ -695,8 +695,9 @@ def _register() -> None:
     estimator registry is a process-global that four test modules mutate by snapshotting it and
     popping whatever appeared during their window. A module-level registration that lands inside one
     of those windows is popped at its teardown and never comes back, since the module is already in
-    `sys.modules` and will not re-execute. The underlying fragility is the registry rather than this
-    module, so this guards itself rather than pretending the registry is stable.
+    `sys.modules` and will not re-execute. That is SPEC-ERRATA E40's shape for the third time in this
+    build, and the underlying fragility is the registry rather than this module, so this guards
+    itself rather than pretending the registry is stable.
 
     A quantity with no registered estimator is an open research target and the docs build says so.
     These four are not open: they are computed by `ForecastCalibration` on every scored ledger, and

@@ -13,7 +13,7 @@ rules and the recorded numbers rather than a re-print of the published outcome c
 `verify_against_recorded` helper then compares the recomputed verdicts with the ones the store
 holds, and disagreements are returned rather than raised.
 
-Two things this found, neither of them fixed here.
+Two things this found, and both are in the package report rather than being fixed here.
 
 **Every measurement in the campaign postdates the freeze.** All 1,363 rows in
 `campaign-results/runs/campaign/evidence.jsonl` were created on 2026-07-19 and the freeze is
@@ -625,8 +625,9 @@ def rescore_campaign(
 ) -> tuple[CalibrationLedger, CampaignFreeze, tuple[str, ...]]:
     """The whole route: freeze, rebuild, resolve, score, ledger. Returns the ledger and any findings.
 
-    The published figures it should reproduce are a directional Brier of 0.26 over 16 calls, a coin
-    at 0.25, an interval coverage of 0.75 over 4, and the meta kill fired.
+    This is what the acceptance clause runs. The published figures it should reproduce are a
+    directional Brier of 0.26 over 16 calls, a coin at 0.25, an interval coverage of 0.75 over 4,
+    and the meta kill fired.
     """
     freeze = load_freeze(specs_dir)
     adjudications = load_adjudications(store_path)
