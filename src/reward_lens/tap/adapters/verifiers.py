@@ -2,14 +2,15 @@
 
 Prime Intellect's ``verifiers`` is the only place in the open ecosystem where token ids, per-token
 logprobs, MoE routing, reward and advantage already sit in one serialisable object, so the
-conversion to this library's record is close to a field mapping rather than a reconstruction from
+conversion to section 2.2's record is close to a field mapping rather than a reconstruction from
 three sources. That is why this adapter is short and why it is worth having.
 
 Verified against ``verifiers`` at commit ``edafab857aabf830237068193150694cfae50c3b`` (2026-07-30).
-Both structures were re-located by content rather than by line number, because line numbers in that
-codebase had already drifted once, and ``TrajectoryStep`` is not the v1 dataclass it is sometimes
-described as: it is a ``TypedDict`` in ``verifiers/types.py``, and ``verifiers/v1/`` defines no
-``TrajectoryStep`` at all.
+Both structures were re-located by content rather than by line number, because the survey's line
+numbers had already drifted once and §8.2's claim that ``TrajectoryStep`` is a v1 dataclass is
+wrong: it is a ``TypedDict`` in ``verifiers/types.py`` and ``verifiers/v1/`` defines no
+``TrajectoryStep`` at all. Both structures were found where SPEC-ERRATA E7 says they are, with
+every field in the order E7 records.
 
 Nothing here imports ``verifiers``. Every input is read through `_get`, which accepts a mapping or
 an object with attributes, so a rollout that arrived as JSON from ``vf-eval`` and a live ``State``
@@ -91,9 +92,9 @@ and ``step_advantage``, and ``features["verifiers_step_score_uniform"]`` says wh
 looking at.
 
 It cannot tell you the serving engine. ``Engine`` defaults to ``unknown`` and the caller supplies
-it. Eager and compiled vLLM have been measured disagreeing with each other about as much as either
-disagrees with HuggingFace, so an unrecorded engine is a real gap and recording ``vllm`` without a
-revision would not close it.
+it. Section 4.7 measured eager and compiled vLLM disagreeing with each other about as much as
+either disagrees with HuggingFace, so an unrecorded engine is a real gap and recording ``vllm``
+without a revision would not close it.
 """
 
 from __future__ import annotations
@@ -911,10 +912,10 @@ def _provenance(
 ) -> tuple["SegmentProvenance", ...]:
     """Segments keyed on ``response.model``, merged across consecutive steps that agree.
 
-    Mandatory and plural, and here it is genuinely plural: a rollout that resumed under a newer
-    served model has two segments and `PolicyMixture.singular` is False for it, which is what
-    `NEAR_POLICY` reads. The caveat is in `CONVERTER_FINDINGS`: ``response.model`` is a model name,
-    so two checkpoints served under one name look singular.
+    Mandatory and plural (section 2.2), and here it is genuinely plural: a rollout that resumed
+    under a newer served model has two segments and `PolicyMixture.singular` is False for it, which
+    is what `NEAR_POLICY` reads. The caveat is in `CONVERTER_FINDINGS`: ``response.model`` is a
+    model name, so two checkpoints served under one name look singular.
     """
     from reward_lens.record.provenance import SamplingMeta, SegmentProvenance
     from reward_lens.record.tensors import Engine

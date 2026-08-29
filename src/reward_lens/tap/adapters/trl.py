@@ -233,6 +233,8 @@ class TRLTap:
         emit_extra: bool = False,
         retain_args: bool = True,
         record_grad_presence: bool = True,
+        record_token_ids: bool = True,
+        failure_at: float | None = None,
         max_steps: int = DEFAULT_MAX_STEPS,
         ring: TapRing | None = None,
         name: str = "trl",
@@ -245,6 +247,17 @@ class TRLTap:
         self.emit_extra = emit_extra
         self.retain_args = retain_args
         self.record_grad_presence = record_grad_presence
+        #: BLK-027. `Turn.token_ids` is a declared field and this adapter left it
+        #: None, so the default is True. False restores the previous behaviour
+        #: exactly, which is an abstention rather than an empty tuple.
+        self.record_token_ids = record_token_ids
+        #: BLK-021. The score at or below which a rollout counts as a failure on the
+        #: optimised objective, so `GroupStats.all_fail` is a measurement rather than
+        #: False on every group of every record. None is an abstention and
+        #: `from_scores` reads it as one: nothing in `GRPOConfig` says what failure is on
+        #: a task, so a value invented here would turn a gap into a claim. The caller
+        #: declares it, as `VerifiersAdapter.failure_at` already is declared.
+        self.failure_at = failure_at
         self.max_steps = max_steps
         self.name = name
 
@@ -267,6 +280,12 @@ class TRLTap:
         #: says a record is thinner than it looks.
         self.adapter_exceptions = 0
         self.adapter_exception_keys: list[str] = []
+        #: Steps whose row order could not be shown to be the generation order, so the group id
+        #: and generation index were withheld rather than guessed. See ``_grouping_provenance``.
+        #: BLK-009.
+        self.unverified_grouping_steps = 0
+        #: Why the last such step failed the check, empty while nothing has failed it.
+        self.grouping_refusal_reason = ""
         self._prev_added_ns = 0
         self._prev_inner_ns = 0
         self._prev_calls = 0
@@ -757,7 +776,17 @@ class TRLTap:
         The group is recoverable because ``_calculate_rewards`` gets every row at once and TRL's
         own ``.view(-1, num_generations, ...)`` is what reconstructs it, at
         ``grpo_trainer.py:2686`` and ``:2712``. Consecutive runs of ``num_generations`` rows are
-        one prompt's rollouts, and that is the only assumption in here.
+        one prompt's rollouts.
+
+        **That assumption is true of one row order and false of another**, which is BLK-009.
+        ``shuffle_sequence_dict`` at ``:1589`` permutes the generation batch, and after it row
+        order carries no grouping at all. Both sources this method reads are upstream of it: the
+        reward functions are called at ``:1673`` inside ``_generate_and_score_completions``, and
+        ``_logs`` is extended at ``:2823-2827`` inside the same function, while the shuffle is
+        applied one frame up to that function's return value. So the assumption holds today.
+        ``_grouping_provenance`` is what says so on each step instead of leaving it inherited: it
+        checks the one signal that survives a permutation, that the K rows of a group carry one
+        prompt, and the group id and generation index are emitted only where it holds.
 
         Scores come from the wrapped call's own return value where there is one, so the record
         holds what the grader actually returned rather than what survived the aggregation. Where
@@ -779,6 +808,12 @@ class TRLTap:
         n = len(completions) if completions is not None else 0
         if n == 0:
             return ()
+        completion_tokens = self._completion_lengths_for(b, n)
+        completion_ids = self._completion_ids_for(b, n)
+        grouping_verified, refusal = self._grouping_provenance(prompts, n, k)
+        if not grouping_verified:
+            self.unverified_grouping_steps += 1
+            self.grouping_refusal_reason = refusal
         per_func = self._scores_for(b, n)
         refs = self._call_refs(b)
         weights = self._weights_for(tuple(per_func))
@@ -803,7 +838,11 @@ class TRLTap:
                     make_trajectory(
                         id=str(trajectory_id(group=str(gid), ordinal=j - lo)),
                         task_ref=str(task),
-                        turns=self._turns_for(prompt_text, completions[j]),
+                        turns=self._turns_for(
+                            prompt_text,
+                            completions[j],
+                            completion_ids[j] if completion_ids is not None else None,
+                        ),
                         scores=self._score_tree(row, refs, weights),
                         advantage=(
                             b.advantages[j]
@@ -811,7 +850,16 @@ class TRLTap:
                             else None
                         ),
                         provenance=self._provenance_for(b, n_turns=2),
-                        features=self._features_for(row, weights),
+                        features=self._features_for(
+                            row,
+                            weights,
+                            completion_text=completions[j],
+                            completion_tokens=(
+                                completion_tokens[j] if completion_tokens is not None else None
+                            ),
+                            group_ordinal=g if grouping_verified else None,
+                            generation_index=(j - lo) if grouping_verified else None,
+                        ),
                     )
                 )
             groups.append(
@@ -820,7 +868,22 @@ class TRLTap:
                     task_ref=task,
                     trajectories=tuple(trajectories),
                     estimator=estimator,
-                    group_stats=GroupStats.from_scores(totals, std_epsilon=std_eps),
+                    group_stats=GroupStats.from_scores(
+                        totals,
+                        std_epsilon=std_eps,
+                        # BLK-021, one producer for the denominator. `_estimator_spec`
+                        # decides it once, off `scale_rewards`, and it is already on the
+                        # `EstimatorSpec` attached to this same `Group`; the statistics
+                        # read that decision rather than repeating it. A second literal
+                        # here is the drift this row is about: the population standard
+                        # deviation sitting beside a recorded ddof of 1, which is 6.9%
+                        # apart at K = 8 and 41.4% apart at K = 2.
+                        std_ddof=estimator.std_ddof,
+                        # BLK-021, the other half. Without a failure value `all_fail` is
+                        # False on every group of every TRL-tapped record, which is what
+                        # a run in which no group ever failed also looks like.
+                        failure_at=self.failure_at,
+                    ),
                 )
             )
         return tuple(groups)
@@ -904,25 +967,198 @@ class TRLTap:
         return WeightedSum(name="reward", children=leaves, weights=weights)
 
     def _features_for(
-        self, row: Mapping[str, float | None], weights: tuple[float, ...]
+        self,
+        row: Mapping[str, float | None],
+        weights: tuple[float, ...],
+        *,
+        completion_text: str = "",
+        completion_tokens: int | None = None,
+        group_ordinal: int | None = None,
+        generation_index: int | None = None,
     ) -> dict[str, float]:
-        """TRL's own realised reward for this row, kept because it is what produced the advantage.
+        """The per-rollout scalars that belong on the row rather than in a step aggregate.
 
-        This is ``nansum`` reproduced: present components are weighted and summed, absent ones
-        contribute nothing rather than refusing. It is not the metrologically right answer and it
-        is not meant to be. It is the number the optimizer actually used, and a record that holds
-        only the right answer cannot show that the run used a different one.
-
+        ``trl_realised_reward`` is TRL's own realised reward for this row, kept because it is what
+        produced the advantage. This is ``nansum`` reproduced: present components are weighted and
+        summed, absent ones contribute nothing rather than refusing. It is not the metrologically
+        right answer and it is not meant to be. It is the number the optimizer actually used, and a
+        record that holds only the right answer cannot show that the run used a different one.
         Absent entirely when every component abstained, because TRL marks that row unscorable at
         2679 and its advantage is forced to zero at 2730. A zero here would be the exact confusion
         the field is missing.
 
-        The key is a ``FeatureID``, which is a plain string namespace rather than a registered
-        quantity, so naming it is not a quantity-id decision. It is prefixed and it is the only
-        key this adapter writes.
+        ``completion_length_tokens`` is BLK-010. TRL builds the per-sequence vector at
+        ``grpo_trainer.py:2289``/``:2291``, reduces it to mean, min and max at ``:2302-2304`` and
+        keeps nothing per row, so the length the length-matched comparators and the bunching
+        estimator need never existed downstream. It is recovered from ``completion_ids``, which
+        TRL hands every callable reward function at ``:1673``; ``len(ids)`` here is the same
+        expression the trainer evaluates at ``:2291``. **Absent when the ids are absent.** A
+        character count promoted to a token count is not a degraded reading of this quantity, it
+        is a different quantity, and this project has already published one wrong negative on that
+        substitution: "the largest upper-tail tie is 2" was in characters and is 211 in tokens.
+
+        ``completion_length_chars`` is that character proxy, emitted **beside** the token count and
+        named for what it is. Both are written so a reader can see the two disagree instead of
+        inheriting one for the other; nothing downstream may read the chars field as a length in
+        tokens, and the pair is what makes the substitution refutable rather than invisible.
+
+        ``prompt_group_id`` and ``generation_index`` are BLK-009. ``:796`` already puts the group
+        into ``Group.id`` and ``:804`` puts the generation index inside the trajectory id, and a
+        value a reader has to recover by parsing an opaque identifier is not a recorded field: the
+        id's construction is free to change without anybody noticing what it took with it, and
+        every within-group estimand depends on the grouping being readable. ``prompt_group_id`` is
+        the ordinal within the step, which is what pairs with ``generation_index`` to address a
+        rollout; ``Group.id`` stays the globally unique handle. **Both are absent when
+        ``_grouping_provenance`` could not show the row order is the generation order**, because
+        the alternative is a grouping recovered from a permuted order, and BLK-009's own
+        consequence line is that such a grouping either fails C3's theorem check at the instrument
+        or, worse, passes on the wrong grouping.
+
+        The keys are ``FeatureID``s, a plain string namespace rather than registered quantities, so
+        naming them is not a quantity-id decision. ``trl_realised_reward`` keeps its framework
+        prefix because it is a TRL-specific number; the other four do not, because they are the
+        recording contract's own cross-framework field names and one quantity gets one spelling.
         """
+        out: dict[str, float] = {}
         total = _total(row, weights)
-        return {} if total is None else {"trl_realised_reward": total}
+        if total is not None:
+            out["trl_realised_reward"] = total
+        out["completion_length_chars"] = float(len(completion_text))
+        if completion_tokens is not None:
+            out["completion_length_tokens"] = float(completion_tokens)
+        if group_ordinal is not None:
+            out["prompt_group_id"] = float(group_ordinal)
+        if generation_index is not None:
+            out["generation_index"] = float(generation_index)
+        return out
+
+    def _grouping_provenance(
+        self, prompts: tuple[str, ...] | None, n: int, k: int
+    ) -> tuple[bool, str]:
+        """Whether this step's row order is still the generation order, and why not when it is not.
+
+        BLK-009. ``shuffle_sequence_dict`` at ``grpo_trainer.py:1589`` permutes the generation
+        batch, and downstream of it consecutive runs of ``num_generations`` rows are not one
+        prompt's rollouts. Everything this adapter reads is upstream of that line, but "upstream"
+        is a claim about TRL's control flow at one version, and a claim nothing checks is the kind
+        that survives the release that falsifies it.
+
+        The check is the one signal a permutation cannot preserve: a group is one prompt scored K
+        times, so its K rows carry the same prompt. Shuffled rows do not, and the probability that
+        a permutation leaves every group prompt-homogeneous by accident falls off fast in the
+        number of groups. It costs one pass over the prompt list per step, at finish time.
+
+        ``k <= 1`` is verified trivially and honestly: with one rollout per prompt there is no
+        grouping to get wrong. No prompts means not verified, because the check cannot run, and
+        an unrunnable check is not a passing one.
+        """
+        if k <= 1:
+            return True, ""
+        if prompts is None or len(prompts) < n:
+            return False, (
+                "no prompt column for this step: the K rows of a group are one prompt's rollouts, "
+                "so without the prompts there is nothing to check the row order against"
+            )
+        for g in range((n + k - 1) // k):
+            lo, hi = g * k, min((g + 1) * k, n)
+            if hi - lo < 2:
+                continue
+            distinct = {prompts[j] for j in range(lo, hi)}
+            if len(distinct) != 1:
+                return False, (
+                    f"candidate group {g} spans {len(distinct)} distinct prompts across "
+                    f"{hi - lo} rows, so the row order is not the generation order. Downstream of "
+                    f"shuffle_sequence_dict (grpo_trainer.py:1589) the grouping is not recoverable "
+                    f"from row order and it is not guessed here"
+                )
+        return True, ""
+
+    def _completion_lengths_for(self, b: StepBucket, n: int) -> tuple[int, ...] | None:
+        """Per-rollout completion length in tokens, or ``None`` when it was not recoverable.
+
+        ``completion_ids`` is the third positional keyword TRL passes every callable reward
+        function (``grpo_trainer.py:1673`` for the sync branch, ``:1691`` for the async one): a
+        list of per-sequence token id lists, unpadded, one per rollout. It arrives **inside**
+        ``_generate_and_score_completions``, so it is upstream of ``shuffle_sequence_dict`` at
+        ``:1589`` and the row order is the generation order. ``len(ids)`` is the same expression
+        the trainer evaluates at ``:2291`` before reducing it away.
+
+        Three things this deliberately does not do.
+
+        It does not fall back to ``trainer._logs``, because the completion length in tokens is not
+        in ``_logs`` at all: only the text is. Reconstructing it by re-tokenising that text would
+        be a second tokenizer's opinion about a batch the first one already counted.
+
+        It does not keep the ids. One int per rollout is what the contract row asks for and what
+        the downstream estimands consume; retaining the ids for a 401-step run at 128 rollouts and
+        about 1,240 tokens each is tens of millions of Python ints for a number already computed.
+        That is why ``Turn.token_ids`` stays ``None`` on this adapter's records and
+        ``Trajectory.n_tokens`` stays 0, which was already true before this change.
+
+        It does not pad or truncate. A ``completion_ids`` shorter or longer than ``completions``
+        means the two came from different batches, and matching the rows it can would put a length
+        on a row it does not belong to. The whole step abstains instead.
+
+        **The one case where this is not TRL's logged number.** With tools or a rollout-func
+        ``env_mask``, ``:2289`` counts only model-generated tokens (``sum(mask)``) while this
+        counts every completion token. The design's run has no tools; a run that does gets the
+        completion length rather than the model-token length and this docstring is the notice.
+        """
+        for call in b.calls:
+            kwargs = call.kwargs
+            if not kwargs:
+                continue
+            ids = kwargs.get("completion_ids")
+            if ids is None:
+                continue
+            try:
+                lengths = tuple(len(seq) for seq in ids)
+            except TypeError:
+                return None
+            return lengths if len(lengths) == n else None
+        return None
+
+    def _completion_ids_for(self, b: StepBucket, n: int) -> tuple[tuple[int, ...], ...] | None:
+        """The per-rollout completion token ids themselves, not their lengths. BLK-027.
+
+        ``_completion_lengths_for`` above deliberately discards these and its docstring says
+        why: one int per rollout is what the downstream estimands consume, and keeping the ids
+        for a 401-step run is tens of millions of Python ints for a number already computed.
+        That reasoning is right about the estimands and wrong about the contract.
+        ``record/turns.py`` **declares** ``Turn.token_ids``, ``worlds/RECORDING.md``'s §3.4
+        lists the per-token fields as contract rows, and a declared field that nothing writes is
+        the defect BLK-027 names. So the ids are kept when asked for and not otherwise.
+
+        ``TRLTap(record_token_ids=False)`` is the switch. It defaults to True because the field
+        is declared; a caller who wants the old behaviour gets the same ``None`` as before, which
+        is an abstention rather than an empty tuple.
+
+        **The cost, stated rather than implied.** At the design's geometry, 128 rollouts of about
+        1,240 tokens each, one step is roughly 159,000 ints and 401 steps is about 64 million.
+        Records are written per step rather than accumulated, so the resident cost is one step;
+        the cost that lands is on disk, and `worlds/RECORDING.md` already budgets the per-token
+        fields at 1.6 MB per rollout-set at ``L = 32``.
+
+        Same three refusals as its sibling: no fall back to ``trainer._logs``, which does not
+        carry ids at all; no re-tokenising of the text, which is a second tokenizer's opinion; and
+        no padding or truncation, because a length mismatch means two different batches and the
+        whole step abstains.
+        """
+        if not self.record_token_ids:
+            return None
+        for call in b.calls:
+            kwargs = call.kwargs
+            if not kwargs:
+                continue
+            ids = kwargs.get("completion_ids")
+            if ids is None:
+                continue
+            try:
+                out = tuple(tuple(int(t) for t in seq) for seq in ids)
+            except TypeError:
+                return None
+            return out if len(out) == n else None
+        return None
 
     def _texts_for(self, b: StepBucket) -> tuple[tuple[str, ...] | None, tuple[str, ...] | None]:
         """Prompts and completions, preferring the grader's own arguments over TRL's log deques.
@@ -972,18 +1208,49 @@ class TRLTap:
             out[name] = [_as_float(v) for v in gathered[:n]] + [None] * max(0, n - len(gathered))
         return out
 
-    def _turns_for(self, prompt: str, completion: str) -> tuple[Any, ...]:
+    def _turns_for(
+        self,
+        prompt: str,
+        completion: str,
+        completion_ids: tuple[int, ...] | None = None,
+    ) -> tuple[Any, ...]:
         """One user turn and one assistant turn. Single-turn GRPO is two turns, not one.
 
         Recording the prompt as a turn rather than as a field on the trajectory is what makes a
         multi-turn record and a single-turn record the same shape, which is the whole reason the
         hierarchy has a turn level.
+
+        **BLK-027, and what is filled here and what is not.** ``Turn`` declares four per-token
+        fields and this adapter set none of them. ``token_ids`` is now populated on the assistant
+        turn from ``completion_ids``, which arrives as the third keyword TRL passes every reward
+        function and is upstream of ``shuffle_sequence_dict``, so its row order is the generation
+        order. The other three are not reachable from here and the reason differs per field:
+
+        ``loss_mask``       TRL's ``completion_mask`` is built in
+                            ``_generate_and_score_completions`` and is not passed to a reward
+                            function. It is reachable from ``trainer._buffered_inputs``, which is
+                            assigned AFTER ``shuffle_sequence_dict`` permutes the batch and the
+                            permutation is never returned, so the rows cannot be mapped back
+                            except by content-matching completions, which is ambiguous on
+                            duplicates. Part 4.2's override at the point before the shuffle is
+                            what makes it reachable, and that is BLK-009's build item.
+        ``logprobs_sampling`` same route, same obstacle, and additionally absent entirely unless
+                            ``use_vllm=True``: on the transformers generate path
+                            ``_generate_single_turn`` sets ``logprobs = None``. The design sets
+                            ``use_vllm`` to colocate for exactly this reason.
+        ``logprobs_train``  not reachable from ANY callback. It is consumed into ``log_ratio``
+                            inside ``_compute_loss`` and dies there. The ``_compute_loss``
+                            override is BLK-004's, in ``P2-LOSS``.
+
+        The prompt turn's ``token_ids`` stays ``None``: ``prompt_ids`` is not among the keywords
+        a reward function receives, and re-tokenising the prompt text would be a second
+        tokenizer's opinion about a batch the first one already counted.
         """
         from reward_lens.record.turns import Turn
 
         return (
             Turn(index=0, role="user", text=prompt),
-            Turn(index=1, role="assistant", text=completion),
+            Turn(index=1, role="assistant", text=completion, token_ids=completion_ids),
         )
 
     def _provenance_for(self, b: StepBucket, *, n_turns: int) -> tuple[Any, ...]:
@@ -1030,7 +1297,7 @@ class TRLTap:
     def _estimator_spec(self) -> Any:
         """How scores became advantages, read off ``GRPOConfig`` rather than inferred.
 
-        The record asks for this exactly, and GRPO is one of the few estimators where exactly is
+        Section 2.2 asks for this exactly, and GRPO is one of the few estimators where exactly is
         achievable, because every branch in ``_generate_and_score_completions`` (2681-2725) is
         selected by a config field.
 

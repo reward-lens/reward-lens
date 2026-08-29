@@ -725,7 +725,7 @@ def instrument_grader(
 
     # The seam. `effect()` is how the instrument effect leaves Plane A, and the tap does not emit
     # it: emitting is a step-boundary act and the tap does not know where a step boundary is. A
-    # framework adapter calls this at the end of a step and hands the result to the record.
+    # framework adapter (W4.1) calls this at the end of a step and hands the result to the record.
     # The numbers are cumulative with rolling quantiles, so a per-step effect is the difference
     # between two of these rather than something the guard has to be told to reset.
     #

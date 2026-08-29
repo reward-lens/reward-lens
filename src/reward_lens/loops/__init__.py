@@ -1,4 +1,4 @@
-"""``reward_lens.loops`` — optimization, serving, and recording.
+"""``reward_lens.loops`` — optimization, serving, and recording (DESIGN 2.13).
 
 This subsystem makes reward-lens a dependency of training pipelines rather than a post-hoc tool. It
 is what unblocks the sciences that live in the optimization loop: thermodynamics (S3), hackability

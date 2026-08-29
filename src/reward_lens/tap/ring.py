@@ -1,4 +1,4 @@
-"""The bounded buffer the tap writes into, so the hot path never does blocking I/O.
+"""The bounded buffer the tap writes into, so the hot path never does blocking I/O (section 2.7).
 
 Plane A is allowed to reduce a value and append it to a ring buffer. It is not allowed to write a
 file, take a lock it might wait on, or let a queue grow until the host runs out of memory. That

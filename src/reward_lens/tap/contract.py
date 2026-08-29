@@ -1,4 +1,4 @@
-"""The Plane A vocabulary: what a tap declares, what it records, and what it costs.
+"""The Plane A vocabulary: what a tap declares, what it records, and what it costs (section 2.7).
 
 Plane A runs inside somebody else's training loop, so its reliability contract is the inverse of
 everything else in this library. Plane B fails closed and loud, because a wrong number is worse
@@ -59,7 +59,7 @@ if TYPE_CHECKING:  # a ring holds records; a record knows nothing about a ring
 
 @dataclass(frozen=True)
 class TapBudget:
-    """What a tap promises the host, declared before it runs.
+    """What a tap promises the host, declared before it runs (section 2.7).
 
     The three limits are not decoration. Adoption at a lab ends permanently the first time a
     monitor crashes or stalls a job, and the documented failure modes are memory-shaped: a vLLM
@@ -422,7 +422,7 @@ class TapBreach:
 
 @dataclass(frozen=True)
 class InstrumentEffect:
-    """What the tap cost the run, measured.
+    """What the tap cost the run, measured (section 2.7).
 
     No competitor has published an overhead number of any kind, so this type exists to make ours
     reportable rather than anecdotal, and ``as_term`` is what stops it being a footnote: it
