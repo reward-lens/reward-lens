@@ -48,7 +48,7 @@ def linear(criteria) -> float:
 
 
 def test_salib_is_the_package_we_think_it_is_and_reproduces_its_reference_values():
-    """The dependency check, plus a re-verification of the two claims D4 leans on.
+    """Section 4.9, plus a re-verification of the two claims D4 leans on.
 
     `SALib` has no `__version__`, so the version comes from the distribution metadata. The
     reference values are analytic: for `3a + 2b` the first-order indices are `9/13 = 0.6923` and

@@ -60,7 +60,7 @@ def _corpus() -> ListCorpus:
 
 
 # ---------------------------------------------------------------------------
-# The engine, re-verified. E9 rewrote both of these access paths.
+# The engine, re-verified. SPEC-ERRATA E9 rewrote both of these access paths.
 # ---------------------------------------------------------------------------
 
 
@@ -142,7 +142,7 @@ def test_mutmut_import_raises_outside_a_prepared_directory() -> None:
 
 
 def test_mutmut_return_shape_is_pinned_because_3_7_changed_it(tmp_path: Path) -> None:
-    """E9 verified mutmut 3.6.0, which returns `(code, names)`.
+    """SPEC-ERRATA E9 verified mutmut 3.6.0, which returns `(code, names)`.
 
     `mutmut>=3.6.0,<4.0` resolves to 3.7.0 today, and 3.7.0 returns a `MutatedFile` object with
     `.code`, `.mutant_names` and `.line_span_by_function_name` instead. The fallback handles both;

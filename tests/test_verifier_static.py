@@ -69,7 +69,7 @@ def test_third_party_imports_are_the_packages_we_think_they_are() -> None:
 
 
 def test_libcst_needs_the_wrapper_not_the_module() -> None:
-    """E9: `wrapper.visit()` is required; `module.visit()` raises."""
+    """SPEC-ERRATA E9: `wrapper.visit()` is required; `module.visit()` raises."""
     import libcst as cst
     from libcst.metadata import PositionProvider
 

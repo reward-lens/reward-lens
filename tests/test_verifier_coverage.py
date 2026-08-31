@@ -71,7 +71,7 @@ def test_the_coverage_we_import_is_the_third_party_one_not_our_module() -> None:
 
 
 def test_the_context_api_is_switch_context_not_set_context() -> None:
-    """E9. The write-up names `set_context()`; `Coverage` has no such method."""
+    """SPEC-ERRATA E9. Appendix G names `set_context()`; `Coverage` has no such method."""
     import coverage
 
     assert not hasattr(coverage.Coverage, "set_context")
@@ -80,7 +80,7 @@ def test_the_context_api_is_switch_context_not_set_context() -> None:
 
 
 def test_json_report_wants_a_path_not_a_file_object(tmp_path: Path, grader) -> None:
-    """E9, the second half of the coverage entry. Held, re-checked here."""
+    """SPEC-ERRATA E9, the second half of the coverage entry. Held, re-checked here."""
     import io
 
     import coverage

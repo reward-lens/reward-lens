@@ -92,7 +92,7 @@ def test_libcst_is_the_package_we_think_it_is() -> None:
 
 
 def test_the_visitor_must_be_driven_by_the_wrapper_and_not_by_the_module() -> None:
-    """E9's first libcst wrinkle, re-run against the installed version.
+    """SPEC-ERRATA E9's first libcst wrinkle, re-run against the installed version.
 
     `module.visit(v)` never resolves the metadata, so the first `get_metadata` call inside the
     visitor fails. E9 records this as one failure and it is two, which matters because the second
@@ -460,7 +460,7 @@ def test_both_instruments_pass_lint(harness) -> None:
 
 
 def test_the_inventory_declares_source_access_rather_than_mutate(harness) -> None:
-    """E20: reading a harness's text is neither running it nor modifying it."""
+    """SPEC-ERRATA E20: reading a harness's text is neither running it nor modifying it."""
     from reward_lens.core.types import Access, Component
 
     inst = AttackSurfaceInventory(harness)

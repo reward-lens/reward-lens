@@ -315,7 +315,7 @@ def test_the_generated_invariance_test_passes() -> None:
 
     `none`, which resolves to the trivial group: no affine rescaling of the reward acts on the
     fraction of tasks whose recorded score reproduces, because both sides of the comparison move
-    together. That is an answer rather than an omission. See E11.
+    together. That is an answer rather than an omission. See SPEC-ERRATA E11.
     """
     inst = ReplayFidelity(exact_match, CORPUS)
     group = inst.invariance if inst.invariance != "none" else "trivial"

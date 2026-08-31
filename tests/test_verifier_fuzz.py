@@ -1,6 +1,6 @@
 """Unit tests for D5, `verifier.false_positive_rate` and `verifier.fp_catalogue`.
 
-The parts worth testing away from the clause are the ones where being wrong is quiet.
+The parts worth testing away from the acceptance clause are the ones where being wrong is quiet.
 The false-positive rate has a denominator, and a search that reports only its hits loses every true
 negative and drives the rate towards one. The sensitive flag has to survive a store round trip,
 because a flag that lives only in memory is a convention. `crosshair` exits 0 for both a proof and
@@ -88,7 +88,7 @@ def catalogue(**kwargs: object):
 
 
 def test_crosshair_is_the_package_we_think_it_is():
-    """`crosshair-tool` on PyPI installs a package importable as `crosshair`."""
+    """Section 4.9. `crosshair-tool` on PyPI installs a package importable as `crosshair`."""
     import importlib.metadata
 
     crosshair = pytest.importorskip("crosshair")
@@ -182,14 +182,35 @@ def test_the_declared_baseline_is_computed_and_can_win():
     assert cat.beats_baseline == (cat.false_positive_rate > cat.baseline_random_mutation_fpr)
 
 
-def test_rung_two_raises_a_typed_error_naming_the_extra_rather_than_degrading():
-    from reward_lens.core.extras import ExtraRequiredError
-    from reward_lens.verifier.fuzz import coverage_guided_search
+@pytest.mark.parametrize("atheris_present", [False, True])
+def test_rung_two_refuses_with_rl0701_whether_or_not_atheris_imports(monkeypatch, atheris_present):
+    """Rung 2 is not built, so the answer does not depend on what is installed (D-79).
 
-    with pytest.raises(ExtraRequiredError) as caught:
-        coverage_guided_search()
-    assert "atheris" in str(caught.value)
-    assert "verifier" in str(caught.value)
+    The old behaviour split: `ExtraRequiredError` when `atheris` was missing, `NotImplementedError`
+    when it was present. Neither holds. What is absent is the harness, not a package, so an install
+    cannot change the answer, and a deferred marker has no business on a shipped path. Both cases
+    are asserted here because the second one is the one no environment on this machine reaches.
+    """
+    from reward_lens.contracts import CapabilityUnavailable
+    from reward_lens.verifier import fuzz
+
+    if atheris_present:
+        monkeypatch.setattr(fuzz, "atheris_available", lambda: True)
+    assert fuzz.atheris_available() is atheris_present
+
+    with pytest.raises(CapabilityUnavailable) as caught:
+        fuzz.coverage_guided_search()
+
+    assert caught.value.code == "RL0701"
+    assert caught.value.exit_code == 5
+    assert "rung 1" in str(caught.value)
+    # The break this records: the refusal is no longer an ImportError, so a caller that wrapped
+    # the call in `except ImportError` to degrade quietly now sees the refusal instead.
+    assert not isinstance(caught.value, ImportError)
+    if atheris_present:
+        assert "atheris" not in str(caught.value)
+    else:
+        assert "atheris" in str(caught.value)
 
 
 # ---------------------------------------------------------------------------

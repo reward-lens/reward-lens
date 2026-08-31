@@ -356,12 +356,12 @@ def test_the_generated_invariance_test_passes_for_both() -> None:
 
     Both declare `none`, which resolves to the trivial group: no affine rescaling of the reward
     acts on a count of exploit families or on the exponent of their arrival process, and that is
-    an answer rather than an omission. See E11.
+    an answer rather than an omission. See SPEC-ERRATA E11.
     """
     for inst in (ExploitFamilyCoverage(HAND_LOG), ReliabilityGrowth(HAND_LOG)):
         # `none` is the registry's answer and `trivial` is the group it resolves to; the kernel's
         # `get_group` takes the group id, so the same translation D1 and D9's tests make is made
-        # here. See E11.
+        # here. See SPEC-ERRATA E11.
         group = inst.invariance if inst.invariance != "none" else "trivial"
         report = check_invariance(inst, group, InvariancePayload(), n=4)
         assert report.passed
@@ -392,7 +392,7 @@ def test_the_crow_exponent_is_the_mle_under_both_censoring_schemes():
     terms survive. Without it the horizon is the last failure, whose term is log(1) = 0 and is
     filtered out, so the sum runs to n-1 while the MLE's numerator stays n. Reporting
     `len(ratios)/sum` gave the MLE in the first case and one short of it in the second, and
-    `total_effort` defaults to None so the second is the path most logs take. E42.
+    `total_effort` defaults to None so the second is the path most logs take. SPEC-ERRATA E42.
     """
     import math
 

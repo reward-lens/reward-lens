@@ -1,6 +1,6 @@
 """Unit tests for D3, `verifier.metamorphic_violations`.
 
-Three things are worth testing separately from the clause. The transformations have to
+Three things are worth testing separately from the acceptance clause. The transformations have to
 actually preserve what they say they preserve, because a violation is only as good as that claim.
 The applicability accounting has to distinguish a relation that fired and passed from one that
 never fired, because those look the same on a count and are opposite findings. And the shrink has
@@ -49,7 +49,7 @@ def source_corpus(k: int = 4) -> list[Rollout]:
 
 
 def test_hypothesis_is_the_package_we_think_it_is():
-    """Several plausible names on PyPI install different software.
+    """Section 4.9: several plausible names on PyPI install different software.
 
     Also re-verifies the one claim D3 leans on. `find(strategy, predicate)` returns the shrunk
     example as a **Python object**: `101`, an `int`, for `x > 100`. The `@given` route returns the
