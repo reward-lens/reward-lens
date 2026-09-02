@@ -15,7 +15,7 @@ TikZ and compiled to SVG.
   `pdf2svg` / `dvisvgm` / `inkscape`). Output lands in
   `../content/assets/figures/*.svg`.
 - The SVGs are committed, so the site builds in CI with no LaTeX dependency.
-- Embed with `![The reward readout](assets/figures/reward-projection.svg)`.
+- Embed with `![The reward readout, light version](../content/assets/figures/reward-projection-light.svg)`.
 
 `tikz/reward-projection.tex` is the worked example: the hero figure the whole
 library rests on. Start there.
@@ -38,11 +38,10 @@ in the browser, so there is nothing to pre-build.
 Anything that reports *numbers the library actually produced*: reward-lens
 curves, attribution waterfalls and heatmaps, the attribution-vs-patching
 scatter, hacking effect-size bars, concept dose-response. Generate these from
-real analysis runs, export to `../content/assets/figures/`, and commit them.
-`make_empirical_figures.py` is the worked example: it reads recorded results and
-draws them, so no number on a figure is typed in. Never hand-draw an empirical
-plot, and never invent the numbers on it. If you cannot regenerate a figure,
-leave a marked placeholder instead of faking it.
+real analysis runs (the notebooks and `examples/` scripts already produce most
+of them), export to `../content/assets/figures/`, and commit them. Never hand-
+draw an empirical plot, and never invent the numbers on it. If you cannot
+regenerate a figure, leave a marked placeholder instead of faking it.
 
 ## Prior art worth a look
 

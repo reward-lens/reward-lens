@@ -1,4 +1,4 @@
-"""``reward_lens.artifacts`` — the delivery layer.
+"""``reward_lens.artifacts`` — the delivery layer (section 2.15).
 
 Cards, the Atlas, safety cases, the claims checker, and the site export are views over the evidence
 store. They assemble stored Evidence and never compute fresh numbers, which is what guarantees a
@@ -26,6 +26,16 @@ from reward_lens.artifacts.safety_case import (
     SafetyCaseRefusal,
     SafetyComponent,
     assemble_safety_case,
+)
+from reward_lens.artifacts.sealed import (
+    PRECISIONS,
+    SKIP_DIRS,
+    SKIP_SUFFIXES,
+    Leak,
+    fingerprint,
+    is_fingerprintable,
+    load_fingerprint,
+    scan,
 )
 from reward_lens.artifacts.site import build_site
 
@@ -55,4 +65,21 @@ __all__ = [
     "assemble_safety_case",
     # site
     "build_site",
+    # guarding a held-out quantity against reconstruction (sealed)
+    "Leak",  # one number in one file that hashes to a protected value
+    "fingerprint",  # reduce the protected values to salted hashes
+    "load_fingerprint",  # read a fingerprint file back
+    "scan",  # walk a tree at every extension and look for a protected value
+    "is_fingerprintable",  # whether a value has enough resolution to be worth hashing
+    "PRECISIONS",  # the decimal places a scanned number is rounded to before hashing
+    "SKIP_DIRS",  # directories the scan does not descend into
+    "SKIP_SUFFIXES",  # file suffixes the scan does not open
+    # The modules themselves, so that a full path such as
+    # ``reward_lens.artifacts.sealed`` is a public path rather than a reach into a private one.
+    "atlas",
+    "card",
+    "claims",
+    "safety_case",
+    "sealed",
+    "site",
 ]

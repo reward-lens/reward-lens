@@ -1,0 +1,7 @@
+{
+  "name": "@reward-lens/report",
+  "version": "3.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The shared component tree. Wave 1 builds the offline entry; the workbench and the site island join it later."
+}
