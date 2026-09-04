@@ -1,4 +1,4 @@
-"""Standard addition: dose the target system rather than a clean one (K2 rung 1).
+"""Standard addition: dose the target system rather than a clean one (section 2.8, K2 rung 1).
 
 External calibration builds a clean organism, measures the instrument's response on it, and applies
 the resulting sensitivity to a sample that is not the organism. Every analytical laboratory knows

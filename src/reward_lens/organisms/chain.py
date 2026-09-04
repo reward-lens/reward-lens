@@ -1,6 +1,6 @@
 """K2's three-rung calibration ladder, assembled from parts that already exist.
 
-A calibration chain is a primary method, a reference method, a working method, and a
+Section 2.8 draws a calibration chain: a primary method, a reference method, a working method, and a
 transfer coefficient for each step down. `core/reference.py` holds the types and composes the budget;
 `measure/labels/reference.py` measures the reference material's own certificate; `measure/meta/rungs.py`
 turns any two rungs measured on the same data into a transfer term. None of them says what K2's three

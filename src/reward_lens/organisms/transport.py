@@ -402,8 +402,10 @@ def untransportable_refusal(
     front of it, and that is what `QUANTITY_UNDEFINED` says. `ENVELOPE_VIOLATED` was the other
     candidate and it is wrong: an envelope condition is a measurable property of a run, and
     "this diagram admits no transport formula" is a property of the assumptions rather than of the
-    data. A reason of its own would be better than either and there are seventeen; that is a
-    proposal for 3.1 rather than a change to make here.
+    data. A reason of its own would be better than either and there are eighteen; that is a
+    proposal for 3.1 rather than a change to make here. It is not `ESTIMAND_UNSUPPORTED`, the
+    eighteenth: that one says another instrument would answer this, and here no instrument will,
+    because the diagram admits no transport formula at all.
     """
     what = f" for {quantity}" if quantity else ""
     return Refusal(

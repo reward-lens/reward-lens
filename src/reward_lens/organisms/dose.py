@@ -1,7 +1,7 @@
 """The planted dose sweep: intervals on the Hill parameters, and the therapeutic index (C4 rung 1).
 
 `core/budget.py` holds the Hill curve and says, in as many words, that fitting its parameters over a
-planted dose sweep is this module's job. `measure/meta/floor.py` already does the point fit,
+planted dose sweep is this module's job. M1 (`measure/meta/floor.py`) already does the point fit,
 because a noise floor needs the calibration slope and cannot get one without it. **This module does
 not fit a second Hill curve.** `fit_hill` there is called for every point estimate here, including
 every bootstrap refit, so the two cannot drift and a change to the bounds or the starting point
@@ -9,13 +9,13 @@ happens once.
 
 What is added is the two things C4 rung 1 needs and a noise floor does not.
 
-**Intervals on all three parameters.** The floor module returns `E_max`, `EC50` and `n` with a
-residual and no uncertainty, which is right for its purpose: it divides by the slope and moves on. A
-dose-response *claim* stands or falls on whether the fitted cooperativity is distinguishable from 1,
-because `n` is the parameter that says switch rather than ramp, and a point estimate of 2.4 whose
-interval runs from 0.6 to 9 is four points and luck. The intervals here are a paired bootstrap over
-the sweep points rather than the curvature at the optimum, because a four-point sweep is exactly the
-regime where the asymptotic standard error is estimated from the same four points it is describing.
+**Intervals on all three parameters.** M1 returns `E_max`, `EC50` and `n` with a residual and no
+uncertainty, which is right for its purpose: it divides by the slope and moves on. A dose-response
+*claim* stands or falls on whether the fitted cooperativity is distinguishable from 1, because `n`
+is the parameter that says switch rather than ramp, and a point estimate of 2.4 whose interval runs
+from 0.6 to 9 is four points and luck. The intervals here are a paired bootstrap over the sweep
+points rather than the curvature at the optimum, because a four-point sweep is exactly the regime
+where the asymptotic standard error is estimated from the same four points it is describing.
 
 **The second curve, and the ratio between them.** Sweep the dose against the effect you want *and*
 against the capability you are damaging, fit both, and `TI = TD50 / ED50` is a specification rather
@@ -27,10 +27,10 @@ rung 1 and not a refinement.
 
 **What this cannot do.** The fit assumes the response is monotone in the dose and that the residual
 scatter does not grow with it. A response that rises and then falls, which is what happens once the
-intervention starts damaging the host rather than the concept, is not a Hill curve at all; the floor
-module's `HillFit.monotone` is the flag that says so and it is carried through here rather than
-swallowed. And nothing here can tell a fitted `n` of 6 from a step function: `MAX_HILL_N` is the
-floor module's bound of 20 and a fit that hits it has stopped identifying the parameter.
+intervention starts damaging the host rather than the concept, is not a Hill curve at all; M1's
+`HillFit.monotone` is the flag that says so and it is carried through here rather than swallowed.
+And nothing here can tell a fitted `n` of 6 from a step function: `MAX_HILL_N` is M1's bound of 20
+and a fit that hits it has stopped identifying the parameter.
 """
 
 from __future__ import annotations
@@ -48,13 +48,13 @@ from reward_lens.core.reading import Refusal, RefusalReason
 if TYPE_CHECKING:
     from reward_lens.measure.meta.floor import DoseSweep, HillFit
 
-#: The floor module's own minimum, restated here so a caller reading this module sees the number it
-#: is bound by. Three free parameters plus one point to leave a residual.
+#: M1's own floor, restated here so a caller reading this module sees the number it is bound by.
+#: Three free parameters plus one point to leave a residual.
 MIN_DOSES_FOR_HILL = 4
 
 
 def _floor() -> Any:
-    """The `measure.meta.floor` fitting module, imported on use.
+    """M1's fitting module, imported on use.
 
     Lazily, so `organisms` stays importable without pulling `measure` in behind it. The dependency
     runs organisms to measure and not the other way round, which is the direction `measure/base.py`
@@ -78,8 +78,8 @@ class DosePoint:
     suppressed. ``cost`` is what it damages: benchmark accuracy lost, held-out loss gained.
 
     **Both are stated as magnitudes that rise with the dose.** Passing the cost as a signed delta is
-    the easy mistake and it does not fail loudly: the fit comes back with a negative `E_max`, the
-    floor module reports "the reading does not increase with dose over this range", and a caller who is not
+    the easy mistake and it does not fail loudly: the fit comes back with a negative `E_max`, M1
+    reports "the reading does not increase with dose over this range", and a caller who is not
     reading the reason sees a missing therapeutic index rather than a sign error.
     """
 
@@ -114,7 +114,7 @@ def sweep(
 def as_sweep(
     points: Sequence[DosePoint], *, which: str = "effect", dose_unit: str = "dose"
 ) -> "DoseSweep":
-    """The points as a `DoseSweep`, selecting the effect column or the cost column."""
+    """The points as M1's `DoseSweep`, selecting the effect column or the cost column."""
     floor = _floor()
     if which == "cost":
         used = [p for p in points if p.cost is not None]
@@ -138,9 +138,9 @@ def as_sweep(
 @register_payload
 @dataclass(frozen=True)
 class DoseCurve:
-    """The floor module's fitted Hill parameters with a bootstrap interval on each.
+    """M1's fitted Hill parameters with a bootstrap interval on each.
 
-    ``monotone`` and ``residual_rms`` come straight off `HillFit` and are the two fields a
+    ``monotone`` and ``residual_rms`` come straight off M1's `HillFit` and are the two fields a
     reader checks before believing `hill_n`. A non-monotone sweep still fits, and the flag is the
     only thing in the record that says the curve is describing something that is not a curve.
     """
@@ -177,7 +177,7 @@ class DoseCurve:
 
     @property
     def hit_the_bound(self) -> bool:
-        """Whether the fit hit the upper bound on `n`, where the parameter stops meaning much."""
+        """Whether the fit ran into M1's upper bound on `n`, where the parameter stops meaning much."""
         return self.hill_n >= 20.0 - 1e-6
 
     def curve(self, at_dose: float | None = None) -> CalibrationCurve:
@@ -252,10 +252,10 @@ def fit_curve(
     level: float = 0.95,
     dose_unit: str = "dose",
 ) -> DoseCurve | Refusal:
-    """The floor module's Hill fit over a sweep, plus a paired bootstrap interval on each parameter.
+    """M1's Hill fit over a sweep, plus a paired bootstrap interval on each parameter.
 
-    Refuses rather than returning a curve when the floor module's fit does not converge or comes
-    back with a non-positive `E_max`, carrying its own reason string. Both of those produce three numbers if
+    Refuses rather than returning a curve when M1's fit does not converge or comes back with a
+    non-positive `E_max`, carrying M1's own reason string. Both of those produce three numbers if
     you ask a least-squares routine nicely enough and all three are meaningless, which is the case
     a refusal exists for.
     """
@@ -281,12 +281,12 @@ def fit_curve(
         )
 
     # A response with no dynamic range at all fits a curve with a vanishing but *positive* `E_max`,
-    # which slips past the floor module's `e_max <= 0` guard: on an identically-zero column the
-    # optimiser returns `E_max = 1.4e-9` and `converged` is True. It divides by the slope and a
-    # floor built on a 1e-9 curve is enormous rather than wrong, so the guard is adequate there;
-    # here the curve is the reading, and reporting `EC50` and `n` for a response that never moved
-    # is a confident wrong number. The check is scale-relative rather than absolute because the
-    # columns are in whatever units the caller measured them in.
+    # which slips past M1's `e_max <= 0` guard: on an identically-zero column the optimiser returns
+    # `E_max = 1.4e-9` and `converged` is True. M1 divides by the slope and a floor built on a
+    # 1e-9 curve is enormous rather than wrong, so the guard is adequate there; here the curve is
+    # the reading, and reporting `EC50` and `n` for a response that never moved is a confident wrong
+    # number. The check is scale-relative rather than absolute because the columns are in whatever
+    # units the caller measured them in.
     scale = float(np.max(np.abs(swept.responses))) if swept.responses.size else 0.0
     if swept.dynamic_range <= 1e-9 * max(scale, 1.0):
         return Refusal(

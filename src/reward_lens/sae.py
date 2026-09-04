@@ -33,7 +33,10 @@ from __future__ import annotations
 
 from reward_lens.core.extras import require_extra
 
-require_extra("dict", subsystem="reward_lens.sae")
+# `dict` was this module's extra in v3 and is not a declared extra in 4.0, so the guard that was
+# meant to name an installable group raised `KeyError: 'dict'` at import instead. The module needs
+# torch, which is what `white-box` installs.
+require_extra("white-box", subsystem="reward_lens.sae")
 
 import json
 import math
