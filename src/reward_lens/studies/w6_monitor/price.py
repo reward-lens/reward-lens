@@ -6,9 +6,9 @@ maintainer decides.
 
 ## An inconsistency in the reference arithmetic, reproduced before it is used
 
-The reference figures these prices start from: ten seeds by three conditions of real group-relative
-RL is roughly **11,520 GPU-hours** and **$17,000 to $23,000** at neocloud rates, against a **floor
-of about $2.15 per GPU-hour preemptible**. Those three numbers do not multiply.
+Part 9 states: ten seeds by three conditions of real group-relative RL is roughly **11,520
+GPU-hours** and **$17,000 to $23,000** at neocloud rates, against a **floor of about $2.15 per
+GPU-hour preemptible**. Those three numbers do not multiply.
 
     11,520 GPU-hours at the $17,000 end implies $1.4757 per GPU-hour
     11,520 GPU-hours at the $23,000 end implies $1.9965 per GPU-hour
@@ -16,11 +16,11 @@ of about $2.15 per GPU-hour preemptible**. Those three numbers do not multiply.
 
 **The stated preemptible floor is above the top of the stated range**, so at least one of the three
 is describing a different GPU class from the other two, or one is wrong. Nothing here resolves it,
-and the prices below are quoted as a band whose ends are both taken from those figures: the low end
+and the prices below are quoted as a band whose ends are both taken from the document: the low end
 from the $17,000 figure and the high end from the $2.15 floor. Both ends are labelled with where
 they came from so a reader can substitute their own rate.
 
-The per-arm unit follows from the same figures and is the only derived constant: 11,520 over 30
+The per-arm unit follows from the same sentence and is the only derived constant: 11,520 over 30
 arms is **384 GPU-hours per arm**, which is the number both prices multiply.
 """
 
@@ -30,11 +30,11 @@ from dataclasses import dataclass
 
 from reward_lens.studies.w6_monitor.study import GPU_HOURS_PER_ARM
 
-#: The low end of the rate band, implied by the reference $17,000 over 11,520 GPU-hours.
+#: The low end of the rate band, implied by Part 9's own $17,000 over 11,520 GPU-hours.
 RATE_LOW: float = 17_000.0 / 11_520.0
 
-#: The high end, which is the stated preemptible floor. It is above the top of the stated dollar
-#: range and that is recorded in this module's header rather than smoothed over.
+#: The high end, which is Part 9's stated preemptible floor. It is above the top of Part 9's own
+#: dollar range and that is recorded in this module's header rather than smoothed over.
 RATE_HIGH: float = 2.15
 
 #: What the published campaign cost, for scale. Both rows below are compared against it.
@@ -110,7 +110,7 @@ def _price(study: str, arms: float, **kw: object) -> Price:
 
 
 W6_4_PRICE = _price(
-    "w6_4 (D5 behavioural: selection against exploitation)",
+    "W6.4 (D5 behavioural: selection against exploitation)",
     6.25,
     assumptions=(
         "two verifier conditions (leaky, hardened) by three seeds is six training arms at 384 "
@@ -137,7 +137,7 @@ W6_4_PRICE = _price(
 )
 
 W6_5_PRICE = _price(
-    "w6_5 (I4: monitor half-life as a figure of merit)",
+    "W6.5 (I4: monitor half-life as a figure of merit)",
     11.0,
     assumptions=(
         "the kill condition is stated over ten monitors and each in-loop monitor needs its own arm, "
@@ -161,8 +161,8 @@ W6_5_PRICE = _price(
         "0.6 and better below it, which is fine. The second factor is not estimable in advance: if "
         "no monitor decays over the horizon the study returns 'no decay at this horizon', which is "
         "a real finding and is the direction the frontier-scale monitorability result points, but "
-        "it does not deliver the ranking the row exists for. Unlike `w6_4` there is no cheap arc "
-        "that detects that in advance"
+        "it does not deliver the ranking the row exists for. Unlike W6.4 there is no cheap arc that "
+        "detects that in advance"
     ),
 )
 
@@ -173,39 +173,38 @@ def ranked() -> tuple[Price, ...]:
 
 
 RECOMMENDATION = """\
-Buy `w6_4` first, and buy its gate arc before its training arms.
+Buy W6.4 first, and buy its gate arc before its training arms.
 
-`w6_4` is 2,400 GPU-hours against `w6_5`'s 4,224, and the totals are the smaller half of the
-argument. The larger half is that `w6_4`'s expensive arc is conditional on a cheap one.
-`w6_4.base_sample` is 96 GPU-hours of inference on a model nobody is updating, it can run before any
-arm launches, and it answers on its own whether the selection-versus-exploitation split will resolve
-at the depth available. If it will not, the six training arms are never bought and the loss is 96
-GPU-hours. `w6_5` has no equivalent: nothing observable before the arms run says whether any monitor
-will decay over the horizon, and a run in which none does costs the full 4,224 and returns a horizon
-result rather than the ranking.
+W6.4 is 2,400 GPU-hours against W6.5's 4,224, and the totals are the smaller half of the argument.
+The larger half is that W6.4's expensive arc is conditional on a cheap one. `w6_4.base_sample` is 96
+GPU-hours of inference on a model nobody is updating, it can run before any arm launches, and it
+answers on its own whether the selection-versus-exploitation split will resolve at the depth
+available. If it will not, the six training arms are never bought and the loss is 96 GPU-hours.
+W6.5 has no equivalent: nothing observable before the arms run says whether any monitor will decay
+over the horizon, and a run in which none does costs the full 4,224 and returns a horizon result
+rather than the ranking.
 
-`w6_4` also carries a matched positive control that `w6_5` does not. Its third hypothesis, that the
+W6.4 also carries a matched positive control that W6.5 does not. Its third hypothesis, that the
 leaky arm realises more false-positive mass than the hardened arm, is already published at a
 43.8-point leak-stratum effect. It is registered here to void the run rather than to confirm
 anything: arms that do not reproduce it did not do what the design says, and that is knowable from
-the arms themselves. `w6_5`'s analogous check, the pressure contrast against parallel monitors, is a
+the arms themselves. W6.5's analogous check, the pressure contrast against parallel monitors, is a
 hypothesis rather than a control, because there is no published effect size for it to fail to
 reproduce.
 
-Against all of that, `w6_5` is the more novel row. Its headline is unoccupied: monitors degrading
-under pressure is observed, and ranking monitors by that curve is not done anywhere. `w6_4`'s
-headline is occupied by a preregistered two-arm contrast published in July 2026 and only its
-mechanism is open. If the choice were about novelty rather than about decisiveness per dollar the
-order would reverse, and that is a judgement about what the release is for rather than an arithmetic
-result.
+Against all of that, W6.5 is the more novel row. Its headline is unoccupied: monitors degrading
+under pressure is observed, and ranking monitors by that curve is not done anywhere. W6.4's headline
+is occupied by a preregistered two-arm contrast published in July 2026 and only its mechanism is
+open. If the choice were about novelty rather than about decisiveness per dollar the order would
+reverse, and that is a judgement about what the release is for rather than an arithmetic result.
 
-**And there is a third study, cheaper than either, that is upstream of `w6_5`.** Two monitors
-matched on accuracy and differing only in whether their false positives are systematic or random,
-each in the loop, with the hack rate as the outcome. Two arms, 768 GPU-hours, roughly $1,133 to
-$1,651. It tests the mechanism `w6_5`'s figure of merit assumes, which is that what a monitor costs
-the policy is the structure of its errors and not their rate. If that mechanism is not there,
-ranking by half-life is ranking by something with no explanation behind it, and `w6_5` should be
-re-scoped before it is bought. `study.OPEN_TARGET` states it.
+**And there is a third study, cheaper than either, that is upstream of W6.5.** Two monitors matched
+on accuracy and differing only in whether their false positives are systematic or random, each in
+the loop, with the hack rate as the outcome. Two arms, 768 GPU-hours, roughly $1,133 to $1,651. It
+tests the mechanism W6.5's figure of merit assumes, which is that what a monitor costs the policy is
+the structure of its errors and not their rate. If that mechanism is not there, ranking by half-life
+is ranking by something with no explanation behind it, and W6.5 should be re-scoped before it is
+bought. `study.OPEN_TARGET` states it.
 """
 
 

@@ -1,4 +1,4 @@
-"""The plan: studies, the arcs that answer them, and the gate between them.
+"""The plan: studies, the arcs that answer them, and the gate between them (§4.6).
 
 A `Plan` is the whole of what a run intends to do. It holds the frozen studies, whose predictions
 are already uneditable; the arcs, which are the units of work and the only things that produce
@@ -52,12 +52,12 @@ def _spec_of(study: StudyLike) -> StudySpec:
 class Plan:
     """Everything a run intends to do, before any of it happens.
 
-    `bindings` is the field the plan cannot work without. A `Prediction.metric` is a string like
-    `spearman_biasbattery_vs_rmbench_hard`; it is not a quantity id and it names no subject. Until
-    something says which registered quantity, measured on what, that string refers to, there is no
-    question for closure to answer. Leaving a metric unbound is itself a closure gap rather than a
-    silent pass, because "nobody said what this metric is" and "nobody produces it" are the same
-    problem seen at different depths.
+    `bindings` is the field §4.6 does not print and the plan cannot work without. A
+    `Prediction.metric` is a string like `spearman_biasbattery_vs_rmbench_hard`; it is not a
+    quantity id and it names no subject. Until something says which registered quantity, measured
+    on what, that string refers to, there is no question for closure to answer. Leaving a metric
+    unbound is itself a closure gap rather than a silent pass, because "nobody said what this
+    metric is" and "nobody produces it" are the same problem seen at different depths.
     """
 
     studies: tuple[StudyLike, ...] = ()
@@ -147,8 +147,8 @@ def check_closure(plan: Plan) -> ClosureReport:
     cost that exceeds the declared budget raise the same way.
 
     Returns the report on success, and the report is worth keeping: `report.metric_arcs` is the
-    per-metric arc attribution the runner records, so that a metric which does go missing at run
-    time produces a void naming the arc rather than only the metric.
+    per-metric arc attribution §4.6 rule 3 asks the runner to record, so that a metric which does
+    go missing at run time produces a void naming the arc rather than only the metric.
     """
     report = closure_report(plan)
     if not report.closed:

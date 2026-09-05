@@ -1,9 +1,9 @@
-"""`w6_4`, catalogue row D5's behavioural half: what the policy does about a leaky verifier.
+"""W6.4, catalogue row D5's behavioural half: what the policy does about a leaky verifier.
 
-D5's static half is built and closed. Run against MATH's `is_equiv` it found 28 metamorphic
+D5's static half is built and closed as W3.4b. Run against MATH's `is_equiv` it found 28 metamorphic
 violations over 40 pairs at a false-positive rate of 0.002, **and its kill condition fired: the
-random-mutation baseline beats rung 1.** The acceptance file that produced those numbers asserts
-relations rather than values and contains none of them.
+random-mutation baseline beats rung 1.** Those numbers are quoted from `BUILD_STATE.md`; the
+acceptance file that produced them asserts relations rather than values and contains none of them.
 
 The behavioural half was specified as "train against audited-hackable versus audited-clean graders
 and measure what the policy does", and **most of that has since been answered by somebody else.**
@@ -13,11 +13,11 @@ tasks, seeds and compute, rewarded by the original tests (leaky) against the MBP
 margin, at 0.20 points with a one-sided 95% upper bound of 0.75, and it reports a cheap static
 leakiness audit computed before training tracking realised rewarded false-positive mass at Spearman
 0.80, with a leak-stratum false-positive share 43.8 points above clean tasks. Two further families
-replicate under a preregistration frozen before their data existed. **All of that is quoted from
-the published record and none of it is measured here.**
+replicate under a preregistration frozen before their data existed. **All of that is quoted from the
+field-scan dossier and none of it is measured here.**
 
 So the naive version of this row is bought. Running two arms to find out whether a leaky verifier
-inflates false-positive mass would spend real compute confirming a published `[C]`-tier result.
+inflates false-positive mass would spend Phase 6 money confirming a published `[C]`-tier result.
 
 **What is genuinely open is the mechanism, and that paper marks it `[E]`.** Its words: mechanism
 evidence is consistent with *selection of pre-existing error modes rather than learned exploitation*,
@@ -378,8 +378,8 @@ def decompose_mass(
     Refuses without a base-policy sample. That refusal is structural rather than defensive: without
     it this function would happily report a false-positive rate on a training record, which is a
     property of the verifier, and the verifier half of D5 is the half a published preregistered
-    contrast has already answered at Spearman 0.80. A compute-gated design that can be discharged
-    by re-measuring the answered half is not a compute-gated design.
+    contrast has already answered at Spearman 0.80. A Phase 6 design that can be discharged by
+    re-measuring the answered half is not a Phase 6 design.
     """
     if trained is None:
         return Refusal(
@@ -500,9 +500,10 @@ class AuditedFamilyMass(W6Instrument):
     Declares `verifier.fp_catalogue`, which is D5's second registered quantity and is described as
     the catalogue of accepted-but-wrong inputs. That is what this produces: the same catalogue,
     indexed by training window and weighted by how much reward each family earned rather than by how
-    many the fuzzer found. Its registered unit is OPEN, the quantity carries no printed unit row at
-    all, so nothing here contradicts one, and the registry's `definition` field is empty. **The id
-    was not minted here, and the definition the behavioural indexing would need is not filled in.**
+    many the fuzzer found. Its registered unit is OPEN (SPEC-ERRATA E14 records that the quantity has
+    no Appendix A row at all), so nothing here contradicts a printed unit, and the registry's
+    `definition` field is empty. **A request to fill that definition so it covers the behavioural
+    indexing is in this package's report; the id was not minted here.**
 
     Rung 0 on D5's printed ladder, which reads "replay known exploit families". That is a fair
     description of what this does, replayed against the run's own rewarded rollouts instead of
@@ -525,7 +526,7 @@ class AuditedFamilyMass(W6Instrument):
     deviations = (
         "the catalogue's D5 measures a false-positive rate by searching the verifier. This measures "
         "where a training run's reward went among the failure families that search found, which is "
-        "the behavioural half of D5 and is not a rung of the printed ladder",
+        "the behavioural half Part 9 assigns to W6.4 and is not a rung of the printed ladder",
         "the declared baseline `random_mutation` is D5's and is inherited rather than re-run: the "
         "static half already ran it and its kill condition fired. The baseline that decides this "
         "reading is the second one, the base policy's own error distribution, and it is not in the "
@@ -537,9 +538,9 @@ class AuditedFamilyMass(W6Instrument):
     substrates = ALL_SUBSTRATES
     phases = RUN_PHASES
     envelope = BEHAVIOURAL_ENVELOPE
-    #: `trivial` in the registry, which is where `none` resolves. A catalogue of accepted-but-wrong
-    #: inputs is a set of reproducers and no affine rescaling of the reward acts on it.
-    #: `FalsePositiveFuzzing` declares the same group for the same reason.
+    #: `trivial` in the registry, which is where `none` resolves (SPEC-ERRATA E38). A catalogue of
+    #: accepted-but-wrong inputs is a set of reproducers and no affine rescaling of the reward acts
+    #: on it. `FalsePositiveFuzzing` declares the same group for the same reason.
     invariance = "trivial"
     invariance_relation = INVARIANT
     baselines = BEHAVIOURAL_BASELINES

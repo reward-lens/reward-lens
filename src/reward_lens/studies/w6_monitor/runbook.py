@@ -13,7 +13,7 @@ produce it you are looking at.
 from __future__ import annotations
 
 W6_4_RUNBOOK = """\
-# w6_4 runbook: selection against exploitation in rewarded verifier false positives
+# W6.4 runbook: selection against exploitation in rewarded verifier false positives
 
 ## 0. Freeze, before anything else runs
 
@@ -36,10 +36,10 @@ purpose; it is not a blocker, it is a label saying this was frozen against uncom
     # one call per verifier; keep `FPCatalogue.by_family` from each
 
 Two things to look at before going further. If `catalogue.beats_baseline` is False on either
-verifier, the audit's own kill condition has fired, which is what happened on MATH's `is_equiv`: the
-random-mutation baseline beat rung 1. That does not stop this study, because the audit's per-family
-counts are still the ordering the horse race scores, but it does mean the audit going into the race
-is a weak one and the result should say so. If `reference_disagreements` is non-zero,
+verifier, the audit's own kill condition has fired, which is what happened on MATH's `is_equiv` in
+W3.4b: the random-mutation baseline beat rung 1. That does not stop this study, because the audit's
+per-family counts are still the ordering the horse race scores, but it does mean the audit going
+into the race is a weak one and the result should say so. If `reference_disagreements` is non-zero,
 the strict reference is accepting things the verifier rejects, the two are not ordered, and the
 false-positive rate is not well defined; fix the reference before spending anything.
 
@@ -107,7 +107,7 @@ measurement, it changes what is being measured.
 """
 
 W6_5_RUNBOOK = """\
-# w6_5 runbook: monitor half-life under pressure as a figure of merit
+# W6.5 runbook: monitor half-life under pressure as a figure of merit
 
 ## 0. Freeze.
 
@@ -145,10 +145,10 @@ silently changed composition mid-run would put the change into the degradation t
     # op.fpr is the realised rate, not the target
 
 Set each monitor's threshold so its **realised** in-loop false-alarm rate hits a common target, and
-record the achieved rate. Not doing so has been measured: a detector comparison matched on a common
-threshold gave the conjunction an advantage in five of six designs that disappeared under a matched
-false-alarm rate. Here it is worse, because the operating point sets how hard the policy pushes
-against the monitor as well as how the monitor is scored.
+record the achieved rate. SPEC-ERRATA E54 measured what happens otherwise: a detector comparison
+matched on a common threshold gave the conjunction an advantage in five of six designs that
+disappeared under a matched false-alarm rate. Here it is worse, because the operating point sets how
+hard the policy pushes against the monitor as well as how the monitor is scored.
 
 ## 5. Buy the arms. Ten in-loop plus one no-monitor control.
 

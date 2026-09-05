@@ -1,8 +1,8 @@
-"""What `w6_4` and `w6_5` share: the runner, the access matrices, the envelopes, and d-prime.
+"""What W6.4 and W6.5 share: the runner, the access matrices, the envelopes, and d-prime.
 
-Both packages are monitor-under-pressure designs and both turn on the same separation. `w6_5`
-splits a falling detection curve into *evasion* (the policy's hacks stopped looking suspicious) and
-*degradation* (the monitor stopped discriminating). `w6_4` splits a rising false-positive mass into
+Both packages are monitor-under-pressure designs and both turn on the same separation. W6.5 splits
+a falling detection curve into *evasion* (the policy's hacks stopped looking suspicious) and
+*degradation* (the monitor stopped discriminating). W6.4 splits a rising false-positive mass into
 *selection* (training moved probability onto failure modes the base policy already produced) and
 *exploitation* (training found failure modes the base policy did not have). In both cases an
 aggregate moved, two mechanisms could have moved it, and the reading is worthless unless it says
@@ -11,8 +11,8 @@ which.
 The move that makes both separable is the same one, and it is metrology's rather than machine
 learning's: hold something fixed and re-measure it. A check standard is a stable artefact measured
 in every session so that instrument drift can be told from subject change; `monitor/check_standard`
-is that instrument and J5 is its shipped form. `w6_5`'s frozen probe set and `w6_4`'s base-policy
-family sample are the same idea applied to two different subjects.
+is that instrument and J5 is its shipped form. W6.5's frozen probe set and W6.4's base-policy family
+sample are the same idea applied to two different subjects.
 
 **Neither package is run here.** Every instrument below is asserted against a planted subject whose
 answer is known by construction, and each one's docstring names the real subject its claim needs and
@@ -43,7 +43,7 @@ from reward_lens.measure.base import BaseObservable, Context, run
 
 #: Where a monitor or a verifier can live. Both rows read a scoring decision and neither cares
 #: whether the thing that produced it is a network or a program: a linear probe on activations, a
-#: generative judge and a test suite are all monitors for this purpose, and `w6_5` ranks across
+#: generative judge and a test suite are all monitors for this purpose, and W6.5 ranks across
 #: exactly that mixture on purpose.
 ALL_SUBSTRATES = frozenset(
     {
@@ -157,9 +157,9 @@ class W6Instrument(BaseObservable):
         ``ctx._observable`` is set around both branches. `Context.emit` reads the observable's name,
         version, gauge status and quantity off it, and `run()` is the only place in the kernel that
         sets it, so a no-signal branch that calls `measure` directly emits `observable="anonymous"`
-        and `quantity=""` whatever the instrument declared. That is the road every record-only
-        instrument takes; `measure/threshold/_base.py` found and fixed it, and this is the same fix
-        in the same shape.
+        and `quantity=""` whatever the instrument declared. That is SPEC-ERRATA E35 arriving by the
+        road every record-only instrument takes; `measure/threshold/_base.py` found and fixed it,
+        and this is the same fix in the same shape.
         """
         self._computed = computed
         self._emit_kwargs = kwargs

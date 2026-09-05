@@ -43,7 +43,7 @@ if TYPE_CHECKING:  # `StudyResult` is imported inside `_void_result` so this mod
     from reward_lens.studies.spec import StudyResult
 
 # ---------------------------------------------------------------------------
-# `w6_5` — I4
+# W6.5 — I4
 # ---------------------------------------------------------------------------
 
 W6_5_NOTES = """\
@@ -154,8 +154,8 @@ W6_5_KILLS = (
         threshold=1.25,
         description=(
             "the arms ran at realised in-loop false-alarm rates differing by more than a quarter, "
-            "so the ranking is a ranking of operating points. This failure has been measured on "
-            "the conjunction detector and it is sharper here, because the operating point sets "
+            "so the ranking is a ranking of operating points. SPEC-ERRATA E54 measured this failure "
+            "on the conjunction detector and it is sharper here, because the operating point sets "
             "the pressure as well as the scale."
         ),
     ),
@@ -189,7 +189,7 @@ def w6_5_spec() -> StudySpec:
 
 
 # ---------------------------------------------------------------------------
-# `w6_4` — D5's behavioural half
+# W6.4 — D5's behavioural half
 # ---------------------------------------------------------------------------
 
 W6_4_NOTES = """\
@@ -360,8 +360,8 @@ def w6_4_spec() -> StudySpec:
 # Plans, and the closure check that has to pass before a price is quoted
 # ---------------------------------------------------------------------------
 
-#: The unit of compute both prices are built from. The reference arithmetic: ten seeds by three
-#: conditions of real group-relative RL is roughly 11,520 GPU-hours, so one arm is 11,520 / 30.
+#: The unit of compute both prices are built from. Part 9's own arithmetic: "ten seeds by three
+#: conditions of real group-relative RL is roughly 11,520 GPU-hours", so one arm is 11,520 / 30.
 #: Everything downstream multiplies this, so it is stated once and named.
 GPU_HOURS_PER_ARM: float = 11_520.0 / 30.0
 
@@ -371,7 +371,7 @@ def _out(quantity: str, subject: str) -> Output:
 
 
 def w6_5_plan(spec: StudySpec | FrozenStudy | None = None) -> Plan:
-    """The arcs producing `w6_5`'s registered metrics, with the training cost on the training arc.
+    """The arcs that produce W6.5's registered metrics, with the training cost on the training arc.
 
     Three arcs and not one, because the closure report is more useful when the expensive arc is
     separable: `w6_5.train` carries every GPU-hour and the two arcs above it are arithmetic on what
@@ -434,7 +434,7 @@ def w6_5_plan(spec: StudySpec | FrozenStudy | None = None) -> Plan:
 
 
 def w6_4_plan(spec: StudySpec | FrozenStudy | None = None) -> Plan:
-    """The arcs that produce `w6_4`'s registered metrics.
+    """The arcs that produce W6.4's registered metrics.
 
     The base-policy sample is its own arc and it is deliberately upstream of the training arc. It is
     the only input the split cannot be computed without, it costs inference rather than training, and
@@ -514,12 +514,12 @@ def w6_4_plan(spec: StudySpec | FrozenStudy | None = None) -> Plan:
 
 
 def freeze_w6_4(repo_dir: str | None = None) -> FrozenStudy:
-    """Freeze `w6_4`'s spec. The `+dirty` suffix on the sha is visible and is not an error."""
+    """Freeze W6.4's spec. The `+dirty` suffix on the sha is visible and is not an error."""
     return freeze(w6_4_spec(), repo_dir=repo_dir)
 
 
 def freeze_w6_5(repo_dir: str | None = None) -> FrozenStudy:
-    """Freeze `w6_5`'s spec."""
+    """Freeze W6.5's spec."""
     return freeze(w6_5_spec(), repo_dir=repo_dir)
 
 
@@ -539,7 +539,7 @@ def check_both() -> dict[str, object]:
 #: Why both analyses void today. Named once so the two agree, and stated as the thing that is
 #: missing rather than as an apology.
 _NO_SUBJECT = (
-    "no run exists that carries this. Both shipped fixtures are the wrong shape: the GRPO "
+    "no run exists that carries this. Both fixtures on the branch are the wrong shape: the GRPO "
     "records are a real optimisation trace on a 2.45M-parameter model with a length grader and no "
     "reward-hacking transition, and the AISI series is a labelled hack rate per step with no "
     "per-rollout monitor scores and no verifier. The campaign store holds no reinforcement-learning "
@@ -577,7 +577,7 @@ def _void_result(spec: StudySpec, remedy: str) -> "StudyResult":
 
 
 def analyse_w6_4(run: object = None) -> "StudyResult":
-    """`w6_4`'s analysis. Voids until the arms exist, naming what would have to be bought."""
+    """W6.4's analysis. Voids until the arms exist, naming what would have to be bought."""
     return _void_result(
         w6_4_spec(),
         remedy=(
@@ -589,7 +589,7 @@ def analyse_w6_4(run: object = None) -> "StudyResult":
 
 
 def analyse_w6_5(run: object = None) -> "StudyResult":
-    """`w6_5`'s analysis. Voids until the arms exist, naming what would have to be bought."""
+    """W6.5's analysis. Voids until the arms exist, naming what would have to be bought."""
     return _void_result(
         w6_5_spec(),
         remedy=(
@@ -605,13 +605,13 @@ def analyse_w6_5(run: object = None) -> "StudyResult":
 #: The observation: a linear probe on base-model layer 34 at a 5% false-positive rate, placed inside
 #: a GRPO loop without differentiating through it, produced 0% hacking in three of three runs, with
 #: monitor accuracy predicting performance at r = 0.83 and 0.75, and an 80%-accurate probe beat a
-#: 90%-accurate ground-truth monitor. Not measured here.
+#: 90%-accurate ground-truth monitor. Quoted from the field-scan dossier; not measured here.
 #:
 #: A worse monitor produced a better outcome. The natural mechanism is that what matters is not a
 #: monitor's error *rate* but its error *structure*: a monitor whose mistakes are systematic teaches
 #: the policy where the mistakes are, and a monitor whose mistakes are unpredictable does not. If
 #: that is right, static accuracy is the wrong axis and the half-life is measuring the right one,
-#: which is the strongest available argument for `w6_5` and is currently untested.
+#: which is the strongest available argument for W6.5 and is currently untested.
 #:
 #: What would settle it: two monitors constructed to be matched on held-out accuracy and to differ
 #: only in whether their false positives are drawn from a fixed rule or at random, each placed in
@@ -623,7 +623,7 @@ OPEN_TARGET: str = (
     "error structure against error rate: two monitors matched on accuracy, one with systematic "
     "false positives and one with random ones, each in the loop, hack rate as the outcome. Two "
     "arms. Predicted: the random-error monitor gives the lower hack rate. Untested, and it is the "
-    "mechanism `w6_5`'s figure of merit assumes."
+    "mechanism W6.5's figure of merit assumes."
 )
 
 

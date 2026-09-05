@@ -38,8 +38,7 @@ imports fine and every entry point refuses by name rather than reading a file th
 
 Run it:
 
-    REWARD_LENS_EVAL_DOSSIER=/path/to/13-EVAL-SCIENCE.md \
-        python -m reward_lens.experiments.x8_leaderboard_meta
+    python -m reward_lens.experiments.x8_leaderboard_meta
 
 which verifies the quotes, freezes the spec, runs the analysis, and prints the write-up section.
 The freeze happens before the analysis in the same process and the ordering is not adjustable.
@@ -69,17 +68,17 @@ from reward_lens.studies.spec import Hypothesis, KillCriterion, Prediction, Stud
 # The evidence base
 # ---------------------------------------------------------------------------
 
-#: The environment variable that supplies the dossier's location.
+#: The dossier the effect sizes come from. Absolute, because it is a read-only reference outside
+#: this repository and there is no sensible relative path to it.
+#: The environment variable that says where the dossier is, and the file name to look for when it
+#: is unset. The dossier is a read-only reference held outside this repository, so there is no path
+#: that is right for everyone; the previous default was one developer's home directory, which the
+#: wheel then shipped to everyone else. There is deliberately no fallback behind the variable: a
+#: bare file name resolves against whatever the working directory happens to be, which turns an
+#: unconfigured install into either a confusing error further down or, if a file of that name is
+#: there, an analysis quoting the wrong document.
 DOSSIER_ENV_VAR = "REWARD_LENS_EVAL_DOSSIER"
-
-#: The file the effect sizes are quoted from.
 DOSSIER_NAME = "13-EVAL-SCIENCE.md"
-
-#: The dossier the effect sizes come from, or None when it has not been located. It is a read-only
-#: reference held outside this repository, so there is no path an installed copy of the library
-#: could guess: set `DOSSIER_ENV_VAR` to point at it, or pass a path to the functions below. There
-#: is deliberately no fallback, because a default pointing at a file that is not there would turn a
-#: missing evidence base into a confusing error somewhere further down.
 _dossier_env = os.environ.get(DOSSIER_ENV_VAR)
 DOSSIER: Path | None = Path(_dossier_env) if _dossier_env else None
 
@@ -632,13 +631,7 @@ def _dirty_paths(repo_dir: Path) -> list[str]:
 
 
 def repo_root() -> Path:
-    """The checkout this module lives in, found from the file rather than from the cwd.
-
-    This assumes the source layout, ``<root>/src/reward_lens/experiments/``. Run from an installed
-    package there is no checkout above the module and the path this returns is not a repository,
-    which is not an error: the git stamp then reads ``unknown`` and the spec hash, which is a
-    content hash of the plan and is the part the preregistration rests on, is unaffected.
-    """
+    """The repository this module lives in, found from the file rather than from the cwd."""
     return Path(__file__).resolve().parents[3]
 
 
@@ -647,8 +640,8 @@ def freeze_x8(repo_dir: Path | None = None, frozen_at: str | None = None) -> Fre
 
     The campaign's freeze refuses outright on a dirty tree, and that is the right behaviour there:
     it is freezing a spend commitment against a commit somebody will later check out. Here the tree
-    is expected to be dirty, because an analysis is normally frozen while the checkout it sits in is
-    still being edited, and refusing would mean the spec never gets hashed at all.
+    is expected to be dirty, because this analysis is being written alongside other work in the same
+    checkout, and refusing would mean the spec never gets hashed at all.
 
     So the refusal is recorded rather than raised. The spec hash is the part that carries the
     preregistration and it is exact either way: it is a content hash of the predictions and the
@@ -1017,7 +1010,7 @@ def student_t_over_z(k: int, alpha: float = meta.ALPHA) -> float:
 
 
 def findings_section(result: X8Result, outcome: FreezeOutcome | None = None) -> str:
-    """The write-up section, generated from the numbers rather than written around them.
+    """The FINDINGS.md-ready section, generated from the numbers rather than written around them.
 
     Every sentence that states a direction is conditioned on the value, so the section reads
     correctly if the pooled fraction lands on either side of the threshold and if the prediction
@@ -1420,11 +1413,11 @@ __all__ = [
     "DOSSIER_NAME",
     "DOSSIER_SECTION",
     "DOSSIER_SHA256",
+    "DossierNotConfigured",
     "ESTIMAND",
     "INCLUSION_RULE",
     "NULL_FRACTION",
     "SIX",
-    "DossierNotConfigured",
     "Extraction",
     "FreezeOutcome",
     "QuoteCheck",
@@ -1433,11 +1426,11 @@ __all__ = [
     "analyse",
     "assert_quotes_verify",
     "dossier_sha256",
+    "resolve_dossier",
     "findings_section",
     "freeze_x8",
     "main",
     "repo_root",
-    "resolve_dossier",
     "run",
     "study_spec",
     "verify_quotes",

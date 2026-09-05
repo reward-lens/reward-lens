@@ -1,13 +1,13 @@
 """Subjects whose answer is known by construction, for both rows.
 
-Neither `w6_4` nor `w6_5` is run. What can be asserted without spending anything is that the
-arithmetic recovers a decomposition somebody planted, and that is what these generators exist for.
-Each one takes the split it is meant to produce as an argument and builds a subject that has
-exactly that split, so a test can assert the number rather than assert a range.
+Neither W6.4 nor W6.5 is run. What can be asserted without spending anything is that the arithmetic
+recovers a decomposition somebody planted, and that is what these generators exist for. Each one
+takes the split it is meant to produce as an argument and builds a subject that has exactly that
+split, so a test can assert the number rather than assert a range.
 
 The generators are deliberately explicit about the physics they assume, because getting that wrong
 is how a planted test passes while the instrument is broken, and it is how the first version of the
-`w6_5` test lied. **Evasion is the policy moving under a fixed monitor; degradation is the monitor
+W6.5 test lied. **Evasion is the policy moving under a fixed monitor; degradation is the monitor
 moving under a fixed policy.** A generator that shrinks a monitor's scores multiplicatively changes
 the spread as well as the separation and produces a mixture when it meant to produce one term, which
 is what the first attempt here did: it reported 21% evasion on a subject built to have none, and the
@@ -25,8 +25,8 @@ from reward_lens.studies.w6_monitor.degradation import MonitorTrace
 
 #: The published curve's endpoints, used as the default shape of a planted decay so the planted
 #: subject sits in the same range as the thing being modelled. `d'` 3.75 falling to 1.25 and AUROC
-#: 0.996 to 0.810 is what the 2026-07-29 curve reports. It is a **shape borrowed for a synthetic
-#: subject** and nothing measured here reproduces or tests it.
+#: 0.996 to 0.810 is what the 2026-07-29 curve reports, quoted from the field-scan dossier. It is a
+#: **shape borrowed for a synthetic subject** and nothing measured here reproduces or tests it.
 PUBLISHED_D_PRIME_START: float = 3.75
 PUBLISHED_D_PRIME_END: float = 1.25
 
@@ -151,7 +151,7 @@ def planted_monitor_bank(
 
 
 # ---------------------------------------------------------------------------
-# `w6_4`
+# W6.4
 # ---------------------------------------------------------------------------
 
 

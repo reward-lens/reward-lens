@@ -1,10 +1,11 @@
-"""`w6_4` and `w6_5`: two compute-gated designs, written in full and not run.
+"""W6.4 and W6.5: two compute-gated designs, written in full and not run.
 
-Nothing here is executed. What is delivered is a design complete enough that the maintainer can
-decide whether to buy it: the module that does the arithmetic, a study frozen through
-`studies.freeze` with its predictions and kill criteria hashed before any data exists, an
-acceptance test that proves the arithmetic on a subject whose answer was planted, a statement of
-which real subject each claim needs, a runbook, and a price with its assumptions written out.
+Phase 6 is the part of this build that costs money, and the deal it makes is different from every
+other phase. Nothing here is executed. What is delivered is a design complete enough that the
+maintainer can decide whether to buy it: the module that does the arithmetic, a study frozen through
+`studies.freeze` with its predictions and kill criteria hashed before any data exists, an acceptance
+test that proves the arithmetic on a subject whose answer was planted, a statement of which real
+subject each claim needs, a runbook, and a price with its assumptions written out.
 
 Both rows are monitor-under-pressure designs and both turn on the same separation, which is why they
 are one package. An aggregate moved; two mechanisms could have moved it; the reading is worth
@@ -16,14 +17,14 @@ modes it never produced. Both separations work the same way, by holding somethin
 re-measuring it, which is what a check standard is for.
 
 Both instruments refuse when the thing that would be held fixed is missing, and in both cases that
-refusal is doing structural work rather than being defensive. Without a frozen probe set, `w6_5`
-would produce the falling curve the field already publishes. Without a base-policy sample, `w6_4`
-would produce a false-positive rate on a training record, which is a property of the verifier, and
-the verifier half of D5 is the half a preregistered published contrast has already answered.
+refusal is doing structural work rather than being defensive. Without a frozen probe set, W6.5 would
+produce the falling curve the field already publishes. Without a base-policy sample, W6.4 would
+produce a false-positive rate on a training record, which is a property of the verifier, and the
+verifier half of D5 is the half a preregistered published contrast has already answered.
 
-`price.py` ranks the two by decisiveness per dollar and recommends `w6_4` first, mostly because its
+`price.py` ranks the two by decisiveness per dollar and recommends W6.4 first, mostly because its
 expensive arc is gated by a cheap one that can abort it. `study.OPEN_TARGET` names a third study,
-cheaper than either, that is upstream of `w6_5`'s premise and untested.
+cheaper than either, that is upstream of W6.5's premise and untested.
 
 `behaviour.py`'s reading is dual-use and sensitive by default: a per-family ranking of which failure
 modes earn reward on a deployed verifier is a target list. It follows the pattern D5's static half
@@ -80,8 +81,9 @@ from reward_lens.studies.w6_monitor.study import (
     w6_5_spec,
 )
 
-#: Every instrument this package ships. The acceptance file lints each one, because an acceptance
-#: test that renders readings and never lints the declarations passes a broken declaration.
+#: Every instrument this package ships. The acceptance file lints each one, which is SPEC-ERRATA
+#: E56: four instruments shipped for two waves failing lint rule 1 while their package read `done`,
+#: because the acceptance test rendered readings and never linted the declarations.
 W6_MONITOR: tuple[type, ...] = (
     MonitorDegradation,
     MonitorHalfLife,

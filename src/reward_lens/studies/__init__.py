@@ -1,6 +1,6 @@
-"""``reward_lens.studies`` — the science layer's engine.
+"""``reward_lens.studies`` — the science layer's engine (gate 3, section 2.14).
 
-A Study is the unit of confirmatory work: a frozen spec plus a thin analysis function. This
+A Study is the unit of confirmatory work: a frozen spec plus a thin analysis function (R9). This
 package provides the spec schema, freezing (which stamps the git sha and makes predictions
 uneditable after the run), the runner (which produces REGISTERED Evidence and adjudicates it
 against the frozen predictions), the theorem scoreboard, and the report renderer. The sixteen
@@ -38,7 +38,7 @@ from reward_lens.studies.spec import (
 from reward_lens.studies.void import StudyOutcome, Void, VoidReason
 
 __all__ = [
-    # plan closure
+    # plan closure (W2.5)
     "Plan",
     "PlanBuilder",
     "bind",

@@ -1,4 +1,4 @@
-"""The aggregation plan: a count over studies is a claim, and it needs freezing too.
+"""The aggregation plan: a count over studies is a claim, and it needs freezing too (§6.7).
 
 Every study in a campaign can be preregistered and the sentence that adds them up can still be
 made after the fact. That sentence is where the freedom is: which studies count, what counts as a
@@ -11,14 +11,14 @@ measures and analyses supporting its titular claim, and for selection of outcome
 knowledge of the data. The individual studies were fine. The claim about them was not, and the
 paper's own subject was rigour.
 
-This library's evidence base has the same shape. The 2.0 campaign, whose runs and evidence store
-live with the campaign rather than in this repository, froze 27 study specs on 2026-07-18 and every
-spec hash still verifies. Its published summary reads: "19 of 27 frozen cards adjudicated against
-the merged evidence store; 16 of 53 frozen hypotheses confirmed, 21 refuted, 16 inconclusive; 8 kill
-criteria fired". Re-derived from the campaign's own evidence store those numbers reproduce exactly.
+This library's evidence base has the same shape. The campaign froze 27 study specs on 2026-07-18
+and every spec hash still verifies. Its published summary
+(``campaign-results/RESULTS.md`` line 5) reads: "19 of 27 frozen cards adjudicated against the
+merged evidence store; 16 of 53 frozen hypotheses confirmed, 21 refuted, 16 inconclusive; 8 kill
+criteria fired". Re-derived from ``runs/campaign/evidence.jsonl`` those numbers reproduce exactly.
 Every one of the 27 adjudication rows carries ``trust: 2``, which is ``TrustLevel.REGISTERED``.
 The sentence that adds them up carries nothing, because there was no object for it to be registered
-against. The frozen-spec manifest has eight keys and none of them is an aggregation rule.
+against. ``specs/frozen/manifest.json`` has eight keys and none of them is an aggregation rule.
 
 **Why this labels rather than raises or refuses.** Plan closure raises, because nothing has run yet
 and the useful behaviour is to stop before spending money (see `reward_lens.core.closure`). An
@@ -140,12 +140,12 @@ DEFAULT_REMEDY: dict[ExploratoryReason, str] = {
 class MetaAnalysisPlan:
     """The aggregation rule, frozen before the studies it aggregates run.
 
-    The first five fields are prose, written for a reader. They say what the count is, which
-    studies are in it, and how an outcome becomes a tally mark. Prose is what makes the plan
-    reviewable and it is not something `cover` can check a count against, so `studies`, `unit` and
-    `labels` carry the same three commitments in a form a program can compare. They are not a
-    second opinion: the hash covers both, so a plan whose prose and whose machine-readable fields
-    disagree is a plan that says two things and a reviewer can see it.
+    The first five fields are the ones §6.7 specifies and they are prose, written for a reader.
+    They say what the count is, which studies are in it, and how an outcome becomes a tally mark.
+    Prose is what makes the plan reviewable and it is not something `cover` can check a count
+    against, so `studies`, `unit` and `labels` carry the same three commitments in a form a program
+    can compare. They are not a second opinion: the hash covers both, so a plan whose prose and
+    whose machine-readable fields disagree is a plan that says two things and a reviewer can see it.
 
     `frozen_at` is inside the hash. That costs a little (the timestamp has to be fixed before the
     hash can be published) and it buys the property the object exists for: a plan cannot be
