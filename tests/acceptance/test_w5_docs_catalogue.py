@@ -1,7 +1,7 @@
 """Acceptance: the docs build reads the registry, and lint rule two is enforceable.
 
-The instrument contract states two lint rules. The first, an `Instrument` whose quantity is not
-registered fails at import, has been enforced since Phase 0. The second, **a `Quantity` with no estimator
+Section 4.2 states two lint rules. The first, an `Instrument` whose quantity is not registered
+fails at import, has been enforced since Phase 0. The second, **a `Quantity` with no estimator
 fails the docs build with a message naming it as an open research target rather than a bug**, had
 nothing to enforce it: no part of the documentation build read the registry, so the rule was a
 sentence in a specification.
@@ -132,7 +132,7 @@ def test_open_page_names_every_open_quantity(gen, view):
 
 
 def test_the_polymorphic_open_field_is_normalised(gen):
-    """E14: six rows store `quantities` as the bare string OPEN.
+    """SPEC-ERRATA E14: six rows store `quantities` as the bare string OPEN.
 
     Iterating that string yields four single-character ids. Rendering them would put four phantom
     quantities on a user-facing page, which is the exact shape of the bug E14 records.
@@ -188,7 +188,9 @@ def test_reason_meaning_covers_the_enum(gen):
     from reward_lens.core.reading import REASON_MEANING, RefusalReason
 
     assert set(REASON_MEANING) == set(RefusalReason)
-    assert len(RefusalReason) == 17, "seventeen reasons"
+    assert len(RefusalReason) == 18, (
+        "eighteen reasons; see SPEC-ERRATA E12, E30 and E48, and D-031 for the eighteenth"
+    )
 
 
 # ---------------------------------------------------------------------------

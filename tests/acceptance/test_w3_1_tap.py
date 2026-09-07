@@ -1,6 +1,6 @@
-"""The grader wrapper, the ring, and the Plane A contract.
+"""W3.1 — the grader wrapper, the ring, and the Plane A contract.
 
-The clause: *wrapping a callable that raises, is slow, and returns a dict never changes
+The acceptance clause: *wrapping a callable that raises, is slow, and returns a dict never changes
 the return value and never propagates; the overhead is measured and recorded; a deliberate budget
 breach disables the tap and records it.*
 

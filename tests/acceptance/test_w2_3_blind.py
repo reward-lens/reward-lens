@@ -1,4 +1,4 @@
-"""Acceptance: `record/labels.py` and `Blind[T]`.
+"""W2.3 acceptance: `record/labels.py` and `Blind[T]`.
 
 The clause, in full: *a function annotated to take features cannot be passed a `Blind`, checked by
 the type checker in CI, plus the three runtime tests from `flight-recorder`: disjoint field sets, a
@@ -65,7 +65,7 @@ AUDITED = LabelQuality(
 @pytest.mark.skipif(
     importlib.util.find_spec("mypy") is None,
     reason=(
-        "mypy is not installed. The static half of the clause is unverified here and is "
+        "mypy is not installed. The static half of the W2.3 clause is unverified here and is "
         "verified by the blind-types job in CI, which installs the [dev] extra."
     ),
 )
@@ -224,7 +224,7 @@ def test_a_scoring_pass_reads_the_oracle_once_and_the_store_says_so(tmp_path) ->
 
 
 def test_scoring_against_an_unaudited_answer_key_is_refused(tmp_path) -> None:
-    """A refusal is a value, and the reason the barrier is not only a type.
+    """Section 6.1, and the reason W2.3 is not only a type.
 
     A `Blind` keeps the oracle out of the detector. It says nothing about whether the oracle is
     right, and scoring against a one-third-wrong answer key measures the answer key.

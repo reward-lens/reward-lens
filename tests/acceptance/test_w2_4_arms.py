@@ -1,6 +1,6 @@
-"""Acceptance: two arms with a deliberate configuration diff produce a void, not a comparison.
+"""W2.4 acceptance: two arms with a deliberate configuration diff produce a void, not a comparison.
 
-The clause this file discharges: *`record/arms.py`. Arms, coupling, common random
+The clause this file discharges, from Part 9: *`record/arms.py`. Arms, coupling, common random
 numbers, the arm-divergence void gate. Accept: two synthetic arms with a deliberate configuration
 diff produce a void rather than a comparison.*
 
@@ -10,7 +10,7 @@ never called on the diverged arms. A gate that returns a warning beside a number
 
 Four more assertions are here because each is a place the gate can look right and be worthless.
 The void has to name the diverging key and print both values, or it is `inconclusive` with a new
-spelling. It has to be condition 4 of the seven already declared rather than a new
+spelling. It has to be condition 4 of the seven declared in section 6.2 rather than a new
 condition invented in this module. It has to work on two records read back off disk, because that
 is where arms actually diverge, long after the plan that built them. And the gate has to be able
 to say yes, or it is not a gate.
@@ -56,7 +56,7 @@ BASE_CONFIG = {
 }
 
 #: One coupling for the whole comparison: shared seeds, common random numbers, the same prompt
-#: order, and one engine identity both arms have to be served by.
+#: order, and one engine identity both arms have to be served by (section 6.6).
 COUPLING = shared_seeds(2026, engine="vllm@0.11.2+flash_attn_2")
 
 
@@ -86,7 +86,7 @@ def _paired_difference_factory(log: list[tuple[str, str]]):
 
 
 def test_two_arms_with_a_deliberate_diff_produce_a_void_rather_than_a_comparison():
-    """The clause, in one test.
+    """The acceptance clause, in one test.
 
     The two arms are built correctly by `arms()`, and then one of them is relaunched with an
     override the plan never declared, which is how this happens in the field: a stale flag in a

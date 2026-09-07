@@ -2,7 +2,7 @@
 
 Every test here carries the number that was wrong and the number that replaced it, because a
 regression that only asserts the new behaviour cannot tell a reader what it is protecting. The
-findings are R5's on B2 and B6 and R4's on B1 and its nulls.
+findings are R5's on B2 and B6 and R4's on B1 and its nulls, recorded in SPEC-ERRATA E42.
 
 One of them did not survive reproduction and is recorded here as a correction rather than a fix:
 the annotation-budget bound was reported as matching no published result, and it matches Shah et
@@ -489,7 +489,7 @@ def test_the_smith_condorcet_identity_is_a_theorem_and_is_not_reported_as_eviden
 
     The Smith set is a singleton exactly when its member beats every other alternative, which is the
     definition of a Condorcet winner. It cannot fail for n >= 2 and it holds on 4,000 random designs
-    including incomplete ones. It is checked here as a code-correctness invariant, and B2's
+    including incomplete ones. It is checked here as a code-correctness invariant, and W3.3b's
     report of it as a corroborating measurement is withdrawn.
     """
     rng = np.random.default_rng(0)

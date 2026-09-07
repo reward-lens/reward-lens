@@ -7,13 +7,14 @@ module. A monitoring layer is not a bank of independent thresholds with a shared
 **composes predicates over multiple channels with a joint false-alarm rate**, and the composition
 has to be legal.
 
-**How the composition is made legal.** E-values do not multiply legally under arbitrary dependence.
-Vovk and Wang (2021) show that the merging function valid under arbitrary dependence is the
-*arithmetic mean*, and that it is essentially the only admissible symmetric one; the product is
-valid across *independent* e-values, and over *time within one channel*, where each factor is
-conditionally an e-value given the past. Entropy, reward spread and completion length on the same
-training run are about as dependent as three series can be, so multiplying their e-values would
-inflate the evidence by a factor that is not bounded in general.
+**How the composition is made legal, and where section 3.4 is wrong about it.** Section 3.4 says
+e-values "multiply legally under arbitrary dependence". They do not. Vovk and Wang (2021) show that
+the merging function valid under arbitrary dependence is the *arithmetic mean*, and that it is
+essentially the only admissible symmetric one; the product is valid across *independent* e-values,
+and over *time within one channel*, where each factor is conditionally an e-value given the past.
+Entropy, reward spread and completion length on the same training run are about as dependent as
+three series can be, so multiplying their e-values would inflate the evidence by a factor that is
+not bounded in general. Recorded as SPEC-ERRATA E48.
 
 What survives that correction is better than what it replaces, because a conjunction does not need a
 merging rule at all. The conjunction fires when every channel has crossed, so under the global null
@@ -592,10 +593,10 @@ class ConjunctionDetector(MonitorInstrument):
         "Ville (1939) per channel; Vovk and Wang (2021) merging; Wang and Ramdas (2022) e-BH"
     )
     deviations = (
-        "multiplying the channels' e-values would compose them as if they were independent, and "
-        "they are not, so the conjunction is bounded instead by the minimum of the per-channel "
-        "levels, which needs no dependence assumption, and the merged e-value uses the arithmetic "
-        "mean.",
+        "section 3.4 composes the channels by multiplying their e-values and says the product is "
+        "valid under arbitrary dependence. It is not, so the conjunction is bounded by the minimum "
+        "of the per-channel levels, which needs no dependence assumption, and the merged e-value "
+        "uses the arithmetic mean. SPEC-ERRATA E48.",
         "each channel's e-process is the Gaussian likelihood-ratio martingale on the standardized "
         "series, so the per-channel level is exact only to the extent that the standardized channel "
         "is standard normal in control. An autocorrelated channel spends its budget faster than the "

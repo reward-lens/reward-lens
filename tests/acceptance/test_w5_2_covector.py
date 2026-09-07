@@ -1,6 +1,6 @@
-"""Acceptance: the F5 variance spike, and what its verdict made of the instrument.
+"""W5.2 acceptance: the F5 variance spike, and what its verdict made of the instrument.
 
-The clause: *"F5, spike first. Measure the score-function estimator's variance at
+Part 9's clause: *"W5.2 F5, spike first. Measure the score-function estimator's variance at
 `K in {4, 8, 16, 64}` before building anything on it. Accept: a variance-versus-K curve with the
 variance-reduction techniques ablated, and an explicit go or no-go recorded as a design note. If
 no-go, F5 reduces to the differentiable-surrogate case and the plan changes here."*
@@ -11,7 +11,7 @@ curve exists at all four group sizes with the reduction ladder ablated, that the
 recorded against thresholds fixed before the numbers were produced, that P8's resolution is
 registered through `studies.freeze`, that the score-function rungs refuse below the measured floor
 with the floor in the remedy, and that rung 3 runs on the model that wrote the 200-step record and
-returns Evidence carrying the `IncrementalValidity` lint rule four makes mandatory.
+returns Evidence carrying the `IncrementalValidity` section 6.4 makes mandatory.
 
 The real-subject half needs `transformers` and a CPU forward on
 `trl-internal-testing/tiny-Qwen3ForCausalLM`, and skips without them. The recorded-decision half
@@ -56,7 +56,7 @@ def test_the_curve_exists_at_every_registered_group_size():
 
 
 def test_the_three_named_reduction_techniques_were_ablated():
-    """Three techniques are named, and all three are separately on the curve.
+    """Section 3.8 names three and all three are separately on the curve.
 
     Group-mean baselines, antithetic sampling, and control variates. The ladder runs no-baseline,
     group mean, leave-one-out, leave-one-out plus control variate, and antithetic plus everything,
@@ -140,7 +140,7 @@ def test_the_instruments_are_white_box_so_incremental_validity_is_mandatory():
 
 
 def test_stable_rank_and_participation_ratio_are_reported_and_numerical_rank_is_not():
-    """Numerical rank is the wrong statistic and nobody should have reported it."""
+    """Section 3.7: numerical rank is the wrong statistic and nobody should have reported it."""
     from reward_lens.measure.frontier.covector import SelectionGeometry
 
     fields = set(SelectionGeometry.__dataclass_fields__)
@@ -296,7 +296,7 @@ def test_the_score_function_rung_refuses_below_the_measured_floor(policy, rollou
 
 
 def test_the_refusal_carries_a_remedy_that_is_an_instruction(policy, rollouts):
-    """A remedy has to be actionable: "envelope violated" is not, and "pool at least 600 rollouts" is."""
+    """Section 6.1: "envelope violated" is not a remedy and "pool at least 600 rollouts" is."""
     items, rewards, groups, texts = rollouts
     reading = SelectionCovector(rewards=rewards, groups=groups, texts=texts, rung=0).estimate(
         _context(policy, items)

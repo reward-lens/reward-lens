@@ -16,7 +16,8 @@ than only against the new one.
                 no interval.
 
 The `declare_fixed` and Hill-slope findings are not here, because both live outside this package
-and the fix belongs to whoever owns those files. They are recorded with their numbers instead.
+and the fix belongs to whoever owns those files. They are reproduced in the build report with the
+numbers instead.
 """
 
 from __future__ import annotations

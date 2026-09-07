@@ -1,4 +1,4 @@
-"""Acceptance: a plan that cannot answer its own predictions does not start.
+"""W2.5 acceptance: a plan that cannot answer its own predictions does not start.
 
 The clause this file discharges: *a plan whose study registers a metric no arc produces raises
 `ClosureError` naming the prediction, the metric and the gap, before any work runs.*
@@ -58,7 +58,7 @@ from reward_lens.studies.spec import Hypothesis, KillCriterion, Prediction, Stud
 
 
 def test_a_metric_no_arc_produces_raises_before_any_work_runs():
-    """The clause, in the smallest plan that can carry it.
+    """The acceptance clause, in the smallest plan that can carry it.
 
     Two hypotheses and a kill criterion. One hypothesis is answerable and the other two
     predictions are not, so the failure has to be specific about which.
@@ -168,7 +168,7 @@ CAMPAIGN_STORE = _REPO.parent.parent / "campaign-results" / "runs" / "campaign" 
 
 #: The eight cards the campaign's scoreboard labels inconclusive at card level. Counted with
 #: ``awk -F'|' '/inconclusive/ {gsub(/ /,"",$3); if ($3=="") c++; else h++} END {print c, h}'``
-#: over the campaign's scoreboard, which gives 8 and 16.
+#: over ``SCOREBOARD.md``, which gives 8 and 16.
 INCONCLUSIVE_CARDS = frozenset(
     {
         "STYLE-RMB",
@@ -496,8 +496,8 @@ def test_closure_blocks_thirteen_predictions_of_which_four_are_kill_criteria(cam
     for gap in kills:
         assert "kill criterion" in gap.render()
 
-    # The nine hypotheses are, name for name, the rows the campaign's scoreboard marks inconclusive
-    # for these five cards. Closure reaches the same verdict off the plan that adjudication reached off the
+    # The nine hypotheses are, name for name, the rows SCOREBOARD.md marks inconclusive for these
+    # five cards. Closure reaches the same verdict off the plan that adjudication reached off the
     # run, which is the whole claim.
     assert {g.demand.owner for g in hypotheses} == {
         "H-style-transfer",
@@ -546,7 +546,7 @@ def test_the_campaign_could_not_have_declared_a_closable_plan(campaign_plan):
 
 
 def test_the_report_hands_the_runner_an_arc_for_every_metric_it_can_answer(campaign_plan):
-    """Closure rule 3. The predictions that do close get their producing arc recorded."""
+    """§4.6 rule 3. The predictions that do close get their producing arc recorded."""
     plan, _unreadable, _arcs = campaign_plan
     report = closure_report(plan)
 

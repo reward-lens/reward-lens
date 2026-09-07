@@ -10,10 +10,11 @@
 # package: there is no pyproject.toml, no release, and no name on any index, so there is nothing to
 # put in a dependency list. The alternative in this lane, `confseq`, cannot be installed here at
 # all: no cp312 wheel exists, pip falls back to the sdist, and CMake fails on
-# Boost_INCLUDE_DIR-NOTFOUND. Vendoring is the only option rather than the preference.
+# Boost_INCLUDE_DIR-NOTFOUND. Vendoring is the only option rather than the preference, and it is
+# recorded as SPEC-ERRATA E9.
 #
 # Nothing below is modified. Byte-for-byte the upstream file, so the sha256 above is checkable
-# against the vendored body with the header stripped, and `tests/test_monitor_sequential.py` does
+# against the vendored body with the header stripped, and `tests/test_monitor_vendor.py` does
 # exactly that. Wrapping it instead of editing it is what keeps that check meaningful: everything
 # this library needs on top of `cif.py` lives in `reward_lens.stats.sequential` and
 # `reward_lens.monitor.eprocess`, never here.

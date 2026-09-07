@@ -1,7 +1,7 @@
-"""`core/invariance.py`: the generated property test and the lint rule it enforces.
+"""W1.3 — `core/invariance.py`, the generated property test and the lint rule it enforces.
 
-What this file has to show: the reward-affine group's generated test passes on an invariant index
-and fails on a deliberately non-invariant one.
+The acceptance clause: the reward-affine group's generated test passes on an invariant index and
+fails on a deliberately non-invariant one.
 
 Everything else here exists because the gate has to hold under the three ways it would otherwise
 be quietly bypassed: a covariant instrument declaring itself invariant, an instrument declaring a
@@ -82,7 +82,7 @@ mean_reward.name = "mean_reward"  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------------------
-# The generated test, passing and failing
+# The acceptance clause
 # ---------------------------------------------------------------------------
 
 
@@ -224,7 +224,7 @@ def test_declaring_an_unadmitted_relation_raises(payload):
 def test_every_group_declares_what_it_admits():
     """Every group offering a value relation names which ones, and `units` offers none.
 
-    `units` is the exception and it is not an oversight: the assertion its group generates is a refusal
+    `units` is the exception and it is not an oversight: its Appendix B assertion is a refusal
     (`UNIT_MISMATCH`) rather than a relation between two values, so there is no status an
     instrument could declare under it. It carries `refusal_only`, and `check_invariance` routes it
     to `check_unit_refusal` before it consults `admits` at all.
@@ -238,7 +238,7 @@ def test_every_group_declares_what_it_admits():
 
 
 def test_tokenization_does_not_admit_raw_only():
-    """The group offers "be invariant under it, or refuse", and a refusal is not `raw_only`.
+    """Appendix B offers "be invariant under it, or refuse", and a refusal is not `raw_only`.
 
     `raw_only` asserts nothing about the value and passes unconditionally, so reading "or refuse"
     as "or declare raw_only" would let a per-token instrument opt out of the one check that exists
@@ -332,19 +332,19 @@ def test_parse_group_field_reads_the_catalogue_as_printed():
 def test_every_catalogue_instrument_resolves_an_invariance_group():
     """The lint rule that makes the fan-out safe: no instrument merges without a group.
 
-    52 of the original 85 records print OPEN in their own column because the catalogue prints no
-    group for them. Most resolve from the quantities they estimate, which the registry declares for
-    all 125. The exception this test pins is the M-series controls, whose `quantities` field is
-    itself OPEN: if that set moves in either direction, someone should know.
+    52 of the original 85 records print OPEN in their own column because Part 5 prints no group for
+    them. Most resolve from the quantities they estimate, which Appendix A declares for all 125. The
+    exception this test pins is the M-series controls, whose `quantities` field is itself OPEN: if
+    that set moves in either direction, someone should know.
 
-    It went from six to two. M3, M4, M5 and M8 have shipped instruments declaring
+    It went from six to two in wave 5. M3, M4, M5 and M8 have shipped instruments declaring
     registered quantities, and the catalogue records were filled from the installed source, which is
     rung 2 of the precedence ladder and beats a document. M5 is the interesting one: it declares
     `study.power` deliberately, because its reading is the same quantity M10 computes before the
     run, measured at a higher rung instead of calculated.
 
     The two that remain are the two that should. M6 has no instrument in the tree at all, so nothing
-    has computed a stripped-text delta and nothing has had to choose the id. M7 declares no
+    has computed a stripped-text delta and there is no builder to choose the id. M7 declares no
     class-level quantity on purpose and says why: a combined standard uncertainty is in the units of
     its reading, so an uncertainty budget has no measurand separate from the one it is a budget for,
     and it takes the subject's quantity per instance.
@@ -359,12 +359,13 @@ def test_every_catalogue_instrument_resolves_an_invariance_group():
     assert unresolved == ["M6", "M7"], (
         f"instruments with no resolvable invariance group changed: {unresolved}"
     )
-    # 90 catalogue records since J6, the forecast calibration ledger, joined. It resolves
+    # 90 catalogue records since J6, the forecast calibration ledger, joined in wave 5. It resolves
     # a group like everything else: `none`, which is the informative answer rather than the absent
     # one, because a Brier score is a function of probabilities and outcomes and no rescaling of a
     # reward acts on a number written down before the reward existed.
-    # 95, from 91: N5 to N8, the contract layer, shipped and their catalogue rows were never
-    # written, so four shipped instruments were invisible to every enumeration in the suite.
+    # 95 since wave 6, from 91: N5 to N8, W3.9's contract layer, were built in wave 4 and their
+    # catalogue rows were never written, so four shipped instruments were invisible to every
+    # enumeration in the suite while their package read `done`. SPEC-ERRATA E56.
     assert len(resolved) == 95
     assert sum(1 for g in resolved.values() if g) == 93
 

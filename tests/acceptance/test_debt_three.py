@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import os
 import pathlib
 
 import numpy as np
@@ -61,12 +60,9 @@ from reward_lens.interventions.rescue import knockout_and_rescue  # noqa: E402
 from reward_lens.interventions.steer import SteeringIntervention  # noqa: E402
 from reward_lens.runtime.hooks import mount_points, mounted_interventions  # noqa: E402
 
-#: X5's cached completion lengths from `ai-safety-institute/reward-hacking-olmo3.1-32b-kl0.0-seed2`,
-#: the subject the numbers in point 3 above were measured on. The cache is not in this
-#: repository: point ``REWARD_LENS_X5_LENGTHS`` at an ``.npz`` holding a ``length`` array to
-#: reproduce them, or the tests that need it skip.
-_LENGTHS_ENV = os.environ.get("REWARD_LENS_X5_LENGTHS")
-LENGTHS = pathlib.Path(_LENGTHS_ENV) if _LENGTHS_ENV else None
+#: X5's cached completion lengths from `ai-safety-institute/reward-hacking-olmo3.1-32b-kl0.0-seed2`.
+#: The subject this section's numbers were measured on, and the reason they are reproducible here.
+LENGTHS = pathlib.Path(__file__).resolve().parents[2] / "experiments/x5_threshold/aisi_lengths.npz"
 
 D_MODEL = 8
 N_HEADS = 2
@@ -251,8 +247,8 @@ def test_something_with_neither_contract_says_so(net):
 
 @pytest.fixture
 def lengths() -> np.ndarray:
-    if LENGTHS is None or not LENGTHS.exists():
-        pytest.skip("no cached AISI completion lengths; set REWARD_LENS_X5_LENGTHS")
+    if not LENGTHS.exists():
+        pytest.skip("X5's cached AISI completion lengths are not on disk")
     return np.asarray(np.load(LENGTHS)["length"], dtype=np.float64)
 
 

@@ -1,4 +1,4 @@
-"""Acceptance: amplifier safety on every component of one real composite reward.
+"""W3.5 acceptance: amplifier safety on every component of one real composite reward.
 
 The clause this file discharges, verbatim: *amplifier safety is computed for every component of one
 real composite reward and the ranking is recorded before any collapse is observed, as a frozen
@@ -9,9 +9,10 @@ prediction.*
 `WeightedSum` per rollout, an `EstimatorSpec` read off `GRPOConfig`, and 24 optimizer steps of
 `OptimizerTelemetry`. The task component is a binary verifier the policy sometimes satisfies, which
 is what gives the window both all-fail groups and mixed ones; the other two are auxiliaries whose
-variance does not depend on whether the task was solved, which is the dangerous shape.
+variance does not depend on whether the task was solved, which is the shape section 3.2 says is
+dangerous.
 
-**How to run it.** TRL is not installed in the shared venv; the TRL tap installs it to a
+**How to run it.** TRL is not installed in the shared venv, following W4.1, which installed it to a
 scratch `--target` directory and ran against that. Two routes, and both are here:
 
     pip install --no-deps --target /tmp/trlpkgs "trl>=1.9.2,<2.0"
@@ -532,7 +533,7 @@ def test_the_shipped_replay_divisor_is_not_the_one_trl_wrote_these_advantages_wi
     them are stripped here so the third is visible on its own: the ratio clip written into
     `EstimatorSpec.clip_low`/`clip_high`, and `record.scores.evaluate` returning NaN for a total one
     of whose leaves abstained where TRL's `nansum` contributes zero for it. The second is deliberate
-    and recorded in E7: a total missing a term is not a smaller total, and the record
+    and recorded in SPEC-ERRATA E7: a total missing a term is not a smaller total, and the record
     keeps the distinction TRL discards. What is left is the variance divisor, and TRL's `nanstd`
     applies Bessel's correction (`trl/trainer/utils.py:877-879`) while `replay_advantages` calls
     numpy's `std()`.
@@ -588,7 +589,7 @@ def test_the_shipped_replay_divisor_is_not_the_one_trl_wrote_these_advantages_wi
 def test_no_collapse_is_observed_in_the_window_the_ranking_was_taken_on(reading, run):
     """ "Before any collapse is observed" is a claim about the record, so it is checked.
 
-    Collapse in the relevant sense is the all-fail-dominated phase: the task signal vanishing and
+    Collapse in section 3.2's sense is the all-fail-dominated phase: the task signal vanishing and
     staying gone while an auxiliary keeps moving. Two things establish that it has not happened
     here. The all-fail fraction over the window the ranking is pooled from is below the dominance
     level, and the task signal in the last third of the run is no weaker than in the first. So the
@@ -669,7 +670,7 @@ def test_e1_finds_that_the_recorded_spec_does_not_reproduce_the_recorded_advanta
     `EstimatorSpec.clip_low` and `clip_high`. While `record.scores.replay_advantages` applied those
     as bounds on the **advantage**, every replayed advantage came back as exactly 0.2 against
     recorded advantages spanning more than two units: 0 of 48 groups agreed, worst 1.68. The ratio
-    clip belongs to the loss and is no longer applied to the advantage (E50).
+    clip belongs to the loss and is no longer applied to the advantage (SPEC-ERRATA E50).
 
     `replay_advantages` divided by `std(ddof=0)` while TRL's `nanstd` applies Bessel's correction,
     which is 15.47% at this record's K of 4 against a tolerance of 1e-4. The divisor is now
@@ -786,7 +787,7 @@ def test_e6_refuses_because_the_tap_records_neither_logprob_stream(run):
 
 
 def test_every_instrument_in_the_series_returns_evidence_or_a_refusal_on_this_record(run):
-    """The instrument contract, over a real record: never an exception, never a None, never a zero."""
+    """Section 4.2's contract, over a real record: never an exception, never a None, never a zero."""
     instruments = [
         RecordedEstimator(run),
         DegenerateGroups(run, floor=FLOOR, attribute=True),

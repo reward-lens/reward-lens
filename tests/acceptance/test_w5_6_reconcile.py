@@ -1,4 +1,4 @@
-"""Acceptance: F4, the reconciliation residual budgeted, and F6, the Lande slope.
+"""W5.6 acceptance: F4, the reconciliation residual budgeted, and F6, the Lande slope.
 
 **The clause.** *The budget-closure test runs on two real runs and its verdict is published either
 way.*
@@ -114,7 +114,7 @@ from reward_lens.record.reader import open_run
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "grpo_run"
 ACCESS = {Component.RECORD: Access.RECORD, Component.POLICY: Access.BACKWARD}
 
-#: The nine budget terms, and which of them these two records can supply.
+#: The nine terms of section 3.1.5, and which of them these two records can supply.
 COMPUTED_ON_FIXTURE = {"u_stale", "u_KL", "u_batch", "u_MC", "u_basis"}
 MISSING_ON_FIXTURE = {"u_entropy", "u_momentum", "u_curv", "u_clip"}
 
@@ -331,7 +331,7 @@ def test_g_equal_to_c_reproduces_the_ledger_residual_exactly(runs):
 
 
 def test_a_mismatched_feature_basis_refuses_rather_than_aligning_by_name(runs):
-    """D19's join key, enforced. A reordered basis is a different vector space."""
+    """BUILD_NOTES D19's join key, enforced. A reordered basis is a different vector space."""
     from dataclasses import replace as _replace
 
     run = runs["long"]
@@ -345,7 +345,7 @@ def test_a_mismatched_feature_basis_refuses_rather_than_aligning_by_name(runs):
 
 
 # ---------------------------------------------------------------------------
-# 5. The three instruments satisfy the contract and return Evidence or a Refusal
+# 5. The three instruments satisfy section 4.2 and return Evidence or a Refusal
 # ---------------------------------------------------------------------------
 
 
@@ -375,7 +375,7 @@ def test_f4_downgrades_outside_linear_response_rather_than_refusing(runs):
     """Outside the envelope the residual is still the thing worth reading, so it is not refused.
 
     The instrument that can say "the first order explains nothing here" has to be able to run where
-    the first order explains nothing. The regime `downgrade` behaviour is what says so: the
+    the first order explains nothing. Section 2.4's `downgrade` is the behaviour that says so: the
     quantity stays defined and its trust is capped.
     """
     from reward_lens.measure.rate.regime import RegimeInputs, measure_regime

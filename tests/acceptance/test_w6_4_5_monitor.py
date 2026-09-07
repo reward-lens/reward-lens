@@ -1,14 +1,14 @@
-"""The arithmetic, on subjects whose answer was planted.
+"""W6.4 and W6.5: the arithmetic, on subjects whose answer was planted.
 
 Neither study is run. What is asserted here is that the two decompositions recover splits that were
 put there on purpose, that both instruments refuse when the thing that makes the split possible is
 missing, that both kill conditions fire when they should and not when they should not, that both
 plans close, and that every instrument this package ships passes `lint_instrument`.
 
-That last one is E56 and it is why it is the first test in the file. Four instruments shipped
-failing lint rule 1 while their package read `done`, because the acceptance test rendered readings
-and never linted the declarations. A package can discharge its clause completely and still not
-exist by the architecture's own definition.
+That last one is SPEC-ERRATA E56 and it is why it is the first test in the file. Four instruments
+shipped for two waves failing lint rule 1 while their package read `done`, because the acceptance
+test rendered readings and never linted the declarations. A package can discharge its acceptance
+clause completely and still not exist by the architecture's own definition.
 
 The power figures in both study specs' `notes` are recomputed here rather than quoted, in the three
 slow tests at the end. They are the design's measured resolution and every one of them is a number
@@ -58,7 +58,7 @@ from reward_lens.studies.w6_monitor.study import (
 )
 from reward_lens.verifier import DisclosureDecision, DisclosureRequired, is_sensitive, redact
 
-#: The denominator every fixture here uses: rewarded rollouts in one window.
+#: The denominator every W6.4 fixture uses: rewarded rollouts in one window.
 N_REWARDED = 40_000
 
 
@@ -142,7 +142,7 @@ def test_an_instrument_with_nothing_to_read_refuses_with_a_remedy(cls):
 
 
 # ---------------------------------------------------------------------------
-# The split, by decay half-life
+# W6.5: the split
 # ---------------------------------------------------------------------------
 
 
@@ -195,7 +195,7 @@ def test_a_monitor_that_held_refuses_rather_than_returning_a_large_number():
 
 
 def test_a_trend_the_surrogates_reproduce_is_refused():
-    """The same discipline, on a new statistic: autocorrelated noise manufactures trends.
+    """W4.5's discipline, on a new statistic: autocorrelated noise manufactures trends.
 
     An AR(1) series with no decay in it at all, fed to the fitter directly. Whatever slope least
     squares finds, a block bootstrap of the same series finds one as steep often enough that the
@@ -236,7 +236,7 @@ def test_a_curve_with_no_check_standard_refuses_and_does_not_fall_back():
 
 
 # ---------------------------------------------------------------------------
-# The ranking, and the kill condition
+# W6.5: the ranking, and the kill condition
 # ---------------------------------------------------------------------------
 
 
@@ -275,7 +275,7 @@ def test_the_kill_does_not_fire_when_they_disagree(anti_aligned_ranking):
 
 
 def test_a_ranking_over_unmatched_false_alarm_rates_refuses(anti_aligned_ranking):
-    """E54, sharper: here the operating point sets the pressure, not only the scale."""
+    """SPEC-ERRATA E54, sharper: here the operating point sets the pressure, not only the scale."""
     from dataclasses import replace
 
     curves = list(anti_aligned_ranking.half_lives)
@@ -327,7 +327,7 @@ def test_a_monitor_that_held_ranks_above_every_monitor_that_decayed():
 
 
 # ---------------------------------------------------------------------------
-# The split, by rewarded rollouts
+# W6.4: the split
 # ---------------------------------------------------------------------------
 
 
@@ -493,7 +493,7 @@ def test_base_depth_for_is_the_cheap_lever_and_says_so():
 
 
 # ---------------------------------------------------------------------------
-# The detector is dual-use
+# W6.4 is dual-use
 # ---------------------------------------------------------------------------
 
 
@@ -621,7 +621,7 @@ def test_the_price_is_arithmetic_from_one_stated_constant():
         assert price.dollars_low == pytest.approx(price.gpu_hours * RATE_LOW)
         assert price.dollars_high == pytest.approx(price.gpu_hours * RATE_HIGH)
         assert price.assumptions
-    # The stated preemptible floor is above the top of the stated dollar range.
+    # Part 9's own stated preemptible floor is above the top of its own stated dollar range.
     assert 11_520.0 * RATE_HIGH > 23_000.0
     assert ranked()[0] is W6_4_PRICE
 

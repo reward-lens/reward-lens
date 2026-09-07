@@ -1,8 +1,8 @@
-"""Acceptance: four-dimensional access resolution and the capability report.
+"""W1.6 acceptance: four-dimensional access resolution and the capability report.
 
-The clause: *the capability report renders for a synthetic record with no policy and lists at least
-one refusal with a remedy.* Four more clauses follow, and each of them is a way the module could
-have been built wrong:
+The clause from Part 9: *the report of section 4.5 renders for a synthetic record with no policy and
+lists at least one refusal with a remedy.* Four more clauses come from the work package brief and
+each of them is a way the module could have been built wrong:
 
 - `REPLICATE` is resolved from a probe rather than assumed. A fake endpoint that ignores its seed
   resolves to `QUERY` only; one that honours it resolves to `QUERY | REPLICATE`.
@@ -11,11 +11,11 @@ have been built wrong:
   name.
 - `unchecked` checks are rendered as unchecked rather than as passes.
 
-The scenario is the worked one: 401 steps, 25,664 rollouts, a three-leaf composite
+The scenario is the one section 4.5 prints: 401 steps, 25,664 rollouts, a three-leaf composite
 grader, no policy checkpoint, and a grader whose rubric weights changed at step 240. The estimators
 are registered here rather than imported, because none of the catalogue's 89 instruments has a
 registered estimator yet and the point of the report is to work correctly both before and after
-that changes. Their costs are deliberately *not* the numbers the worked example prints, so that
+that changes. Their costs are deliberately *not* the numbers printed in section 4.5, so that
 `test_no_number_in_the_report_came_from_the_specification` can tell a rendered number from a
 transcribed one.
 """
@@ -55,7 +55,7 @@ from reward_lens.core.types import Access, Component, Phase, Substrate
 from reward_lens.measure.base import BaseObservable, PreflightResult
 
 # ---------------------------------------------------------------------------
-# The synthetic run
+# The synthetic run of section 4.5
 # ---------------------------------------------------------------------------
 
 
@@ -72,7 +72,7 @@ class SyntheticRecord:
 
 
 class Node:
-    """A stand-in for the `ScoreTree`, carrying only the structural protocol's fields."""
+    """A stand-in for W2.2's `ScoreTree`, carrying only the structural protocol's fields."""
 
     def __init__(self, name, *, children=(), combine=None, substrate=None, enabled=True):
         self.name = name
@@ -96,7 +96,7 @@ def composite_grader() -> Node:
 
 
 def measured_regime() -> RegimeReading:
-    """The five conditions, with one failure and one that could not be determined."""
+    """The five conditions of section 4.5, with one failure and one that could not be determined."""
     return RegimeReading(
         conditions={
             RegimeCondition.GROUP_NONDEGENERATE: ConditionReading(
@@ -257,7 +257,7 @@ def _registry():
 
 @pytest.fixture(scope="module")
 def report(_registry):
-    """The capability report for the synthetic run, resolved end to end."""
+    """The section 4.5 report for the synthetic run, resolved end to end."""
     record = SyntheticRecord()
     access = resolve_access(record=record, grader=composite_grader(), policy=None)
     return capability_report(
@@ -283,7 +283,7 @@ def report(_registry):
 
 
 def test_the_report_renders_for_a_synthetic_record_with_no_policy(report):
-    """The clause, first half."""
+    """The acceptance clause, first half."""
     assert report.access.of(Component.POLICY) is Access.RECORD
     assert not (report.access.of(Component.POLICY) & Access.BACKWARD)
     text = report.render()
@@ -291,11 +291,11 @@ def test_the_report_renders_for_a_synthetic_record_with_no_policy(report):
     for heading in ("ACCESS RESOLVED", "REGIME MEASURED", "AVAILABLE NOW", "REFUSED, WITH REMEDY"):
         assert heading in text
     positions = [text.index(h) for h in ("ACCESS RESOLVED", "REGIME MEASURED", "AVAILABLE NOW")]
-    assert positions == sorted(positions), "the sections print in the documented order"
+    assert positions == sorted(positions), "the sections print in the order section 4.5 prints them"
 
 
 def test_the_report_lists_at_least_one_refusal_with_a_remedy(report):
-    """The clause, second half."""
+    """The acceptance clause, second half."""
     assert report.refused, "a run with no policy and a non-stationary grader refuses something"
     for refusal in report.refused:
         assert refusal.remedy.strip()
@@ -553,7 +553,7 @@ def test_the_counts_in_the_footer_reconcile(report):
 
 
 def test_no_number_in_the_report_came_from_the_specification(report):
-    """The worked example's block is illustrative. Every number here is rendered from a registered value."""
+    """Section 4.5's block is illustrative. Every number here is rendered from a registered value."""
     text = report.render()
     for illustrative in ("420 calls", "$1.10", "±0.4", "±0.06", "18 min CPU", "20 replays"):
         assert illustrative not in text
@@ -577,7 +577,7 @@ def test_the_section_4_2_signature_takes_a_bare_matrix(report):
     assert plain.access.note_for(Component.GRADER) == "supplied by the caller"
     # A superset rather than an exact set. The two registered in this module are what this test is
     # about, and the registry is process-global, so any instrument that registers a real estimator
-    # at import and is reachable in the same session legitimately appears here too.
+    # at import and is reachable in the same session legitimately appears here too. W2.7's
     # `run.regime` was the first, and pinning an exact set makes every later package's arrival a
     # failure in a test that is not about them.
     assert {_ESS, _RECOVERY} <= {a.quantity for a in plain.available}

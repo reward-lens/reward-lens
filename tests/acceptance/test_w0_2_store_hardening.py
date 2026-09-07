@@ -1,4 +1,4 @@
-"""Acceptance: a store killed mid-append reopens without loss.
+"""W0.2 acceptance: a store killed mid-append reopens without loss.
 
 The clause this file discharges: *a store killed mid-append reopens without loss and the partial
 bytes land in `.partial`; two shards with a cross-shard parent merge correctly and a shard with a

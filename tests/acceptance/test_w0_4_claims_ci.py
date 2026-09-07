@@ -1,4 +1,4 @@
-"""Acceptance: an unbound number in a docs page fails the workflow.
+"""W0.4 acceptance: an unbound number in a docs page fails the workflow.
 
 The clause this file discharges: *a deliberately unbound number in a docs page fails the workflow.*
 

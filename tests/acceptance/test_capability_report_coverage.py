@@ -101,8 +101,9 @@ def test_the_capability_report_does_not_report_a_built_library_as_unbuilt() -> N
         "telling a reader that a library of shipped instruments contains none of them"
     )
     assert resolved > 0, (
-        f"all {rows} catalogue rows render as not yet built. The likely cause is that the "
-        "estimator ladder is no longer loaded before the report computes its covered set"
+        f"all {rows} catalogue rows render as not yet built. See the corrected E58 in "
+        "SPEC-ERRATA.md; the likely cause is that the estimator ladder is no longer loaded before "
+        "the report computes its covered set"
     )
 
 

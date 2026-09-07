@@ -1,15 +1,15 @@
-"""Acceptance: D6 exploit-family coverage, D8 attack surface, D10 replay fidelity.
+"""W3.4c acceptance: D6 exploit-family coverage, D8 attack surface, D10 replay fidelity.
 
-**On the clause.** The overall clause covers all ten D instruments and reads:
+**On the acceptance clause.** Part 9's W3.4 clause covers all ten D instruments and reads:
 
     *a card renders for one marketplace environment with coverage, surviving mutants (with source
     spans and diffs), at least one metamorphic violation with a reproducer, Sobol total-effect
     indices, a false-positive catalogue, the silent-zero rate and a flakiness spread.*
 
-Seven items. Five are D1 to D5 and were discharged elsewhere. The remaining two belong to
+Seven items. Five are D1 to D5 and were discharged by W3.4a and W3.4b. The remaining two belong to
 other series: the silent-zero rate is B4's `grader.silent_zero_rate` and the flakiness spread is
 A7's `env.flakiness`, which the catalogue registers at line 417 with a unit of percentage points.
-**Nothing in the clause is produced by D6, D8 or D10.** That is a gap in the clause rather than in this
+**Nothing in the clause is produced by D6, D8 or D10.** That is a gap in Part 9 rather than in this
 package, and it is reported rather than papered over, so the clause this file discharges is stated
 here in full and is the one the three catalogue records imply:
 
@@ -66,7 +66,7 @@ from reward_lens.verifier.replay import ReplayFidelity, ReplayReport, replay_cor
 # The real subjects
 # ---------------------------------------------------------------------------
 
-#: `is_equiv` from `hendrycks/math`. The same subject the other D packages used, reused so
+#: `is_equiv` from `hendrycks/math`. The same subject W3.4a and W3.4b used, reused deliberately so
 #: the D-series numbers on this grader accumulate against one program rather than four.
 MATH_URL = "https://raw.githubusercontent.com/hendrycks/math/main/modeling/math_equivalence.py"
 
@@ -191,10 +191,10 @@ def test_d6_reads_a_real_exploit_log_from_a_real_public_verifier(math_verifier) 
     The measured result on `is_equiv`, and it is worth reading before the assertions: four families
     over forty-five finds, every one of them found more than once, so `f1 = 0` and Good-Turing puts
     the unseen mass at zero. That is the arithmetic working, and it is also **the kill condition
-    originally named for this instrument arriving on the first real log it was pointed at**: with no
+    CALIPER named for this instrument arriving on the first real log it was pointed at**: with no
     singleton families the estimator has nothing to extrapolate from and the reading collapses onto
-    the baseline count it was supposed to improve on. That kill condition was later dropped and D6
-    declared unkillable; the first real log says keeping it was right.
+    the baseline count it was supposed to improve on. ASSAY dropped that kill condition and
+    declared D6 unkillable; the first real log says CALIPER was right to keep it.
     """
     log = _math_exploit_log(math_verifier)
     assert log.n >= 40, "the MATH checker breaks under a semantics-preserving rewrite in bulk"
@@ -454,7 +454,7 @@ def test_d10_finds_the_tasks_a_changed_grader_makes_unauditable(math_verifier) -
     """The instrument has range: the same record against a grader that normalises differently.
 
     The change is one line, folding U+2212 MINUS SIGN onto ASCII hyphen, which is the normalisation
-    gap D4 measured in this same checker. A record produced before that fix and read after it
+    gap W3.4b measured in this same checker. A record produced before that fix and read after it
     is a record whose scores cannot all be reproduced, and the tasks where it fails are named.
     """
     fn = math_verifier.load()
@@ -516,7 +516,7 @@ def test_the_generated_invariance_test_passes_for_all_four(math_verifier, sweben
     Four of the five declare `none`, which resolves to the trivial group: no affine rescaling of
     the reward acts on a count of exploit families, on the exponent of their arrival process, on an
     inventory of file reads, or on the fraction of records that reproduce. That is an answer rather
-    than an omission, per E11.
+    than an omission, per SPEC-ERRATA E11.
 
     `env.attack_cheapness` is the exception and its group is `units`, whose assertion is a refusal
     rather than a numeric relation, so `check_invariance` routes it away from a value comparison

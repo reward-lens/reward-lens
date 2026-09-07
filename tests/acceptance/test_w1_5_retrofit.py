@@ -1,15 +1,16 @@
-"""Acceptance: the shipped observables and indices, retyped onto the instrument contract.
+"""W1.5 acceptance: the shipped observables and indices, retyped onto section 4.2.
 
-What this file has to show is "a test enumerating the registry asserts every instrument has all
-four", the four being a quantity id, an invariance group, an envelope and baselines.
-`lint_instrument` is that check, plus the rule that an instrument's quantity must be registered, so
-`test_every_instrument_passes_lint` below is the gate and the rest of this module exists to make its
-failures readable.
+The spec's own acceptance clause for W1.5 is "a test enumerating the registry asserts every
+instrument has all four", the four being a quantity id, an invariance group, an envelope and
+baselines. `lint_instrument` is that check, plus the section 4.2 rule that an instrument's quantity
+must be registered, so `test_every_instrument_passes_lint` below is the gate and the rest of this
+module exists to make its failures readable.
 
 Counts, measured rather than quoted. Eleven observables in `measure/battery/` and eighteen indices
-in `measure/indices/`, twenty-nine together. Fourteen `LINEAR_READOUT` declaration sites inside
-`measure/` before the retrofit; twelve after, two having been dropped from instruments that never
-reach a readout vector.
+in `measure/indices/`, twenty-nine together, which is what Part 9 W1.5 says and not what section 5.C
+says (it says seventeen indices). Fourteen `LINEAR_READOUT` declaration sites inside `measure/`
+before the retrofit, which is SPEC-ERRATA E5 and not the fifteen the spec quotes; twelve after, two
+having been dropped from instruments that never reach a readout vector.
 """
 
 from __future__ import annotations
@@ -91,8 +92,9 @@ def _registry() -> None:
 def test_measured_population_is_eleven_and_eighteen() -> None:
     """Eleven battery observables, eighteen indices, twenty-nine together.
 
-    Two counts were in circulation, 28 and 29. The count here is the population, measured off the
-    tree rather than transcribed, and it is 29.
+    Section 5.C says "eleven shipped Observables and seventeen indices", which is 28 and disagrees
+    with Part 9 W1.5's "the 29 existing observables and indices". The count here is the population,
+    and it says W1.5 is right.
     """
     assert len(battery_instruments()) == 11
     assert len(index_instruments()) == 18
@@ -126,7 +128,7 @@ def test_linear_readout_declaration_count_after_the_drop() -> None:
 
 
 def _retrofit_sources() -> list[pathlib.Path]:
-    """The modules the retrofit owns: the battery and the index library."""
+    """The modules W1.5 owns: the battery and the index library."""
     return sorted((MEASURE_DIR / "battery").glob("*.py")) + sorted(
         (MEASURE_DIR / "indices").glob("*.py")
     )
@@ -142,7 +144,7 @@ def _capability_valued_requires(paths) -> list[str]:
 
 
 def test_no_capability_valued_requires_remains_in_the_retrofitted_packages() -> None:
-    """This half of the rename: nothing in the battery or the index library uses the old name."""
+    """W1.5's own half of the rename: nothing in the battery or the index library uses the old name."""
     offenders = _capability_valued_requires(_retrofit_sources())
     assert offenders == [], f"still declaring a Capability under `requires`: {offenders}"
 
@@ -150,12 +152,11 @@ def test_no_capability_valued_requires_remains_in_the_retrofitted_packages() -> 
 def test_no_capability_valued_requires_remains_anywhere_in_measure() -> None:
     """The removal condition for the two compatibility accessors in `measure/base.py`.
 
-    The instrument contract gives the name `requires` to the AccessMatrix and 2.0.1 gave it to the Capability
+    Section 4.2 gives the name `requires` to the AccessMatrix and 2.0.1 gave it to the Capability
     flags. `declared_capabilities` and `declared_access` read both spellings during the transition
     and their docstrings name this count reaching zero as when they get deleted, so it is asserted
-    rather than assumed. This test is wider than the retrofit's own path set on purpose: the
-    accessors are shared, so a module outside the battery and the index library keeps them alive
-    for everyone.
+    rather than assumed. This test is wider than W1.5's own path set on purpose: the accessors are
+    shared, so a module outside the battery and the index library keeps them alive for everyone.
     """
     owned = set(_retrofit_sources())
     offenders = _capability_valued_requires(sorted(MEASURE_DIR.rglob("*.py")))
@@ -169,17 +170,17 @@ def test_no_capability_valued_requires_remains_anywhere_in_measure() -> None:
 
 
 # ---------------------------------------------------------------------------
-# The gate: every instrument passes lint
+# The acceptance clause
 # ---------------------------------------------------------------------------
 
 
 def test_every_instrument_passes_lint() -> None:
-    """Every instrument in `measure/` has all four, and lint agrees.
+    """W1.5's acceptance clause: every instrument in `measure/` has all four, and lint agrees.
 
-    `lint_instrument` checks the four declarations the contract requires: a registered
+    `lint_instrument` checks the four declarations of section 4.2's lint rules: a registered
     quantity, a non-empty baseline tuple, an envelope, and an invariance group. It returns findings
     rather than raising so the retype could land in one commit; an empty list for every instrument
-    is what closes the retrofit.
+    is what closes W1.5.
     """
     findings = {i.name: lint_instrument(i) for i in all_instruments()}
     failed = {n: [f.render() for f in fs] for n, fs in findings.items() if fs}
@@ -191,7 +192,7 @@ def test_every_instrument_passes_lint() -> None:
         + "\n".join(line for fs in failed.values() for line in fs)
         + (
             f"\n\nAll of it is one cause: {len(unregistered)} quantity ids that no row in "
-            f"spec/QUANTITIES.yaml carries, because the registry holds the 85 catalogue "
+            f"spec/QUANTITIES.yaml carries, because Appendix A registers the 85 catalogue "
             f"instruments and not the shipped corpus. Register these and this test goes green "
             f"with no further edit here:\n  " + "\n  ".join(unregistered)
             if unregistered
@@ -203,15 +204,14 @@ def test_every_instrument_passes_lint() -> None:
 def test_declarations_present_even_where_the_quantity_row_is_missing() -> None:
     """Localises the failure above; it does not replace it.
 
-    This asserts the four declarations exist and are well formed, which is the half of the work
-    that lives in `measure/`. The half that lives in `spec/QUANTITIES.yaml` is the quantity row,
-    and when that is missing this test passes while `test_every_instrument_passes_lint` fails,
-    which is exactly the information a reader of a red run needs. It is not a softer gate: the gate
-    is above.
+    This asserts the four declarations exist and are well formed, which is the half of W1.5 that
+    lives in `measure/`. The half that lives in `spec/QUANTITIES.yaml` is the quantity row, and when
+    that is missing this test passes while `test_every_instrument_passes_lint` fails, which is
+    exactly the information a reader of a red run needs. It is not a softer gate: the gate is above.
     """
     for inst in all_instruments():
         assert inst.quantity, f"{inst.name} declares no quantity"
-        # `selection.differential_S` carries a capital in its local part, as the registry prints
+        # `selection.differential_S` carries a capital in its local part, as Appendix A prints
         # it, so the id pattern allows one rather than the id being renamed to fit a test.
         assert re.fullmatch(r"[a-z_]+\.[A-Za-z_0-9]+", inst.quantity), (
             f"{inst.name} declares {inst.quantity!r}, which is not a dotted registry id"
@@ -302,7 +302,7 @@ def test_chi_is_registered_as_the_shipped_differential_at_rung_zero() -> None:
     """
     chi = index_pkg.Chi()
     assert chi.quantity == "selection.differential_S"
-    assert chi.quantity in QUANTITIES, "the one quantity of the 29 that the registry does carry"
+    assert chi.quantity in QUANTITIES, "the one quantity of the 29 that Appendix A does carry"
     assert chi.rung == 0
 
     bias = chi.BIAS
@@ -338,7 +338,7 @@ def test_chi_is_covariant_not_invariant_under_a_reward_rescale() -> None:
     # Read through `resolve_relation` rather than off the attribute. `chi` now declares the mapping
     # form, because it transforms two ways: covariant with weight 1 under `reward.affine` and
     # invariant under `repr.basis`, which it used to record in a comment for want of anywhere to put
-    # it.
+    # it. SPEC-ERRATA E55.
     affine = resolve_relation(chi, "reward.affine")
     assert affine.status == "covariant"
     assert affine.weight == 1.0
@@ -559,7 +559,7 @@ def test_generated_invariance_check_passes(inst) -> None:
         # declares is what the mapping form of `invariance_relation` exists to stop: `chi` is
         # covariant with weight 1 under `reward.affine` and invariant under `repr.basis`, and a
         # single relation cannot say both. Left unset, `check_invariance` calls `resolve_relation`
-        # and gets the right one per group, which is the behaviour under test.
+        # and gets the right one per group, which is the behaviour under test. SPEC-ERRATA E55.
         report = check_invariance(
             inst,
             gid,

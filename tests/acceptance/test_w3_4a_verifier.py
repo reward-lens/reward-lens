@@ -1,4 +1,4 @@
-"""Acceptance: coverage with per-rollout attribution, survivors with spans and diffs, and
+"""W3.4a acceptance: coverage with per-rollout attribution, survivors with spans and diffs, and
 the control-flow graph that maps arcs back onto rubric clauses.
 
 Two subjects, and they are different tests. The fixture below is a math-answer grader written here:

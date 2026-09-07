@@ -1,6 +1,6 @@
-"""Acceptance: G1, G2, G3, the credit measure.
+"""W5.4 acceptance: G1, G2, G3, the credit measure.
 
-The clause, in two halves, and this file asserts both:
+Part 9's clause, in two halves, and this file asserts both:
 
     the disintegrations sum to the update norm within tolerance (the conservation test), and one
     framework's existing tensor dump is consumed rather than reimplemented.
@@ -14,7 +14,7 @@ record's own learning rate of 1e-06 moves the parameters by `dtheta` with
 numbers with one order of magnitude of headroom, and the float64 case is asserted at machine
 epsilon because that is what it reaches.
 
-**The second half is a real consumer of a real format.** E7 is right that the specified rung 0
+**The second half is a real consumer of a real format.** SPEC-ERRATA E7 is right that §5.G's rung 0
 points at the wrong thing: `dump_data_batch` is a bool config field at `config.py:1085` and the
 function is `dump_data` at `trainer.py:1238-1244`. E7 is also right about the sharper problem, and
 this file reproduces it as a test rather than repeating it as a claim: `rewards` is popped at
@@ -180,7 +180,7 @@ def test_precision_is_reported_because_the_native_dtype_cannot_carry_the_audit(r
     """bfloat16 gives a conservation error four orders of magnitude worse, and that is why we cast.
 
     Measured on this step: 1.560e-03 native against 1.126e-07 in float32. The number is not a defect
-    in the disintegration, it is the numerics floor showing up in the one place that makes it
+    in the disintegration, it is §4.7's numerics floor showing up in the one place that makes it
     visible, and an instrument that measured in the model's own dtype would report it as credit.
     """
     batch, _ = real_batch
@@ -209,7 +209,7 @@ def test_a_partition_that_does_not_tile_is_refused_at_construction(real_batch):
 
 
 def test_a_degenerate_group_refuses_rather_than_reporting_uniform_shares(policy, real_batch):
-    """Every advantage zero is E3, not a measurement problem, and every share of zero is
+    """Every advantage zero is §3.2's E3, not a measurement problem, and every share of zero is
     undefined rather than uniform."""
     batch, _ = real_batch
     flat = TrajectoryBatch(
@@ -321,7 +321,7 @@ def skyrl_dump(tmp_path):
 
 
 def test_the_skyrl_dump_is_consumed_without_importing_skyrl(skyrl_dump):
-    """Rung 0: read the per-token advantage tensor a framework already writes.
+    """Rung 0 of §5.G: read the per-token advantage tensor a framework already writes.
 
     The reader resolves four names through a restricted unpickler and decodes the buffers with
     numpy. `skyrl` is not installed in this environment and is not in `sys.modules` afterwards,
@@ -342,10 +342,10 @@ def test_the_skyrl_dump_is_consumed_without_importing_skyrl(skyrl_dump):
 
 
 def test_the_dump_carries_neither_rewards_nor_uids(skyrl_dump):
-    """E7, reproduced as a test rather than repeated as a claim.
+    """SPEC-ERRATA E7, reproduced as a test rather than repeated as a claim.
 
-    The specification calls this rung "consume SkyRL's `dump_data_batch` where it exists" and
-    treats it as free. It is partial: `rewards` is popped at `trainer.py:436` and `uids` at `:437`, and `dump_data` is
+    §5.G calls this rung "consume SkyRL's `dump_data_batch` where it exists" and treats it as free.
+    It is partial: `rewards` is popped at `trainer.py:436` and `uids` at `:437`, and `dump_data` is
     called at `:441`. So the tensor reaches disk and the two fields that make it interpretable do
     not. The group is recoverable because rows from one prompt share the ids the response mask
     excludes; the reward is not recoverable from this file at all.
@@ -418,9 +418,8 @@ def test_turn_mass_refuses_on_this_record_rather_than_substituting_token_counts(
 
     The refusal is the correct output and the remedy names both routes out: a `verifiers` record
     carries `completion_logprobs`, and on a TRL record the way to the quantity is the white-box
-    disintegration. Substituting token counts would return the declared "uniform attribution over
-    tokens" baseline under the name `credit.by_turn`, which is the silent downgrade the contract
-    forbids.
+    disintegration. Substituting token counts would return §5.G's declared "uniform attribution over
+    tokens" baseline under the name `credit.by_turn`, which is the silent downgrade §6.1 forbids.
     """
     out = turn_mass(list(first_step.trajectories))
     assert isinstance(out, Refusal)
@@ -484,7 +483,7 @@ def test_tool_call_and_span_shares_are_indexed_correctly():
 def test_the_subject_a_turn_concentration_claim_needs():
     """Names the limit rather than working around it. This test asserts the gap, not a result.
 
-    The headline for G2 is "in a 40-turn episode, 71% of the log-probability mass that received
+    §5.G's headline for G2 is "in a 40-turn episode, 71% of the log-probability mass that received
     advantage is in turns 1 to 3 and turn 40", and it exists to confirm or refute the report that
     RLVR reallocates probability at a small set of critical positions near the start and end of a
     trajectory. Nothing in this build can make that claim:
@@ -529,8 +528,8 @@ def test_the_implicit_prm_is_degenerate_on_every_group_of_the_reference_record(p
     from its first token, every value past the root is that rollout's own outcome, the whole outcome
     advantage lands on token one and 92% of trained positions carry exactly zero.
 
-    Reporting that is closing the package. The package's own kill condition is "kill if the
-    induced function is constant", and this is the measured form of it.
+    Reporting that is closing the package. §5.G's own entry says "kill if the induced function is
+    constant", and this is the measured form of it.
     """
     run = open_run(LONG, LONG_RUN)
     tokenizer = policy.tokenizer
@@ -623,7 +622,7 @@ def test_the_implicit_prm_refuses_a_group_of_one():
 
 
 # ---------------------------------------------------------------------------
-# The white-box reading carries an IncrementalValidity, and lint agrees
+# Section 6.4: the white-box reading carries an IncrementalValidity, and lint agrees
 # ---------------------------------------------------------------------------
 
 
@@ -658,13 +657,13 @@ def _record_proxy(policy, batch):
 
 
 def test_the_white_box_reading_carries_an_incremental_validity(policy):
-    """An `IncrementalValidity` is mandatory on a white-box reading, and lint rule four checks it.
+    """§6.4 is mandatory on a white-box reading, and lint rule four is what checks it.
 
     The framing is the one `credit_increment` argues for and it is a declared deviation. M9 presumes
     the instrument is a predictor scored against an external criterion; the credit measure is a
     definition, so scoring it against itself would return a perfect number meaning nothing. The
     criterion here is the white-box measurement and what competes against it is every cheap method,
-    the instrument's own record-only proxy included. That answers the rule's actual question directly:
+    the instrument's own record-only proxy included. That answers §6.4's actual question directly:
     if the dumb baselines already say which rollouts carried the mass, the backward passes bought
     the ground truth rather than the localisation.
 
@@ -704,7 +703,7 @@ def test_the_white_box_reading_carries_an_incremental_validity(policy):
     # The obligation itself.
     assert reading.incremental is not None
     assert lint_reading(reading, instrument) == []
-    assert reading.quantity == "credit.measure", "assert the emitted quantity, not the declared one"
+    assert reading.quantity == "credit.measure", "SPEC-ERRATA E51: assert the emitted quantity"
 
     record = reading.incremental
     assert record.baseline_id
@@ -725,7 +724,7 @@ def test_all_three_instruments_pass_lint():
 
 
 def test_only_the_gradient_instrument_is_white_box():
-    """G2 and G3 read a record and open nothing, so the rule puts no obligation on their readings."""
+    """G2 and G3 read a record and open nothing, so §6.4 puts no obligation on their readings."""
     from reward_lens.measure.base import is_white_box
 
     assert is_white_box(CreditDisintegration(batch=None)) is True

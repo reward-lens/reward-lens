@@ -1,6 +1,6 @@
-"""Acceptance: D3 metamorphic violations, D4 Sobol sensitivity, D5 false-positive fuzzing.
+"""W3.4b acceptance: D3 metamorphic violations, D4 Sobol sensitivity, D5 false-positive fuzzing.
 
-The overall clause covers all ten D instruments. The third of it is this package's:
+W3.4's overall clause covers all ten D instruments. The third of it is this package's:
 
     *at least one metamorphic violation with a reproducer, Sobol total-effect indices, and a
     false-positive catalogue.*
@@ -554,14 +554,17 @@ def test_an_uncertified_reference_is_refused(verifier, corpus):
 
 
 def test_rung_two_is_declared_unreachable_rather_than_silently_skipped(catalogue_reading):
-    """atheris is not in the verifier extra, so rung 2 did not run and the reading says so."""
+    """Rung 2 is not built, so the entry point refuses with RL0701 and the reading says so."""
+    from reward_lens.contracts import CapabilityUnavailable
     from reward_lens.verifier.fuzz import coverage_guided_search
 
     catalogue = catalogue_reading.value
     assert catalogue.coverage_guided_available is False
     assert "atheris" in catalogue.coverage_guided_gap
-    with pytest.raises(ImportError, match="atheris"):
+    with pytest.raises(CapabilityUnavailable) as caught:
         coverage_guided_search()
+    assert caught.value.code == "RL0701"
+    assert "rung 1" in str(caught.value)
 
 
 # ---------------------------------------------------------------------------
@@ -664,7 +667,7 @@ def test_the_generated_invariance_test_passes_for_all_three(verifier, strict_ref
 
     D3 and D5 declare `none`, which resolves to the trivial group. Their generated test passes
     because nothing acts on a violation count or on a threshold-crossing rate, which is an answer
-    rather than an omission: see E11.
+    rather than an omission: see SPEC-ERRATA E11.
     """
     inputs = RUBRIC_INPUTS
     x = sobol_sample(inputs, 256, seed=0)

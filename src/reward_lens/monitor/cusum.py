@@ -52,6 +52,7 @@ from reward_lens.monitor._base import (
 from reward_lens.monitor.arl import (
     SHIPPED_AD_HOC,
     CusumDesign,
+    Sides,
     arl_siegmund,
     design_cusum,
     lorden_delay,
@@ -89,11 +90,22 @@ def standardize(series: Sequence[float], baseline: int | None = None) -> np.ndar
 
 @dataclass(frozen=True)
 class CusumRun:
-    """The chart's path and its first alarm.
+    """The chart's path, its first alarm, and which alarm rule produced it.
 
-    ``upper`` and ``lower`` are the two accumulators. ``alarm_at`` is an index into the series, not
-    a step number: a caller holding a window has to map it back, and returning a step number here
-    would hide whether the mapping happened.
+    ``upper`` and ``lower`` are the two accumulators, both of them recorded whichever rule ran, so
+    the path a one-sided chart did not watch is still there to look at. ``alarm_at`` is an index
+    into the series, not a step number: a caller holding a window has to map it back, and returning
+    a step number here would hide whether the mapping happened.
+
+    ``sides`` is what the **runner** did, written from the rule it applied rather than copied off
+    the design. It duplicates ``design.sides`` and that is the point: a design and a runner that
+    disagree used to be invisible, because the design was the only thing that said anything and it
+    was not the thing being executed.
+
+    ``peak`` is the highest value reached by an accumulator the alarm rule was watching, so it is
+    comparable with ``design.h``. On a one-sided chart the lower accumulator can run far past ``h``
+    without meaning anything, and reporting it as the peak statistic beside the threshold it was
+    never measured against would say the chart nearly fired when it was never going to.
     """
 
     upper: np.ndarray
@@ -101,6 +113,7 @@ class CusumRun:
     alarm_at: int | None
     peak: float
     design: CusumDesign
+    sides: Sides = 2
 
     @property
     def fired(self) -> bool:
@@ -114,15 +127,22 @@ def run_cusum(
     baseline: int | None = None,
     standardized: bool = False,
 ) -> CusumRun:
-    """Page's two-sided CUSUM with a derived threshold. The chart, run.
+    """Page's CUSUM with a derived threshold, run at the sidedness its design was solved for.
 
-    Two-sided because that is what the design in `arl.py` solved for and what
-    `stats.changepoint.cusum` already runs. A one-sided design at the same target ``ARL_0`` needs a
-    different ``h`` (4.09 rather than 4.77 at ``k = 0.5``, ``ARL_0 = 370``), so mixing the two is
-    not a detail: it is the difference between a chart that alarms every 370 steps and one that
-    alarms every 740.
+    ``design.sides`` decides the alarm rule. At ``sides=2`` the chart alarms on either accumulator,
+    which is what `stats.changepoint.cusum` runs and what the design table in section 3.4 refers to.
+    At ``sides=1`` it alarms on the upper accumulator only, which is the chart `arl.arl_siegmund`
+    scores at ``sides=1`` and the one a monitor watching for a rise is designed as.
+
+    The two are not interchangeable and the difference is a factor of two, not a detail. Under the
+    null the two arms are symmetric and their alarm rates add, so running a threshold solved for one
+    rule under the other halves the in-control interval: at ``k = 0.5`` and a target ``ARL_0`` of
+    240, ``h = 3.6690`` one-sided delivers about 240 under its own rule and about 120 under the
+    other. Both accumulators are computed either way, because the unwatched path is worth seeing;
+    only the alarm rule and ``peak`` depend on the sidedness.
     """
     z = np.asarray(series, dtype=np.float64) if standardized else standardize(series, baseline)
+    two_sided = design.sides != 1
     up = np.zeros(z.size)
     lo = np.zeros(z.size)
     hi_acc = 0.0
@@ -135,10 +155,18 @@ def run_cusum(
         lo_acc = max(0.0, lo_acc - v - design.k)
         up[i] = hi_acc
         lo[i] = lo_acc
-        peak = max(peak, hi_acc, lo_acc)
-        if alarm is None and (hi_acc > design.h or lo_acc > design.h):
+        watched = max(hi_acc, lo_acc) if two_sided else hi_acc
+        peak = max(peak, watched)
+        if alarm is None and watched > design.h:
             alarm = i
-    return CusumRun(upper=up, lower=lo, alarm_at=alarm, peak=float(peak), design=design)
+    return CusumRun(
+        upper=up,
+        lower=lo,
+        alarm_at=alarm,
+        peak=float(peak),
+        design=design,
+        sides=2 if two_sided else 1,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -155,10 +183,12 @@ class TransitionWindow:
     points, derived from those two, and they are properties rather than fields so the three numbers
     cannot disagree.
 
-    **Delay is measured from ``onset_step``, the beginning of the transition.** That convention
-    makes a delay positive and a lead negative. `lead_to_midpoint` is the other number people
-    quote, the distance from the alarm back to the 50% point, and it is reported beside the delay
-    rather than instead of it because papers in this area use both and call both "lead time".
+    **Delay is measured from ``onset_step``, the beginning of the transition.** That is the
+    convention section 3.4's example uses ("realised delay 22 steps, or 0.38 of the transition
+    window") and it makes a delay positive and a lead negative. `lead_to_midpoint` is the other
+    number people quote, the distance from the alarm back to the 50% point, and it is reported
+    beside the delay rather than instead of it because papers in this area use both and call both
+    "lead time".
 
     ``source`` is ``"H4"`` when instrument H4 produced the fit, ``"local"`` when the stand-in in
     this module did, and ``"planted"`` when the transition was simulated and the width is known by
@@ -426,7 +456,7 @@ def default_bank(
     arl0: float = 370.0,
     ewma_lam: float = 0.2,
 ) -> tuple[DetectorSpec, ...]:
-    """The comparison that decides the design: designed alarms against fixed thresholds.
+    """The comparison the acceptance clause asks for: designed alarms against fixed thresholds.
 
     ``horizon`` sets the level of the anytime-valid alarm so that it spends the same false-alarm
     budget over the watched window as an ``ARL_0``-designed chart does. Without that conversion the
@@ -794,7 +824,7 @@ class DetectionDelay(MonitorInstrument):
     version = "1.0"
     capabilities = Capability.NONE
     gauge_status = GaugeStatus.INVARIANT
-    faithful_to = "Page (1954); the transition-window unit convention for lead time"
+    faithful_to = "Page (1954); section 3.4's unit convention for lead time"
     deviations = (
         "the transition width is fitted here by a four-parameter logistic when H4's fit is not "
         "supplied. H4 owns that measurement and this is a stand-in; every reading records which of "

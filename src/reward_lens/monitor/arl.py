@@ -61,8 +61,8 @@ def arl_siegmund(h: float, k: float, shift: float = 0.0, sides: Sides = 2) -> fl
 
     with the removable singularity at ``d = 0`` filled by its limit ``b^2``.
 
-    ``sides=2`` is the chart the recorder runs and the chart the stated design table refers to:
-    two accumulators, one for each direction, alarming on either. Its run length is the minimum
+    ``sides=2`` is the chart the recorder runs and the chart the design table in section 3.4 refers
+    to: two accumulators, one for each direction, alarming on either. Its run length is the minimum
     of two, so the rates add: ``1/ARL_2 = 1/ARL_+ + 1/ARL_-``. Under the in-control mean the two
     arms are symmetric and that is exactly halving. Getting the sidedness wrong moves ``h`` by about
     0.7, which is the difference between an in-control ARL of 370 and one of 740, so it is not a
@@ -95,7 +95,7 @@ def solve_h(arl0: float, k: float, sides: Sides = 2, *, tol: float = 1e-9) -> fl
     bracket is widened by doubling until it contains the target, which handles the very long run
     lengths (``ARL_0`` above a million) that a per-token monitor would want.
 
-    The stated design points are reproduced here for the two-sided chart:
+    The design points section 3.4 states are reproduced here for the two-sided chart:
     ``k = 0.5, ARL_0 = 370`` gives ``h = 4.766``, and Monte Carlo on 60,000 streams returns
     370.1 +- 2.9. See `SIEGMUND_REFERENCE` for what the second stated point does instead.
     """
@@ -313,7 +313,7 @@ def shipped_ad_hoc_arl0(sides: Sides = 2) -> float:
 
 
 # ---------------------------------------------------------------------------
-# The stated design points, and what three methods say about them
+# The design points section 3.4 states, and what three methods say about them
 # ---------------------------------------------------------------------------
 
 
@@ -330,7 +330,7 @@ class ReferencePoint:
     def render(self) -> str:
         verdict = "reproduced" if self.agrees else "NOT reproduced"
         return (
-            f"ARL_0 = {self.arl0_target:.0f} at k = 0.5, two-sided: stated h = "
+            f"ARL_0 = {self.arl0_target:.0f} at k = 0.5, two-sided: spec states h = "
             f"{self.h_stated:.3g}, solver returns h = {self.h_solved:.4g} [{verdict}]. "
             f"At the stated h the chart's in-control ARL is "
             f"{self.arl0_at_h_stated_siegmund:.0f}."
@@ -338,17 +338,18 @@ class ReferencePoint:
 
 
 def reference_points(k: float = 0.5, sides: Sides = 2) -> tuple[ReferencePoint, ...]:
-    """The two stated design points, checked rather than asserted.
+    """The two design points section 3.4 states, checked rather than asserted.
 
-    The first reproduces exactly: ``ARL_0 = 370`` returns ``h = 4.766`` against a stated 4.77, and
+    The first reproduces exactly: ``ARL_0 = 370`` returns ``h = 4.766``, the spec states 4.77, and
     Monte Carlo on 60,000 streams at ``h = 4.77`` returns an in-control run length of 370.1 +- 2.9.
 
-    The second does not. The stated value is ``h = 5.71`` for ``ARL_0 = 1000``; the solver returns
+    The second does not. The spec states ``h = 5.71`` for ``ARL_0 = 1000``; the solver returns
     5.750, the integral equation returns 5.757, and Monte Carlo at ``h = 5.71`` returns 956 +- 8,
     whose interval excludes 1000. No convention for the same chart reproduces both stated points at
     once: the ratio of the two targets implies a log-slope of 1.058 per unit of ``h`` and the chart
-    at ``k = 0.5`` has 1.011, a 4.6% disagreement that is too large to be rounding. Reported with
-    the simulation, rather than absorbed by adjusting a constant until both numbers appear.
+    at ``k = 0.5`` has 1.011, a 4.6% disagreement that is too large to be rounding. Recorded as
+    SPEC-ERRATA E47 with the simulation, rather than absorbed by adjusting a constant until both
+    numbers appear.
     """
     out = []
     for target, stated in ((370.0, 4.77), (1000.0, 5.71)):

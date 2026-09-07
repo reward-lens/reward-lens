@@ -1,6 +1,6 @@
-"""The TRL tap.
+"""W4.1 — the TRL tap.
 
-The clause: *a real small GRPO run produces a complete record with a measured and
+The acceptance clause: *a real small GRPO run produces a complete record with a measured and
 published instrument effect, and the run is unaffected by a deliberately failing tap.*
 
 Both halves are here and they are asserted against the same run rather than against two
@@ -60,8 +60,8 @@ STEPS = 12
 BATCH = 8
 K = 4
 
-#: Wide enough that nothing in these tests breaches by accident. The breach path is the grader
-#: wrapper's own acceptance test; what this file is measuring is what the tap costs when it is working.
+#: Wide enough that nothing in these tests breaches by accident. The breach path is W3.1's
+#: acceptance test; what this file is measuring is what the tap costs when it is working.
 GENEROUS = TapBudget(
     max_added_latency_ms_p99=1000.0,
     max_resident_bytes=64 * 1024 * 1024,
@@ -335,7 +335,7 @@ def test_the_record_has_all_five_levels(arms):
 
 
 def test_segment_provenance_is_present_on_every_trajectory(arms):
-    """Mandatory and plural by the record format, and ``check_tiling`` enforces the cover.
+    """Mandatory and plural by section 2.2, and ``check_tiling`` enforces the cover on construction.
 
     One segment here is a claim rather than a default: ``num_iterations`` and
     ``steps_per_generation`` are both 1, so every rollout was consumed by the optimizer step that
@@ -375,7 +375,69 @@ def test_the_record_carries_advantages_and_scores_and_abstentions(arms):
         "an abstention became a zero on the way into the record, which is the failure mode the "
         "whole score channel exists to prevent"
     )
-    assert all(t.features == {} for t in abstained), "and it must not become a realised reward"
+    assert all("trl_realised_reward" not in t.features for t in abstained), (
+        "and it must not become a realised reward"
+    )
+
+
+def test_the_per_rollout_completion_length_in_tokens_reaches_the_record(arms):
+    """BLK-010, on a real trainer rather than a fake one.
+
+    TRL reduces the per-sequence vector to mean, min and max at ``grpo_trainer.py:2302-2304`` and
+    keeps nothing per row. The tap recovers it from ``completion_ids``. This asserts the recovered
+    per-row values reproduce the trainer's own three reductions on the run that just happened, so
+    the field is tied to TRL's arithmetic and not only to a fixture's.
+
+    The same run separates the two quantities the row is about: every completion here is exactly
+    ``max_completion_length`` tokens while the character lengths vary enough to give the reward a
+    non-zero standard deviation. A character proxy on this run is not a noisy token count, it is a
+    different number entirely.
+    """
+    arm = arms["working"]
+    run = arm.tap.finish()
+    trajectories = [t for s in run.steps for g in s.groups for t in g.trajectories]
+
+    tokens = [t.features.get("completion_length_tokens") for t in trajectories]
+    chars = [t.features.get("completion_length_chars") for t in trajectories]
+    assert all(v is not None for v in tokens), "the token length did not reach a single row"
+
+    logged = [
+        entry for entry in arm.trainer.state.log_history if "completions/mean_length" in entry
+    ]
+    assert logged, "TRL logged no completion lengths, so there is nothing to check against"
+    per_step = {}
+    for step in run.steps:
+        per_step[step.index] = [
+            t.features["completion_length_tokens"] for g in step.groups for t in g.trajectories
+        ]
+    for index, entry in enumerate(logged[: len(per_step)]):
+        values = per_step[index]
+        assert min(values) == entry["completions/min_length"]
+        assert max(values) == entry["completions/max_length"]
+        assert sum(values) / len(values) == pytest.approx(entry["completions/mean_length"])
+
+    assert len(set(chars)) > 1, "the fixture has to vary in characters or it proves nothing"
+    assert chars != tokens
+
+
+def test_the_grouping_is_verified_upstream_of_the_shuffle_on_a_real_batch(arms):
+    """BLK-009 on the real trainer: the group id and generation index are on every row, and the
+    provenance check that would withhold them did not have to fire.
+
+    The unit fixture drives the check with an injected permutation; this says the check is also
+    quiet on a batch TRL itself laid out, which is the other half of a guard being useful. A guard
+    that fires on real data is a broken guard, and one that never fires on anything is not a guard.
+    """
+    arm = arms["working"]
+    run = arm.tap.finish()
+    assert arm.tap.unverified_grouping_steps == 0, arm.tap.grouping_refusal_reason
+    for step in run.steps:
+        for ordinal, group in enumerate(step.groups):
+            assert {int(t.features["prompt_group_id"]) for t in group.trajectories} == {ordinal}
+            assert sorted(int(t.features["generation_index"]) for t in group.trajectories) == list(
+                range(len(group.trajectories))
+            )
+            assert len({t.turns[0].text for t in group.trajectories}) == 1
 
 
 def test_the_leaf_points_back_at_the_grader_call_that_produced_it(arms):
@@ -407,7 +469,7 @@ def test_group_stats_count_the_abstentions_rather_than_scoring_them(arms):
 
 
 def test_the_estimator_spec_says_exactly_how_scores_became_advantages(arms):
-    """The format asks for EXACTLY, and GRPO is one of the estimators where that is achievable."""
+    """Section 2.2 asks for EXACTLY, and GRPO is one of the estimators where that is achievable."""
     run = arms["working"].tap.finish()
     spec = next(iter(run.steps)).groups[0].estimator
     assert spec.family.startswith("grpo/")
@@ -453,7 +515,7 @@ def test_the_record_survives_a_round_trip_through_the_store(arms):
     """ "Complete" has to mean serialisable, or it means a pile of live objects in one process.
 
     ``RecordWriter`` and ``open_run`` are the boundary between Plane A's output and Plane B's
-    input, and everything downstream of the tap reads the record rather than the tap. So the run is
+    input, and everything downstream of W4.1 reads the record rather than the tap. So the run is
     written, reopened from disk, and the levels are counted again on the way back.
     """
     from reward_lens.record.reader import open_run
@@ -479,7 +541,7 @@ def test_the_record_survives_a_round_trip_through_the_store(arms):
 
 
 def test_every_step_carries_its_own_instrument_effect(arms):
-    """The format puts the effect on the step, and it is a term in the budget rather than prose."""
+    """Section 2.2 puts the effect on the step, and it is a term in the budget rather than prose."""
     run = arms["working"].tap.finish()
     effects = [s.instrument for s in run.steps]
     assert all(e.invocations > 0 for e in effects)
@@ -654,9 +716,9 @@ def test_the_measured_overhead_from_outside(arms):
     a user would measure it, with the arguments shaped the way TRL shapes them.
 
     Three levels rather than two, because a single "wrapped versus bare" number cannot say which
-    layer costs what, and the grader wrapper already published its own from-outside figure of 1.89
-    to 2.03 microseconds. Separating them is what makes this measurement comparable to that one
-    instead of replacing it.
+    layer costs what, and W3.1 already published its own from-outside figure of 1.89 to 2.03
+    microseconds. Separating them is what makes this measurement comparable to that one instead of
+    replacing it.
 
     **The bare number is not a stand-in for a real grader.** Scoring 32 completions by their length
     takes about 1.6 microseconds, and a real grader is a parse (milliseconds) or a judge over HTTP
@@ -713,14 +775,14 @@ def test_the_measured_overhead_from_outside(arms):
         f"one extra column of {n_rows} values:\n"
         f"  bare grader                    {med(bare) / 1000:8.3f} us median  "
         f"{p99(bare) / 1000:8.3f} us p99\n"
-        f"  + instrument_grader           {med(w3_1) / 1000:8.3f} us median  "
+        f"  + instrument_grader (W3.1)     {med(w3_1) / 1000:8.3f} us median  "
         f"{p99(w3_1) / 1000:8.3f} us p99\n"
-        f"  + the TRL adapter             {med(w4_1) / 1000:8.3f} us median  "
+        f"  + the TRL adapter   (W4.1)     {med(w4_1) / 1000:8.3f} us median  "
         f"{p99(w4_1) / 1000:8.3f} us p99\n"
         f"  ---\n"
-        f"  the grader wrapper adds        {(med(w3_1) - med(bare)) / 1000:8.3f} us median  "
+        f"  W3.1 wrapper adds              {(med(w3_1) - med(bare)) / 1000:8.3f} us median  "
         f"{(p99(w3_1) - p99(bare)) / 1000:8.3f} us p99\n"
-        f"  the adapter adds on top        {(med(w4_1) - med(w3_1)) / 1000:8.3f} us median  "
+        f"  W4.1 adapter adds on top       {(med(w4_1) - med(w3_1)) / 1000:8.3f} us median  "
         f"{(p99(w4_1) - p99(w3_1)) / 1000:8.3f} us p99\n"
         f"  whole stack adds               {(med(w4_1) - med(bare)) / 1000:8.3f} us median  "
         f"{(p99(w4_1) - p99(bare)) / 1000:8.3f} us p99\n"

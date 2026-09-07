@@ -2,8 +2,8 @@
 
 `spec/CATALOGUE.yaml` is the operative catalogue and `status` is its statement about whether an
 instrument exists. Nothing recomputes that statement, so it went stale the moment the first package
-closed and stayed stale from then on: 89 of 95 rows claimed an instrument had not been written
-while 83 of them shipped, and `reward-lens capabilities` told a stranger so. E58.
+closed and stayed stale for five waves: 89 of 95 rows claimed an instrument had not been written
+while 83 of them shipped, and `reward-lens capabilities` told a stranger so. SPEC-ERRATA E58.
 
 The repair is a data edit and the data will drift again. This file is the part that does not: it
 walks the installed tree, collects every class that declares a quantity, and compares that against
@@ -11,12 +11,13 @@ the field, naming the rows that disagree and in which direction. A row claiming 
 instrument and a row claiming `planned` with a shipped one are different defects with different
 remedies, and the messages say which.
 
-**Why an enumeration rather than a count.** Three times an enumeration-as-a-test has caught a hole
-nobody was looking for: E19's 28 unregistered retrofit rows, the docs build's quantity registered
-only in-process, and E56's four contract-layer instruments that shipped failing lint rule 1 while
-their package read `done`, found by enumerating the registry for an unrelated reason. The registry
-enumeration is what stops a large build developing holes nobody notices. A count would have passed
-every one of them.
+**Why an enumeration rather than a count.** Three times in this build an enumeration-as-a-test has
+caught a hole nobody was looking for: E19's 28 unregistered retrofit rows, the docs build's
+process-locally-registered quantity, and E56's four contract-layer instruments that shipped for two
+waves failing lint rule 1 while their package read `done`, found by a sciences agent enumerating the
+registry for an unrelated reason. Section 12 rule 5 is what all three are: the registry enumeration
+is what stops a fifty-agent build developing holes nobody notices. A count would have passed every
+one of them.
 
 **The two directions are not equally establishable, and that decides the shape of this file.** The
 walk can only ever see fewer instruments than exist, because a subsystem behind an optional extra
@@ -116,7 +117,7 @@ def _walk() -> tuple[dict[str, list[str]], list[str], list[tuple[str, str]]]:
 
     Returns the quantity index, the modules skipped because an extra is not installed, and any
     module that failed for some other reason. `reward_lens.sae` is the skip on a full dev install:
-    It sits behind the `[dict]` extra deliberately, so its `ExtraRequiredError` is the guard
+    W0.5 put it behind the `[dict]` extra deliberately, so its `ExtraRequiredError` is the guard
     working rather than a defect. On a base install the white-box subsystems join it.
     """
     declared: dict[str, list[str]] = {}
@@ -190,7 +191,8 @@ def test_no_catalogue_row_denies_an_instrument_that_ships(walk):
         "not exist. Set `status: built` on each row in spec/CATALOGUE.yaml, then run "
         "`python tools/regen_spec_json.py`. A Phase 6 row reaching this list means its module "
         "landed and its reading has still never been produced, which is the case for a status "
-        "value distinct from both `built` and `planned`; no field records that today:\n"
+        "value distinct from both `built` and `planned`; the row's `work_package` and "
+        "BUILD_STATE's package table are what currently carry that:\n"
         + "\n".join(
             f"  {rid} (status: {status}) is carried by {', '.join(carriers)}"
             for rid, status, carriers in wrong
@@ -235,7 +237,7 @@ def test_no_catalogue_row_claims_an_instrument_that_does_not_exist(walk):
 def test_the_rows_no_quantity_id_can_link_are_exactly_the_two_that_declare_none(walk):
     """`quantities: OPEN` makes a row undecidable here, so the set of them is pinned by name.
 
-    Left as a count this would be the failure mode the enumeration exists to prevent: a third row
+    Left as a count this would be the failure mode section 12 rule 5 exists to prevent: a third row
     going OPEN would move a number nobody reads instead of naming a row somebody has to look at.
     """
     unlinkable = {row["id"] for row in _rows() if not _quantities(row)}
@@ -251,8 +253,9 @@ def test_the_rows_no_quantity_id_can_link_are_exactly_the_two_that_declare_none(
 def test_every_instrument_in_the_tree_passes_its_own_lint(walk):
     """E56's rule, standing: an acceptance test that renders a reading does not lint the declaration.
 
-    Four instruments discharged their clause completely and did not exist by the architecture's
-    own definition, because the clause tested the measurement and the lint tests the declaration. Those fail independently, so this checks the second over
+    Four instruments discharged their acceptance clause completely and did not exist by the
+    architecture's own definition, for five waves, because the clause tested the measurement and
+    the lint tests the declaration. Those fail independently, so this checks the second over
     everything the walk can see rather than package by package.
     """
     declared, _, _ = walk
@@ -268,7 +271,7 @@ def test_every_instrument_in_the_tree_passes_its_own_lint(walk):
         for finding in lint_instrument(obj):
             findings.append(f"  {carrier}: {finding.render()}")
     assert not findings, (
-        "instruments in the tree fail the instrument lint. An instrument that cannot pass "
+        "instruments in the tree fail the section 4.2 lint. An instrument that cannot pass "
         "`lint_instrument` does not exist:\n" + "\n".join(findings)
     )
 

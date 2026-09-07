@@ -1,4 +1,4 @@
-"""Acceptance: the compute-gated rate package, proved on planted subjects.
+"""W6.1 and W6.2 acceptance: the compute-gated rate package, proved on planted subjects.
 
 **Nothing here runs on a real subject and that is the whole point of the package.** Phase 6 is
 compute-gated: the module, the frozen study, this test, the runbook and the price exist so that a
@@ -131,12 +131,12 @@ def single_well(beta: float, m: float, *, n_iter: int = 60, lr: float = 0.02) ->
 
 
 # ---------------------------------------------------------------------------
-# Rule 3: lint everything this package ships. E56.
+# Rule 3: lint everything this package ships. SPEC-ERRATA E56.
 # ---------------------------------------------------------------------------
 
 
 def test_every_instrument_this_package_ships_passes_lint():
-    """E56: four instruments shipped failing lint while their package read `done`.
+    """E56: four instruments shipped for two waves failing lint while their package read `done`.
 
     They failed because the acceptance test rendered readings and never linted. So this runs first
     in the file and it covers all three, constructed with empty inputs on purpose: lint reads the
@@ -163,7 +163,7 @@ def test_the_quantities_this_package_claims_are_registered_with_their_rungs():
         1: "run.hysteresis_area.rate_extrapolated",
     }
 
-    # H1 rung 1 was registered elsewhere with `run=None` and this package implements it. The entry
+    # H1 rung 1 was registered by W4.8 with `run=None` and this package implements it. The entry
     # is in a file this package does not own, so it is left as registered and the wiring is a
     # request; this assertion is what will fail the day it is wired, which is the point.
     tau = {e.rung: e for e in ladder("run.tau_relax")}
@@ -175,7 +175,7 @@ def test_the_quantities_this_package_claims_are_registered_with_their_rungs():
 
 
 # ---------------------------------------------------------------------------
-# H2, the two-run rate test
+# W6.1 — H2, the two-run rate test
 # ---------------------------------------------------------------------------
 
 
@@ -222,7 +222,7 @@ def test_a_lagging_tracker_separates_and_the_faster_arm_transitions_later_in_lam
 
 
 def test_the_shift_is_reported_in_h4_transition_widths_and_not_in_a_second_unit():
-    """H4's own argument, applied to this instrument.
+    """Section 3.4's own argument, applied to this instrument.
 
     Lead time is defined as a fraction of the fitted transition width because four incommensurable
     conventions were in circulation. A displacement between two arms is the same kind of quantity,
@@ -287,7 +287,7 @@ def test_the_baselines_are_scored_in_the_readings_own_unit():
 
 
 # ---------------------------------------------------------------------------
-# H1 rung 1, perturb-and-hold
+# W6.2a — H1 rung 1, perturb-and-hold
 # ---------------------------------------------------------------------------
 
 
@@ -450,7 +450,7 @@ def test_the_two_rungs_of_tau_relax_disagree_and_it_is_published_as_a_transfer()
     transfer = rung_transfer(3.0, rung1)
     assert transfer.value == pytest.approx(abs(3.0 - rung1.tau))
     assert transfer.name == "t21"
-    assert "against the perturb-and-hold protocol" in transfer.method
+    assert "perturb-and-hold protocol of section 3.4" in transfer.method
     assert transfer.as_term().name == "t21"
 
 
@@ -464,7 +464,7 @@ def test_too_few_episodes_refuse_because_three_is_where_the_linearity_check_star
 
 
 # ---------------------------------------------------------------------------
-# H3, rate-extrapolated hysteresis
+# W6.2b — H3, rate-extrapolated hysteresis
 # ---------------------------------------------------------------------------
 
 
@@ -620,7 +620,7 @@ def _stationary_ar1(n: int, seed: int, phi: float = 0.7) -> np.ndarray:
 
 
 def test_a_rising_autocorrelation_without_its_null_is_not_evidence():
-    """The published claim, demonstrated on a series that has no slowing down in it.
+    """The claim section 3.4 makes, demonstrated on a series that has no slowing down in it.
 
     A stationary first-order series at a fixed coefficient of 0.7 produces a rolling
     autocorrelation whose Kendall tau against time is strongly positive. Reported on its own that
@@ -690,7 +690,7 @@ def test_flickering_is_bimodality_with_a_null_and_it_says_where_that_null_is_wro
 
 
 def test_the_driver_check_is_the_adiabaticity_number_reached_from_the_other_side():
-    """This is one of the warning checks and it is H1's quantity, not a new one."""
+    """Section 3.4 lists this among the warning checks and it is H1's quantity, not a new one."""
     series = _stationary_ar1(300, seed=11, phi=0.8)
     slow = driver_comparison(series, 0.02, name="obs", seed=1)
     fast = driver_comparison(series, 0.9, name="obs", seed=1)
@@ -839,7 +839,7 @@ def test_the_analysis_frozen_before_the_arms_exist_scores_them_when_they_do():
 def test_the_price_is_arithmetic_and_the_specs_own_three_numbers_do_not_close():
     """Every number in the price sheet comes from code, including the discrepancy in its anchor.
 
-    The specification prices ten seeds by three conditions at "roughly 11,520 GPU-hours and $17,000 to $23,000
+    Part 9 prices ten seeds by three conditions at "roughly 11,520 GPU-hours and $17,000 to $23,000
     at neocloud rates, against a floor of about $2.15 per GPU-hour preemptible". Those do not
     reconcile, and the price module carries all three rather than picking one silently.
     """

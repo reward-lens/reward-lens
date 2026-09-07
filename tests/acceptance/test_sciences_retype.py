@@ -1,7 +1,8 @@
 """Acceptance: the sixteen sciences, retyped onto the kernel.
 
-The sciences survive as studies rather than as subsystems, and get retyped rather than rewritten.
-The retype is four things, and this file is the clause that closes them:
+The disposition in `BUILD_NOTES.md` is that the sciences survive as studies rather than as
+subsystems, and get retyped rather than rewritten. The retype is four things, and this file is the
+clause that closes them:
 
 1. the analysis takes a `record/` object rather than a planted organism,
 2. it returns a `Reading`, so a subject that cannot answer produces a refusal with a remedy,
@@ -42,10 +43,10 @@ from studies._retype import (
     specs,
 )
 
-#: What counts as one of the sixteen sciences, by directory name: `sNN_name` plus `atlas_meta`. It
-#: is written down here rather than inferred from what happens to be on disk, because `studies/`
-#: also holds four compute-gated study packages, and a predicate that merely excludes them today is
-#: not the same as one that says what it means.
+#: What counts as one of the sixteen sciences, by directory name. `BUILD_NOTES.md` D1 defines the
+#: set: `sNN_name` plus `atlas_meta`. It is written down here rather than inferred from what happens
+#: to be on disk, because wave 7 put four compute-gated study packages under `studies/` and a
+#: predicate that merely excludes them today is not the same as one that says what it means.
 _SCIENCE_DIR_RE = re.compile(r"^(?:s\d{2}_\w+|atlas_meta)$")
 
 SHORT_RUN = ("tests/fixtures/grpo_run/short", "run:8a8c7e29274db0a681313b48dbd1eb63")
@@ -102,23 +103,24 @@ def test_every_science_declares_a_retype() -> None:
 
     The denominator is the sixteen sciences by name, and getting there took two corrections.
 
-    It was `science_modules()`, which walks **every** directory under `studies/`. Four
-    compute-gated study packages live there (`w6_rate`, `w6_distillation`, `w6_transfer`,
-    `w6_monitor`), so the missing list was permanently non-empty and **this test could never have
-    flipped to a pass no matter how many sciences landed.** It was found twice independently, from
-    opposite ends of the roster, which is what a shared acceptance file is for.
+    It was `science_modules()`, which walks **every** directory under `studies/`. This wave put four
+    compute-gated study packages there (`w6_rate`, `w6_distillation`, `w6_transfer`, `w6_monitor`),
+    so the missing list was permanently non-empty and **this test could never have flipped to a pass
+    no matter how many sciences landed.** Two sciences agents found that independently within an
+    hour, from opposite ends of the roster, which is what a shared acceptance file is for.
 
-    Both findings proposed `specs()`, on the ground that the compute packages ship no
-    `build_spec`. That was true when it was measured and false an hour later: a Phase 6 package's deliverables include a
+    Both proposed `specs()`, on the ground that the compute packages ship no `build_spec`. That was
+    true when they measured it and false an hour later: a Phase 6 package's deliverables include a
     frozen study spec, so `w6_distillation` acquired one and walked straight back into the
     denominator. **A predicate that happens to exclude something today is not the same as one that
     says what it means.**
 
     So the denominator names the thing it is counting. A science is a directory following the
-    `sNN_name` convention, plus `atlas_meta`, and that is the only set this test is about. The
-    underlying fault is not fixed here: the top-level `studies/` is meant to hold the sixteen
-    sciences and four compute-gated packages landed in it as well. Moving them is the right repair
-    and is deliberately not being done in the hours before a version tag.
+    `sNN_name` convention, plus `atlas_meta`, which is the set `BUILD_NOTES.md` D1 defines and the
+    only set this test is about. The underlying fault is the integrator's and is not fixed here: D1
+    says the top-level `studies/` means the sixteen sciences, and four Phase 6 packages were briefed
+    into it anyway. Moving them is the right repair and is deliberately not being done in the hours
+    before a version tag with two of those four still being written.
     """
     have = set(retypes())
     want = {name for name in specs() if _SCIENCE_DIR_RE.match(name)}
@@ -211,10 +213,10 @@ def test_every_reported_number_resolves_to_a_registered_quantity(
 ) -> None:
     """The emitted side, which is the one that matters.
 
-    A field is not wired until every path that emits reaches it, and the cheap check is to assert
-    the emitted value rather than the declaration. So this reads the quantity map off the Evidence
-    rather than off the metric table, and it caught a real bug: a loop variable named `quantity`
-    shadowed the parameter of the same name in
+    SPEC-ERRATA E51's lesson is that a field is not wired until every path that emits reaches it,
+    and the cheap check is to assert the emitted value rather than the declaration. So this reads
+    the quantity map off the Evidence rather than off the metric table, and it caught a real bug:
+    a loop variable named `quantity` shadowed the parameter of the same name in
     `ScienceRetype.evidence`, and every reading was stamped with whichever id the last measured
     entry happened to carry.
     """
@@ -246,7 +248,7 @@ def test_every_reported_number_resolves_to_a_registered_quantity(
 def test_the_study_spec_passes_closure_or_names_its_gap(name: str, retype: ScienceRetype) -> None:
     """A plan with no unregistered metric closes; a plan with one raises, naming it.
 
-    Both halves are required. `check_closure` raising `ClosureError` before any work
+    Both halves are the acceptance clause. `check_closure` raising `ClosureError` before any work
     runs, with the prediction, the metric and the gap in the message, is the behaviour the whole
     mechanism exists for, and a science whose metric has no registered quantity id is exactly the
     case that should trigger it. Asserting only the passing half would let a science quietly bind a

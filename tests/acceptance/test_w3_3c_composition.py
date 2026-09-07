@@ -1,4 +1,4 @@
-"""Acceptance: B3's counterfactual composition and B4's silent-zero census.
+"""W3.3c acceptance: B3's counterfactual composition and B4's silent-zero census.
 
 The clause has two halves and each is asserted on something real rather than on a fixture.
 
@@ -343,7 +343,7 @@ def real_verifier():
 def verifier_run(real_verifier):
     """Score the real answer pairs through the real tap and keep what it recorded.
 
-    The composition is `is_equiv` for correctness and a length term, in the shape taken
+    The composition is `is_equiv` for correctness and a length term, in the shape section 3.3 takes
     from Kimi K3: the score is pinned to -1 when the answer runs past a scaled budget. The
     correctness leaf is a real verifier's real output; the length term and the assembly are this
     test's, and that is said here rather than implied.

@@ -1,4 +1,4 @@
-"""Acceptance: *a ``TrajectoryStep`` stream converts to ``Trajectory`` with logprobs, routing
+"""W4.2 acceptance: *a ``TrajectoryStep`` stream converts to ``Trajectory`` with logprobs, routing
 and advantage preserved, field by field, asserted.*
 
 Field by field is meant literally. ``TrajectoryStep`` has nine fields and ``TrajectoryStepTokens``
@@ -13,7 +13,7 @@ every ``TrajectoryStep`` in the library at one place, and ``parse_response_token
 for a two-turn rollout, with the routing, multimodal and attribution fields filled because no test
 fixture in the framework fills them and a converter that has never seen them is untested on them.
 
-Two facts from E7 are asserted directly, because both change what a downstream number
+Two facts from SPEC-ERRATA E7 are asserted directly, because both change what a downstream number
 means. ``score_group`` mean-centres with no standard-deviation division, so the amplifier
 mechanism is absent rather than weak. And ``rubrics/rubric.py:204-217`` substitutes ``0.0`` for any
 exception, so a zero is ambiguous unless something upstream of the rubric observed the call.
@@ -441,7 +441,7 @@ def test_staleness_is_declared_and_says_it_is_a_declaration(converted):
 
 
 # ---------------------------------------------------------------------------
-# E7, fact one: the amplifier mechanism is absent, not weak
+# SPEC-ERRATA E7, fact one: the amplifier mechanism is absent, not weak
 # ---------------------------------------------------------------------------
 
 
@@ -538,7 +538,7 @@ def test_a_degenerate_group_is_flagged_at_std_zero_because_there_is_no_epsilon()
 
 
 # ---------------------------------------------------------------------------
-# E7, fact two: the silent zero
+# SPEC-ERRATA E7, fact two: the silent zero
 # ---------------------------------------------------------------------------
 
 
@@ -819,7 +819,7 @@ def _verifiers_types() -> Path | None:
 
 @pytest.mark.skipif(_verifiers_types() is None, reason="set REWARD_LENS_VERIFIERS_SOURCE")
 def test_the_field_lists_match_the_framework_source():
-    """E7's field lists, re-checked against source rather than carried forward."""
+    """SPEC-ERRATA E7's field lists, re-checked against source rather than carried forward."""
     import ast
 
     tree = ast.parse(_verifiers_types().read_text(encoding="utf-8"))

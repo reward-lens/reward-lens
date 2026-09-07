@@ -1,20 +1,20 @@
-"""K1, K2 and K3: the arithmetic of three compute-gated rows, proven without a GPU.
+"""W6.6, W6.7, W6.8: the arithmetic of three compute-gated rows, proven without a GPU.
 
 Nothing in this package is ever run against a real subject by the person who wrote it. That makes
 this file the only thing standing between "a study spec that says what someone should do one day"
 and a package. So it does five things and each of them is a clause of the acceptance:
 
-1.  **Lint every instrument this package ships.** That is E56, where four instruments shipped
-    failing lint rule 1 while their package read `done`, because the acceptance test rendered
-    readings and never linted.
+1.  **Lint every instrument this package ships.** That is E56, where four instruments shipped for
+    two waves failing lint rule 1 while their package read `done`, because the acceptance test
+    rendered readings and never linted.
 2.  **Prove the arithmetic on planted subjects**, where the answer is known by construction. The
     standard-addition extrapolation recovers a planted native level and a planted matrix factor;
     the BF16 sparsity arithmetic is checked bit for bit against torch's own cast and then against a
     planted run in which nothing at all is sparse; the shelf-life fit recovers a planted crossing.
 3.  **Freeze every study spec**, so the preregistration is a content hash rather than a paragraph.
 4.  **Run the generated invariance tests** from the instruments' own declarations, standing rule 4.
-5.  **Reproduce the price arithmetic**, including the one place the specification's own scale
-    sentence does not reconcile.
+5.  **Reproduce the price arithmetic**, including the one place the build spec's own scale sentence
+    does not reconcile.
 
 Every refusal path is exercised too, because a refusal that has never been produced is a docstring.
 """
@@ -934,7 +934,7 @@ def test_the_rate_table_reproduces_the_dossiers_own_published_workload_costs() -
 def test_the_build_specs_scale_sentence_does_not_reconcile_with_its_own_band() -> None:
     """Reproduced rather than repeated, and reported as a finding.
 
-    The specification's scale sentence quotes 11,520 GPU-hours, $17,000 to $23,000, and a floor of about $2.15
+    Part 9's scale sentence quotes 11,520 GPU-hours, $17,000 to $23,000, and a floor of about $2.15
     per GPU-hour preemptible. 11,520 x 2.15 = $24,768, above the top of the band in the same
     sentence. The dossier's H100 floor band, $1.50 to $2.01, reproduces $17,280 to $23,155, which
     is the band exactly. So the band is right and $2.15 is not the floor it was computed from, and

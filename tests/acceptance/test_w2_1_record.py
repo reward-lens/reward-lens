@@ -1,4 +1,4 @@
-"""Acceptance: the canonical process record, its store, and the four things that gate it.
+"""W2.1 acceptance: the canonical process record, its store, and the four things that gate it.
 
 The specification's clause is three sentences: *a synthetic 401-step run with multi-turn
 trajectories round-trips; a trajectory spanning two policy versions preserves both; a statistic
@@ -12,8 +12,8 @@ because each of them is a place where a schema can look correct and be wrong:
 - a `verifiers`-shaped `TrajectoryStep` maps into a `Trajectory` with every one of the ten token
   fields preserved.
 
-The last one uses a mapping written inline rather than a converter. `record/convert/` belongs
-elsewhere; what is being asserted here is that the schema is *adequate* to hold the framework's
+The last one uses a mapping written inline rather than a converter. `record/convert/` belongs to
+W2.6 and W4.2; what is being asserted here is that the schema is *adequate* to hold the framework's
 structure, which is the fact those packages depend on and the fact that is expensive to discover
 late.
 """
@@ -382,8 +382,8 @@ def test_a_trajectory_spanning_two_policy_versions_preserves_both(tmp_path):
     assert second.turn_range == (2, 5)
     assert first.staleness_steps == 0
     assert second.staleness_steps == 3
-    # The engine identity survives in full, not as an opaque string: the limit of detection is
-    # cached per (model, engine, revision, dtype, attention_impl, layer).
+    # The engine identity survives in full, not as an opaque string: section 4.7 caches the limit
+    # of detection per (model, engine, revision, dtype, attention_impl, layer).
     assert first.engine.name == "vllm"
     assert first.engine.attention_impl == "flash_attn_2"
     assert first.engine.compiled is False
@@ -558,7 +558,7 @@ def test_a_recompute_ref_survives_the_round_trip_as_a_recipe(tmp_path):
 
 
 def test_the_seam_for_scores_and_labels_round_trips_a_registered_payload(tmp_path):
-    """What the score tree and the blind labels have to do to plug in: decorate their dataclasses.
+    """What W2.2 and W2.3 have to do to plug in: decorate their dataclasses, and nothing else.
 
     The score tree and the blind label go through the kernel's `ValueCodec`, which reconstructs any
     dataclass registered with `register_payload`. This stands in a stub for each and asserts the
@@ -823,7 +823,7 @@ class _ReturnsZerosWithBadAgreement:
     """The exact failure mode this design exists to prevent, made concrete.
 
     A recomputer that hands back a zero array and reports 3.28% disagreement, which is the hybrid
-    MoE number, against an expected floor of 0.35%.
+    MoE number from section 4.7, against an expected floor of 0.35%.
     """
 
     def can_honour(self, ref):
@@ -1049,7 +1049,7 @@ def _verifiers_trajectory_step() -> dict:
 
 
 def _map_verifiers_step(vstep: dict, store: TensorStore) -> Trajectory:
-    """The mapping the converter will own, written here to show the schema is adequate to hold it.
+    """The mapping W4.2 will own, written here to show the schema is adequate to hold it.
 
     Three turns come out of one `TrajectoryStep`: the system message, the user message, and the
     assistant completion. Splitting the prompt by message is what makes the system role survive,

@@ -1,7 +1,7 @@
-"""Debt R: five record-side wrong numbers, and one property failure.
+"""Debt R: the five record-side wrong numbers from SPEC-ERRATA E50, and one property failure.
 
-A review of `record/` against the record format found nine differences. Four of them were fixed
-already. These are the other five, each asserted here with the number it changed:
+E50 read `record/` against section 2.2 and found nine differences. Four were fixed in wave 5. These
+are the other five, each asserted here with the number it changed:
 
 1. `AbstentionCensus.abstention_rate` returned **4.0** on a five-leaf record whose stated upper
    bound came back **1.6**, below its own point estimate. It counted a leaf as unattributable and

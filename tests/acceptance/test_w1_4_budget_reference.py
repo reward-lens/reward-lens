@@ -1,6 +1,6 @@
-"""`core/budget.py` and `core/reference.py`: the GUM table, the limits, and the trust cap.
+"""W1.4 — `core/budget.py` and `core/reference.py`: the GUM table, the limits, and the trust cap.
 
-What this file has to show, in three parts: an instrument below LOD returns a `Refusal` carrying both
+The acceptance clause, in three parts: an instrument below LOD returns a `Refusal` carrying both
 numbers; a budget whose terms do not compose fails a property test; a `ReferenceMaterial` with
 `u_homogeneity is None` caps the trust level at CALIBRATED, and the cap is asserted.
 
@@ -66,7 +66,7 @@ def test_sensitivity_coefficients_multiply_before_squaring():
 
 @pytest.mark.parametrize("n_terms", [1, 2, 3, 5, 9])
 def test_composition_is_the_quadrature_sum_for_any_number_of_terms(n_terms):
-    """The composition property, over random budgets."""
+    """The property test the acceptance clause asks for, over random budgets."""
     rng = np.random.default_rng(0)
     for _ in range(50):
         values = rng.uniform(0.0, 10.0, size=n_terms)
@@ -229,7 +229,7 @@ def test_the_decision_rule_has_three_outcomes():
 
 
 def test_a_reading_below_lod_returns_a_refusal_carrying_both_numbers():
-    """Never an exception, never a zero, and both limits are in the detail."""
+    """The acceptance clause. Never an exception, never a zero, and both limits are in the detail."""
     lod = LimitOfDetection(
         sigma_blank=0.02,
         sensitivity=0.5,
@@ -335,7 +335,7 @@ def _reference(**kw) -> ReferenceMaterial:
 
 
 def test_an_uncharacterised_reference_caps_trust_at_calibrated():
-    """The rule that would have changed how CAL-TRANSFER reads."""
+    """The acceptance clause, and the rule that would have changed how CAL-TRANSFER reads."""
     ref = _reference(u_homogeneity=None, u_stability=None)
     assert not ref.is_certified
     assert ref.uncharacterised == ("u_homogeneity", "u_stability")

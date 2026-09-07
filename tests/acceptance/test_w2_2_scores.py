@@ -1,4 +1,4 @@
-"""Acceptance: the `ScoreTree`, and the counterfactual it makes free.
+"""W2.2 acceptance: the `ScoreTree`, and the counterfactual it makes free.
 
 The specification's clause is one sentence: *a tree with an override node re-evaluates correctly
 with the node disabled, on recorded leaves, with no grader calls.* All four of its parts are
@@ -12,10 +12,10 @@ the counterfactual is run a second time against the trees that came back off dis
 asserted on a counter inside the grader itself and on the tap's own offered-record count, both of
 which are read before and after and must not have moved.
 
-Three more things are asserted because the score tree is the substrate for three catalogued
-instruments and each of them would be silently wrong without one of them: the dead-zone fraction
-I3 reports, the silent-zero census B4 reports, and the refusal B3 owes a record whose per-leaf
-scores were never kept.
+Three more things are asserted because W2.2 is the substrate for three catalogued instruments and
+each of them would be silently wrong without one of them: the dead-zone fraction I3 reports, the
+silent-zero census B4 reports, and the refusal B3 owes a record whose per-leaf scores were never
+kept.
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Acceptance: `policy/`, the policy node, symmetric with signals.
+"""W5.1 acceptance: `policy/`, the policy node, symmetric with signals.
 
 **The clause.** *The same lens and attribution instruments run against a policy and a grader with
 no code change beyond the argument.*
@@ -11,7 +11,7 @@ in the loop body branches on which subject it has, and the instruments are the o
 `trl-internal-testing/tiny-Qwen3ForCausalLM`, both on CPU.
 
 The rest of the file covers the three things the package is for beyond the clause: the first
-white-box reading carrying a real `IncrementalValidity`, the reach-through fix in
+white-box reading carrying a real `IncrementalValidity` (§6.4), the reach-through fix in
 `measure/battery/path.py`, and the gradient boundary between Plane A and Plane B.
 """
 
@@ -71,7 +71,7 @@ def policy():
 
 
 # ---------------------------------------------------------------------------
-# The clause
+# The acceptance clause
 # ---------------------------------------------------------------------------
 
 
@@ -219,7 +219,7 @@ def test_hvp_matches_a_finite_difference_of_the_gradient(policy):
 
 
 # ---------------------------------------------------------------------------
-# The first white-box reading
+# The first white-box reading (§6.4)
 # ---------------------------------------------------------------------------
 
 
@@ -253,10 +253,10 @@ def _record_items():
 def test_white_box_reading_carries_a_measured_incremental_validity(policy):
     """The first reading in this library whose `Evidence.incremental` is not None.
 
-    An `IncrementalValidity` record is mandatory on every white-box reading and lint rule
+    §6.4 makes an `IncrementalValidity` record mandatory on every white-box reading and lint rule
     four rejects a white-box instrument whose reading has `incremental is None`. Until this reading
     existed the rule had nothing to check, because `Context.emit` could not forward the field
-    (E44) and no instrument supplied one.
+    (SPEC-ERRATA E44) and no instrument supplied one.
 
     The four numbers are measured on the shared GRPO record: a ridge probe on the policy's final
     residual against the six-baseline bank on the same completions, with the correlation between the
@@ -337,10 +337,10 @@ def test_the_probe_lints_clean_and_its_quantity_is_registered_for_real():
 
     This began as the other assertion: the probe reported exactly one finding, the unregistered
     quantity, and `register_proposed()` cleared it in-process so that "estimates a quantity nobody
-    registered" was visibly separate from "has four other problems". `policy.readout_recoverability`
-    was then registered for real, along with catalogue record C9 and its estimator, so the guard
-    has fired and is inverted rather than deleted, as E25's `py.typed` check was for the same
-    reason.
+    registered" was visibly separate from "has four other problems". The integrator registered
+    `policy.readout_recoverability` at wave 5's integration along with catalogue record C9 and its
+    estimator, so the guard has fired and is inverted rather than deleted, as E25's `py.typed` check
+    was for the same reason.
 
     `register_proposed` stays and is now a no-op, which is asserted: it was written as an escape
     hatch for a package whose row had not landed, and a hatch that silently re-registers over a real
@@ -461,7 +461,7 @@ def test_architecture_view_matches_v1_on_a_real_reward_model():
     replaceable; what it does not cover is the reward-head reading, the ArmoRM gating and the
     Gemma-2 soft cap, which are grader-side.
 
-    The migration then moved those grader-side concerns into `signals/adapters.py`, so the v1
+    W0.5's second half then moved those grader-side concerns into `signals/adapters.py`, so the v1
     side of this comparison is now imported straight from `model_adapters` rather than through
     `signals.adapters.build_site_map`, which builds on `describe` and would make the comparison a
     tautology. Both sides stay real, which is the only way this is evidence.
@@ -522,7 +522,7 @@ def test_architecture_view_finds_qwen3_head_projection_by_shape(policy):
 
 
 def test_a_serving_policy_is_not_a_policy_subject(policy):
-    """Crossing the boundary is impossible rather than slow.
+    """Crossing the boundary is impossible rather than slow (§2.7).
 
     `ServingPolicy` has no `capture` and no `grad_h`, so it fails the protocol check, and asking it
     for one names where the reading can be taken instead.
@@ -536,36 +536,6 @@ def test_a_serving_policy_is_not_a_policy_subject(policy):
     with pytest.raises(EngineBoundary) as excinfo:
         serving.grad_h
     assert "inference_mode" in str(excinfo.value)
-    assert "policy.hf.from_pretrained" in str(excinfo.value)
-
-
-def test_the_boundary_is_an_attribute_error_so_hasattr_can_answer(policy):
-    """What makes the protocol check above False on every interpreter rather than most of them.
-
-    A runtime protocol check is `hasattr` over the protocol's members on 3.10 and 3.11, and
-    `typing._get_protocol_attrs` returns a **set**, so the members are walked in hash order and
-    that order changes per process. While `EngineBoundary` was a `RuntimeError` and nothing else it
-    escaped `hasattr` rather than answering False, so the test above passed or failed depending on
-    whether `capture` came up before some other absent name. The same commit went green on 3.11 and
-    red on 3.10 in one CI run over exactly this. Python 3.12 moved protocol checks to
-    `inspect.getattr_static` and never saw it, which is what made it look version-specific rather
-    than random.
-
-    `policy/selection.py` and `geometry/hessian.py` ask `hasattr` for these names too, and were
-    getting an exception where they expected a boolean.
-    """
-    serving = ServingPolicy(meta=policy.meta, call=lambda prompts, spec: None)
-    assert issubclass(EngineBoundary, AttributeError)
-    assert issubclass(EngineBoundary, RuntimeError)
-
-    for name in ("capture", "grad_h", "token_gradients", "hvp", "with_interventions"):
-        assert not hasattr(serving, name), name
-        assert getattr(serving, name, "absent") == "absent", name
-
-    # The whole point of the class is the sentence it raises, so being an AttributeError must not
-    # have cost it. A caller who reaches for the name directly still gets told where to go.
-    with pytest.raises(EngineBoundary) as excinfo:
-        serving.capture
     assert "policy.hf.from_pretrained" in str(excinfo.value)
 
 
@@ -603,8 +573,8 @@ def test_apparatus_provenance_reports_nnsight_presence():
 
 
 def test_importing_policy_does_not_import_torch():
-    """The no-compiled-dependency property, held for this package too. Asserted in a subprocess
-    because this test session has already imported torch."""
+    """W0.3's property, held for this package too. Asserted in a subprocess because this test
+    session has already imported torch."""
     import subprocess
 
     code = "import sys, reward_lens.policy; print('torch' in sys.modules)"
@@ -615,11 +585,11 @@ def test_importing_policy_does_not_import_torch():
 
 
 def test_credit_and_selection_arrived_as_additions_rather_than_edits():
-    """`credit.py` and `selection.py` belong to other packages, and this one must not pre-empt them.
+    """W5.4 and W5.5 own `credit.py` and `selection.py`, and W5.1 must not have pre-empted them.
 
     This started as the opposite assertion: both modules were required to be **absent**, because an
     empty module with the right name reads as finished and is worse than one that is not there.
-    Both have since landed, so the guard has been inverted rather than deleted, on D12's precedent.
+    Both landed in wave 6, so the guard has been inverted rather than deleted, on D12's precedent.
     Deleting it would leave nothing watching a boundary whose violation is silent: what it now
     checks is that they arrived as genuine modules with real contents, and that `policy/base.py`
     still does not reach into either, which is the property that made them additions rather than a

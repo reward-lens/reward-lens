@@ -1,12 +1,12 @@
-"""Acceptance: the kernel everything else is checked against.
+"""W1.1 to W1.4 acceptance: the kernel everything else is checked against.
 
 Clauses discharged here:
 
-- *the ladder for `grader.effective_group_size` resolves to three different rungs under three
-  access matrices, asserted.*
-- *an instrument declaring a condition absent from `measured_by` fails lint.*
-- *a refusal carries both numbers*, and the parts of the reading contract that do not need
-  `budget.py` or `reference.py`, which are not built yet.
+- W1.1: *the ladder for `grader.effective_group_size` resolves to three different rungs under
+  three access matrices, asserted.*
+- W1.2: *an instrument declaring a condition absent from `measured_by` fails lint.*
+- W1.4 (reading): *a refusal carries both numbers*, and the parts of W1.4 that do not need
+  `budget.py` or `reference.py`, which are not built yet and are recorded as such in BUILD_STATE.
 
 The kernel is small and subtle and everything is checked against it, which is why it is built and
 tested before any fan-out. A subtle divergence here is the one bug that costs a rebuild rather
@@ -67,9 +67,9 @@ def _registry():
     """Load the quantities, then take this module's synthetic estimators back out.
 
     The estimator registry is process-global and this module registers stand-in rungs for
-    `grader.effective_group_size` to exercise the ladder machinery. When this file was written
-    those were the only rungs for that quantity, so leaving them behind cost nothing. The real A1
-    ladder landed later, and from then on every later test in the same process saw eight rungs where
+    `grader.effective_group_size` to exercise the ladder machinery. When W1.1 was written those
+    were the only rungs for that quantity, so leaving them behind cost nothing. W3.2a landed the
+    real A1 ladder, and from then on every later test in the same process saw eight rungs where
     there are four: `ladder()` returned `[0, 0, 1, 1, 2, 2, 3, 3]` and the metrology test that
     checks A1's registered bias directions failed under the full suite while passing alone.
 
@@ -115,12 +115,12 @@ def test_phase_is_not_derivable_from_access():
 
 
 # ---------------------------------------------------------------------------
-# The ladder
+# W1.1 — the ladder
 # ---------------------------------------------------------------------------
 
 
 def _ess_ladder():
-    """A1's four rungs, transcribed from the worked example."""
+    """A1's four rungs, transcribed from the worked example at section 2.5."""
     rungs = [
         (
             0,
@@ -175,7 +175,7 @@ def _ess_ladder():
 
 
 def test_the_ladder_resolves_to_three_different_rungs_under_three_access_matrices():
-    """The ladder clause."""
+    """The W1.1 clause."""
     _ess_ladder()
     assert [e.rung for e in ladder(_ESS)] == [0, 1, 2, 3]
 
@@ -223,7 +223,7 @@ def test_the_registry_refuses_to_redefine_a_name():
 
 
 def test_an_estimator_for_an_unregistered_quantity_fails_at_import():
-    """An Instrument whose quantity is not registered fails at import."""
+    """Section 4.2: an Instrument whose quantity is not registered fails at import."""
     with pytest.raises(ValueError, match="not a registered quantity"):
         register_estimator(
             EstimatorEntry(
@@ -267,12 +267,12 @@ def test_the_registry_carries_the_printed_unit_token_so_the_decomposition_is_che
 
 
 # ---------------------------------------------------------------------------
-# The envelope
+# W1.2 — the envelope
 # ---------------------------------------------------------------------------
 
 
 def test_an_envelope_naming_an_unmeasurable_condition_fails_lint():
-    """The envelope clause. A declared precondition nobody can check enforces nothing."""
+    """The W1.2 clause. A declared precondition nobody can check enforces nothing."""
     with pytest.raises(EnvelopeLintError, match="declares no way to measure"):
         EnvelopeSpec(requires=frozenset({RegimeCondition.QUASI_STATIC}), measured_by={})
 
@@ -326,7 +326,7 @@ def test_every_catalogue_envelope_measurer_resolves_or_is_openly_unmeasured():
     either a registered quantity id or the literal `OPEN`, which is the record saying nobody has
     said how the condition is measured. Anything else is an id that would fail at construction the
     moment an instrument lifted the record into an `EnvelopeSpec`, and finding that out in the
-    package that lifts it is how E37 was found the first time.
+    builder's package is how E37 was found the first time.
     """
     import json
     import pathlib
@@ -369,7 +369,7 @@ def test_bound_on_violation_must_name_the_bounding_estimator():
 
 
 def test_an_instrument_declaring_quasi_static_is_refused_on_a_run_with_ad_of_three():
-    """The other half of the envelope clause: the refusal carries the statistic and the threshold."""
+    """The other half of the W1.2 clause: the refusal carries the statistic and the threshold."""
     env = EnvelopeSpec(
         requires=frozenset({RegimeCondition.QUASI_STATIC}),
         measured_by={RegimeCondition.QUASI_STATIC: "run.adiabaticity"},
@@ -409,7 +409,7 @@ def test_there_are_twelve_regime_conditions():
 
 
 # ---------------------------------------------------------------------------
-# Refusal is a value
+# W1.4 — refusal is a value
 # ---------------------------------------------------------------------------
 
 
@@ -460,19 +460,30 @@ def test_every_refusal_reason_has_a_meaning_a_user_can_read():
         assert len(text) > 40, reason
 
 
-def test_there_are_sixteen_refusal_reasons():
-    """Fifteen documented reasons, plus RECORD_INCOMPLETE.
+def test_the_refusal_catalogue_carries_fifteen_reasons_and_three_amendments():
+    """Fifteen as section 4.2 prints them, plus three ratified amendments. The brief says seventeen.
 
-    E12 records the fifteen. E30 is the sixteenth, a ratified amendment rather than a drift: ACCESS_INSUFFICIENT is about what you can touch and
+    E12 records the fifteen against the brief's seventeen. E30 is the sixteenth, a ratified
+    amendment rather than a drift: ACCESS_INSUFFICIENT is about what you can touch and
     RECORD_INCOMPLETE is about what is there, and their remedies point in opposite directions.
+
+    This asserts a fact about the catalogue, not a contract that the catalogue never grows. Each
+    time it has grown, it has grown by a ratified amendment and this number has moved with it.
     """
-    assert len(list(RefusalReason)) == 17
+    assert len(list(RefusalReason)) == 18
     assert RefusalReason.RECORD_INCOMPLETE in REASON_MEANING
-    # E48, the seventeenth.
-    # The three reasons are separated by one question and it is worth asserting rather than
+    # E48, the seventeenth, applied at wave 6's integration once every builder had handed back.
+    # The four reasons are separated by one question and it is worth asserting rather than
     # describing: where is the remedy answerable? Access, where the reader stands. Record, upstream.
-    # This one, nowhere, because the question does not apply to the object.
+    # Quantity, nowhere, because the question does not apply to the object. Estimand, where the
+    # reader stands but with a different instrument, because the question applies and this
+    # instrument does not compute in it.
     assert RefusalReason.QUANTITY_UNDEFINED in REASON_MEANING
+    # The eighteenth, ratified as D-031 of the C1 repair programme. It replaces a placeholder that
+    # was refusing a continuous power design under ACCESS_INSUFFICIENT, which was semantically
+    # false: the caller's access was fine and the estimand was the thing the instrument could not
+    # take.
+    assert RefusalReason.ESTIMAND_UNSUPPORTED in REASON_MEANING
 
 
 # ---------------------------------------------------------------------------
@@ -481,26 +492,28 @@ def test_there_are_sixteen_refusal_reasons():
 
 
 def test_the_catalogue_loads_every_quantity_and_the_counts_are_what_was_recounted():
-    """124 catalogue rows, plus four quantities named by instruments and never registered.
+    """124 Appendix A rows, plus four quantities Part 5 names and the table never registered.
 
-    The four are `credit.successor_representation` (E10), `verifier.fp_catalogue`,
-    `verifier.trusted_inputs` and `selection.dimensionality` (E14). Each is named in an
-    instrument's own catalogue entry and has no registry row. Registered here so the docs build
-    names them as open research targets rather than losing them.
+    The four are `credit.successor_representation` (SPEC-ERRATA E10) and, added in wave 0,
+    `verifier.fp_catalogue`, `verifier.trusted_inputs` and `selection.dimensionality` (E14). Each
+    is named in an instrument's own Part 5 entry and has no registry row, which is precisely the
+    defect §1.5 item 9 charges CALIPER with. Registered here so the docs build names them as open
+    research targets rather than losing them.
 
-    Plus the 28 the retrofit added (E19): the shipped 2.0.1 corpus survives as instruments and
-    gives none of them a row, so 28 of the 29 retrofitted observables had no quantity to declare. E19 marked all 28 out of the wedge on the claim that the corpus needs
+    Plus the 28 the retrofit added (E19): §5.C says the shipped 2.0.1 corpus survives as
+    instruments and gives none of them a row, so 28 of the 29 retrofitted observables had no
+    quantity to declare. E19 marked all 28 out of the wedge on the claim that the corpus needs
     `GRADER: FORWARD`; thirteen of them declare `GRADER: QUERY` or `RECORD: RECORD` in the
-    installed source and are in the wedge on the catalogue's own legend. Those thirteen were flipped,
+    installed source and are in the wedge on Appendix A's own legend. Those thirteen were flipped,
     which is why the wedge count is 98 rather than 85. The fifteen that genuinely need FORWARD or
     FORWARD|MUTATE stay out.
 
-    Plus the five of series N (E23): the Level 0 frontier is developed in full and the catalogue
-    gives it no rows. All five are in the wedge, because the whole layer needs a callable grader
-    and a gold channel on the same n samples and nothing else.
+    Plus the five of series N (E23): §3.0 develops the Level 0 frontier in full, Part 9 gives it no
+    work package, and Appendix A gives it no rows. All five are in the wedge, because the whole
+    layer needs a callable grader and a gold channel on the same n samples and nothing else.
 
-    Plus five more, from six ids that were computed and then declined rather than invented. Three
-    register what B2 and B3 already compute (`grader.houtman_maks_index`,
+    Plus five adjudicated at the top of wave 5, from six ids builders computed and declined to
+    invent. Three register what B2 and B3 already compute (`grader.houtman_maks_index`,
     `grader.money_pump_index`, `grader.null_reach`) and two split `grader.score_distribution`, whose
     spread is covariant under `reward.affine` and whose flip rate is invariant, which one
     `invariance_group` field cannot say. The sixth, `grader.copeland_slater_disagreement`, is
@@ -512,13 +525,13 @@ def test_the_catalogue_loads_every_quantity_and_the_counts_are_what_was_recounte
     transform of the Laplacian, so it is provably invariant under a group that really acts on it and
     `none` was discarding a free test of a property that holds.
 
-    And four more when `forecast/` landed: `forecast.brier_score` and the two Murphy terms it
-    decomposes into, plus `forecast.decision_value`. The last is the one worth registering rather
-    than leaving on a payload, because it is the number that answers "so what",
+    And four more when `forecast/` landed later in the same wave: `forecast.brier_score` and the two
+    Murphy terms it decomposes into, plus `forecast.decision_value`. The last is the one worth
+    registering rather than leaving on a payload, because it is the number that answers "so what",
     it is covariant under a rescaling of the loss where the other three are dimensionless, and on the
     campaign's own re-scored ledger it is exactly 0.000 while the Brier score looks informative.
 
-    And one more when A1 stopped multiplying Kish's shape factor into
+    And one more at wave 6, when A1 stopped multiplying Kish's shape factor into
     `grader.effective_group_size`. The two factors answer different questions and their product is
     not a quantity: the shape factor asks how unequal the deviations within a group are, which is a
     fact about the policy and the reward, and the reliability asks how much of the observed variance
@@ -528,13 +541,13 @@ def test_the_catalogue_loads_every_quantity_and_the_counts_are_what_was_recounte
     it needs a scored group and nothing else. Measured across eleven real reward models it runs
     0.7346 to 0.7562, which is where the per-grader variation in the old reading was coming from.
 
-    And four more which were not an addition but a repair. The contract layer, N5 to N8,
-    shipped and its four quantity ids were never registered, so `reward.optimal_weights`,
-    `reward.equal_compensation_ratio`, `reward.sorting_cutoff` and
+    And four more at wave 6, which were not an addition but a repair. W3.9's contract layer, N5 to
+    N8, was built and shipped in wave 4 and its four quantity ids were never registered, so
+    `reward.optimal_weights`, `reward.equal_compensation_ratio`, `reward.sorting_cutoff` and
     `reward.component_congruity` had no rows and no `reward.*` prefix existed in the registry at all.
     Four shipped instruments were failing `lint_instrument` rule 1 while their package read `done`.
-    Found by enumerating the registry for an unrelated reason, which is the third time an
-    enumeration-as-a-test has caught a hole nobody was looking for.
+    Found by the sciences agent enumerating the registry for an unrelated reason, which is the third
+    time an enumeration-as-a-test has caught a hole nobody was looking for. SPEC-ERRATA E56.
     """
     report = load_quantities()
     assert report.skipped_open == []
@@ -544,7 +557,7 @@ def test_the_catalogue_loads_every_quantity_and_the_counts_are_what_was_recounte
 
 
 def test_every_registered_quantity_has_a_unit_and_an_invariance_group():
-    """The enumeration that stops a large build developing holes nobody notices."""
+    """The enumeration that stops a fifty-agent build developing holes nobody notices."""
     for q in QUANTITIES.values():
         assert q.unit.dimension, q.id
         assert q.invariance, q.id

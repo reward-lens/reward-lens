@@ -1,7 +1,7 @@
-"""Lint rule four, closed for the battery and the index library (catalogue M9).
+"""Lint rule four, closed for the battery and the index library (section 6.4, catalogue M9).
 
-An `IncrementalValidity` is mandatory on every white-box reading, and
-`measure.base.lint_reading` is the rule. It went live when `policy/` produced the first
+Section 6.4 makes an `IncrementalValidity` mandatory on every white-box reading, and
+`measure.base.lint_reading` is the rule. It went live in wave 5, when `policy/` produced the first
 white-box reading in the library carrying a measured record, and it was deliberately left ungated in
 CI because fifteen shipped instruments declared a white-box capability and emitted nothing. Ungating
 made the debt visible instead of making the rule wait on it.
@@ -67,7 +67,7 @@ INDEX_NAMES = (
     "Contested",
 )
 
-#: Held by other packages and retrofitted there. Named rather than filtered
+#: Held by other agents this wave and retrofitted in their own packages. Named rather than filtered
 #: silently, so the exclusion is a statement somebody has to delete rather than a gap.
 NOT_IN_THIS_PACKAGE = frozenset({"Chi", "FeatureRewardAlignment"})
 
@@ -99,9 +99,9 @@ def test_the_white_box_population_is_fifteen_and_the_mask_is_the_shipped_one() -
     `WHITE_BOX` is `ACTIVATIONS | GRADIENTS | HVP`, which reaches fifteen. Widening it to include
     `LINEAR_READOUT` reaches seventeen, adding `FeatureRewardAlignment` and
     `MultiObjectiveGeometry`, which declare a readout and no activations. Whether reading a head's
-    weight vector counts as opening the network is a decision for the library and not for this
-    file; the test pins what is true of the shipped mask so that widening it is a visible change
-    with a failing test attached rather than a silent one.
+    weight vector counts as opening the network is the integrator's call and not this file's; the
+    test pins what is true of the shipped mask so that widening it is a visible change with a
+    failing test attached rather than a silent one.
     """
     assert WHITE_BOX == (Capability.ACTIVATIONS | Capability.GRADIENTS | Capability.HVP)
     assert len(white_box_instruments()) == 15
@@ -115,7 +115,7 @@ def test_the_white_box_population_is_fifteen_and_the_mask_is_the_shipped_one() -
 
 
 # ---------------------------------------------------------------------------
-# The rule, on every white-box instrument this package owns
+# The acceptance clause
 # ---------------------------------------------------------------------------
 
 
@@ -132,7 +132,7 @@ def test_every_white_box_instrument_pays_or_says_why_not(inst) -> None:
     emits = getattr(inst, "emits_incremental", False) or inst.name in _EMITTERS
     assert exemption is not None or emits, (
         f"{inst.name} declares {declared_capabilities(inst)!r}, which makes its readings white-box "
-        f"under lint rule four, and it neither emits an IncrementalValidity nor declares an "
+        f"under section 6.4, and it neither emits an IncrementalValidity nor declares an "
         f"incremental_exemption saying why it cannot. Measure one against stats.baselines, or "
         f"declare (reason_id, prose) with reason_id in {sorted(INCREMENTAL_EXEMPTIONS)}."
     )
@@ -190,9 +190,9 @@ def test_eval_awareness_emits_a_measured_record_through_the_emit_path() -> None:
     """The one instrument in this package with a subject emits a record, asserted where it lands.
 
     **Asserted on `Evidence.incremental` rather than on anything the instrument declares**, which is
-    the whole lesson of the two defects before it. Three of `make_evidence`'s optional fields have each
+    the whole lesson of SPEC-ERRATA E44 and E51. Three of `make_evidence`'s optional fields have each
     been found declared, plumbed, tested at one call site and dead at another, and `incremental` was
-    the third: the rule made it mandatory, `make_evidence` had accepted one since it was written,
+    the third: section 6.4 made it mandatory, `make_evidence` had accepted one since it was written,
     and `Context.emit` did not forward it, so the mandatory field was unreachable rather than merely
     unset. A field is not wired until every path that emits reaches it, and the cheap check is to
     assert the emitted value.
@@ -269,9 +269,9 @@ def test_the_record_names_a_baseline_the_bank_actually_ran(record_case=None) -> 
 
 
 def test_a_baseline_at_ceiling_is_named_at_the_reading() -> None:
-    """The ceiling trap, closed where it can be seen.
+    """The wave-5 trap, closed where it can be seen.
 
-    The library's first incremental record was measured against a baseline whose accuracy was 1.0,
+    W5.1 measured the library's first incremental record against a baseline whose accuracy was 1.0,
     because the reference run's grader is a length function and the length baseline therefore solves
     its task outright. Every number in that record was right and it established that the four-number
     shape works, not that opening the network bought anything. So the helper says so at the reading

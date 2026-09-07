@@ -1,4 +1,4 @@
-"""``reward_lens.oracles`` — LLM assistance with mandatory provenance."""
+"""``reward_lens.oracles`` — LLM assistance with mandatory provenance (section 2.16, R10)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""The clause for series I.
+"""W4.5, the acceptance clause for series I.
 
     A McCrary test and a bunching elasticity are computed for two hard gates in a real run and the
     elasticity responds when the gate is synthetically moved; I5 is scored against the
@@ -315,7 +315,7 @@ def test_the_elasticity_does_not_respond_where_there_is_no_gate(subject):
 
 
 def test_moving_a_gate_that_changes_nothing_is_void_rather_than_a_failed_kill(subject):
-    """E24, void condition 8, in the place series I can reach it.
+    """SPEC-ERRATA E24, void condition 8, in the place series I can reach it.
 
     An installed gate does not change the running variable, so a gate-move check run on one sample
     re-scored twice compares two identical arrays. The honest answer is that the contrast never

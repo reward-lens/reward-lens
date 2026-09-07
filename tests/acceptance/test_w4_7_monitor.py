@@ -1,4 +1,4 @@
-"""Acceptance: the anytime-valid monitoring layer, J1 to J5.
+"""W4.7 acceptance: the anytime-valid monitoring layer, J1 to J5.
 
 The clause this file discharges, verbatim: *on the labelled series the anytime-valid alarm's
 realised delay and false-alarm rate are reported against fixed-threshold baselines and the
@@ -34,9 +34,9 @@ from reward_lens.core.reading import Refusal, RefusalReason
 from reward_lens.measure.base import Context, lint_instrument
 from reward_lens.monitor import (
     MONITOR,
+    SECTION_3_4_CASE,
     SHIPPED_AD_HOC,
     SIEGMUND_REFERENCE,
-    WORKED_CASE,
     AlarmDesign,
     AsymmetricLoss,
     CheckStandardDriftInstrument,
@@ -83,7 +83,7 @@ def run():
 
 @pytest.fixture(scope="module")
 def channels(run):
-    return channels_of(run, instrument="monitor")
+    return channels_of(run, instrument="W4.7")
 
 
 @pytest.fixture(scope="module")
@@ -93,7 +93,7 @@ def bank():
 
 
 # ---------------------------------------------------------------------------
-# The clause, first half: delay and false-alarm rate, by simulation
+# The acceptance clause, first half: delay and false-alarm rate, by simulation
 # ---------------------------------------------------------------------------
 
 
@@ -174,7 +174,7 @@ def test_the_solver_reproduces_the_first_stated_design_point() -> None:
 
 
 def test_the_second_stated_design_point_is_not_reproducible_and_the_arbiter_is_simulation() -> None:
-    """E47. The design states `h = 5.71` for `ARL_0 = 1000` at `k = 0.5`.
+    """SPEC-ERRATA E47. Section 3.4 states `h = 5.71` for `ARL_0 = 1000` at `k = 0.5`.
 
     Three independent routes disagree with it and agree with each other. Monte Carlo is the
     definition of an average run length rather than an approximation to it, so it is the arbiter,
@@ -256,7 +256,7 @@ def test_the_three_rungs_are_ordered_on_the_real_abstention_stream(run) -> None:
 
 def test_the_ppv_line_that_prevents_a_class_of_overclaim() -> None:
     """At a 2.5% base rate and a 31.7% false-positive rate, PPV is under 8% at perfect sensitivity."""
-    value = ppv(**WORKED_CASE)
+    value = ppv(**SECTION_3_4_CASE)
     assert value < 0.08, value
     assert round(value, 4) == 0.0748
     print(f"\nPPV at prevalence 2.5%, FPR 31.7%, sensitivity 1.0: {value:.4f}")
@@ -495,7 +495,7 @@ def test_the_five_catalogue_quantities_are_all_covered() -> None:
     }
     # `monitor.ppv_curve` is J4's second quantity and it is carried on the `monitor.operating_point`
     # reading rather than by a seventh instrument, because a curve with no threshold beside it is
-    # not a decision.
+    # not a decision. Raised for the integrator in the build report.
 
 
 def test_what_the_labelled_series_would_add() -> None:

@@ -1,14 +1,14 @@
-"""K1: the distillation gap, on a planted subject where the answer is known.
+"""W6.3 / K1: the distillation gap, on a planted subject where the answer is known.
 
-The clause for a compute-gated package is not "the phenomenon is real"; nobody here can
+The acceptance clause for a compute-gated package is not "the phenomenon is real"; nobody here can
 buy the checkpoints. It is that the arithmetic recovers a survival fraction that was planted, that
 the instrument lints, that its generated invariance test passes, that every refusal it can produce
 is reachable and carries a remedy, and that the frozen study, the price and the runbook exist and
 agree with each other.
 
-The lint calls are the point of the file rather than a formality. E56: four instruments shipped
-failing lint rule 1 while their package read `done`, because their acceptance test rendered
-readings and never linted. Every instrument this package ships is linted here, and so
+The lint calls are the point of the file rather than a formality. SPEC-ERRATA E56: four instruments
+shipped for two waves failing lint rule 1 while their package read `done`, because their acceptance
+test rendered readings and never linted. Every instrument this package ships is linted here, and so
 is every reading it emits.
 """
 
@@ -229,7 +229,7 @@ def test_the_reading_lints_and_carries_its_baselines() -> None:
 def test_the_generated_invariance_test_passes() -> None:
     """Permuting rollouts within a prompt leaves the survival slope exactly where it was.
 
-    The instrument is adapted to `InvariancePayload`'s vocabulary the way a scores-only
+    The instrument is adapted to `InvariancePayload`'s vocabulary the way §2.6 says a scores-only
     instrument is: `scores` carries every rollout's value for every (arm, prompt, feature) cell and
     `group_ids` labels each such cell, so a within-group permutation is a reordering of the rollouts
     inside one cell. The statistic re-forms the three arms, takes the per-prompt means and their
@@ -524,7 +524,7 @@ def test_the_price_is_computed_and_the_measurement_is_not_what_costs_money() -> 
     # The finding: producing the checkpoints is the bill and the measurement is a rounding error.
     assert bill.inference_gpu_hours / bill.gpu_hours < 0.01
     assert bill.sensitivity(4.0) < 0.05
-    # And the specification's own scale marker reproduces from the sourced RL-run unit.
+    # And the build spec's own scale marker reproduces from the sourced RL-run unit.
     assert reference_multi_seed_gpu_hours() == pytest.approx(11_520.0)
 
 

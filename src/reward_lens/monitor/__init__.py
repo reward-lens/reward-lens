@@ -34,7 +34,7 @@ reporting an alarm index as a lead.
 
 `_vendor/cif.py` is `AsiaeeLab/certified-interventional-fidelity` under MIT, vendored unmodified,
 providing rungs 0 and 2 of J1's ladder. `confseq` was the alternative and cannot be installed here
-at all: no cp312 wheel, and CMake fails on Boost.
+at all: no cp312 wheel, and CMake fails on Boost. SPEC-ERRATA E9.
 """
 
 from __future__ import annotations
@@ -128,7 +128,7 @@ from reward_lens.monitor.operating_point import (
     DEFAULT_PREVALENCES,
     J4_BASELINES,
     LOSS_ENVELOPE,
-    WORKED_CASE,
+    SECTION_3_4_CASE,
     AsymmetricLoss,
     OperatingPoint,
     OperatingPointFromLoss,
@@ -177,7 +177,7 @@ __all__ = [
     "RHO",
     "RUNG_NAMES",
     "RUNG_SOURCE",
-    "WORKED_CASE",
+    "SECTION_3_4_CASE",
     "SHIPPED_AD_HOC",
     "SIEGMUND_REFERENCE",
     "AlarmDesign",
@@ -244,4 +244,16 @@ __all__ = [
     "sigma_z",
     "solve_h",
     "standardize",
+    # The modules themselves, so that a full path such as ``reward_lens.monitor.cusum`` is a public
+    # path rather than a reach into a private one. ``eprocess`` is the one module missing from this
+    # list: the package already exports a function of that name, so the module name cannot be added
+    # without shadowing it. Reach it by ``importlib.import_module`` or
+    # ``from reward_lens.monitor import eprocess as eprocess_module``. ``_base`` and ``_vendor``
+    # start with an underscore and are private on purpose.
+    "arl",
+    "check_standard",
+    "conjunction",
+    "cusum",
+    "ewma",
+    "operating_point",
 ]

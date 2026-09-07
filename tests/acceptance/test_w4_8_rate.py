@@ -1,4 +1,4 @@
-"""Acceptance: H1 rung 0 and H4, the two instruments the rate package was waiting on.
+"""W4.8 acceptance: H1 rung 0 and H4, the two instruments the rate package was waiting on.
 
 The clause, in three parts:
 
@@ -9,9 +9,8 @@ reported and validated against planted widths.*
 Each part is one test below and none of them is satisfied by a number typed into a fixture. The
 adiabaticity number comes out of an exponential schedule whose log derivative is a constant the
 record carries, so nobody writes `Ad` anywhere; the `QUASI_STATIC` flip is measured twice on one
-record, once with the regime reading alone and once with this package's relaxation time handed to
-it; and the transition width is fitted to logistics whose 10-to-90 rise was chosen before the fit
-ran.
+record, once with W2.7 alone and once with this package's relaxation time handed to it; and the
+transition width is fitted to logistics whose 10-to-90 rise was chosen before the fit ran.
 
 The fourth test is the real subject. A 200-step GRPO trace of a 0.6M-parameter model against a
 length grader is a real optimisation trace and contains no reward-hacking transition, so what it
@@ -123,26 +122,25 @@ def test_quasi_static_is_answered_where_the_regime_reading_alone_returns_none():
     """The same record, measured twice. The only thing that changes is the relaxation time.
 
     The observable is white noise about a level, which is the commonest shape a short training
-    series has. Its uncorrected lag-1 coefficient lands at or below zero, the regime reading
-    reports no relaxation time from it, and `QUASI_STATIC` comes back `None` with the reason.
+    series has. Its uncorrected lag-1 coefficient lands at or below zero, W2.7 reports no relaxation
+    time from it, and `QUASI_STATIC` comes back `None` with the reason.
 
     What answers it is the interval rather than the point. The corrected coefficient on this seed is
     still negative, so the relaxation time is exactly zero: a series with no positive memory relaxes
     inside one step. The upper end of the coefficient's interval is positive and below one, so the
     relaxation time has a finite upper bound, `Ad` has one with it, and the condition can be decided
-    on the conservative end. The regime reading has no interval to reach for and so has nothing
-    to decide on.
+    on the conservative end. W2.7 has no interval to reach for and so has nothing to decide on.
     """
     run = annealed_run(rate=0.01, means=ar1(0.0, 60, seed=13))
 
     alone = measure_regime(run).conditions[RegimeCondition.QUASI_STATIC]
-    assert alone.holds is None, "the regime reading alone is expected to decline on this series"
+    assert alone.holds is None, "W2.7 alone is expected to decline on this series"
     assert math.isnan(alone.statistic)
     assert "at or below zero" in alone.detail
 
     reading = adiabaticity(run, floors=FAST_TAU)
     assert not isinstance(reading, Refusal)
-    assert reading.tau.phi_ols <= 0, "the estimator the regime reading uses declines here"
+    assert reading.tau.phi_ols <= 0, "the estimator W2.7 uses declines here"
     assert reading.tau.phi > reading.tau.phi_ols, "the correction moves it up"
     assert 0.0 < reading.tau.phi_ci[1] < 1.0
     assert math.isfinite(reading.tau.tau_high) and reading.tau.tau_high > 0.0
@@ -161,7 +159,7 @@ def test_quasi_static_is_answered_where_the_regime_reading_alone_returns_none():
 
 
 def test_the_two_rung_zero_estimators_disagree_and_it_is_published_as_a_transfer():
-    """The disagreement is a finding rather than a bug, so it comes back as a battery term."""
+    """The disagreement is a finding rather than a bug, so it comes back as a section 2.8 term."""
     run = annealed_run(rate=0.01, means=ar1(0.6, 60, seed=15))
     reading = adiabaticity(run, floors=FAST_TAU)
     assert not isinstance(reading, Refusal)

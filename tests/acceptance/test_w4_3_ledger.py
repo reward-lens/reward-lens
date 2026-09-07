@@ -1,4 +1,4 @@
-"""Acceptance: F1, the selection term and residual, and F2, `Λ` and `η_eff`.
+"""W4.3 acceptance: F1, the selection term and residual, and F2, `Λ` and `η_eff`.
 
 **The clause.** *On the AISI labelled series, `Λ` is computed per step and plotted against the
 labelled hack rate. Whatever the relationship, it is the first such measurement.*
@@ -131,7 +131,7 @@ def aisi_table():
 
 
 # ---------------------------------------------------------------------------
-# 1. The four instruments exist, declare what the contract requires, and run
+# 1. The four instruments exist, declare what section 4.2 requires, and run
 # ---------------------------------------------------------------------------
 
 
@@ -364,19 +364,141 @@ def test_the_prediction_is_frozen_and_names_its_comparator():
 # ---------------------------------------------------------------------------
 
 
-def test_the_labelled_series_reads_as_a_step_axis_and_not_as_a_row_counter(aisi_table):
-    """The recorded trap: `rollout_index` is per eval file. The guard is that the two counts agree."""
-    from reward_lens.measure.ledger.labelled import check_step_axis
+# ---------------------------------------------------------------------------
+# The historical path, reproduced here rather than kept in the library
+# ---------------------------------------------------------------------------
 
-    n_steps, n_files = check_step_axis(aisi_table)
-    assert n_steps == n_files == 401
+
+def _steps_the_old_defaults_built(table):
+    """What `steps_from_table` produced before the E1 preflight, reproduced explicitly.
+
+    The four defaults it carried were all wrong on this artifact: the reward was `training_passed`,
+    the group was `(step, problem_id)`, the advantage was standardised by numpy's population
+    standard deviation, and the eval file index was read as the training step. R3 was computed
+    through all four.
+
+    They are reproduced **here** and not restored to the library. The assertions in the tests below
+    are a correct record of what that path produced, and the point of keeping them is that the
+    corrected path has to be checked against something: a test simply repointed at the new path
+    would assert that the new path is self-consistent and nothing more. So both are asserted, each
+    says which it is, and `test_the_corrected_path_reproduces_the_old_one_where_it_should` holds
+    them against each other.
+    """
+    import numpy as np
+
+    from reward_lens.measure.ledger.features import SURFACE_NAMES, surface_features
+    from reward_lens.measure.ledger.price import StepSample, advantages_from_rewards
+
+    steps = np.asarray([float(v) for v in table["rollout_index"]], dtype=np.float64)
+    groups = np.asarray(list(table["problem_id"]), dtype=object).astype(str)
+    rewards = np.asarray([float(v) for v in table["training_passed"]], dtype=np.float64)
+    texts = np.asarray(list(table["response"]), dtype=object)
+
+    out = []
+    for step in np.unique(steps):
+        mask = steps == step
+        idx = np.flatnonzero(mask)
+        rows, keep = [], []
+        for i in idx:
+            values = surface_features("" if texts[i] is None else str(texts[i]), 1)
+            if values is None:
+                continue
+            rows.append([values[n] for n in SURFACE_NAMES])
+            keep.append(int(i))
+        if not keep:
+            continue
+        kept = np.asarray(keep, dtype=np.intp)
+        labels = groups[kept]
+        codes = {name: n for n, name in enumerate(sorted(set(labels.tolist())))}
+        gid = np.asarray([codes[str(g)] for g in labels], dtype=np.int64)
+        sizes = np.bincount(gid, minlength=len(codes))
+        big = np.asarray([sizes[g] >= 2 for g in gid], dtype=bool)
+        adv = advantages_from_rewards(
+            rewards[kept], gid, std_normalised=True, std_ddof=0, std_epsilon=1e-4
+        )
+        out.append(
+            StepSample(
+                index=int(step),
+                names=SURFACE_NAMES,
+                features=np.asarray(rows, dtype=np.float64),
+                advantages=np.where(big, adv, np.nan),
+                group_ids=gid,
+                task_ids=tuple(str(g) for g in labels),
+                advantage_source="reconstructed",
+                n_dropped=int(idx.size - len(keep)),
+            )
+        )
+    return out
+
+
+def test_the_corrected_path_reproduces_the_old_one_where_it_should(aisi_table):
+    """The two paths on the same rollouts, and where they are allowed to differ.
+
+    The corrected path has a different reward, a different grouping and a different advantage
+    convention, so almost nothing should match. What must match is the scaffolding: the same steps,
+    the same rollouts kept, the same features. A difference there would mean the rewrite changed
+    which rows are in the analysis rather than what is computed from them, and every comparison
+    between the two paths would be measuring that instead.
+    """
+    from reward_lens.measure.ledger.labelled import AISI_RUN, steps_from_table
+
+    old = _steps_the_old_defaults_built(aisi_table)
+    new = steps_from_table(aisi_table, AISI_RUN, reward="proxy")
+    assert not isinstance(new, Refusal)
+    assert len(old) == len(new) == 401
+    assert [s.index for s in old] == [s.index for s in new]
+    assert [s.n for s in old] == [s.n for s in new]
+    assert [s.n_dropped for s in old] == [s.n_dropped for s in new]
+    for a, b in zip(old[:5], new[:5]):
+        assert np.allclose(a.features, b.features, equal_nan=True)
+
+    # And where they must differ. The old path merges two prompt groups on three files; the new one
+    # keeps them apart, so the group count differs exactly there and nowhere else.
+    differing = [
+        s.index
+        for a, b in zip(old, new)
+        for s in (a,)
+        if len(set(a.group_ids.tolist())) != len(set(b.group_ids.tolist()))
+    ]
+    assert differing == [29, 138, 236]
+
+    # The corrected path refuses to supply an operational reward at all, which is the whole finding.
+    assert isinstance(steps_from_table(aisi_table, AISI_RUN, reward="operational"), Refusal)
+
+
+def test_the_labelled_series_reads_as_a_step_axis_and_not_as_a_row_counter(aisi_table):
+    """The recorded trap, and the repair to the check that was meant to catch it.
+
+    `rollout_index` is per eval file. The old guard compared the table's step column against the
+    table's own file column, which is an internal consistency check wearing a step-axis name: on the
+    companion run it passes at 403 against 403 while one published eval file has no rows in the
+    parquet at all. It compares against the published file count now.
+    """
+    from reward_lens.measure.ledger.labelled import AISI_RUN, check_step_axis
+
+    got = check_step_axis(aisi_table, AISI_RUN.columns, n_published_files=401)
+    assert not isinstance(got, Refusal)
+    assert got.n_distinct_steps == got.n_distinct_files_in_table == 401
+    assert got.agrees_with_publication
+    # And the labelling, because a public page of this project has it wrong: 0 through 400.
+    assert (got.low, got.high) == (0, 400)
+    assert got.contiguous and got.missing == ()
+
+    # The check the old one could not make. A run whose index is missing an entry has as many
+    # distinct indices as it has distinct file names, so comparing the table against itself passes
+    # while one published file has no rows in the parquet at all. That is the companion run.
+    keep = [i for i, v in enumerate(aisi_table["rollout_index"]) if int(v) != 200]
+    holed = {k: [list(v)[i] for i in keep] for k, v in aisi_table.items()}
+    hole = check_step_axis(holed, AISI_RUN.columns, n_published_files=401)
+    assert isinstance(hole, Refusal)
+    assert hole.statistics["missing"] == [200]
 
 
 def test_the_labelled_rate_counts_nulls_separately_from_negatives(aisi_table):
     """`reward_hacked` is `int64` with 1, 0 or null. A null is unscored, never a zero."""
-    from reward_lens.measure.ledger.labelled import label_rate
+    from reward_lens.measure.ledger.labelled import AISI_RUN, label_rate
 
-    rates = label_rate(aisi_table)
+    rates = label_rate(aisi_table, AISI_RUN.columns)
     assert len(rates) == 401
     assert all(r.n_total == 64 for r in rates)
     assert all(r.n_labelled + r.n_null == r.n_total for r in rates)
@@ -387,20 +509,20 @@ def test_the_labelled_rate_counts_nulls_separately_from_negatives(aisi_table):
 
 
 def test_lambda_per_step_against_the_labelled_hack_rate(aisi_table):
-    """The clause. `Λ` per step on a labelled series, placed against the hack rate.
+    """The acceptance clause. `Λ` per step on a labelled series, placed against the hack rate.
 
     Whatever the relationship, it is the first such measurement, and the relationship here is that
     `Λ` **lags**. The assertions fix the sign and the orders of magnitude rather than the exact
     numbers: the magnitude of the lag moves with how degenerate groups are treated (0.93 widths
     with them included, 3.6 with them masked out) and the sign does not.
     """
-    from reward_lens.measure.ledger.labelled import label_rate, rate_series, steps_from_table
+    from reward_lens.measure.ledger.labelled import AISI_RUN, label_rate, rate_series
 
-    steps_h, rate_h = rate_series(label_rate(aisi_table))
+    steps_h, rate_h = rate_series(label_rate(aisi_table, AISI_RUN.columns))
     assert len(steps_h) == 401
     assert rate_h[0] < 0.05 and rate_h[-1] > 0.9
 
-    samples = steps_from_table(aisi_table)
+    samples = _steps_the_old_defaults_built(aisi_table)
     assert len(samples) == 401
     assert all(s.advantage_source == "reconstructed" for s in samples)
     ledgers = ledger_series(samples, eta=1.0)
@@ -448,10 +570,10 @@ def test_the_registered_cusum_metric_does_not_resolve_the_question_on_this_serie
     define normal. The sign it reports is the opposite of the one the two fitted transitions agree
     on, which is what makes this worth asserting rather than quietly correcting.
     """
-    from reward_lens.measure.ledger.labelled import label_rate, rate_series, steps_from_table
+    from reward_lens.measure.ledger.labelled import AISI_RUN, label_rate, rate_series
 
-    steps_h, rate_h = rate_series(label_rate(aisi_table))
-    samples = steps_from_table(aisi_table)
+    steps_h, rate_h = rate_series(label_rate(aisi_table, AISI_RUN.columns))
+    samples = _steps_the_old_defaults_built(aisi_table)
     ledgers = ledger_series(samples, eta=1.0)
     per_step = lambda_by_step(ledgers, feature_scales(samples), context=5)
     lam_steps = np.asarray([s for s, _ in per_step], dtype=float)

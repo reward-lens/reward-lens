@@ -1,17 +1,17 @@
-"""Acceptance: an instrument declaring QUASI_STATIC is refused at Ad = 3.
+"""W2.7 acceptance: an instrument declaring QUASI_STATIC is refused at Ad = 3.
 
 The clause: *an instrument declaring `QUASI_STATIC` is refused on a synthetic record with `Ad = 3`,
 and the refusal carries the statistic and the threshold.*
 
-The kernel already discharged that clause against a hand-built `RegimeReading`, which proved the
-envelope machinery works and proved nothing about whether anything can produce the reading. This
-file discharges it the other way round: the record is synthetic, the reading is measured from it by
+W1.2 already discharged that clause against a hand-built `RegimeReading`, which proved the envelope
+machinery works and proved nothing about whether anything can produce the reading. This file
+discharges it the other way round: the record is synthetic, the reading is measured from it by
 `measure_regime`, and the refusal comes out of `BaseObservable.preflight` with the measured
 statistic in it. Nobody types 3.0 anywhere; the schedule and the relaxation time are what make it
 three.
 
 The other three tests here are the surrounding claims that make the first one worth having. All
-three of the regime violation behaviours are driven by the same measured reading, so `bound` and
+three of section 2.4's violation behaviours are driven by the same measured reading, so `bound` and
 `downgrade` are not dead branches. An undetermined condition refuses as well as a failed one,
 because unknown is not a pass. And the capability report renders the measured block, which is what
 the reading is for.
@@ -184,12 +184,12 @@ def _context(reading) -> Context:
 
 
 def test_an_instrument_declaring_quasi_static_is_refused_at_ad_three():
-    """The clause, against a reading measured from a record.
+    """The acceptance clause, against a reading measured from a record.
 
     `tau_relax = 3` steps and a schedule moving at 1.0 in log units per step give `Ad = 3`. The
     relaxation time is supplied rather than fitted because that is what makes the number exact: a
     fitted `tau` on a finite series carries its own sampling error, and a clause about the value 3
-    should not be discharged by a number that happens to round there. The rung-1 method measures
+    should not be discharged by a number that happens to round there. Section 3.4's rung 1 measures
     `tau` by perturb-and-hold and hands it over exactly like this. The record-derived path is the
     test immediately below.
     """
@@ -216,7 +216,7 @@ def test_an_instrument_declaring_quasi_static_is_refused_at_ad_three():
 
 
 def test_the_same_refusal_arrives_with_the_relaxation_time_read_off_the_record():
-    """No supplied `tau`: the AR(1) fit supplies it, and the anneal is fast.
+    """No supplied `tau`: the AR(1) fit of section 3.4 supplies it, and the anneal is fast.
 
     The number is not 3 here and it is not supposed to be. What this checks is that the whole path
     from a record with nothing but a schedule and a reward series to a refusal carrying real
@@ -259,7 +259,7 @@ def _ar1_series(*, n: int, phi: float, seed: int) -> list[float]:
 
 
 def test_bound_and_downgrade_are_driven_by_the_same_measured_reading():
-    """The three violation behaviours are not interchangeable and all three need the reading."""
+    """Section 2.4's three behaviours are not interchangeable and all three need the reading."""
     reading = measure_regime(annealed_run(rate=1.0), inputs=RegimeInputs(tau_relax=3.0))
     ctx = _context(reading)
 

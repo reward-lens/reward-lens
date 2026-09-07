@@ -10,7 +10,7 @@ The clause, in full:
 
 The subject is `is_equiv` from `hendrycks/math`, the answer-equivalence checker the MATH benchmark
 ships and the one most open RLVR math pipelines still call, directly or through a fork. It is the
-same subject the D packages point at, reused deliberately so the D-series numbers on this
+same subject W3.4a, W3.4b and W3.4c point at, reused deliberately so the D-series numbers on this
 grader accumulate against one program rather than against four.
 
 It is fetched over the network and the tests skip with a message when there is none, because a
@@ -61,7 +61,7 @@ from reward_lens.verifier import (
     is_sensitive,
 )
 
-#: `is_equiv` from `hendrycks/math`. The same URL the D packages fetch.
+#: `is_equiv` from `hendrycks/math`. The same URL W3.4a and W3.4c fetch.
 REAL_VERIFIER_URL = (
     "https://raw.githubusercontent.com/hendrycks/math/main/modeling/math_equivalence.py"
 )
@@ -401,7 +401,7 @@ def test_less_access_renders_strictly_more_refusals(
 
 
 def test_the_poorer_card_is_still_a_card(real_inputs: CardInputs) -> None:
-    """Below the card's access minimum the artifact does not disappear. That is the point."""
+    """Below section 5.D's access minimum the artifact does not disappear. That is the point."""
     poor_ctx = card_context(real_inputs, access=LESS_ACCESS, phase=Phase.PRE_RUN)
     reading = GraderCard(real_inputs).estimate(poor_ctx)
     assert not isinstance(reading, Refusal)

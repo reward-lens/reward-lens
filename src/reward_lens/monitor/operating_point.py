@@ -40,7 +40,7 @@ from reward_lens.measure.base import Context
 from reward_lens.monitor._base import NO_ACCESS, MonitorInstrument
 
 # ---------------------------------------------------------------------------
-# Bayes' rule, and the numbers of the worked case
+# Bayes' rule, and the numbers section 3.4 quotes
 # ---------------------------------------------------------------------------
 
 #: The prevalence grid every reading carries by default. Log-ish rather than linear because the
@@ -57,9 +57,9 @@ DEFAULT_PREVALENCES: tuple[float, ...] = (
     0.50,
 )
 
-#: The worked case, kept as data so the docstring's number is checkable rather than asserted.
-#: `tests/acceptance/test_w4_7_monitor.py` recomputes it.
-WORKED_CASE: dict[str, float] = {"prevalence": 0.025, "fpr": 0.317, "sensitivity": 1.0}
+#: The worked case from section 3.4, kept as data so the docstring's number is checkable rather
+#: than asserted. `tests/test_monitor_operating_point.py` recomputes it.
+SECTION_3_4_CASE: dict[str, float] = {"prevalence": 0.025, "fpr": 0.317, "sensitivity": 1.0}
 
 
 def ppv(sensitivity: float, fpr: float, prevalence: float) -> float:
@@ -472,7 +472,7 @@ __all__ = [
     "DEFAULT_PREVALENCES",
     "J4_BASELINES",
     "LOSS_ENVELOPE",
-    "WORKED_CASE",
+    "SECTION_3_4_CASE",
     "AsymmetricLoss",
     "OperatingPoint",
     "OperatingPointFromLoss",

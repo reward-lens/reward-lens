@@ -289,8 +289,8 @@ CHECK_STANDARD_ENVELOPE = EnvelopeSpec(
 class CheckStandardDriftInstrument(MonitorInstrument):
     """J5. "The frozen invariant probe set moved 0.04 this session. That is instrument drift."
 
-    Pair it with an isochronous design: measure the check standard at the same points in the
-    schedule every session, so a drift cannot be an artefact of when you looked.
+    Pair it with the isochronous design of section 4.7: measure the check standard at the same
+    points in the schedule every session, so a drift cannot be an artefact of when you looked.
 
     What it cannot do: it cannot say what changed. A moved probe set means the apparatus moved, and
     the candidates are the grader deployment, the tokenizer, the sampling parameters, the judge's

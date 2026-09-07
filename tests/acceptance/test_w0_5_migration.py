@@ -1,6 +1,6 @@
-"""The migration's second half: the four v1 modules that had live v2 consumers.
+"""W0.5's second half: the four v1 modules that had live v2 consumers (SPEC-ERRATA E8).
 
-The first half deleted fifteen genuinely orphaned modules, 6,454 lines. It could not delete four
+W0.5's first half deleted fifteen genuinely orphaned modules, 6,454 lines. It could not delete four
 more, because they were not legacy at all: `model.py`, `model_adapters/`, `sae.py` and
 `diagnostic_data_v2.py` had live v2 consumers at runtime and were mislabelled. E8 recorded that and
 recorded the order the migration should happen in. This file is the acceptance for three of the
@@ -14,17 +14,17 @@ What moved, and what each consumer now resolves against:
   - `sae.py` -> behind the `[dict]` extra. One class, `TopKSAE`, reached from one call site in
     `measure/battery/feature.py`. The specification demotes sparse dictionaries to candidate
     generators that may never be a claim substrate; the extra is that position in the packaging.
-  - `model_adapters/`'s grader-side half -> `signals/adapters.py`. `policy/arch.py` already
+  - `model_adapters/`'s grader-side half -> `signals/adapters.py`. `policy/arch.py` (W5.1) already
     replaced the navigation half structurally. What it deliberately did not take is the reward head,
     ArmoRM's gating, Gemma-2's soft cap and InternLM2's `v_head`, because those are grader-side.
     They are here now, and `signals/adapters.py` no longer imports `model_adapters` at all.
 
 `model.py` is the fourth and it is not migrated here. Its consumers are all in `organisms/`, and
-what retiring it would take is written down rather than started in a half-done commit.
+what retiring it would take is in the build report rather than in a half-done commit.
 
 None of the four modules is deleted to make a count look better. `model_adapters/` and `model.py`
 are still on disk, still imported by each other and by the organism foundry, and still tested.
-Deleting working code to satisfy a count is how a cleanup becomes an outage.
+Deleting working code to satisfy a count is how a cleanup becomes an outage (BUILD_NOTES D6).
 """
 
 from __future__ import annotations
@@ -214,7 +214,7 @@ def test_sae_raises_a_typed_error_naming_an_installable_extra_when_dict_is_absen
 
 
 def test_the_extra_the_error_names_is_one_pip_can_install():
-    """Declared in `pyproject.toml`, not just in the message. The dependency clause, re-asserted here.
+    """Declared in `pyproject.toml`, not just in the message. W0.3's clause, re-asserted here.
 
     This is the assertion that makes the one above worth having. `test_w0_3_dependencies.py` holds
     the general form over every extra; this pins the one this migration newly depends on, so a
@@ -304,7 +304,7 @@ def test_a_supplied_dictionary_needs_no_extra_at_all():
 def test_module_level_torch_imports_before_and_after():
     """Three modules import torch in their body, and all three are guarded.
 
-    The before: eight modules at the start of the migration, three after its first half, all
+    The before: eight modules at the top of W0.5, three after its first half (BUILD_NOTES D2), all
     three of which were the kept v1 modules `sae.py`, `model.py` and `model_adapters/__init__.py`.
 
     The after: still those three files, and the number is the point rather than a disappointment.
@@ -760,19 +760,6 @@ def test_which_families_have_no_reachable_real_subject_and_what_would_be_needed(
         ),
         "qwen3": _hub_snapshot("Skywork/Skywork-Reward-V2-Qwen3-0.6B", "model.safetensors"),
     }
-    if not any(p is not None for p in reachable_with_weights.values()):
-        # Same skip the three tests above take, and for the same reason: nothing here downloads
-        # anything, so on a machine with an empty hub cache this asserts that the cache is empty
-        # rather than anything about the inventory. The two-of-six gap is a claim about which
-        # families can be reached from a populated cache, and a runner that has never fetched a
-        # checkpoint cannot answer it either way. One of the two present and the other missing is
-        # a different thing, a real change in what is reachable, and still fails below.
-        pytest.skip(
-            "no reward-model weights in the local HF cache, so which families are reachable "
-            "cannot be determined here. Fetch hf_hub_download('Skywork/Skywork-Reward-Llama-3.1"
-            "-8B', 'model-00004-of-00004.safetensors') and hf_hub_download('Skywork/Skywork-"
-            "Reward-V2-Qwen3-0.6B', 'model.safetensors') to run this inventory."
-        )
     assert all(p is not None for p in reachable_with_weights.values()), reachable_with_weights
 
     for family in ("armorm", "internlm2"):

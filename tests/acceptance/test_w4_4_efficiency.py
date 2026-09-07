@@ -1,4 +1,4 @@
-"""Acceptance: F3, the cost book. The KL budget, the efficiency, and where the nats went.
+"""W4.4 acceptance: F3, the cost book. The KL budget, the efficiency, and where the nats went.
 
 **The clause.** *Efficiency is in [0,1] on every run tested; a synthetic case with a known `G`
 reproduces `KL_min` analytically.*
@@ -18,7 +18,7 @@ rather than a gap: `kl_to_previous` and `kl_to_ref` are `None` on all 200 steps 
 so `D_t` is not in the record and cannot be reconstructed from it. The optimiser is
 `ADAMW_TORCH_FUSED`, so the applied step is not the gradient times the learning rate and the moment
 state that would relate them was never written; `update_norm` and `grad_norm_unclipped` are `None`
-too. `cost_series` therefore refuses with `RECORD_INCOMPLETE`, which is the outcome the derivation asks for
+too. `cost_series` therefore refuses with `RECORD_INCOMPLETE`, which is the outcome §3.1.4 asks for
 by name in preference to substituting a proxy and keeping the name `kl_spent`. `KL_min` and its
 per-feature shares need no denominator and are computed on all 199 step pairs.
 
@@ -134,7 +134,7 @@ def test_diagonal_g_reproduces_kl_min_computed_by_hand():
 def test_correlated_g_reproduces_kl_min_and_its_shapley_shares_by_hand():
     """`G = [[2,1],[1,2]]`, `Δz = (1, 0)`. Determinant 3, so every number below is exact.
 
-    This is the case that matters, because the whole difficulty is that named features
+    This is the case that matters, because the whole difficulty in §3.1.4 is that named features
     are correlated and the eigenbasis decomposition therefore does not name anything. Here the
     second feature does not move at all and still carries a share, which is correct: `G` couples
     them, so holding the second feature at its observed zero while moving the first costs more than
@@ -167,7 +167,7 @@ def test_correlated_g_reproduces_kl_min_and_its_shapley_shares_by_hand():
 
 
 def test_the_single_feature_bound_is_the_singleton_coalition():
-    """`δ²/(2 G_ii)`: moving one feature by `δ` costs at least this, whatever else happens."""
+    """§3.1.4's `δ²/(2 G_ii)`: moving one feature by `δ` costs at least this, whatever else happens."""
     g = _synthetic_g(np.array([[2.0, 1.0], [1.0, 2.0]]), ("length", "other"))
     assert g.single_feature_bound("length", 1.0) == pytest.approx(0.25, rel=1e-15)
     # And it is a genuine lower bound on the cost of a movement that includes it.
@@ -302,7 +302,7 @@ def book(long_run):
 
 
 def test_the_record_carries_no_per_step_kl_and_no_way_to_reconstruct_one(long_run):
-    """The fact the reconciliation plan turns on, asserted on the record rather than quoted.
+    """The fact W5.6's plan turns on, asserted on the record rather than quoted from a note.
 
     Four fields would each give `D_t` and all four are absent on every step. `kl_to_previous` is
     the quantity itself. `kl_to_ref` is a different one and would not do, but its absence rules out
@@ -323,7 +323,7 @@ def test_the_record_carries_no_per_step_kl_and_no_way_to_reconstruct_one(long_ru
 
 
 def test_the_cost_book_refuses_record_incomplete_rather_than_substituting_a_proxy(long_run, book):
-    """The named forbidden outcome, as a refusal with a remedy that says what to log."""
+    """§3.1.4's named forbidden outcome, as a refusal with a remedy that says what to log."""
     _samples, ledgers, g = book
     out = cost_series(ledgers, g, run_=long_run)
     assert isinstance(out, Refusal)
@@ -353,7 +353,7 @@ def test_kl_min_and_its_shares_are_computed_on_every_step_pair_without_a_denomin
 
 
 def test_the_metric_holds_C_succeeds_G_on_the_real_record(book):
-    """`C ⪰ G`, checked on the real feature basis rather than only in the derivation."""
+    """§3.1.3's `C ⪰ G`, checked on the real feature basis rather than only in the derivation."""
     _samples, _ledgers, g = book
     assert g.covariance is not None
     gap = np.linalg.eigvalsh(g.covariance - g.matrix)

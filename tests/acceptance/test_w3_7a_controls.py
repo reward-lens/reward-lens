@@ -1,8 +1,8 @@
-"""Acceptance: the controls bank. M3, M4, M5 and M10.
+"""W3.7a acceptance: the controls bank. M3, M4, M5 and M10.
 
-The clauses this file discharges: *a claim without a baseline fails lint; a null without a matched
-control is refused; all six baselines run through one interface and return comparable readings; a
-detector that a string match matches is reported as
+The clauses this file discharges, from W3.7 and from the work package: *a claim without a baseline
+fails lint; a null without a matched control is refused; all six baselines run through one
+interface and return comparable readings; a detector that a string match matches is reported as
 matched rather than as a win; the semantic placebo bank returns a coherent irrelevant direction and
 selecting one is the default path; the power calculation is validated against simulation, and the
 simulation is in the test; the resolution ratio q = N/N\\* is computed and a q < 1 case reports "not
@@ -84,7 +84,7 @@ WORDS = ("alpha", "beta", "gamma", "delta", "epsilon")
 
 
 def _ctx() -> Context:
-    """No signal. These four read injected data, which is why they can run at all."""
+    """No signal. These four read injected data, which is why they run in wave 1 at all."""
     return Context()
 
 
@@ -114,7 +114,7 @@ def _task(n: int = 160, seed: int = 0, *, marker: str = "exit(0)") -> DetectionT
 
 
 def test_a_claim_without_a_baseline_fails_lint():
-    """The clause, verbatim. Three ways to have no baseline, all three findings."""
+    """The W3.7 clause, verbatim. Three ways to have no baseline, all three findings."""
     assert lint_claim(SimpleNamespace(instrument="Probe"))  # no mapping at all
     assert lint_claim({"instrument": "Probe", "baselines": {}})  # an empty one
     partial = {"instrument": "Probe", "baselines": {"baseline.length": 0.61}}
@@ -217,7 +217,7 @@ def test_a_claim_that_beats_nothing_is_not_allowed_to_report_a_win():
 
 
 def test_a_null_without_a_matched_control_is_refused():
-    """The clause, verbatim, with the library's own 0.13-power card as the shape."""
+    """The W3.7 clause, verbatim, with the library's own 0.13-power card as the shape."""
     claim = NullClaim(
         instrument="Susceptibility",
         effect=0.01,
@@ -460,7 +460,7 @@ def test_lint_instrument_is_empty_for_all_four_controls():
 
 
 def test_the_three_proposed_quantities_are_the_only_registration_this_package_needs():
-    """M3 and M4 have no registered id (E14); M5 and M10 estimate `study.power`."""
+    """M3 and M4 have no registered id (SPEC-ERRATA E14); M5 and M10 estimate `study.power`."""
     load_quantities()
     assert {q.id for q in PROPOSED} == {
         "baseline.best_score",

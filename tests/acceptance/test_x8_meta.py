@@ -34,10 +34,10 @@ from reward_lens.experiments import x8_leaderboard_meta as x8
 from reward_lens.stats import meta
 
 pytestmark = pytest.mark.skipif(
-    x8.DOSSIER is None or not x8.DOSSIER.exists(),
+    not x8.DOSSIER.exists(),
     reason=(
-        "no evidence base. X8 is an analysis of quotations and does not run without the file they "
-        "are quoted from; set REWARD_LENS_EVAL_DOSSIER to it."
+        f"the evidence base is not at {x8.DOSSIER}; X8 is an analysis of quotations and does not "
+        f"run without the file they are quoted from. Set REWARD_LENS_EVAL_DOSSIER."
     ),
 )
 
