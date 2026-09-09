@@ -1,0 +1,27 @@
+# What this project declares about its reward system, before anything is measured.
+reward:
+  entry: grader.py
+  kind: plain
+  shape: plain
+  trainer: trl
+  watch:
+    - none_to_nan
+    - exception_to_zero
+    - bool_as_score
+tasks:
+  path: tasks.jsonl
+  prompt: prompt
+  tests: tests
+responses:
+  path: responses.jsonl
+outcome:
+  kind: protected_test_suite
+  path: outcome
+success: a response is successful when the protected suite in outcome/ accepts it
+constraints:
+  - the grader runs on CPU, offline, with no model
+# The declared name, beside the version it is declared at: a report's subject line reads the two
+# together, as `code-reward v1`.
+name: code-reward
+version:
+  id: code-reward-v1

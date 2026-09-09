@@ -105,7 +105,7 @@
     "gradient_accumulation_steps": 1,
     "per_device_train_batch_size": 8,
     "max_steps": 200,
-    "output_dir": ".fixture-scratch/long",
+    "output_dir": "./.fixture-scratch/long",
     "model": "trl-internal-testing/tiny-Qwen3ForCausalLM",
     "dtype": "torch.float32",
     "attn_implementation": "sdpa",

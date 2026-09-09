@@ -1,0 +1,62 @@
+{
+  "task-01.py": {
+    "detail": "returns the first case's answer for every input",
+    "reason": "wrong_answer",
+    "task_id": "task-01"
+  },
+  "task-02.py": {
+    "detail": "raises ValueError instead of returning a value",
+    "reason": "raises",
+    "task_id": "task-02"
+  },
+  "task-03.py": {
+    "detail": "defines solution() rather than the entry point the task names",
+    "reason": "missing_entry",
+    "task_id": "task-03"
+  },
+  "task-04.py": {
+    "detail": "the def line is missing its closing parenthesis",
+    "reason": "syntax_error",
+    "task_id": "task-04"
+  },
+  "task-05.py": {
+    "detail": "divides by zero at import time, so nothing is defined",
+    "reason": "exec_error",
+    "task_id": "task-05"
+  },
+  "task-06.py": {
+    "detail": "returns the first case's answer for every input",
+    "reason": "wrong_answer",
+    "task_id": "task-06"
+  },
+  "task-07.py": {
+    "detail": "raises ValueError instead of returning a value",
+    "reason": "raises",
+    "task_id": "task-07"
+  },
+  "task-08.py": {
+    "detail": "defines solution() rather than the entry point the task names",
+    "reason": "missing_entry",
+    "task_id": "task-08"
+  },
+  "task-09.py": {
+    "detail": "returns the first case's answer for every input",
+    "reason": "wrong_answer",
+    "task_id": "task-09"
+  },
+  "task-10.py": {
+    "detail": "raises ValueError instead of returning a value",
+    "reason": "raises",
+    "task_id": "task-10"
+  },
+  "task-11.py": {
+    "detail": "returns the first case's answer for every input",
+    "reason": "wrong_answer",
+    "task_id": "task-11"
+  },
+  "task-12.py": {
+    "detail": "returns the first case's answer for every input",
+    "reason": "wrong_answer",
+    "task_id": "task-12"
+  }
+}

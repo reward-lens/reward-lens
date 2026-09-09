@@ -1,0 +1,312 @@
+{"prompt": "Write a Python function that will reverse a list of integers. Task 000.", "answer": "def solve_000(x): return reverse_impl(x)", "tests": ["suite/check_reverse_000.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 001.", "answer": "def solve_001(x): return sort_impl(x)", "tests": ["suite/check_sort_001.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 002.", "answer": "def solve_002(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_002.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 003.", "answer": "def solve_003(x): return flatten_impl(x)", "tests": ["suite/check_flatten_003.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 004.", "answer": "def solve_004(x): return chunk_impl(x)", "tests": ["suite/check_chunk_004.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 005.", "answer": "def solve_005(x): return rotate_impl(x)", "tests": ["suite/check_rotate_005.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 006.", "answer": "def solve_006(x): return merge_impl(x)", "tests": ["suite/check_merge_006.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 007.", "answer": "def solve_007(x): return count_impl(x)", "tests": ["suite/check_count_007.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 008.", "answer": "def solve_008(x): return reverse_impl(x)", "tests": ["suite/check_reverse_008.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 009.", "answer": "def solve_009(x): return sort_impl(x)", "tests": ["suite/check_sort_009.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 010.", "answer": "def solve_010(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_010.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 011.", "answer": "def solve_011(x): return flatten_impl(x)", "tests": ["suite/check_flatten_011.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 012.", "answer": "def solve_012(x): return chunk_impl(x)", "tests": ["suite/check_chunk_012.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 013.", "answer": "def solve_013(x): return rotate_impl(x)", "tests": ["suite/check_rotate_013.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 014.", "answer": "def solve_014(x): return merge_impl(x)", "tests": ["suite/check_merge_014.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 015.", "answer": "def solve_015(x): return count_impl(x)", "tests": ["suite/check_count_015.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 016.", "answer": "def solve_016(x): return reverse_impl(x)", "tests": ["suite/check_reverse_016.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 017.", "answer": "def solve_017(x): return sort_impl(x)", "tests": ["suite/check_sort_017.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 018.", "answer": "def solve_018(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_018.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 019.", "answer": "def solve_019(x): return flatten_impl(x)", "tests": ["suite/check_flatten_019.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 020.", "answer": "def solve_020(x): return chunk_impl(x)", "tests": ["suite/check_chunk_020.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 021.", "answer": "def solve_021(x): return rotate_impl(x)", "tests": ["suite/check_rotate_021.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 022.", "answer": "def solve_022(x): return merge_impl(x)", "tests": ["suite/check_merge_022.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 023.", "answer": "def solve_023(x): return count_impl(x)", "tests": ["suite/check_count_023.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 024.", "answer": "def solve_024(x): return reverse_impl(x)", "tests": ["suite/check_reverse_024.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 025.", "answer": "def solve_025(x): return sort_impl(x)", "tests": ["suite/check_sort_025.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 026.", "answer": "def solve_026(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_026.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 027.", "answer": "def solve_027(x): return flatten_impl(x)", "tests": ["suite/check_flatten_027.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 028.", "answer": "def solve_028(x): return chunk_impl(x)", "tests": ["suite/check_chunk_028.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 029.", "answer": "def solve_029(x): return rotate_impl(x)", "tests": ["suite/check_rotate_029.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 030.", "answer": "def solve_030(x): return merge_impl(x)", "tests": ["suite/check_merge_030.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 031.", "answer": "def solve_031(x): return count_impl(x)", "tests": ["suite/check_count_031.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 032.", "answer": "def solve_032(x): return reverse_impl(x)", "tests": ["suite/check_reverse_032.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 033.", "answer": "def solve_033(x): return sort_impl(x)", "tests": ["suite/check_sort_033.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 034.", "answer": "def solve_034(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_034.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 035.", "answer": "def solve_035(x): return flatten_impl(x)", "tests": ["suite/check_flatten_035.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 036.", "answer": "def solve_036(x): return chunk_impl(x)", "tests": ["suite/check_chunk_036.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 037.", "answer": "def solve_037(x): return rotate_impl(x)", "tests": ["suite/check_rotate_037.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 038.", "answer": "def solve_038(x): return merge_impl(x)", "tests": ["suite/check_merge_038.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 039.", "answer": "def solve_039(x): return count_impl(x)", "tests": ["suite/check_count_039.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 040.", "answer": "def solve_040(x): return reverse_impl(x)", "tests": ["suite/check_reverse_040.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 041.", "answer": "def solve_041(x): return sort_impl(x)", "tests": ["suite/check_sort_041.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 042.", "answer": "def solve_042(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_042.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 043.", "answer": "def solve_043(x): return flatten_impl(x)", "tests": ["suite/check_flatten_043.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 044.", "answer": "def solve_044(x): return chunk_impl(x)", "tests": ["suite/check_chunk_044.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 045.", "answer": "def solve_045(x): return rotate_impl(x)", "tests": ["suite/check_rotate_045.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 046.", "answer": "def solve_046(x): return merge_impl(x)", "tests": ["suite/check_merge_046.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 047.", "answer": "def solve_047(x): return count_impl(x)", "tests": ["suite/check_count_047.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 048.", "answer": "def solve_048(x): return reverse_impl(x)", "tests": ["suite/check_reverse_048.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 049.", "answer": "def solve_049(x): return sort_impl(x)", "tests": ["suite/check_sort_049.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 050.", "answer": "def solve_050(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_050.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 051.", "answer": "def solve_051(x): return flatten_impl(x)", "tests": ["suite/check_flatten_051.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 052.", "answer": "def solve_052(x): return chunk_impl(x)", "tests": ["suite/check_chunk_052.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 053.", "answer": "def solve_053(x): return rotate_impl(x)", "tests": ["suite/check_rotate_053.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 054.", "answer": "def solve_054(x): return merge_impl(x)", "tests": ["suite/check_merge_054.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 055.", "answer": "def solve_055(x): return count_impl(x)", "tests": ["suite/check_count_055.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 056.", "answer": "def solve_056(x): return reverse_impl(x)", "tests": ["suite/check_reverse_056.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 057.", "answer": "def solve_057(x): return sort_impl(x)", "tests": ["suite/check_sort_057.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 058.", "answer": "def solve_058(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_058.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 059.", "answer": "def solve_059(x): return flatten_impl(x)", "tests": ["suite/check_flatten_059.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 060.", "answer": "def solve_060(x): return chunk_impl(x)", "tests": ["suite/check_chunk_060.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 061.", "answer": "def solve_061(x): return rotate_impl(x)", "tests": ["suite/check_rotate_061.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 062.", "answer": "def solve_062(x): return merge_impl(x)", "tests": ["suite/check_merge_062.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 063.", "answer": "def solve_063(x): return count_impl(x)", "tests": ["suite/check_count_063.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 064.", "answer": "def solve_064(x): return reverse_impl(x)", "tests": ["suite/check_reverse_064.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 065.", "answer": "def solve_065(x): return sort_impl(x)", "tests": ["suite/check_sort_065.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 066.", "answer": "def solve_066(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_066.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 067.", "answer": "def solve_067(x): return flatten_impl(x)", "tests": ["suite/check_flatten_067.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 068.", "answer": "def solve_068(x): return chunk_impl(x)", "tests": ["suite/check_chunk_068.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 069.", "answer": "def solve_069(x): return rotate_impl(x)", "tests": ["suite/check_rotate_069.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 070.", "answer": "def solve_070(x): return merge_impl(x)", "tests": ["suite/check_merge_070.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 071.", "answer": "def solve_071(x): return count_impl(x)", "tests": ["suite/check_count_071.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 072.", "answer": "def solve_072(x): return reverse_impl(x)", "tests": ["suite/check_reverse_072.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 073.", "answer": "def solve_073(x): return sort_impl(x)", "tests": ["suite/check_sort_073.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 074.", "answer": "def solve_074(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_074.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 075.", "answer": "def solve_075(x): return flatten_impl(x)", "tests": ["suite/check_flatten_075.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 076.", "answer": "def solve_076(x): return chunk_impl(x)", "tests": ["suite/check_chunk_076.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 077.", "answer": "def solve_077(x): return rotate_impl(x)", "tests": ["suite/check_rotate_077.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 078.", "answer": "def solve_078(x): return merge_impl(x)", "tests": ["suite/check_merge_078.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 079.", "answer": "def solve_079(x): return count_impl(x)", "tests": ["suite/check_count_079.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 080.", "answer": "def solve_080(x): return reverse_impl(x)", "tests": ["suite/check_reverse_080.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 081.", "answer": "def solve_081(x): return sort_impl(x)", "tests": ["suite/check_sort_081.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 082.", "answer": "def solve_082(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_082.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 083.", "answer": "def solve_083(x): return flatten_impl(x)", "tests": ["suite/check_flatten_083.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 084.", "answer": "def solve_084(x): return chunk_impl(x)", "tests": ["suite/check_chunk_084.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 085.", "answer": "def solve_085(x): return rotate_impl(x)", "tests": ["suite/check_rotate_085.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 086.", "answer": "def solve_086(x): return merge_impl(x)", "tests": ["suite/check_merge_086.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 087.", "answer": "def solve_087(x): return count_impl(x)", "tests": ["suite/check_count_087.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 088.", "answer": "def solve_088(x): return reverse_impl(x)", "tests": ["suite/check_reverse_088.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 089.", "answer": "def solve_089(x): return sort_impl(x)", "tests": ["suite/check_sort_089.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 090.", "answer": "def solve_090(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_090.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 091.", "answer": "def solve_091(x): return flatten_impl(x)", "tests": ["suite/check_flatten_091.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 092.", "answer": "def solve_092(x): return chunk_impl(x)", "tests": ["suite/check_chunk_092.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 093.", "answer": "def solve_093(x): return rotate_impl(x)", "tests": ["suite/check_rotate_093.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 094.", "answer": "def solve_094(x): return merge_impl(x)", "tests": ["suite/check_merge_094.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 095.", "answer": "def solve_095(x): return count_impl(x)", "tests": ["suite/check_count_095.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 096.", "answer": "def solve_096(x): return reverse_impl(x)", "tests": ["suite/check_reverse_096.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 097.", "answer": "def solve_097(x): return sort_impl(x)", "tests": ["suite/check_sort_097.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 098.", "answer": "def solve_098(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_098.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 099.", "answer": "def solve_099(x): return flatten_impl(x)", "tests": ["suite/check_flatten_099.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 100.", "answer": "def solve_100(x): return chunk_impl(x)", "tests": ["suite/check_chunk_100.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 101.", "answer": "def solve_101(x): return rotate_impl(x)", "tests": ["suite/check_rotate_101.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 102.", "answer": "def solve_102(x): return merge_impl(x)", "tests": ["suite/check_merge_102.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 103.", "answer": "def solve_103(x): return count_impl(x)", "tests": ["suite/check_count_103.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 104.", "answer": "def solve_104(x): return reverse_impl(x)", "tests": ["suite/check_reverse_104.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 105.", "answer": "def solve_105(x): return sort_impl(x)", "tests": ["suite/check_sort_105.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 106.", "answer": "def solve_106(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_106.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 107.", "answer": "def solve_107(x): return flatten_impl(x)", "tests": ["suite/check_flatten_107.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 108.", "answer": "def solve_108(x): return chunk_impl(x)", "tests": ["suite/check_chunk_108.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 109.", "answer": "def solve_109(x): return rotate_impl(x)", "tests": ["suite/check_rotate_109.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 110.", "answer": "def solve_110(x): return merge_impl(x)", "tests": ["suite/check_merge_110.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 111.", "answer": "def solve_111(x): return count_impl(x)", "tests": ["suite/check_count_111.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 112.", "answer": "def solve_112(x): return reverse_impl(x)", "tests": ["suite/check_reverse_112.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 113.", "answer": "def solve_113(x): return sort_impl(x)", "tests": ["suite/check_sort_113.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 114.", "answer": "def solve_114(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_114.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 115.", "answer": "def solve_115(x): return flatten_impl(x)", "tests": ["suite/check_flatten_115.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 116.", "answer": "def solve_116(x): return chunk_impl(x)", "tests": ["suite/check_chunk_116.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 117.", "answer": "def solve_117(x): return rotate_impl(x)", "tests": ["suite/check_rotate_117.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 118.", "answer": "def solve_118(x): return merge_impl(x)", "tests": ["suite/check_merge_118.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 119.", "answer": "def solve_119(x): return count_impl(x)", "tests": ["suite/check_count_119.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 120.", "answer": "def solve_120(x): return reverse_impl(x)", "tests": ["suite/check_reverse_120.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 121.", "answer": "def solve_121(x): return sort_impl(x)", "tests": ["suite/check_sort_121.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 122.", "answer": "def solve_122(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_122.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 123.", "answer": "def solve_123(x): return flatten_impl(x)", "tests": ["suite/check_flatten_123.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 124.", "answer": "def solve_124(x): return chunk_impl(x)", "tests": ["suite/check_chunk_124.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 125.", "answer": "def solve_125(x): return rotate_impl(x)", "tests": ["suite/check_rotate_125.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 126.", "answer": "def solve_126(x): return merge_impl(x)", "tests": ["suite/check_merge_126.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 127.", "answer": "def solve_127(x): return count_impl(x)", "tests": ["suite/check_count_127.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 128.", "answer": "def solve_128(x): return reverse_impl(x)", "tests": ["suite/check_reverse_128.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 129.", "answer": "def solve_129(x): return sort_impl(x)", "tests": ["suite/check_sort_129.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 130.", "answer": "def solve_130(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_130.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 131.", "answer": "def solve_131(x): return flatten_impl(x)", "tests": ["suite/check_flatten_131.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 132.", "answer": "def solve_132(x): return chunk_impl(x)", "tests": ["suite/check_chunk_132.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 133.", "answer": "def solve_133(x): return rotate_impl(x)", "tests": ["suite/check_rotate_133.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 134.", "answer": "def solve_134(x): return merge_impl(x)", "tests": ["suite/check_merge_134.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 135.", "answer": "def solve_135(x): return count_impl(x)", "tests": ["suite/check_count_135.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 136.", "answer": "def solve_136(x): return reverse_impl(x)", "tests": ["suite/check_reverse_136.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 137.", "answer": "def solve_137(x): return sort_impl(x)", "tests": ["suite/check_sort_137.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 138.", "answer": "def solve_138(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_138.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 139.", "answer": "def solve_139(x): return flatten_impl(x)", "tests": ["suite/check_flatten_139.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 140.", "answer": "def solve_140(x): return chunk_impl(x)", "tests": ["suite/check_chunk_140.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 141.", "answer": "def solve_141(x): return rotate_impl(x)", "tests": ["suite/check_rotate_141.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 142.", "answer": "def solve_142(x): return merge_impl(x)", "tests": ["suite/check_merge_142.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 143.", "answer": "def solve_143(x): return count_impl(x)", "tests": ["suite/check_count_143.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 144.", "answer": "def solve_144(x): return reverse_impl(x)", "tests": ["suite/check_reverse_144.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 145.", "answer": "def solve_145(x): return sort_impl(x)", "tests": ["suite/check_sort_145.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 146.", "answer": "def solve_146(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_146.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 147.", "answer": "def solve_147(x): return flatten_impl(x)", "tests": ["suite/check_flatten_147.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 148.", "answer": "def solve_148(x): return chunk_impl(x)", "tests": ["suite/check_chunk_148.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 149.", "answer": "def solve_149(x): return rotate_impl(x)", "tests": ["suite/check_rotate_149.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 150.", "answer": "def solve_150(x): return merge_impl(x)", "tests": ["suite/check_merge_150.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 151.", "answer": "def solve_151(x): return count_impl(x)", "tests": ["suite/check_count_151.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 152.", "answer": "def solve_152(x): return reverse_impl(x)", "tests": ["suite/check_reverse_152.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 153.", "answer": "def solve_153(x): return sort_impl(x)", "tests": ["suite/check_sort_153.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 154.", "answer": "def solve_154(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_154.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 155.", "answer": "def solve_155(x): return flatten_impl(x)", "tests": ["suite/check_flatten_155.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 156.", "answer": "def solve_156(x): return chunk_impl(x)", "tests": ["suite/check_chunk_156.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 157.", "answer": "def solve_157(x): return rotate_impl(x)", "tests": ["suite/check_rotate_157.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 158.", "answer": "def solve_158(x): return merge_impl(x)", "tests": ["suite/check_merge_158.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 159.", "answer": "def solve_159(x): return count_impl(x)", "tests": ["suite/check_count_159.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 160.", "answer": "def solve_160(x): return reverse_impl(x)", "tests": ["suite/check_reverse_160.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 161.", "answer": "def solve_161(x): return sort_impl(x)", "tests": ["suite/check_sort_161.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 162.", "answer": "def solve_162(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_162.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 163.", "answer": "def solve_163(x): return flatten_impl(x)", "tests": ["suite/check_flatten_163.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 164.", "answer": "def solve_164(x): return chunk_impl(x)", "tests": ["suite/check_chunk_164.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 165.", "answer": "def solve_165(x): return rotate_impl(x)", "tests": ["suite/check_rotate_165.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 166.", "answer": "def solve_166(x): return merge_impl(x)", "tests": ["suite/check_merge_166.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 167.", "answer": "def solve_167(x): return count_impl(x)", "tests": ["suite/check_count_167.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 168.", "answer": "def solve_168(x): return reverse_impl(x)", "tests": ["suite/check_reverse_168.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 169.", "answer": "def solve_169(x): return sort_impl(x)", "tests": ["suite/check_sort_169.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 170.", "answer": "def solve_170(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_170.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 171.", "answer": "def solve_171(x): return flatten_impl(x)", "tests": ["suite/check_flatten_171.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 172.", "answer": "def solve_172(x): return chunk_impl(x)", "tests": ["suite/check_chunk_172.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 173.", "answer": "def solve_173(x): return rotate_impl(x)", "tests": ["suite/check_rotate_173.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 174.", "answer": "def solve_174(x): return merge_impl(x)", "tests": ["suite/check_merge_174.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 175.", "answer": "def solve_175(x): return count_impl(x)", "tests": ["suite/check_count_175.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 176.", "answer": "def solve_176(x): return reverse_impl(x)", "tests": ["suite/check_reverse_176.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 177.", "answer": "def solve_177(x): return sort_impl(x)", "tests": ["suite/check_sort_177.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 178.", "answer": "def solve_178(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_178.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 179.", "answer": "def solve_179(x): return flatten_impl(x)", "tests": ["suite/check_flatten_179.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 180.", "answer": "def solve_180(x): return chunk_impl(x)", "tests": ["suite/check_chunk_180.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 181.", "answer": "def solve_181(x): return rotate_impl(x)", "tests": ["suite/check_rotate_181.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 182.", "answer": "def solve_182(x): return merge_impl(x)", "tests": ["suite/check_merge_182.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 183.", "answer": "def solve_183(x): return count_impl(x)", "tests": ["suite/check_count_183.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 184.", "answer": "def solve_184(x): return reverse_impl(x)", "tests": ["suite/check_reverse_184.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 185.", "answer": "def solve_185(x): return sort_impl(x)", "tests": ["suite/check_sort_185.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 186.", "answer": "def solve_186(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_186.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 187.", "answer": "def solve_187(x): return flatten_impl(x)", "tests": ["suite/check_flatten_187.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 188.", "answer": "def solve_188(x): return chunk_impl(x)", "tests": ["suite/check_chunk_188.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 189.", "answer": "def solve_189(x): return rotate_impl(x)", "tests": ["suite/check_rotate_189.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 190.", "answer": "def solve_190(x): return merge_impl(x)", "tests": ["suite/check_merge_190.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 191.", "answer": "def solve_191(x): return count_impl(x)", "tests": ["suite/check_count_191.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 192.", "answer": "def solve_192(x): return reverse_impl(x)", "tests": ["suite/check_reverse_192.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 193.", "answer": "def solve_193(x): return sort_impl(x)", "tests": ["suite/check_sort_193.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 194.", "answer": "def solve_194(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_194.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 195.", "answer": "def solve_195(x): return flatten_impl(x)", "tests": ["suite/check_flatten_195.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 196.", "answer": "def solve_196(x): return chunk_impl(x)", "tests": ["suite/check_chunk_196.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 197.", "answer": "def solve_197(x): return rotate_impl(x)", "tests": ["suite/check_rotate_197.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 198.", "answer": "def solve_198(x): return merge_impl(x)", "tests": ["suite/check_merge_198.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 199.", "answer": "def solve_199(x): return count_impl(x)", "tests": ["suite/check_count_199.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 200.", "answer": "def solve_200(x): return reverse_impl(x)", "tests": ["suite/check_reverse_200.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 201.", "answer": "def solve_201(x): return sort_impl(x)", "tests": ["suite/check_sort_201.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 202.", "answer": "def solve_202(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_202.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 203.", "answer": "def solve_203(x): return flatten_impl(x)", "tests": ["suite/check_flatten_203.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 204.", "answer": "def solve_204(x): return chunk_impl(x)", "tests": ["suite/check_chunk_204.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 205.", "answer": "def solve_205(x): return rotate_impl(x)", "tests": ["suite/check_rotate_205.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 206.", "answer": "def solve_206(x): return merge_impl(x)", "tests": ["suite/check_merge_206.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 207.", "answer": "def solve_207(x): return count_impl(x)", "tests": ["suite/check_count_207.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 208.", "answer": "def solve_208(x): return reverse_impl(x)", "tests": ["suite/check_reverse_208.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 209.", "answer": "def solve_209(x): return sort_impl(x)", "tests": ["suite/check_sort_209.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 210.", "answer": "def solve_210(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_210.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 211.", "answer": "def solve_211(x): return flatten_impl(x)", "tests": ["suite/check_flatten_211.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 212.", "answer": "def solve_212(x): return chunk_impl(x)", "tests": ["suite/check_chunk_212.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 213.", "answer": "def solve_213(x): return rotate_impl(x)", "tests": ["suite/check_rotate_213.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 214.", "answer": "def solve_214(x): return merge_impl(x)", "tests": ["suite/check_merge_214.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 215.", "answer": "def solve_215(x): return count_impl(x)", "tests": ["suite/check_count_215.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 216.", "answer": "def solve_216(x): return reverse_impl(x)", "tests": ["suite/check_reverse_216.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 217.", "answer": "def solve_217(x): return sort_impl(x)", "tests": ["suite/check_sort_217.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 218.", "answer": "def solve_218(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_218.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 219.", "answer": "def solve_219(x): return flatten_impl(x)", "tests": ["suite/check_flatten_219.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 220.", "answer": "def solve_220(x): return chunk_impl(x)", "tests": ["suite/check_chunk_220.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 221.", "answer": "def solve_221(x): return rotate_impl(x)", "tests": ["suite/check_rotate_221.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 222.", "answer": "def solve_222(x): return merge_impl(x)", "tests": ["suite/check_merge_222.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 223.", "answer": "def solve_223(x): return count_impl(x)", "tests": ["suite/check_count_223.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 224.", "answer": "def solve_224(x): return reverse_impl(x)", "tests": ["suite/check_reverse_224.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 225.", "answer": "def solve_225(x): return sort_impl(x)", "tests": ["suite/check_sort_225.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 226.", "answer": "def solve_226(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_226.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 227.", "answer": "def solve_227(x): return flatten_impl(x)", "tests": ["suite/check_flatten_227.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 228.", "answer": "def solve_228(x): return chunk_impl(x)", "tests": ["suite/check_chunk_228.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 229.", "answer": "def solve_229(x): return rotate_impl(x)", "tests": ["suite/check_rotate_229.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 230.", "answer": "def solve_230(x): return merge_impl(x)", "tests": ["suite/check_merge_230.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 231.", "answer": "def solve_231(x): return count_impl(x)", "tests": ["suite/check_count_231.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 232.", "answer": "def solve_232(x): return reverse_impl(x)", "tests": ["suite/check_reverse_232.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 233.", "answer": "def solve_233(x): return sort_impl(x)", "tests": ["suite/check_sort_233.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 234.", "answer": "def solve_234(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_234.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 235.", "answer": "def solve_235(x): return flatten_impl(x)", "tests": ["suite/check_flatten_235.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 236.", "answer": "def solve_236(x): return chunk_impl(x)", "tests": ["suite/check_chunk_236.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 237.", "answer": "def solve_237(x): return rotate_impl(x)", "tests": ["suite/check_rotate_237.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 238.", "answer": "def solve_238(x): return merge_impl(x)", "tests": ["suite/check_merge_238.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 239.", "answer": "def solve_239(x): return count_impl(x)", "tests": ["suite/check_count_239.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 240.", "answer": "def solve_240(x): return reverse_impl(x)", "tests": ["suite/check_reverse_240.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 241.", "answer": "def solve_241(x): return sort_impl(x)", "tests": ["suite/check_sort_241.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 242.", "answer": "def solve_242(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_242.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 243.", "answer": "def solve_243(x): return flatten_impl(x)", "tests": ["suite/check_flatten_243.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 244.", "answer": "def solve_244(x): return chunk_impl(x)", "tests": ["suite/check_chunk_244.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 245.", "answer": "def solve_245(x): return rotate_impl(x)", "tests": ["suite/check_rotate_245.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 246.", "answer": "def solve_246(x): return merge_impl(x)", "tests": ["suite/check_merge_246.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 247.", "answer": "def solve_247(x): return count_impl(x)", "tests": ["suite/check_count_247.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 248.", "answer": "def solve_248(x): return reverse_impl(x)", "tests": ["suite/check_reverse_248.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 249.", "answer": "def solve_249(x): return sort_impl(x)", "tests": ["suite/check_sort_249.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 250.", "answer": "def solve_250(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_250.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 251.", "answer": "def solve_251(x): return flatten_impl(x)", "tests": ["suite/check_flatten_251.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 252.", "answer": "def solve_252(x): return chunk_impl(x)", "tests": ["suite/check_chunk_252.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 253.", "answer": "def solve_253(x): return rotate_impl(x)", "tests": ["suite/check_rotate_253.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 254.", "answer": "def solve_254(x): return merge_impl(x)", "tests": ["suite/check_merge_254.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 255.", "answer": "def solve_255(x): return count_impl(x)", "tests": ["suite/check_count_255.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 256.", "answer": "def solve_256(x): return reverse_impl(x)", "tests": ["suite/check_reverse_256.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 257.", "answer": "def solve_257(x): return sort_impl(x)", "tests": ["suite/check_sort_257.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 258.", "answer": "def solve_258(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_258.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 259.", "answer": "def solve_259(x): return flatten_impl(x)", "tests": ["suite/check_flatten_259.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 260.", "answer": "def solve_260(x): return chunk_impl(x)", "tests": ["suite/check_chunk_260.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 261.", "answer": "def solve_261(x): return rotate_impl(x)", "tests": ["suite/check_rotate_261.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 262.", "answer": "def solve_262(x): return merge_impl(x)", "tests": ["suite/check_merge_262.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 263.", "answer": "def solve_263(x): return count_impl(x)", "tests": ["suite/check_count_263.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 264.", "answer": "def solve_264(x): return reverse_impl(x)", "tests": ["suite/check_reverse_264.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 265.", "answer": "def solve_265(x): return sort_impl(x)", "tests": ["suite/check_sort_265.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 266.", "answer": "def solve_266(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_266.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 267.", "answer": "def solve_267(x): return flatten_impl(x)", "tests": ["suite/check_flatten_267.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 268.", "answer": "def solve_268(x): return chunk_impl(x)", "tests": ["suite/check_chunk_268.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 269.", "answer": "def solve_269(x): return rotate_impl(x)", "tests": ["suite/check_rotate_269.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 270.", "answer": "def solve_270(x): return merge_impl(x)", "tests": ["suite/check_merge_270.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 271.", "answer": "def solve_271(x): return count_impl(x)", "tests": ["suite/check_count_271.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 272.", "answer": "def solve_272(x): return reverse_impl(x)", "tests": ["suite/check_reverse_272.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 273.", "answer": "def solve_273(x): return sort_impl(x)", "tests": ["suite/check_sort_273.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 274.", "answer": "def solve_274(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_274.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 275.", "answer": "def solve_275(x): return flatten_impl(x)", "tests": ["suite/check_flatten_275.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 276.", "answer": "def solve_276(x): return chunk_impl(x)", "tests": ["suite/check_chunk_276.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 277.", "answer": "def solve_277(x): return rotate_impl(x)", "tests": ["suite/check_rotate_277.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 278.", "answer": "def solve_278(x): return merge_impl(x)", "tests": ["suite/check_merge_278.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 279.", "answer": "def solve_279(x): return count_impl(x)", "tests": ["suite/check_count_279.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of pairs. Task 280.", "answer": "def solve_280(x): return reverse_impl(x)", "tests": ["suite/check_reverse_280.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of pairs. Task 281.", "answer": "def solve_281(x): return sort_impl(x)", "tests": ["suite/check_sort_281.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of pairs. Task 282.", "answer": "def solve_282(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_282.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of pairs. Task 283.", "answer": "def solve_283(x): return flatten_impl(x)", "tests": ["suite/check_flatten_283.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of pairs. Task 284.", "answer": "def solve_284(x): return chunk_impl(x)", "tests": ["suite/check_chunk_284.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of pairs. Task 285.", "answer": "def solve_285(x): return rotate_impl(x)", "tests": ["suite/check_rotate_285.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of pairs. Task 286.", "answer": "def solve_286(x): return merge_impl(x)", "tests": ["suite/check_merge_286.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of pairs. Task 287.", "answer": "def solve_287(x): return count_impl(x)", "tests": ["suite/check_count_287.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a list of integers. Task 288.", "answer": "def solve_288(x): return reverse_impl(x)", "tests": ["suite/check_reverse_288.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a list of integers. Task 289.", "answer": "def solve_289(x): return sort_impl(x)", "tests": ["suite/check_sort_289.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a list of integers. Task 290.", "answer": "def solve_290(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_290.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a list of integers. Task 291.", "answer": "def solve_291(x): return flatten_impl(x)", "tests": ["suite/check_flatten_291.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a list of integers. Task 292.", "answer": "def solve_292(x): return chunk_impl(x)", "tests": ["suite/check_chunk_292.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a list of integers. Task 293.", "answer": "def solve_293(x): return rotate_impl(x)", "tests": ["suite/check_rotate_293.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a list of integers. Task 294.", "answer": "def solve_294(x): return merge_impl(x)", "tests": ["suite/check_merge_294.py::case_merge"]}
+{"prompt": "Write a Python function that will count a list of integers. Task 295.", "answer": "def solve_295(x): return count_impl(x)", "tests": ["suite/check_count_295.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a string. Task 296.", "answer": "def solve_296(x): return reverse_impl(x)", "tests": ["suite/check_reverse_296.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a string. Task 297.", "answer": "def solve_297(x): return sort_impl(x)", "tests": ["suite/check_sort_297.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a string. Task 298.", "answer": "def solve_298(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_298.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a string. Task 299.", "answer": "def solve_299(x): return flatten_impl(x)", "tests": ["suite/check_flatten_299.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a string. Task 300.", "answer": "def solve_300(x): return chunk_impl(x)", "tests": ["suite/check_chunk_300.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a string. Task 301.", "answer": "def solve_301(x): return rotate_impl(x)", "tests": ["suite/check_rotate_301.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a string. Task 302.", "answer": "def solve_302(x): return merge_impl(x)", "tests": ["suite/check_merge_302.py::case_merge"]}
+{"prompt": "Write a Python function that will count a string. Task 303.", "answer": "def solve_303(x): return count_impl(x)", "tests": ["suite/check_count_303.py::case_count"]}
+{"prompt": "Write a Python function that will reverse a dict of counts. Task 304.", "answer": "def solve_304(x): return reverse_impl(x)", "tests": ["suite/check_reverse_304.py::case_reverse"]}
+{"prompt": "Write a Python function that will sort a dict of counts. Task 305.", "answer": "def solve_305(x): return sort_impl(x)", "tests": ["suite/check_sort_305.py::case_sort"]}
+{"prompt": "Write a Python function that will dedupe a dict of counts. Task 306.", "answer": "def solve_306(x): return dedupe_impl(x)", "tests": ["suite/check_dedupe_306.py::case_dedupe"]}
+{"prompt": "Write a Python function that will flatten a dict of counts. Task 307.", "answer": "def solve_307(x): return flatten_impl(x)", "tests": ["suite/check_flatten_307.py::case_flatten"]}
+{"prompt": "Write a Python function that will chunk a dict of counts. Task 308.", "answer": "def solve_308(x): return chunk_impl(x)", "tests": ["suite/check_chunk_308.py::case_chunk"]}
+{"prompt": "Write a Python function that will rotate a dict of counts. Task 309.", "answer": "def solve_309(x): return rotate_impl(x)", "tests": ["suite/check_rotate_309.py::case_rotate"]}
+{"prompt": "Write a Python function that will merge a dict of counts. Task 310.", "answer": "def solve_310(x): return merge_impl(x)", "tests": ["suite/check_merge_310.py::case_merge"]}
+{"prompt": "Write a Python function that will count a dict of counts. Task 311.", "answer": "def solve_311(x): return count_impl(x)", "tests": ["suite/check_count_311.py::case_count"]}

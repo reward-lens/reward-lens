@@ -8,7 +8,7 @@ Written by a real `GRPOTrainer` and read by every in-run instrument. Regenerate 
 | `short/` | 12 | 96 | 192 | `run:8a8c7e29274db0a681313b48dbd1eb63` |
 | `long/` | 200 | 1,600 | 3,200 | `run:f77bf75940ab982bbc35407af99cc094` |
 
-Same configuration for both, and it is the TRL tap's, unchanged:
+Same configuration for both, and it is W4.1's, unchanged:
 `trl-internal-testing/tiny-Qwen3ForCausalLM`, seed 1234, batch
 8, `num_generations` 4, `max_completion_length` 12, CPU, with a length grader that returns `None`
 on every seventh completion so the abstention channel is exercised on a real run rather than only
@@ -28,7 +28,7 @@ for step in run.steps:
 
 ## They replay exactly, and that is the point of having them
 
-The record format asks how scores became advantages **exactly**, and these two are where
+Section 2.2 asks the record to say how scores became advantages **exactly**, and these two are where
 that claim is checked against a trainer rather than against a fixture. Replaying every group through
 `record.scores.replay_advantages` and differencing against the advantages TRL itself wrote:
 
@@ -41,7 +41,7 @@ That residual is the float32 round-trip and nothing else. It took three fixes to
 which read as fine on its own: the policy-ratio clip was being applied as a bound on the advantage,
 the divisor was the population standard deviation where TRL applies Bessel's correction, and
 `std_ddof` was on the dataclass but in neither `__canonical__` nor `from_canonical`, so it did not
-survive a write.
+survive a write. SPEC-ERRATA E50.
 
 **So a replay that disagrees is now a finding rather than a known limitation**, which is what
 `check_replay` was always supposed to mean.
