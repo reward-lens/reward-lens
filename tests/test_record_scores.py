@@ -499,7 +499,7 @@ def test_the_divisor_convention_changes_the_answer_and_the_record_has_to_say_whi
 
     On a two-element group the gap is its widest: the population form divides by `|a-b|/2` and
     Bessel's by `|a-b|/sqrt(2)`, a factor of `sqrt(2)`. At the `num_generations = 4` GRPO usually
-    runs it is still 15.5%, against a replay tolerance of 1e-4. E50.
+    runs it is still 15.5%, against a replay tolerance of 1e-4. SPEC-ERRATA E50.
     """
     base = dict(
         family="grpo",

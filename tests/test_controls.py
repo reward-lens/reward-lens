@@ -44,7 +44,7 @@ from reward_lens.stats.power import PairedBinaryDesign, resolution_ratio
 def _ctx() -> Context:
     """A context with no signal at all, which is the honest shape for these four.
 
-    None of them touches a network: they read injected data, which is why they need no signal. The
+    None of them touches a network: they read injected data, which is why they are in wave 1. The
     kernel now makes `Context.signal` optional, so the tests say so rather than manufacturing a
     stub reward signal to satisfy a field nobody reads.
     """

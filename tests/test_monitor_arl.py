@@ -89,7 +89,7 @@ def test_monte_carlo_agrees_with_both_at_the_first_design_point() -> None:
 
 
 def test_monte_carlo_contradicts_the_second_stated_design_point() -> None:
-    """E47. The spec states `h = 5.71` for `ARL_0 = 1000`; simulation says 956."""
+    """SPEC-ERRATA E47. The spec states `h = 5.71` for `ARL_0 = 1000`; simulation says 956."""
     mean, se = arl_monte_carlo(5.71, 0.5, 0.0, 2, n_runs=20000, seed=6)
     assert mean + 4 * se < 1000
     assert 900 < mean < 1000

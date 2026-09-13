@@ -352,7 +352,7 @@ def test_the_scaffold_is_hashed_so_a_comparison_names_the_prompt_it_used():
 
 
 # ---------------------------------------------------------------------------
-# Lineage containment in the fold split (E36)
+# Lineage containment in the fold split (SPEC-ERRATA E36)
 # ---------------------------------------------------------------------------
 
 
@@ -397,8 +397,8 @@ def test_the_grouped_split_reports_chance_where_the_ungrouped_one_reports_a_leak
 
     Ungrouped, the twin in the training fold teaches the model the shared body and the twin in the
     test fold carries the opposite label, so the baseline is not merely optimistic: it is
-    confidently *anti*-predictive, which reads as a finding rather than as a bug. The label study
-    hit this on 1,542 real receipt transcripts and got 0.026 against a true answer of 0.5.
+    confidently *anti*-predictive, which reads as a finding rather than as a bug. W3.6 hit this on
+    1,542 real receipt transcripts and got 0.026 against a true answer of 0.5.
     """
     task = _twinned_corpus()
     leaked = (

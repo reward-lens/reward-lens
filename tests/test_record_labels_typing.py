@@ -1,6 +1,6 @@
-"""The static half of the barrier, driven from pytest: mypy must reject the leakage fixture.
+"""The static half of W2.3, driven from pytest: mypy must reject the leakage fixture.
 
-The clause is *a function annotated to take features cannot be passed a `Blind`,
+W2.3's acceptance clause is *a function annotated to take features cannot be passed a `Blind`,
 checked by the type checker in CI*. That is a claim about a checker rejecting something, so the
 test has to run the checker and assert on what it rejected. A test that only asserted the good
 path type checks would pass just as happily against a `Blind` that was an alias for `Any`.
@@ -53,7 +53,7 @@ _MARKER = re.compile(r"#\s*EXPECT:\s*(?P<code>[a-z-]+)\s*$")
 pytestmark = pytest.mark.skipif(
     importlib.util.find_spec("mypy") is None,
     reason=(
-        "mypy is not installed, so the static half of the barrier cannot be checked here. It is "
+        "mypy is not installed, so the static half of W2.3 cannot be checked here. It is "
         "installed by the [dev] extra and it runs in the blind-types job in CI."
     ),
 )
@@ -114,7 +114,7 @@ def expected_from_markers(fixture: Path) -> list[tuple[int, str]]:
 
 
 def test_mypy_rejects_the_leakage_fixture(cache) -> None:
-    """The clause. A clean type check here is a failure, not a pass."""
+    """The acceptance clause. A clean type check here is a failure, not a pass."""
     expected = expected_from_markers(LEAKS)
     assert len(expected) == 8, "the fixture lost its markers"
 
@@ -122,7 +122,7 @@ def test_mypy_rejects_the_leakage_fixture(cache) -> None:
 
     assert code != 0, (
         "mypy accepted tests/w2_3_typing/leaks.py, which passes a Blind to a function annotated "
-        "to take features. The static half of the barrier is not being enforced."
+        "to take features. The static half of W2.3 is not being enforced."
     )
     assert sorted(reported) == sorted(expected)
 
@@ -130,8 +130,8 @@ def test_mypy_rejects_the_leakage_fixture(cache) -> None:
 def test_the_features_function_is_the_one_the_clause_names(cache) -> None:
     """Pinned separately because it is the clause's own sentence.
 
-    The other seven markers are the surrounding barrier. This one line is what the clause says has
-    to be a type error, so it is asserted by message rather than only by code.
+    The other seven markers are the surrounding barrier. This one line is what W2.3 says has to be
+    a type error, so it is asserted by message rather than only by code.
     """
     env = dict(os.environ, MYPYPATH=str(ROOT / "src"))
     proc = subprocess.run(

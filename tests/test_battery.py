@@ -1,4 +1,4 @@
-"""Property tests for the measurement battery.
+"""Property tests for the measurement battery (section 2.8, 4.3.2).
 
 These are not parity tests (that is ``test_e_parity.py``); they are the properties every ported
 Observable must have: it runs on a tiny ``from_tiny`` ClassifierRM, it returns gated Evidence at the
@@ -65,7 +65,7 @@ class _RandomDictionary:
     This is what ``FeatureRewardAlignment`` used to build for itself when no dictionary was
     supplied, and the numbers it produces are identical in kind: alignments of random directions
     with the reward, which the observable reports with ``trained_sae=False``. It moved into the test
-    when ``reward_lens.sae`` moved behind the ``[dict]`` extra, because an instrument that
+    when W0.5 put ``reward_lens.sae`` behind the ``[dict]`` extra, because an instrument that
     conjures a sparse dictionary out of a module it happens to be able to import is claiming a
     dependency it never declared. The documented contract is one method, so this is the whole of it.
     """

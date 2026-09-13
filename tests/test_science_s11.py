@@ -2,7 +2,7 @@
 
 This is one of milestone M6's cheap sciences. The contested-direction probe is calibrated on a real
 tiny ClassifierRM's reward direction with a planted orthogonal contested direction, so the answer is
-known by construction (gate 1): the probe must decode disagreement above chance and report
+known by construction (DESIGN 2.10, gate 1): the probe must decode disagreement above chance and report
 the direction as orthogonal to w_r. The verdict-before-critique probe needs a real reasoning judge, so
 it is recorded as inconclusive-because-gated rather than failed. The study folds its confirmatory
 outcomes into the theorem scoreboard at T7.

@@ -1,7 +1,7 @@
 """The same work, done correctly. **mypy must accept this file with no errors.**
 
 The negative fixture beside this one proves the barrier catches leakage. This one proves the
-barrier is not simply a wall: a detector, a scoring pass and an audit all type check, so someone
+barrier is not simply a wall: a detector, a scoring pass and an audit all type check, so a builder
 who follows the intended path never has to reach for `Any` or a cast to get their work done. A
 `Blind` that nothing legitimate can be written against would be abandoned within a week, and the
 type check would go on passing while everyone routed around it.
@@ -37,7 +37,7 @@ def detect(frame: RolloutFrame) -> float:
 
 
 def rate_by_length(features: Mapping[FeatureID, float]) -> float:
-    """The features function from the clause, called with features."""
+    """The features function from the acceptance clause, called with features."""
     return features.get(FeatureID("len_tokens"), 0.0)
 
 

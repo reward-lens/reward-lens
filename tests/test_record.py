@@ -524,7 +524,7 @@ def test_engine_identity_is_content_derived_and_stable():
     b = Engine(name="vllm", revision="0.11.2", attention_impl="flash_attn_2", dtype="bfloat16")
     c = Engine(name="vllm", revision="0.11.2", attention_impl="flash_attn_2", dtype="float16")
     assert a.id == b.id
-    assert a.id != c.id, "dtype is part of the instrument"
+    assert a.id != c.id, "dtype is part of the instrument, per section 4.7"
     assert a.id.startswith("eng:")
 
 

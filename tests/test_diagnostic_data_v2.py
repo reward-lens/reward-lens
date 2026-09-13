@@ -33,7 +33,7 @@ class TestDiagnosticDataV2:
         assert set(ALL_DIMENSIONS_V2.keys()) == expected
 
     def test_at_least_10_dimensions(self):
-        """The dataset contract requires ≥10 dimensions."""
+        """Prompt §4.6 requires ≥10 dimensions."""
         assert len(ALL_DIMENSIONS_V2) >= 10
 
     def test_get_pairs_returns_list(self):
@@ -52,7 +52,7 @@ class TestDiagnosticDataV2:
             assert len(p.description) > 0
 
     def test_at_least_30_per_dimension(self):
-        """The dataset contract: ≥30 pairs per dimension."""
+        """Prompt §4.6: ≥30 pairs per dimension."""
         pairs_by_dim = get_pairs_by_dim_v2(n_per_dim=30)
         for dim, pairs in pairs_by_dim.items():
             assert len(pairs) >= 30, f"dimension '{dim}' has only {len(pairs)} pairs (need ≥30)"
@@ -72,7 +72,7 @@ class TestDiagnosticDataV2:
         assert len(pairs) <= 15  # shouldn't wildly overshoot
 
     def test_seed_pairs_are_human_written(self):
-        """The dataset contract: ≥5 human-reviewed seed pairs per dimension."""
+        """§4.6: ≥5 human-reviewed seed pairs per dimension."""
         from reward_lens.data.builtin.diagnostic_seeds import _SEEDS
 
         for dim, seeds in _SEEDS.items():

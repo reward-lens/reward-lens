@@ -1,4 +1,4 @@
-"""Arms, coupling, common random numbers, and the arm-divergence gate.
+"""W2.4: arms, coupling, common random numbers, and the arm-divergence gate.
 
 Three things are being pinned here and they fail in different ways.
 
@@ -668,7 +668,7 @@ def test_the_engines_that_actually_served_the_rollouts_are_only_walked_when_aske
 
 
 def test_the_coupling_round_trips_through_the_kernel_codec():
-    spec = shared_seeds(7, engine="vllm@0.11.2", shared={"prompt_set": "ps:abc"}, note="baseline")
+    spec = shared_seeds(7, engine="vllm@0.11.2", shared={"prompt_set": "ps:abc"}, note="wave 1")
     back = decode_foreign(encode_foreign(spec))
     assert back == spec
     assert isinstance(back.streams, tuple)

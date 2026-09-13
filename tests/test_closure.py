@@ -1,4 +1,4 @@
-"""Unit and property tests for plan closure.
+"""Unit and property tests for plan closure (§4.6).
 
 The algorithm is small, so most of these are hand-built plans with one known gap each. The two
 property tests cover the parts a hand-built example cannot: that a cycle anywhere in the arc graph
@@ -342,7 +342,7 @@ def test_demands_cover_every_hypothesis_and_every_kill_criterion():
 
 
 def test_a_closed_plan_returns_a_report_with_the_per_metric_arc_attribution():
-    """Closure rule 3: the runner records which arc was supposed to produce each metric."""
+    """§4.6 rule 3: the runner records which arc was supposed to produce each metric."""
     spec = a_study(metrics=("drift",), kill_metrics=("collapse",))
     bank = on("campaign.scores", roster_key="a", slice="s")
     plan = plan_of(

@@ -1,6 +1,6 @@
 """Deliberate oracle leakage. **mypy must reject this file.**
 
-This is the static half of the clause: *a function annotated to take features cannot
+This is the static half of W2.3's acceptance clause: *a function annotated to take features cannot
 be passed a `Blind`, checked by the type checker in CI.* A clean type check here is a test failure
 rather than a silent pass, which is the point: the clause is about a checker rejecting something,
 and the only way to assert that is to hand it something it must reject.

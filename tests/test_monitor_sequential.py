@@ -197,7 +197,7 @@ def test_merging_under_arbitrary_dependence_is_the_mean_and_not_the_product() ->
 
 
 def test_the_mean_merge_is_valid_under_perfect_dependence_and_the_product_is_not() -> None:
-    """The concrete counterexample to the published claim, simulated.
+    """The concrete counterexample to section 3.4's claim, simulated.
 
     Three perfectly dependent e-values, each a valid e-value on its own. Under the null a valid
     merged e-value has expectation at most 1. The mean does; the product does not, by a wide margin.

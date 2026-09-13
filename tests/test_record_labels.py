@@ -1,4 +1,4 @@
-"""`record/labels.py`: the runtime half of the blind-label barrier.
+"""`record/labels.py`: the runtime half of W2.3.
 
 The type checker is the primary barrier and it is tested in `test_record_labels_typing.py`, which
 runs mypy. Everything here is the part a type checker cannot see:
@@ -168,7 +168,7 @@ def test_a_label_needs_a_key() -> None:
 
 
 def test_the_two_frames_have_disjoint_field_sets() -> None:
-    """The first of the three tests the clause names.
+    """The first of the three tests W2.3's acceptance clause names.
 
     Field-disjoint means there is no attribute path from the visible half to the held-out half, so
     a detector holding a `RolloutFrame` cannot reach the answer key even through `getattr`. The
@@ -423,7 +423,7 @@ def test_adjudicate_returns_the_label_and_writes_exactly_one_row(tmp_path) -> No
 def test_the_row_carries_a_fingerprint_and_never_the_label(tmp_path) -> None:
     """The row is the audit trail and it must not become a second copy of the answer key.
 
-    The evidence store is read at `RECORD` access by every access profile, including the
+    The evidence store is read at `RECORD` access by every profile in section 2.3, including the
     person whose detector is being scored. A row holding the value would be the oracle sitting
     outside the type system, reachable by the one access level everybody has. Asserted against the
     raw bytes on disk rather than against the payload object, because what matters is what a
@@ -473,7 +473,7 @@ def test_two_reads_of_the_same_label_leave_two_rows(tmp_path) -> None:
 
 
 def test_scoring_against_unmeasured_labels_is_refused_with_a_reason_and_a_remedy(tmp_path) -> None:
-    """Scoring against labels with no measured error rate measures the labels.
+    """Section 6.1: scoring against labels with no measured error rate measures the labels.
 
     The refusal is a value. It carries the numbers that produced it (`error_rate=None`,
     `n_audited=0`) and a remedy that names the call the reader should make instead, which is the

@@ -154,7 +154,7 @@ def score_bank(
 
 
 def _leaf_field(leaf: Any, name: str) -> Any:
-    """Read a field off a `ScoreTree` leaf or off the mapping used when the score tree is absent."""
+    """Read a field off a `ScoreTree` leaf or off the mapping used when W2.2 is absent."""
     return leaf[name] if isinstance(leaf, dict) else getattr(leaf, name)
 
 
@@ -203,7 +203,7 @@ def test_the_store_reads_payloads_the_kernel_codec_refuses(simple_store: Path) -
     The refusal is asserted only when `campaign.payloads` is genuinely absent, and that condition is
     checked rather than assumed. `_PAYLOAD_REGISTRY` is a process-global that nothing cleans and the
     codec imports a missing module before giving up, so one earlier test that puts the campaign
-    worktree on `sys.path`, which the closure regression does, makes the class resolvable for the
+    worktree on `sys.path`, which W2.5's closure regression does, makes the class resolvable for the
     rest of the session and the strict codec then reads the store correctly. Asserting the raise
     unconditionally pins the environment rather than the code, and it failed in the full suite while
     passing alone. What matters either way is the second half: `CampaignStore` returns the same
@@ -267,7 +267,7 @@ def test_sidecars_are_counted_rather_than_assumed(simple_store: Path) -> None:
 
 
 def test_a_sidecar_only_the_second_store_holds_is_still_found(tmp_path: Path) -> None:
-    """E3: two stores, and the arrays the first lacks live in the second."""
+    """Errata E3: two stores, and the arrays the first lacks live in the second."""
     root = tmp_path / "primary"
     other = tmp_path / "other" / "payloads"
     payloads = root / "payloads"
@@ -369,7 +369,7 @@ def test_a_bank_response_is_one_turn_with_its_text_unrecorded(simple_store: Path
 
 
 def test_arms_are_one_run_per_grader_cross_linked(tmp_path: Path) -> None:
-    """The record format's own answer to thirteen graders on shared banks."""
+    """Section 2.2's own answer to thirteen graders on shared banks."""
     root = tmp_path / "fleet"
     payloads = root / "payloads"
     write_store(
@@ -651,7 +651,7 @@ def test_the_harness_can_also_say_yes(simple_store: Path) -> None:
 
 
 def test_an_index_with_no_injected_input_refuses_rather_than_noting(simple_store: Path) -> None:
-    """The case the `note` class was invented for now returns what the contract asks for.
+    """The case the `note` class was invented for now returns what section 6.1 asks for.
 
     Twelve shipped indices used to answer "none injected" with an `Evidence` carrying a note. That
     satisfied the letter of "Evidence or a Refusal" and told the reader nothing they could act on,
@@ -770,7 +770,7 @@ def _score_grid(draw: st.DrawFn) -> tuple[int, int, np.ndarray]:
     return rows, k, np.asarray(xs, dtype=np.float32).reshape(rows, k)
 
 
-#: The draw that broke this property on a fresh seed after it had passed for a long time. Row 5 is
+#: The draw that broke this property on a fresh seed after four waves of passing. Row 5 is
 #: [1.0, 524287.96875, -492901.0], whose terms sum to 31387.96875 with a condition number of 32.4.
 #: In float32 the partial sum 524288.96875 rounds up to 524289.0, an absolute error of 0.03125
 #: which the cancellation then multiplies out to 1.03e-06 relative on the mean. The converter

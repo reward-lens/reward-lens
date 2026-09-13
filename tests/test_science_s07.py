@@ -50,7 +50,10 @@ def test_s07_gates_the_real_sweep_honestly(tmp_path):
     # RM-Pythia training run its calibrated curve would then sweep.
     need = gate[0].value["need"]
     assert "reward_lens.dynamics" in need
-    assert "train_rm_pythia" in need and "GPU" in need
+    # D-77 removed the RM-training entry point this need used to name, so the assertion reads
+    # the requirement out of the prose (a trained reward model, at GPU scale) instead of a
+    # symbol reward-lens 3.1.0 no longer ships.
+    assert "reward model trained" in need and "GPU" in need
 
     report = render_report(frozen, result, store)
     assert "CONFIRMED" in report

@@ -173,9 +173,43 @@ def test_importing_the_adapter_pulls_no_framework():
     assert out.stdout.strip() == "[]", f"the adapter imported {out.stdout.strip()} at module scope"
 
 
-def test_the_adapters_package_star_import_pulls_nothing():
+def test_the_adapters_package_names_its_four_adapter_modules():
+    """``__all__`` was empty on purpose and is not any more (BUG_LEDGER P-LIB1-1).
+
+    Three of the sixteen sites the frozen experiment tree imports live under this package, and an
+    empty ``__all__`` left them private module paths that the seam gate fails the build on. Naming
+    the four modules made those paths public; it did not make the symbols importable from the
+    package, so the list now carries ``ContractTRLTap``, ``MappingSources`` and ``verify`` as well.
+    Exact equality rather than a subset check, so that anything added here has to be argued for.
+    """
     module = importlib.import_module("reward_lens.tap.adapters")
-    assert module.__all__ == []
+    assert module.__all__ == [
+        "ContractTRLTap",
+        "MappingSources",
+        "trl",
+        "trl_contract",
+        "trl_signature",
+        "verifiers",
+        "verify",
+    ]
+
+
+def test_the_adapters_package_star_import_pulls_no_framework():
+    """The property the empty ``__all__`` was standing in for, asserted directly.
+
+    The old test asserted ``__all__ == []`` and treated that as the guarantee. The guarantee is that
+    no adapter imports its framework at module scope, so binding all four names drags nothing in. A
+    subprocess for the same reason as the test above: the acceptance test in this session imports
+    all three and ``sys.modules`` would already be poisoned.
+    """
+    code = (
+        "import sys\n"
+        "from reward_lens.tap.adapters import *\n"
+        "print(sorted(k for k in ('torch','trl','transformers','datasets','peft','accelerate')"
+        " if k in sys.modules))\n"
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "[]", f"the star import pulled in {out.stdout.strip()}"
 
 
 # ---------------------------------------------------------------------------
@@ -618,9 +652,16 @@ def test_an_abstention_stays_none_through_the_record():
     assert trajectories[1].scores.value is None
     assert trajectories[1].scores.abstained is True
     assert math.isnan(evaluate(trajectories[1].scores, ScoreContext()))
-    assert trajectories[1].features == {}, "an abstained row has no realised reward, not a zero"
+    assert "trl_realised_reward" not in trajectories[1].features, (
+        "an abstained row has no realised reward, not a zero"
+    )
     assert trajectories[0].scores.value == 1.0
     assert trajectories[0].features["trl_realised_reward"] == 1.0
+    # BLK-010: the length fields are facts about the completion, not about the score, so an
+    # abstained row still carries them. Asserted here so the claim above cannot be widened back
+    # into a whole-dict equality that a later per-rollout field would break again.
+    assert trajectories[1].features["completion_length_tokens"] == 1.0
+    assert trajectories[1].features["completion_length_chars"] == 2.0
 
 
 def test_group_stats_are_computed_from_the_totals_trl_actually_used():

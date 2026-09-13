@@ -1,6 +1,6 @@
 """Unit tests for `reward_lens.tap`: the contract types, the ring, and the guard.
 
-The clause lives in `tests/acceptance/test_w3_1_tap.py`. This file covers the parts
+The acceptance clause lives in `tests/acceptance/test_w3_1_tap.py`. This file covers the parts
 underneath it: shape classification across the return types the ecosystem actually produces, the
 ring's arithmetic and its two drop causes, the guard's window and its exact constant-time gate on
 the p99 check, the downsample branch, and the `RunHandle` protocol the record layer has to satisfy.
