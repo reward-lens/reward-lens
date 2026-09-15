@@ -1,6 +1,6 @@
 # Data
 
-**What is the unit a reward model is measured on?** A preference. `reward_lens.data` is the torch-free schema for preferences and the views built on them: pairs, quadruples, tournaments, and agent trajectories, plus the built-in diagnostic set and the lineage that keeps sample sizes honest.
+**What is the unit a reward model is measured on?** A preference. `reward_lens.data` is the torch-free schema for preferences and the views built on them: `Pair`, `Quadruple`, `Tournament`, and `Trajectory`, plus the built-in diagnostic set and the lineage that keeps sample sizes honest.
 
 ## The preference schema
 

@@ -39,7 +39,7 @@ Every adapter exposes `score`, `score_prefixes`, `capture`, and `readouts`. The 
 
 The capabilities are declared, not guessed. An instrument states what it `requires`, and the runner checks that before it touches a GPU, so a grader that cannot support a measurement is refused with a precise message instead of failing three layers deep. That mapping is direct:
 
-- **Anything reading activations along a linear direction** (the [reward lens](../instruments/lens-crystallization.md), direct attribution, the patch grid, path effects, concept dose-response, the conflict matrix) attaches to the classifier, judge, process, rubric, and trajectory adapters. It does *not* attach to the implicit RM, which has no single head direction, nor to the composites, which have no shared activation.
+- **Anything reading activations along a linear direction** (the [reward-lens](../instruments/lens-crystallization.md), direct attribution, the patch grid, path effects, concept dose-response, the conflict matrix) attaches to the classifier, judge, process, rubric, and trajectory adapters. It does *not* attach to the implicit RM, which has no single head direction, nor to the composites, which have no shared activation.
 - **Score-only instruments** (the bias battery, prompt SNR, most of the [index library](../instruments/index-library.md)) attach to every adapter, since all eight score.
 - **Per-step scores** reach the process RM; **span-typed** experiments reach the trajectory RM; **multi-readout** geometry reaches the rubric head and any multi-row classifier; **generative** verdict work reaches the judge; **distributional** readouts reach the quantile ensemble.
 
@@ -57,6 +57,7 @@ load_signal("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
 #   is GPU/download-gated on this machine (8 GB GPU, cannot hold the 8B/27B campaign models).
 #   The convention sniffed as 'unknown' and the code path is implemented; set allow_download=True
 #   to attempt it on adequate hardware, or use wrap_hf_model/from_tiny for a local model.
+#   (section 2.3.4, hardware reality)
 ```
 
 The error is the honest one: the sniffing and wiring are real, the download is what is withheld, and the two ungated paths are named. `allow_download=True` (or a local path) lifts the gate on hardware that can hold the weights.

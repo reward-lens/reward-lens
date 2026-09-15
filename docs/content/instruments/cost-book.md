@@ -10,7 +10,7 @@
 
 Those are different numbers and the gap between them is the interesting one. A step buys some movement in the behaviour you care about, and it pays for that movement in policy divergence. If the step spent far more divergence than the movement needed, most of what it bought was somewhere you were not looking.
 
-`reward_lens.measure.efficiency` is the book that keeps that account. It is series F3 of the catalogue, and it ships three things: an estimate of the behavioural metric `G`, a minimum cost per step, and the ratio between that minimum and what the step actually spent.
+`reward_lens.measure.efficiency` is the book that keeps that account. It is series F3 of the catalogue and section 3.1.4 of the specification, and it ships three things: an estimate of the behavioural metric `G`, a minimum cost per step, and the ratio between that minimum and what the step actually spent.
 
 ## The three numbers
 
@@ -92,7 +92,7 @@ A clause about a bounded ratio is worth nothing if the denominator is never pres
 | `1.0` | `4.07` nats per sequence | `2.31` | efficiency `0.566`, inside the bound |
 | `0.5` | `0.035` nats per sequence | `2.80` | refusal, `ENVELOPE_VIOLATED` |
 
-The second row is the more informative one. The ratio there is `81`, and the instrument refuses rather than reporting it. A value outside the unit interval is an instrument bug, so the instrument must never hand one out, and the way it never hands one out is by refusing when the premise fails. At the smaller step the failed premise is visible in the numbers: \(\Delta z\) on the leading feature is under half its own standard error, so the step's behavioural effect is below what sixteen samples resolve, and a quadratic form in a noisy \(\Delta z\) measures the noise.
+The second row is the more informative one. The ratio there is `81`, and the instrument refuses rather than reporting it. Section 3.1.4 says a value outside the unit interval is an instrument bug, so the instrument must never hand one out, and the way it never hands one out is by refusing when the premise fails. At the smaller step the failed premise is visible in the numbers: \(\Delta z\) on the leading feature is under half its own standard error, so the step's behavioural effect is below what sixteen samples resolve, and a quadratic form in a noisy \(\Delta z\) measures the noise.
 
 Two things about that experiment are not the trainer's and are stated rather than smoothed over. The step is plain gradient descent rather than AdamW, so \(\Delta\theta\) is known exactly rather than through an optimizer's hidden state. And a step size of `1.0` is far larger than any real run would take. What the experiment establishes is that the bound holds on a real network with a real denominator, and that the self-check fires when it should.
 

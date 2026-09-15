@@ -41,8 +41,7 @@ at rung 0 and a reading at rung 3 are two claims about one quantity and the ladd
 which. And when two rungs disagree on the same data, that disagreement is not an embarrassment: it
 is the cheap method's transfer uncertainty, measured, and it composes into the calibration chain.
 
-A quantity registered with no estimator is an open research target rather than a bug, and this site
-[names every one of them](../catalogue/open.md) instead of quietly omitting them.
+A quantity registered with no estimator is an open research target rather than a bug. The curated public documentation does not include the internal catalogue of such targets, so it makes no claim that the list is complete.
 
 ### `Unit` is three axes, and it refuses
 
@@ -269,7 +268,4 @@ one and report a limit it has not earned.
 
 ## Where to go next
 
-[The anatomy of evidence](anatomy-of-evidence.md) is the other half of this: what comes back when
-an instrument does not refuse. [The trust ladder](trust-ladder.md) is how the trust level on a
-reading gets computed rather than asserted. And [every refusal](../refusals.md) is the page to open
-when one of these types has just told you no.
+[The anatomy of evidence](anatomy-of-evidence.md) is the other half of this: what comes back when an instrument does not refuse. [The trust ladder](trust-ladder.md) is how the trust level on a reading gets computed rather than asserted. The curated public documentation does not include the internal refusal-reference page.

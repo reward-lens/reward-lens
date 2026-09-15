@@ -25,7 +25,7 @@ The estimators underneath live in `reward_lens.policy.selection` and take arrays
 
 C3's contract is not "report your method's recovery". It is: run every localisation method you can against one planted key and publish the ranking, including the rows where the method that read the model's internals came out below one that read none.
 
-The contract is written so that a table of four winners does not discharge it. It requires four or more methods **and** at least one white-box row placed below the best method that read no internals. The requirement is about the losses being visible, not about the count.
+The acceptance clause is written so that a table of four winners does not discharge it. It requires four or more methods **and** at least one white-box row placed below the best method that read no internals. The clause is about the losses being visible, not about the count.
 
 ```python
 from reward_lens.measure.selection import InstrumentRecoveryTable

@@ -27,7 +27,7 @@ Across two models it does not. Each was fit independently, each found its own ef
 
 If the absolute reward is arbitrary, plotting it is worse than useless, because the eye reads a level as if it meant something. Every figure on this site shows a margin instead.
 
-The [reward lens](../instruments/lens-crystallization.md) plots \(w_r^{\top}(h_{\text{chosen}} - h_{\text{rejected}})\) per layer, not two scores side by side. [Attribution](../instruments/attribution.md) reports each component's contribution to the *difference*. A patch measures the *change* in margin. When a curve rises from zero to its final value across depth, that zero is meaningful (no preference formed yet) and that final value is meaningful (the decided margin), because both are differences. A curve of raw reward would have an arbitrary zero and tell you nothing.
+The [reward-lens](../instruments/lens-crystallization.md) plots \(w_r^{\top}(h_{\text{chosen}} - h_{\text{rejected}})\) per layer, not two scores side by side. [Attribution](../instruments/attribution.md) reports each component's contribution to the *difference*. A patch measures the *change* in margin. When a curve rises from zero to its final value across depth, that zero is meaningful (no preference formed yet) and that final value is meaningful (the decided margin), because both are differences. A curve of raw reward would have an arbitrary zero and tell you nothing.
 
 This is one place the reward-model view genuinely departs from generative interpretability, which has no reason to make the point. There, a logit is a logit. Here, a reward is only ever half of a comparison. Internalize it once and a lot of confusing plots resolve: they were always showing you a gap, because a gap is the only thing there is.
 

@@ -22,7 +22,7 @@ An `Observable` declares the capability it needs and the gauge status of what it
 
 Eleven observables, imported from `reward_lens.measure.battery`. The first few read the reward geometry directly off activations and the linear readout, and are gauge-invariant. The last few compare readouts or SAE features and are `RAW_ONLY` or need a frame, so they refuse a cross-model claim without one.
 
-`LensCrystallization` finds the depth where the chosen-versus-rejected margin reaches half its final value: the layer the model made up its mind. See [reward lens and crystallization](../instruments/lens-crystallization.md).
+`LensCrystallization` finds the depth where the chosen-versus-rejected margin reaches half its final value: the layer the model made up its mind. See [reward-lens and crystallization](../instruments/lens-crystallization.md).
 
 ::: reward_lens.measure.battery.lens.LensCrystallization
     options:

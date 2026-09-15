@@ -2,7 +2,7 @@
 
 **Where in the network does the model actually make up its mind?** Run a preference pair through and watch the margin at every layer. For most of the depth, nothing. The two responses sit on top of each other, both near zero, the model apparently undecided. Then, late, the margin snaps open. There is a specific depth where the preference goes from "not yet" to "mostly there," and it is worth naming, because it turns out to be a stable, measurable property of a reward model.
 
-**Crystallization depth** is the layer where the running margin first reaches half of its final value. Half the decision, made. The [reward lens](../instruments/lens-crystallization.md) computes it for any pair.
+**Crystallization depth** is the layer where the running margin first reaches half of its final value. Half the decision, made. The [reward-lens](../instruments/lens-crystallization.md) computes it for any pair.
 
 ![Two projections stay tangled and flat, then split late, with crystallization marked near the end.](../assets/figures/crystallization-schematic-light.svg#only-light){ .rl-fig .rl-fig--hero }
 ![Two projections stay tangled and flat, then split late, with crystallization marked near the end.](../assets/figures/crystallization-schematic-dark.svg#only-dark){ .rl-fig .rl-fig--hero }

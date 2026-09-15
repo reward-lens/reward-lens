@@ -8,7 +8,7 @@
 
 **Which heads and MLPs actually wrote the score?**
 
-The [reward lens](lens-crystallization.md) tells you which *layers* the margin forms in. This goes one level finer. It splits the final reward into a signed contribution from every component, every attention block and every MLP, so you can read off who pushed the score up and who pushed it down. The residual stream is a running sum of these writes and the reward is linear in that sum, so the split is exact. Nothing is left over, and nothing is estimated.
+The [reward-lens](lens-crystallization.md) tells you which *layers* the margin forms in. This goes one level finer. It splits the final reward into a signed contribution from every component, every attention block and every MLP, so you can read off who pushed the score up and who pushed it down. The residual stream is a running sum of these writes and the reward is linear in that sum, so the split is exact. Nothing is left over, and nothing is estimated.
 
 Why care, once you already have the lens? Because "layer 30 decides" is a coarse answer. If you want to know whether the MLPs or the attention are carrying the preference, or which single block wrote most of the margin, attribution hands you the itemized bill.
 

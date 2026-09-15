@@ -67,7 +67,7 @@ print(ev.observable, "|", ev.trust, "|", ev.gauge)
 
 `from_tiny` builds a genuine two-layer reward model on CPU in under a minute, which is enough to exercise every observational instrument end to end. It is not enough to *reproduce* the 8B results, because a two-layer model has no late-layer structure to find. Throughout the battery, the tiny runs are there so you can see the machinery move; the Skywork and ArmoRM numbers are measured results from committed artifacts, and the call that produces them is marked as needing a GPU.
 
-Start with [the reward lens](lens-crystallization.md). It is the instrument that tells the others where to look.
+Start with [the reward-lens](lens-crystallization.md). It is the instrument that tells the others where to look.
 
 ## The instruments that are not about a preference pair
 

@@ -57,7 +57,7 @@ Confirm the environment works before you change anything by running the suite:
 pytest
 ```
 
-If that passes, you have a working checkout of `reward-lens` 3.0.0.
+If that passes, you have a working checkout of `reward-lens` 2.0.1.
 
 ## Working on a change
 

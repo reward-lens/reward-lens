@@ -42,7 +42,7 @@ Everything in the epistemics layer runs like this, on CPU. You can go a long way
 
 ## On a GPU, on a real model
 
-The same shape, pointed at an 8B classifier reward model. Load a signal, pick a measurement, run it. Here is the reward lens on the canonical pair carried through the whole site: a good and a bad answer to "why is the sky blue?"
+The same shape, pointed at an 8B classifier reward model. Load a signal, pick a measurement, run it. Here is the reward-lens on the canonical pair carried through the whole site: a good and a bad answer to "why is the sky blue?"
 
 ```python
 from reward_lens.signals import load_signal
@@ -66,7 +66,7 @@ ev = mb.run(LensCrystallization(), mb.Context(signal=signal, view=DataView([pair
 ev.value["mean_crystal_frac"]     # 0.93  ->  the margin is half-formed only near layer 30 of 32
 ```
 
-On Skywork the preferred answer scores about \(-2.22\) and the rejected one about \(-26.25\), a margin of \(+24.03\). The reward lens shows the two curves staying tangled and flat for most of the network, then splitting late. A crystallization fraction of 0.93 is what that shape means: the model waits until it has nearly finished building its representations before it commits.
+On Skywork the preferred answer scores about \(-2.22\) and the rejected one about \(-26.25\), a margin of \(+24.03\). The reward-lens shows the two curves staying tangled and flat for most of the network, then splitting late. A crystallization fraction of 0.93 is what that shape means: the model waits until it has nearly finished building its representations before it commits.
 
 !!! warning "This step needs a GPU"
     `load_signal` on a hub model is gated behind `allow_download=True`, and an 8B model in `bfloat16` wants roughly 16 GB of GPU memory. Without the flag the loader refuses rather than pretend, and points you at `wrap_hf_model` for a model you have already loaded, or `from_tiny` for the CPU path above. The numbers here were measured on that model. The library does not fabricate them on hardware that cannot hold it.

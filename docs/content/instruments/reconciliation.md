@@ -8,11 +8,11 @@
 
 **Two independent routes predict how far your policy's behaviour moved this step. Do they agree, and if not, by how much and why?**
 
-The reconciliation keeps four books on a training run. The **effect** book measures the movement that happened, \(\Delta z_{\text{obs}}\). The **cause** book measures the selection differential \(S\), how much the advantage favoured each behavioural feature. The **capacity** book is `G`, what a parameter move can reach, and it comes from [the cost book](cost-book.md). Cause and capacity together give a prediction:
+Section 3.1 keeps four books on a training run. The **effect** book measures the movement that happened, \(\Delta z_{\text{obs}}\). The **cause** book measures the selection differential \(S\), how much the advantage favoured each behavioural feature. The **capacity** book is `G`, what a parameter move can reach, and it comes from [the cost book](cost-book.md). Cause and capacity together give a prediction:
 
 \[ \Delta z_{\text{pred}} = \eta \cdot G \cdot C^{-1} S. \]
 
-The difference between the two is the reconciliation residual, and it is not noise. It is a budget with nine named terms, and the question this instrument answers is whether \(\mathrm{Var}(\rho)\) is accounted for by \(\sum u_i^2\). A closed budget characterises the instrument; an open one names an unmodelled term. Either outcome is publishable, which is why both are published here.
+The difference between the two is the reconciliation residual, and section 3.1.5 says it is not noise. It is a budget with nine named terms, and the question this instrument answers is whether \(\mathrm{Var}(\rho)\) is accounted for by \(\sum u_i^2\). A closed budget characterises the instrument; an open one names an unmodelled term. Either outcome is publishable, which is why both are published here.
 
 `reward_lens.measure.reconcile` is F4 and F6: the residual with its budget, and Lande's slope regressing the observed response on the predicted one.
 

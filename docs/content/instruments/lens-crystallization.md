@@ -10,7 +10,7 @@
 
 Run a preference pair forward and watch the margin between the two responses at every layer. For most of the network there is almost nothing to see: the two completions project onto \(w_r\) at nearly the same height, both near zero, the model apparently undecided. Then, late, the margin snaps open. There is a specific depth where the preference goes from "not yet" to "mostly there," and it is worth naming, because it is a stable, measurable property of a reward model rather than a quirk of one pair.
 
-The reward lens is the per-layer view. Crystallization depth is the single number that summarizes it: the layer where the running margin first reaches half of its final value. Half the decision, made.
+The reward-lens is the per-layer view. Crystallization depth is the single number that summarizes it: the layer where the running margin first reaches half of its final value. Half the decision, made.
 
 ![Two projections stay tangled and flat, then split apart late, with crystallization depth marked near the end.](../assets/figures/crystallization-schematic-light.svg#only-light){ .rl-fig .rl-fig--hero }
 ![Two projections stay tangled and flat, then split apart late, with crystallization depth marked near the end.](../assets/figures/crystallization-schematic-dark.svg#only-dark){ .rl-fig .rl-fig--hero }

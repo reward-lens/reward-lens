@@ -34,7 +34,7 @@ One readout, `reward`, a `linear` direction read at the final residual stream. T
 # [('reward', 'linear', 'L1.resid_post', 'final')]
 ```
 
-Because the readout *is* the head, the whole linear-readout battery attaches: the [reward lens and crystallization](../instruments/lens-crystallization.md), [component attribution](../instruments/attribution.md), the [patch grid](../instruments/patch-grid.md), [path effects](../instruments/path-effects.md), and [concept dose-response](../instruments/concept-dose-response.md). Conformance confirms the projection matches the model's native head to zero within tolerance, which is what makes those instruments trustworthy rather than approximate.
+Because the readout *is* the head, the whole linear-readout battery attaches: the [reward-lens and crystallization](../instruments/lens-crystallization.md), [component attribution](../instruments/attribution.md), the [patch grid](../instruments/patch-grid.md), [path effects](../instruments/path-effects.md), and [concept dose-response](../instruments/concept-dose-response.md). Conformance confirms the projection matches the model's native head to zero within tolerance, which is what makes those instruments trustworthy rather than approximate.
 
 ## A worked run
 

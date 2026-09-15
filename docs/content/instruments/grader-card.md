@@ -25,7 +25,7 @@ print(render_card(grader_card(inputs, access=access, phase=Phase.PRE_RUN)))
 
 `card_plan` answers "what would this card contain and what would it cost" with no grader call and no GPU. For a lot of readers that report is the product.
 
-Here is the head of a real one, the card for the answer checker most open RLVR math pipelines call:
+Here is the head of a real one, `experiments/x1_release/cards/is_equiv.txt`, the card for the answer checker most open RLVR math pipelines call:
 
 ```text
 GRADER CARD  hendrycks/math is_equiv
@@ -84,7 +84,7 @@ Across the four cards, `52` fields were rendered. `22` read and `30` refused.
 
 Twenty-one of thirty being `RECORD_INCOMPLETE` is the single most useful number on the page, because it says where the work is. Nothing about these graders is unmeasurable. The measurements were never taken and never recorded, and the fix is upstream in whatever produced the run.
 
-The release publishes a refusal summary that groups all thirty by field with the remedy in full, because the question a reader actually has is not "what did this card fail to say" but "what would it take to say it about any grader", and that is answered one field at a time rather than one grader at a time.
+`experiments/x1_release/refusals.txt` groups all thirty by field with the remedy in full, because the question a reader actually has is not "what did this card fail to say" but "what would it take to say it about any grader", and that is answered one field at a time rather than one grader at a time.
 
 ## Two findings from the fields that did read
 
@@ -110,4 +110,4 @@ None of the four corpora is a rollout produced by a policy under training. Two a
 
 So nothing here is a statement about what a grader does to an optimisation run. It is a statement about what a grader does to inputs, which is the question a buyer asks before the run rather than the one an auditor asks after it.
 
-The release publishes the full cards, one file per subject, with the capability report that preceded each one. Every number in the write-up is bound to a row in the evidence store the run produced, and `reward-lens-claims` verifies the write-up against that store.
+The full cards are in `experiments/x1_release/cards/`, one file per subject, with the capability report that preceded each one in `experiments/x1_release/plans/`. Every number in the release write-up is bound to a row in the evidence store under `experiments/x1_release/evidence`, and `reward-lens-claims` verifies the write-up against that store.

@@ -8,19 +8,19 @@
 
 **In which direction in the residual stream would a nudge raise the expected reward, and how many such directions are there?**
 
-That is the frontier question, and it has two answers at different prices. The general form takes the derivative through the *policy*:
+That is the frontier question of section 3.8, and it has two answers at different prices. The general form takes the derivative through the *policy*:
 
 \[ s_l = \mathbb{E}\bigl[(r - b)\, \nabla_{h_l} \log \pi \bigr] \]
 
 which needs nothing about the grader except that it returns a number. The grader can be a compiler, a test harness, a tournament or a wall-clock timer. The cheap form takes the derivative through the *reward*, \(\partial r/\partial h_l\), which needs the grader to be differentiable and to share a model with the policy.
 
-The same breath that proposes the general form also records that its variance is the largest technical risk in the design, and that nothing may be built on it until a variance-versus-\(K\) curve has been measured.
+Section 3.8 also says, in the same breath as proposing the general form, that its variance is the largest technical risk in the specification and that nothing may be built on it until a variance-versus-\(K\) curve has been measured.
 
 ## The spike was run and it returned no-go
 
 That is what this page is mostly about, because a recorded no-go is a successful spike and it is worth reading as one.
 
-Two thresholds were registered before the first number was produced: a relative standard error below `1.0`, and a mean cosine above `0.5` between two independent estimates of the same direction. With every standard reduction technique applied, group-mean baselines, antithetic sampling and control variates, the measured values at a group size of 64 were:
+Two thresholds were registered before the first number was produced: a relative standard error below `1.0`, and a mean cosine above `0.5` between two independent estimates of the same direction. With every reduction technique the specification names applied, group-mean baselines, antithetic sampling and control variates, the measured values at a group size of 64 were:
 
 | Registered metric | Threshold | Measured | Verdict |
 |---|---|---|---|
@@ -46,7 +46,7 @@ The reductions were ablated one at a time rather than applied as a bundle, which
 
 Only the group-mean baseline earned its place, and it earned it decisively: from `4.99` to `1.082`. Everything after it bought a two per cent improvement in the noise.
 
-**And antithetic sampling actively hurt the thing that matters.** The split-half cosine at the same group size is `0.4515` with a leave-one-out baseline alone and `0.1451` once antithetic pairing is added. The direction got worse while the scalar noise got marginally better, which is the shape of a variance reduction that trades bias for variance in a place the headline metric does not look. That is structural rather than a tuning artefact, and it is recorded here because antithetic sampling is one of the three standard techniques the ablation ladder was built to apply.
+**And antithetic sampling actively hurt the thing that matters.** The split-half cosine at the same group size is `0.4515` with a leave-one-out baseline alone and `0.1451` once antithetic pairing is added. The direction got worse while the scalar noise got marginally better, which is the shape of a variance reduction that trades bias for variance in a place the headline metric does not look. That is structural rather than a tuning artefact, and it is recorded here because the specification names antithetic sampling as one of the three techniques to apply.
 
 ## The score-function rungs still ship, with a floor
 
@@ -64,7 +64,7 @@ It reports a direction in one model's residual-stream basis, so two models' cove
 
 ## Dimensionality, and the four caveats that travel with it
 
-`selection_second_moment`, `whitened_spectrum`, `stable_rank` and `participation_ratio` answer the second half of the question: how many directions there are. Four caveats travel with every number they produce, and one of them bit hard enough here to be worth stating with its measurement.
+`selection_second_moment`, `whitened_spectrum`, `stable_rank` and `participation_ratio` answer the second half of the question: how many directions there are. Section 3.7's four caveats travel with every number they produce, and one of them bit hard enough here to be worth stating with its measurement.
 
 The participation ratio is linear, so it undercounts curvature: a spectrum spread over eight directions may still be one curved manifold. It depends on conditioning, so a value across prompts is not the value within a task. It is preprocessing-sensitive, and on this subject sum-pooling and mean-pooling over positions gave directions at cosine `0.9997` with relative standard errors of `1.097` and `1.125`, so the convention moved the noise and not the direction. And with the sample count near the dimension the spectrum is Marchenko-Pastur distorted, which is measured rather than cited: at a group size of 4 the stable rank of the second moment reads `2.686` out of `8`, and the same matrix estimated from the whole pool reads `6.05`. A reading taken at a realistic group size would have reported concentration in a spectrum that is nearly flat.
 

@@ -54,8 +54,6 @@ The last four are the pathologies the discipline cares most about: a direction w
     options:
       heading_level: 3
 
-A twelfth generator, `kinship_organism`, needs a GPU-trained population and raises until that hardware is present, so it is not documented as working here.
-
 ## The answer key
 
 `AnswerKey` is what makes an organism an organism: the planted truth an instrument is scored against, including which channels are meant to govern behavior out of distribution.

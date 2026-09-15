@@ -72,7 +72,7 @@ There is a guided tour notebook that takes the whole library end to end in a bro
 
 -   __Reach for a tool__
 
-    The battery: the reward lens, attribution, patching, the bias probes, the intervention algebra. One page each, with the math and when not to use it.
+    The battery: the reward-lens, attribution, patching, the bias probes, the intervention algebra. One page each, with the math and when not to use it.
 
     [:octicons-arrow-right-24: Instruments](instruments/index.md)
 

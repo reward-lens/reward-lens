@@ -47,6 +47,6 @@ The honest way to read this: for the compute-gated series, this release is a mea
 
 ## What this page is not
 
-It is not the list of open research targets. That one is [generated from the registry](catalogue/open.md) and is longer: a quantity with a name, a unit and no estimator is a research problem rather than a missing feature, and the docs build fails if a new one turns up unrecorded.
+It is not the list of open research targets. That one is listed in an internal registry that is not included in this public export and is longer: a quantity with a name, a unit and no estimator is a research problem rather than a missing feature, and the docs build fails if a new one turns up unrecorded.
 
 It is also not the caveats page. [Interpreting results honestly](caveats.md) is about how to read numbers this library *does* produce.

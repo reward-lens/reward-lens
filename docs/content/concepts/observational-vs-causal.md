@@ -6,7 +6,7 @@ The honest answer is that they measure different things, and the moment you forg
 
 ## The two questions
 
-An **observational** tool reads. It takes an activation, projects it onto the reward direction, and reports how far the model has leaned toward its verdict by that point. The [reward lens](../instruments/lens-crystallization.md) and [component attribution](../instruments/attribution.md) are observational. They are cheap, one or two forward passes, and they answer "where does the reward *appear*?"
+An **observational** tool reads. It takes an activation, projects it onto the reward direction, and reports how far the model has leaned toward its verdict by that point. The [reward-lens](../instruments/lens-crystallization.md) and [component attribution](../instruments/attribution.md) are observational. They are cheap, one or two forward passes, and they answer "where does the reward *appear*?"
 
 A **causal** tool intervenes. It changes an activation, runs the model forward from there, and measures how the reward moves. [Patching](../instruments/patch-grid.md) is causal. It is expensive, one forward pass per component, and it answers a different question: "which components, if you change them, *change the reward*?"
 

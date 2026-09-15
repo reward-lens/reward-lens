@@ -89,7 +89,7 @@ The real head is ArmoRM's nineteen objectives, a measured result from committed 
 **Nineteen objectives, mostly aligned, not identical.** Each cell is the cosine between two of ArmoRM's objective readouts. The matrix runs warm, so the objectives broadly agree, but the off-diagonal is far from a solid block of ones, and the cooler cells mark objectives that pull apart. Collapsing this to one average reward direction would erase every distinction the matrix shows.
 ///
 
-This is why the single-direction instruments carry a footnote on ArmoRM. When you run [attribution](attribution.md) or the [reward lens](lens-crystallization.md) against a multi-objective head, they read a weighted average of these nineteen directions, and the average is a real approximation with real error. Multi-objective geometry is the instrument that shows you what the approximation smooths over.
+This is why the single-direction instruments carry a footnote on ArmoRM. When you run [attribution](attribution.md) or the [reward-lens](lens-crystallization.md) against a multi-objective head, they read a weighted average of these nineteen directions, and the average is a real approximation with real error. Multi-objective geometry is the instrument that shows you what the approximation smooths over.
 
 To read ArmoRM's own head you need to load it.
 

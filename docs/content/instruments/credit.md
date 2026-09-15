@@ -75,15 +75,15 @@ On the reference record they never do. Measured across all 400 groups rather tha
 
 Every group has a longest common completion prefix of zero tokens. Every rollout is alone from its first token, every value past the root is that rollout's own outcome, the whole outcome advantage lands on token one, and `92.16%` of trained positions, averaged over the 400 groups, carry exactly zero process reward.
 
-G3's own catalogue entry says "kill if the induced function is constant". This is the measured form of that, so **G3 is closed rather than failed**. The instrument is built, it runs, it returns a `Refusal`-shaped verdict with the numbers in it, and the verdict is that this quantity is not worth reading on a record whose sampler never revisits a prefix. The remedy on the reading names the estimator that does survive: a re-roll at prefixes the sampler never revisited, which is rung 1.
+Section 5.G's own catalogue entry says "kill if the induced function is constant". This is the measured form of that, so **G3 is closed rather than failed**. The instrument is built, it runs, it returns a `Refusal`-shaped verdict with the numbers in it, and the verdict is that this quantity is not worth reading on a record whose sampler never revisits a prefix. The remedy on the reading names the estimator that does survive: a re-roll at prefixes the sampler never revisited, which is rung 1.
 
 The other side of the same measurement is asserted too. Given four rollouts that branch, the induced function is non-degenerate and the instrument returns it, so the kill condition is a property of the subject rather than of the code.
 
 ## Reading another framework's tensor dump
 
-The catalogue's rung 0 for this series points at SkyRL's existing dump, and the package consumes it rather than reimplementing it. Two things about that were found by reading the source rather than the documentation, and both are reproduced as tests rather than repeated as claims.
+The specification's rung 0 for this series points at SkyRL's existing dump, and the package consumes it rather than reimplementing it. Two things about that were found by reading the source rather than the documentation, and both are reproduced as tests rather than repeated as claims.
 
-`dump_data_batch` is a boolean configuration field, not a function; the function is `dump_data`. And `rewards` is popped from the batch at `trainer.py:436` and `uids` at `:437`, five lines before the dump, so the one mechanism that is supposed to already write the interpretable tensor writes neither the reward it came from nor the group it belongs to. `read_skyrl_dump` consumes what does reach disk, recovers the grouping by hashing the prompt, and never imports `skyrl`: the read goes through a restricted unpickler, and the acceptance run asserts that `skyrl` is absent from `sys.modules` afterwards.
+`dump_data_batch` is a boolean configuration field, not a function; the function is `dump_data`. And `rewards` is popped from the batch at `trainer.py:436` and `uids` at `:437`, five lines before the dump, so the one mechanism the specification says already writes the interpretable tensor writes neither the reward it came from nor the group it belongs to. `read_skyrl_dump` consumes what does reach disk, recovers the grouping by hashing the prompt, and never imports `skyrl`: the read goes through a restricted unpickler, and the acceptance run asserts that `skyrl` is absent from `sys.modules` afterwards.
 
 ## What this cannot do
 
