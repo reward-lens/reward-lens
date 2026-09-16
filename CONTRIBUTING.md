@@ -1,10 +1,10 @@
-# Contributing to Reward Lens
+# Contributing to reward-lens
 
-Thank you for your interest in contributing to Reward Lens, the mechanistic interpretability toolkit for reward models! We're building the foundation that makes understanding the RLHF optimization target possible.
+Thank you for your interest in contributing to reward-lens, the mechanistic interpretability toolkit for reward models! We're building the foundation that makes understanding the RLHF optimization target possible.
 
 ## Philosophy
 
-Reward Lens is built on a few core beliefs:
+reward-lens is built on a few core beliefs:
 - **Minimal Abstractions:** Prefer lightweight PyTorch hooks directly on HuggingFace models over complex, opaque abstractions.
 - **Auditable Core Code:** No hooks hidden in mysterious dictionaries. ~200 lines vs thousands.
 - **Truth over Hype:** As shown in our validation with component attribution vs causal importance, honesty about limitations (like Spearman $\rho$ values) builds credibility. If a technique is exploratory, say so. If it requires rigorous patching validation, document that.

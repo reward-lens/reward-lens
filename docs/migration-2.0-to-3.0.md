@@ -71,7 +71,7 @@ Two concepts collided under one name and the collision was worse than a rename, 
 is `runtime_checkable` and `isinstance` therefore only checks that the attribute exists. An author
 following the new protocol verbatim on the 2.0 spelling got an `AttributeError` on
 `.missing_from(Capability)` at `run()` time, while the access matrix was never checked at all, and
-nothing flagged it.
+nothing flagged it. See `SPEC-ERRATA.md` E16.
 
 `declared_capabilities` **raises** on the old spelling rather than falling back. Falling back would
 read the inherited `capabilities` default and silently drop the gate the declaration exists to set,
@@ -101,12 +101,14 @@ else:
     print(reading.value, reading.uncertainty)
 ```
 
-There are seventeen refusal reasons. The three that catch most existing 2.0 code are
+There are eighteen refusal reasons. The three that catch most existing 2.0 code are
 `ACCESS_INSUFFICIENT` (answerable where you are standing: get more access or drop a rung),
 `RECORD_INCOMPLETE` (answerable upstream, in whatever wrote the record) and `QUANTITY_UNDEFINED`
 (answerable nowhere, so it is required to name the question that does apply). The distinction is not
 cosmetic: telling somebody to get more access when the honest answer is "your framework does not dump
-this" costs them an afternoon and then still does not work.
+this" costs them an afternoon and then still does not work. `SPEC-ERRATA.md` E30 and E48 are the two
+entries that added the second and third; `ESTIMAND_UNSUPPORTED` is the eighteenth and is the case
+where the question applies and this instrument does not compute in it.
 
 `Evidence` itself gained fields rather than losing them: `quantity`, `lod`, `regime`, `reference`,
 `baselines`, `incremental` and `information_time` are new, and `schema_version` is stamped so a
@@ -186,7 +188,8 @@ unenforceable: measured on a two-line probe, `reveal_type(Blind)` printed `Any` 
 leakage fixture reported one unrelated error and none of the eight.
 
 **What this means for you:** running mypy or pyright against code that imports `reward_lens` will now
-surface real errors where it previously surfaced none. Expect a first run to be noisy.
+surface real errors where it previously surfaced none. Expect a first run to be noisy. See
+`SPEC-ERRATA.md` E25.
 
 ## Two shipped numbers changed value
 
@@ -210,7 +213,7 @@ re-assert the exact conflation the correction removed.
 **`replay_advantages`** had two wrong numbers on default paths, both shipping since the record
 landed.
 
-The policy-ratio clip was applied as a bound on the advantage. The advantage has no clip
+The policy-ratio clip was applied as a bound on the advantage. Section 3.2's advantage has no clip
 term; ratio clipping belongs to the loss, where it truncates the update rather than the advantage.
 At the default, where `epsilon` is set and `epsilon_high` is unset, the two bounds are equal, so
 every live advantage was pinned to a single constant and `counterfactual` then differenced two
@@ -239,7 +242,7 @@ say**. Defaulting to 1 was the other option and it is worse: a near-certain assu
 denominator is exactly the shape of confident wrong number the record exists to prevent.
 
 The record now replays a real trainer to the float32 round-trip and nothing else. See
-`tests/fixtures/grpo_run/README.md` for the residuals.
+`SPEC-ERRATA.md` E50, and `tests/fixtures/grpo_run/README.md` for the residuals.
 
 ## What did not change
 

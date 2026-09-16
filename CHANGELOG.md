@@ -1,11 +1,27 @@
 # Changelog
 
+## [3.1.0] - unreleased
+
+The active product release is **reward-lens 3.1.0**. This is the next minor
+release after the published 3.0.0 line; it remains unreleased while the
+product audit and report workflow is reconciled for release.
+
+- Normalized the maintained product name, package metadata, CLI/help text, and
+  current documentation to `reward-lens`; Python imports remain
+  `reward_lens`, and established compatibility identifiers and configuration
+  keys remain supported.
+- Aligned runtime, package, frontend, lockfile, audit-record, and verification
+  version declarations on 3.1.0. The former 4.0.0 development label is not a
+  product release identity.
+- Added the current audit/report route and release-identity checks. The
+  inherited 3.0.0 record below remains historical release documentation.
+
 ## [3.0.0] - 2026-08-06
 
-A rebuild around a type system 2.0.1 did not have, keeping the half that was
-always the product. The library goes from 42,327 lines across 172 modules to
-168,540 across 376, and the tests from 10,458 lines and 527 collected to
-78,559 and 4,073.
+Codename ASSAY. A rebuild around a type system 2.0.1 did not have, keeping the
+half that was always the product. Seventy commits since 2.0.1: the library goes
+from 42,327 lines across 172 modules to 159,832 across 360, and the tests from
+10,458 lines and 527 collected to 77,616 and 3,971.
 
 The thesis, because every entry below is downstream of it: a reward function is
 written down, and a realized objective is what the policy's behaviour
@@ -145,7 +161,7 @@ The families, and what each answers:
   research target rather than a bug. An instrument with no baselines, no envelope
   or an envelope naming a condition nothing measures fails lint. A white-box
   reading with no incremental validity fails lint.
-- Dependencies restructured. The base install pulls nothing compiled and a
+- Dependencies restructured to §4.9. The base install pulls nothing compiled and a
   CI job asserts it; `import reward_lens` does not import torch. Missing extras
   raise a typed error naming an extra that `pip` can actually install.
 - The claims gate runs in CI over every tracked page, with a ratchet that may
@@ -164,24 +180,6 @@ The families, and what each answers:
   `signals/adapters.py`. `model.py` and `model_adapters/` stay on disk with live
   consumers in the organism foundry, deliberately: deleting working code to make a
   line count look better is how a cleanup becomes an outage.
-- Three pieces of onboarding material that the v1 retirement had already broken:
-  the seven scripts in `examples/`, which imported `RewardModel`,
-  `reward_lens.lens`, `reward_lens.hacking` and `reward_lens.viz`;
-  `Reward_Lens_Intro_Demo.ipynb`, whose first cell imported `reward_lens.hacking`,
-  `ConceptExtractor` and `CONCEPT_PAIRS`; and `configs/`, which described a
-  campaign that does not live in this repository and which nothing referenced.
-  None of the three would run on a fresh install. The README carries a quickstart
-  that is generated from a run instead, so it cannot rot the same way.
-- `work_package`, `caliper_ancestor` and `source_lines` leave the catalogue
-  schema. `status` already carried the only fact `work_package` encoded, and the
-  other two were provenance into documents that are not published. The
-  capability report and the documentation now render `status`, and
-  `CatalogueInstrument.work_package` and `NotBuilt.work_package` are gone from
-  the public API; `NotBuilt.status` replaces the latter.
-- The sdist no longer carries `tests/`. It shipped the 118 modules at the top of
-  the directory without `conftest.py`, the fixtures, or `tests/acceptance/`, so
-  the suite it contained could not be collected. Running the suite needs the
-  repository, which also carries `studies/` and `spec/`.
 
 ### Fixed
 

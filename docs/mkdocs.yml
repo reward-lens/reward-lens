@@ -16,9 +16,9 @@ site_url: https://reward-lens.github.io/reward-lens/
 site_author: Mohammed Suhail B Nadaf
 copyright: Copyright &copy; 2026 Mohammed Suhail B Nadaf, MIT License
 
-# Both of these point at the project's repository rather than any personal account, so the "edit
-# this page" pencil and the header link land where the code is. The authority for the URL is
-# pyproject.toml's `Homepage`; keep the two in step.
+# Both of these were still pointing at the pre-move personal account, which sends every "edit this
+# page" pencil and every header link to a repository that is no longer the project's. The
+# authority is pyproject.toml's `Homepage`, which is the integrator's file.
 repo_url: https://github.com/reward-lens/reward-lens
 repo_name: reward-lens/reward-lens
 edit_uri: edit/main/docs/content/
@@ -245,7 +245,6 @@ nav:
       - The evidence store: discipline/evidence-store.md
   - When it refuses: refusals.md
   - The sciences: sciences.md
-  - Findings: findings.md
   - Interpreting results honestly: caveats.md
   - What 3.0 does not do: not-in-3-0.md
   - Background & theory:

@@ -1,5 +1,5 @@
 # Quantities registered with an estimator ladder nobody has built yet.
-# Lint rule two: a quantity with no estimator is an open research target, and the docs
+# Section 4.2: a quantity with no estimator is an open research target, and the docs
 # build says so by name rather than treating it as a bug. This list may shrink and must
 # not grow. Register an estimator and delete its line; docs/gen_catalogue.py --check
 # enforces it, and --write-ledger rewrites it.
@@ -8,18 +8,19 @@
 # richer environment imports more estimator modules and so sees fewer open quantities,
 # which the ratchet allows.
 #
-# Five of the entries below deserve a note, because the list may otherwise read as five
-# new research problems. They are not. All five have a **shipped instrument that computes
-# them**: the four `reward.*` are the contract layer, N5 to N8, and
-# `run.group_shape_factor` is what A1 reports beside its reading after the correction that
-# stopped multiplying it in. What none of the five has is a registered `EstimatorEntry`,
-# which is the ladder, so `best_estimator` cannot resolve them and the capability report
-# cannot cost them. That is a real gap, and it is the one this file is for.
+# Five added at wave 6, and the reason is worth stating because this list may otherwise
+# read as five new research problems. They are not. All five have a **shipped instrument
+# that computes them**: the four `reward.*` are W3.9's contract layer, N5 to N8, built in
+# wave 4, and `run.group_shape_factor` is what A1 reports beside its reading after the
+# correction that stopped multiplying it in. What none of the five has is a registered
+# `EstimatorEntry`, which is the ladder, so `best_estimator` cannot resolve them and the
+# capability report cannot cost them. That is a real gap and it is the one this file is
+# for; registering the five ladders is a wave-7 row. SPEC-ERRATA E56.
 #
 # This is the only legitimate way this list grows: a quantity registered without a ladder.
 # The ratchet forbids growth that comes from an estimator being deleted or lost.
 #
-# One entry has a second legitimate shape rather than a third:
+# One added at wave 7, and it is a second legitimate shape rather than a third:
 # `policy.readout_recoverability` HAS a registered ladder, in `policy/quantities.py`, and that
 # module imports `reward_lens.runtime`, which needs the `white-box` extra. So a base install
 # never runs the registration and the quantity reads open here while being built and running

@@ -148,8 +148,8 @@ docs/content/theory/identifiability.md	0.05	The two directions look nearly ortho
 docs/content/theory/identifiability.md	1.0	The two directions look nearly orthogonal in raw coordinates, cosine \(0.05\), and identical once the gauge is fixed, ca
 docs/content/theory/identifiability.md	2309.15257	The angle between two canonicalized directions is the STARC-invariant quantity whose cosine is the on-distribution corre
 docs/content/theory/identifiability.md	2411.15951	This is the reward-modeling instance of a general fact about reward learning: a reward function is identifiable only up 
-docs/content/theory/lens-lineage.md	0.047	For the reward lens the same caution is sharp and measured: what the lens shows forming late is not what patching finds 
-docs/content/theory/lens-lineage.md	0.171	For the reward lens the same caution is sharp and measured: what the lens shows forming late is not what patching finds 
+docs/content/theory/lens-lineage.md	0.047	For the reward-lens the same caution is sharp and measured: what the lens shows forming late is not what patching finds
+docs/content/theory/lens-lineage.md	0.171	For the reward-lens the same caution is sharp and measured: what the lens shows forming late is not what patching finds
 docs/content/theory/lens-lineage.md	2303.08112	The tuned lens (Belrose et al., 2023, "Eliciting Latent Predictions from Transformers with the Tuned Lens," arXiv [2303.
 docs/content/theory/preference-rank.md	0.299	The rank-one skew operator gets \(0.970\), recovering \(0.299\) of preference the scalar had to discard
 docs/content/theory/preference-rank.md	0.671	The best scalar reward orders only \(0.671\) of the held-out pairs correctly, barely better than the coin it is forced t

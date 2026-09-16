@@ -6,14 +6,14 @@ can be named in `nav:` exactly like a hand-written one, and `--strict` will fail
 missing rather than shipping a site with a hole in it.
 
 The pages are generated into memory and never written to `docs/content`. That is deliberate in
-three ways. There is no committed copy to go stale. A review diff does not carry ninety
+three ways. There is no committed copy to go stale. The integrator's diff does not carry ninety
 machine-written files. And `reward-lens-claims`, which reads `docs/content` off disk, keeps its
 ratchet over the prose a person wrote, which is the prose it exists to police.
 
 If `reward_lens` will not import, this hook fails the build. It does not fall back to an empty
-catalogue: a docs build that silently skips the registry leaves lint rule two unenforced while
-still looking green, and an unenforced gate that reports success is worse than a red build. The
-documentation environment has to install the package.
+catalogue: a docs build that silently skips the registry is the state section 4.2's second lint
+rule spent three phases unenforceable in, and quietly restoring it would be worse than a red
+build. The documentation environment has to install the package.
 """
 
 from __future__ import annotations

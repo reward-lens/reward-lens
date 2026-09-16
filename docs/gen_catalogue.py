@@ -7,7 +7,7 @@ order of authority:
 - ``reward_lens.core.quantity``: ``QUANTITIES`` after ``load_quantities()``, and ``ladder()`` for
   the estimators registered against each one. This is the live registry, not a file.
 - ``reward_lens.access.report.load_instrument_catalogue()``: the loader the capability report
-  itself uses, which normalises the catalogue's polymorphic fields (six instruments store
+  itself uses, which normalises the polymorphic fields of SPEC-ERRATA E14 (six instruments store
   ``quantities`` as the bare string ``OPEN``, and iterating that yields four single-character ids
   that resolve to nothing).
 - ``spec/CATALOGUE.json``, reached through ``reward_lens.core.quantity.catalogue_path``, for the
@@ -17,9 +17,10 @@ order of authority:
   both hold. A disagreement fails the build naming the field, because a catalogue page that
   disagrees with the loader is worse than no catalogue page.
 
-**Lint rule two lives here.** A `Quantity` with no estimator fails the docs build with a message
-naming it as an open research target rather than a bug. It is enforced as a ratchet, the same
-shape as ``docs/claims-baseline.txt``: ``LEDGER_PATH``
+**Lint rule two lives here.** Section 4.2 of the specification: a `Quantity` with no estimator
+fails the docs build with a message naming it as an open research target rather than a bug. The
+rule has been unenforceable since Phase 0 because nothing in the docs build read the registry.
+It is enforced now as a ratchet, the same shape as ``docs/claims-baseline.txt``: ``LEDGER_PATH``
 records the quantities that are open today, the build fails on any open quantity that is not in
 it, and the list may shrink and must not grow. A ratchet rather than a hard failure because most
 of the registered quantities are specified-and-not-built, so a hard failure would make the docs
@@ -52,9 +53,10 @@ from typing import Any, Iterable
 DOCS_DIR = Path(__file__).resolve().parent
 LEDGER_PATH = DOCS_DIR / "open-quantities.txt"
 
-#: The catalogue rows carry only the series letter, so the titles live here, trimmed from the
-#: series headings. Series N has no heading of its own: the frontier and the contract layer are
-#: developed together, so N1 to N4 take their title from the section that develops them.
+#: Part 5 of the specification names the series; the catalogue rows carry only the letter. These
+#: titles are the Part 5 headings, trimmed. Series N has no Part 5 heading: SPEC-ERRATA E23 records
+#: that the specification develops the frontier in section 3.0 and the contract layer in 3.5.2, and
+#: Part 9 assigns the latter no work package, so N1 to N4 arrive from Part 3 instead.
 SERIES: dict[str, str] = {
     "A": "Signal metrology: the grader as a measurement device",
     "B": "Grader structure: is this thing a scalar, and what is it made of?",
@@ -271,7 +273,7 @@ def load_ledger(path: Path = LEDGER_PATH) -> set[str]:
 #: The preamble a ledger gets when there is no file to take one from.
 DEFAULT_LEDGER_HEADER = """\
 # Quantities registered with an estimator ladder nobody has built yet.
-# Lint rule two: a quantity with no estimator is an open research target, and the docs
+# Section 4.2: a quantity with no estimator is an open research target, and the docs
 # build says so by name rather than treating it as a bug. This list may shrink and must
 # not grow. Register an estimator and delete its line; docs/gen_catalogue.py --check
 # enforces it, and --write-ledger rewrites it.
@@ -318,7 +320,7 @@ def check_ledger(view: RegistryView, ledger: set[str]) -> list[str]:
         raise LintFailure(
             f"{len(new)} registered quantit{'y has' if len(new) == 1 else 'ies have'} no "
             f"estimator and no entry in {LEDGER_PATH.name}:\n  {listed}\n"
-            f"This is lint rule two. A quantity with no estimator is an open "
+            f"This is section 4.2's second lint rule. A quantity with no estimator is an open "
             f"research target rather than a bug, and the docs build names it as one. If that is "
             f"what this is, record it: python docs/gen_catalogue.py --write-ledger. If it is not, "
             f"register the estimator."
@@ -338,7 +340,10 @@ def _would_close(view: RegistryView, qid: str) -> str:
     if not owners:
         return "no catalogue instrument claims it"
     inst = owners[0]
-    return f"{inst.id} {inst.name}"
+    where = f"{inst.id} {inst.name}"
+    if inst.work_package:
+        where += f", work package {inst.work_package}"
+    return where
 
 
 # ---------------------------------------------------------------------------
@@ -416,7 +421,7 @@ def _instrument_section(view: RegistryView, inst: Any) -> list[str]:
         ["Phases", _ordered(inst.phases)],
         ["Invariance group", _cell(row.get("invariance_group"))],
         ["Wedge", "yes" if inst.wedge else "no"],
-        ["Status", _text(row.get("status")) or "not scheduled"],
+        ["Work package", _cell(inst.work_package) if inst.work_package else "not scheduled"],
     ]
     requires = _as_list(row.get("envelope_requires"))
     measured_by = row.get("envelope_measured_by")
@@ -481,7 +486,7 @@ def _instrument_section(view: RegistryView, inst: Any) -> list[str]:
     return out
 
 
-_CATALOGUE_PREAMBLE = """The catalogue is the registry's own rows, rendered from the code that
+_CATALOGUE_PREAMBLE = """The catalogue is the specification's own rows, rendered from the code that
 reads them rather than retyped. Each entry names one instrument, the quantity or quantities it
 estimates, the access it needs, the substrates and phases it applies to, the envelope conditions
 under which its answer means anything, the invariance group it declares, the baselines a claim from
@@ -568,7 +573,7 @@ def _catalogue_index(view: RegistryView) -> str:
         f"{len(view.quantities) - len(view.open_quantities)} have an estimator this build could "
         f"see and load. Every one of the rest is named on the "
         f"[open research targets](open.md) page rather than quietly omitted, which is the whole "
-        f"of lint rule two.",
+        f"of section 4.2's second lint rule.",
         "",
         "The [quantity registry](quantities.md) is the other axis on the same data: one row per "
         "quantity, with its unit, its invariance group, the access its cheapest rung needs, and "
@@ -646,8 +651,8 @@ def _open_page(view: RegistryView, ledger: set[str]) -> str:
         "# Open research targets",
         "",
         f"{len(open_ids)} of {len(view.quantities)} registered quantities have no estimator this "
-        f"build could resolve. They are listed here by name because that is what lint rule two "
-        f"asks for: a quantity with no estimator is an open research target rather than a bug, and a "
+        f"build could resolve. They are listed here by name because that is what section 4.2 asks "
+        f"for: a quantity with no estimator is an open research target rather than a bug, and a "
         f"docs build that quietly omitted it would make the library look finished.",
         "",
         "This page is generated, and the docs build fails if a quantity turns up open without an "
@@ -699,9 +704,10 @@ def _open_page(view: RegistryView, ledger: set[str]) -> str:
     out += [
         "## What would close each one",
         "",
-        "The right column is the catalogue instrument that claims the quantity. A quantity no "
-        "instrument claims is the more interesting case: it means the registry knows a thing is "
-        "worth measuring and nothing in the catalogue is aimed at it.",
+        "The right column is the catalogue instrument that claims the quantity, and the work "
+        "package that would build it. A quantity no instrument claims is the more interesting "
+        "case: it means the registry knows a thing is worth measuring and nothing in the "
+        "catalogue is aimed at it.",
         "",
     ]
     out += _table(
@@ -755,6 +761,17 @@ WHAT_TO_DO: dict[str, str] = {
         "ask that one instead. If the named alternative is not the question you wanted, the honest "
         "conclusion is that the thing you wanted to know is not a property of this object, which "
         "is worth writing down rather than working around."
+    ),
+    "ESTIMAND_UNSUPPORTED": (
+        "The question is fine; this instrument is the wrong one to ask. It computes in a "
+        "particular estimand and you supplied another, so the two ways to move are to bring an "
+        "instrument built for your estimand, or to restate your question in the one this "
+        "instrument does compute in and say in the write-up that you restated it. The commonest "
+        "case is the power planner, which simulates the paired binary test exactly and refuses a "
+        "continuous or ordinal design rather than approximating it against a different null. More "
+        "access does not help and neither does a better record: the refusal names the estimand it "
+        "was handed and the estimand it computes in, and the gap between those two is the whole "
+        "story."
     ),
     "RECORD_INCOMPLETE": (
         "Do not go looking for more access; it will not help. The field was never written, so "
@@ -932,7 +949,7 @@ def _refusals_page() -> str:
         "## The one question that sorts them: where is the remedy answerable?",
         "",
         "A list this long is only navigable if it has an organising idea, and this one does. The "
-        "three refusals that look most alike send you in three different directions, and the test "
+        "four refusals that look most alike send you in four different directions, and the test "
         "that separates them is a single question about the remedy rather than anything about the "
         "reason's name.",
         "",
@@ -955,6 +972,11 @@ def _refusals_page() -> str:
                 "ask the question that does apply",
                 "**nowhere**",
             ],
+            [
+                "[`ESTIMAND_UNSUPPORTED`](#estimand-unsupported)",
+                "bring an instrument that computes in your estimand",
+                "**where you are standing**, with a different instrument",
+            ],
         ],
     )
     out += [
@@ -974,6 +996,16 @@ def _refusals_page() -> str:
         "It is also not `SUBSTRATE_MISMATCH`, which is about the grader's kind (a program has no "
         "activations) rather than the estimator's. The two live on different axes and an "
         "instrument can be refused on either.",
+        "",
+        "The fourth shares the first's answer and not its remedy, which is why it is worth its own "
+        "reason. `ESTIMAND_UNSUPPORTED` also sends you back to where you are standing, but not to "
+        "buy access: the access you have is fine and no rung on any ladder produces this answer. "
+        "The instrument computes in one estimand and you handed it another. The power planner "
+        "simulates the paired binary test exactly, so a continuous design is powered against a "
+        "different null and approximating it there would return a confident number computed "
+        "against the wrong test. Reading that as `ACCESS_INSUFFICIENT` sends a reader looking for "
+        "a rung that does not exist, which is the same afternoon the first two reasons were split "
+        "to save.",
         "",
         "The line between the second and the third is genuinely close in places, and one site was "
         "argued and deliberately left where it was. `record/tensors.py` refuses a compacted "

@@ -54,9 +54,9 @@ Both are lists that may shrink and must not grow, and both fail CI when they do.
 before the claims checker existed. A number in a new page is either tagged with
 the Evidence id it came from or labelled illustrative in the same sentence.
 
-`docs/open-quantities.txt` is the second lint rule: a `Quantity` with no
-estimator fails the docs build, naming it an open research target rather than a
-bug. Record a deliberate one with
+`docs/open-quantities.txt` is section 4.2's second lint rule: a `Quantity` with
+no estimator fails the docs build, naming it an open research target rather than
+a bug. Record a deliberate one with
 
 ```bash
 python docs/gen_catalogue.py --write-ledger    # from a base install, not one with extras
@@ -77,15 +77,8 @@ cd docs
 See [`diagrams/README.md`](diagrams/README.md) for the three figure kinds (TikZ
 geometry, inline Mermaid, matplotlib-from-real-runs) and when to use each.
 
-## Deploy
+## Publication
 
-Documentation publishes to GitHub Pages automatically. The
-[`Deploy Docs to GitHub Pages`](../.github/workflows/docs.yml) workflow builds
-the site with MkDocs on every push to the default branch and serves the built
-HTML directly, so Pages never falls back to rendering a README.
+This export retains the product documentation sources. The CPU workflow validates the package and supported tests; it does not publish this documentation. Website source and deployment are outside this repository import.
 
-One-time repository setup: **Settings → Pages → Build and deployment → Source →
-GitHub Actions**. After that, every push to `main` rebuilds and redeploys.
-
-A ReadTheDocs build also works (point it at `docs/mkdocs.yml`). `site_url` in
-`mkdocs.yml` assumes GitHub Pages; change it to match your host.
+A local documentation build can use docs/mkdocs.yml with its documented dependencies. A future hosting change is separate work and must preserve the distinction between the product's offline report bundle and the external website.
