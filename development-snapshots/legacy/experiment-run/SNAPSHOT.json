@@ -1,0 +1,48 @@
+{
+  "group": "legacy/experiment-run",
+  "status": "selected full source files, not a complete historical working tree or supported implementation",
+  "files": [
+    {
+      "group": "legacy/experiment-run",
+      "logical_source": "legacy-experiment-run",
+      "source_path": "src/reward_lens/hacking.py",
+      "source_revision_or_state": "historical working tree",
+      "source_sha256": "a56ecabb235b27d8416d02d4d8b9db06e31a67ba9d09ebc8d57f68402509845e",
+      "path": "development-snapshots/legacy/experiment-run/src/reward_lens/hacking.py",
+      "recovery_path": "src/reward_lens/hacking.py",
+      "sha256": "a56ecabb235b27d8416d02d4d8b9db06e31a67ba9d09ebc8d57f68402509845e",
+      "size": 20490,
+      "status": "incomplete or historical alternative; not integrated",
+      "transformation": "none",
+      "license": "retained product MIT notice"
+    },
+    {
+      "group": "legacy/experiment-run",
+      "logical_source": "legacy-experiment-run",
+      "source_path": "src/reward_lens/divergence_patching.py",
+      "source_revision_or_state": "historical working tree",
+      "source_sha256": "3e0c49e082d11d827ad72d33373dd52a7ff3cc247b991f70c188836fb3358682",
+      "path": "development-snapshots/legacy/experiment-run/src/reward_lens/divergence_patching.py",
+      "recovery_path": "src/reward_lens/divergence_patching.py",
+      "sha256": "3e0c49e082d11d827ad72d33373dd52a7ff3cc247b991f70c188836fb3358682",
+      "size": 19911,
+      "status": "incomplete or historical alternative; not integrated",
+      "transformation": "none",
+      "license": "retained product MIT notice"
+    },
+    {
+      "group": "legacy/experiment-run",
+      "logical_source": "legacy-experiment-run",
+      "source_path": "src/reward_lens/statistics.py",
+      "source_revision_or_state": "historical working tree",
+      "source_sha256": "3bac8e6e6ea5009487eb4d90e6f4a93dbd98642d09ae0f0005ae063374a42c19",
+      "path": "development-snapshots/legacy/experiment-run/src/reward_lens/statistics.py",
+      "recovery_path": "src/reward_lens/statistics.py",
+      "sha256": "3bac8e6e6ea5009487eb4d90e6f4a93dbd98642d09ae0f0005ae063374a42c19",
+      "size": 14346,
+      "status": "incomplete or historical alternative; not integrated",
+      "transformation": "none",
+      "license": "retained product MIT notice"
+    }
+  ]
+}

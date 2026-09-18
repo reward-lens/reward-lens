@@ -1,0 +1,34 @@
+{
+  "group": "incomplete-packets/P-AUDIT-1",
+  "status": "selected full source files, not a complete historical working tree or supported implementation",
+  "files": [
+    {
+      "group": "incomplete-packets/P-AUDIT-1",
+      "logical_source": "P-AUDIT-1",
+      "source_path": "src/reward_lens/product/audit/run.py",
+      "source_revision_or_state": "worktree source; captured bytes checked against baseline",
+      "source_sha256": "3f518a5cebfa3c4f422283795faa2c9d48e6faf9a31d73d633c9873b8b124541",
+      "path": "development-snapshots/incomplete-packets/P-AUDIT-1/src/reward_lens/product/audit/run.py",
+      "recovery_path": "src/reward_lens/product/audit/run.py",
+      "sha256": "3f518a5cebfa3c4f422283795faa2c9d48e6faf9a31d73d633c9873b8b124541",
+      "size": 76681,
+      "status": "incomplete or historical alternative; not integrated",
+      "transformation": "none",
+      "license": "retained product MIT notice"
+    },
+    {
+      "group": "incomplete-packets/P-AUDIT-1",
+      "logical_source": "P-AUDIT-1",
+      "source_path": "tests/product/test_audit.py",
+      "source_revision_or_state": "worktree source; captured bytes checked against baseline",
+      "source_sha256": "7ddf6d5f324d785ddc233c2af68c94d2f94a1dca2b4492d3a5ba995768e9dee7",
+      "path": "development-snapshots/incomplete-packets/P-AUDIT-1/tests/product/test_audit.py",
+      "recovery_path": "tests/product/test_audit.py",
+      "sha256": "7ddf6d5f324d785ddc233c2af68c94d2f94a1dca2b4492d3a5ba995768e9dee7",
+      "size": 88544,
+      "status": "incomplete or historical alternative; not integrated",
+      "transformation": "none",
+      "license": "retained product MIT notice"
+    }
+  ]
+}
