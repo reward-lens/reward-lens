@@ -66,10 +66,10 @@
       "source_sha256": "4c4d51b838c3c4a237393958cd8ce7bb3332de5ba39620670089653d48f94dc7",
       "path": "development-snapshots/legacy/campaign/tests/test_runtime_cache_read.py",
       "recovery_path": "tests/test_runtime_cache_read.py",
-      "sha256": "4c4d51b838c3c4a237393958cd8ce7bb3332de5ba39620670089653d48f94dc7",
-      "size": 6633,
+      "sha256": "cf08d8dc73d4ee37dc4666b23c0a0ef35e4e5bd605006a5fcebfb577f44d963c",
+      "size": 6670,
       "status": "incomplete or historical alternative; not integrated",
-      "transformation": "none",
+      "transformation": "Portable public derivation: replaced hard-coded machine cache path with optional REWARD_LENS_V1_CACHE; absence still skips the unavailable historical-cache test.",
       "license": "retained product MIT notice"
     },
     {

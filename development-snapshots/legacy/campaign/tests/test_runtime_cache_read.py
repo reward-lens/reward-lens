@@ -15,6 +15,7 @@ so a shard left corrupt by a killed writer is dropped and recomputed instead of 
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -25,14 +26,16 @@ from reward_lens.core.types import ModelFP, Site
 from reward_lens.runtime.backend import Capture, CaptureSpec
 from reward_lens.runtime.store import ActivationStore, InMemoryCaptureHandle, read_v1_cache
 
-# The v1 shared cache lives beside the original (untouched) repo; one shard per (model, pairset).
-_V1_CACHE_ROOT = Path(
-    "/home/suhail-nadaf/final-reward/reward-lens/outputs/v2_20260506_222648_unknown/_shared_cache"
+# Supply the omitted historical cache explicitly; the public snapshot has no local default.
+_V1_CACHE_ROOT = (
+    Path(os.environ["REWARD_LENS_V1_CACHE"])
+    if os.environ.get("REWARD_LENS_V1_CACHE")
+    else None
 )
 
 
 def _first_shard() -> Path | None:
-    if not _V1_CACHE_ROOT.exists():
+    if _V1_CACHE_ROOT is None or not _V1_CACHE_ROOT.exists():
         return None
     shards = sorted(_V1_CACHE_ROOT.glob("*/floor-population-*.pt"))
     return shards[0] if shards else None
@@ -41,7 +44,7 @@ def _first_shard() -> Path | None:
 def test_read_one_v1_cache_shard():
     shard = _first_shard()
     if shard is None:
-        pytest.skip(f"v1 shared cache not present under {_V1_CACHE_ROOT}; E-parity fixture absent")
+        pytest.skip("Set REWARD_LENS_V1_CACHE to an available v1 shared cache; E-parity fixture absent")
 
     cache = read_v1_cache(shard, device="cpu")
 

@@ -36,7 +36,7 @@ reward-lens doctor
 - `tests/`: reusable contract, API, CLI, packaging, and compatibility tests. [`TEST_STATUS.md`](TEST_STATUS.md) states which broader suites remain incomplete or need optional dependencies.
 - `docs/`: API, schema, command, and method documentation.
 
-The accompanying [GRPO Reward Trace](https://github.com/reward-lens/grpo-reward-trace) repository contains protocol and fixture code for studying how GRPO rewards become update pressure and learned behavior. The study destination is reserved while this import awaits publication. Its local public fixture produced 2 pass, 1 fail, 1 defect, and 32 unrun rows; those are routing outcomes, not a completed GPU experiment.
+The accompanying [GRPO Reward Trace](https://github.com/reward-lens/grpo-reward-trace) repository contains protocol and fixture code for studying how GRPO rewards become update pressure and learned behavior. Both source imports became public on 24 September 2026 (Asia/Kolkata). The independently installed public study fixture produced 2 pass, 1 fail, 1 defect, and 32 unrun rows; those are routing outcomes, not a completed GPU experiment.
 
 ## Compatibility and history
 

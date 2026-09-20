@@ -1,0 +1,34 @@
+{
+  "schema": "public-source-publication-v1",
+  "recorded_utc": "2026-09-23T23:38:13.454549+00:00",
+  "repository": "https://github.com/reward-lens/reward-lens",
+  "actual_initial_push_completed_utc": "2026-09-23T23:24:53.284043+00:00",
+  "actual_publication_date_asia_kolkata": "2026-09-24",
+  "initial_public_main_sha": "9ed7663e8d45129035e4718376a3ffb480dc3500",
+  "github_main_verified_utc": "2026-09-23T23:24:54.045350+00:00",
+  "account": "suhailnadaf509",
+  "initial_ci": {
+    "url": "https://github.com/reward-lens/reward-lens/actions/runs/35933477410",
+    "head_sha": "9ed7663e8d45129035e4718376a3ffb480dc3500",
+    "conclusion": "success",
+    "completed_utc": "2026-09-23T23:26:21Z"
+  },
+  "anonymous_https_verification": true,
+  "publication_is_package_release": false,
+  "gpu_or_paid_execution": false,
+  "checks": {
+    "source_version": "3.1.0 unreleased",
+    "wheel_and_sdist_build": "passed",
+    "sdist_to_wheel_closure": "byte-identical wheel",
+    "installed_version_cli_offline_audit": "passed; example audit expected exit 2",
+    "supported_cpu_tests_passed": 663,
+    "supported_cpu_tests_skipped": 1,
+    "snapshot_files_reconstructed": 49,
+    "snapshot_groups": 6
+  },
+  "checked_utc": "2026-09-23T23:32:43.569807+00:00",
+  "limits": [
+    "Broader unfinished and optional checks are documented in TEST_STATUS.md.",
+    "Original public history retains an already public local-path string; the archived current file receives an explicit cache setting in this correction."
+  ]
+}

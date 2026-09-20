@@ -16,3 +16,5 @@ Run python tools/reconstruct_snapshot.py to verify every selected file against t
 The manifest identifies the original logical source, original hash, exported hash, intended relative destination, and known status. This recovers the selected file contents; it does not recreate a complete historical environment or unavailable evidence. Tests in an unsupported snapshot must be reviewed before execution.
 
 No patch depends on an inaccessible private Git object. Private operational material, credentials, and excluded datasets are not backed up by these snapshots.
+
+The archived campaign cache-reader test requires an explicit REWARD_LENS_V1_CACHE directory. Its omitted historical activation data is not supplied. This portable derivation is recorded with separate source and exported hashes in the snapshot manifests.

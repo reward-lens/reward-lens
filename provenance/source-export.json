@@ -1,6 +1,6 @@
 {
   "schema": "public-source-export-v1",
-  "actual_utc": "2026-09-23T22:31:58.681695+00:00",
+  "actual_utc": "2026-09-23T23:39:09.429896+00:00",
   "source_scope": "selected product or C1 source; private operational material, large external inputs and website source excluded",
   "files": [
     {
@@ -75,13 +75,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "17bd2e90509b5058b3f414fe5a84ded6549b02f4dcdb7c2a3e2645e1b4e77d7e",
-      "size": 3932,
+      "sha256": "3e6c9b970c129556a2de430b0ca196f515d2a80ac82c46fc4c5a8af15ed915ed",
+      "size": 3955,
       "mode": 420,
       "logical_source": "product-working-tree",
       "source_revision": "76410d1331625a14334ed7de24a62f2f3afb159f",
       "source_sha256": "3ef00d85960bfe6c57d58513d0590def2ac37a5a2399110dbbfe52d6e274a3e9",
-      "relationship": "derived public content; detailed historical/snapshot manifests identify immutable origins where applicable"
+      "relationship": "derived public content; post-publication factual or portability correction recorded on 2026-09-23T23:39:09.429896+00:00"
     },
     {
       "path": "TEST_STATUS.md",
@@ -345,23 +345,23 @@
     },
     {
       "path": "development-snapshots/MANIFEST.json",
-      "sha256": "97881bc515fe3d5c8f3a2f128f308eca21ea51f44d7255f34e9707ba38a2ee0a",
-      "size": 36039,
+      "sha256": "80cfd86b0f9bc798018d1075b0710866e51d60fa8bce113d6dee5959463dd60e",
+      "size": 36196,
       "mode": 420,
       "logical_source": "reviewed-public-derivation-or-isolated-snapshot",
       "source_revision": null,
       "source_sha256": null,
-      "relationship": "derived public content; detailed historical/snapshot manifests identify immutable origins where applicable"
+      "relationship": "derived public content; post-publication factual or portability correction recorded on 2026-09-23T23:39:09.429896+00:00"
     },
     {
       "path": "development-snapshots/README.md",
-      "sha256": "41a48681bcff07db6a6097485d52c53ad78bc61d00b41c5057bdda626aee3381",
-      "size": 1989,
+      "sha256": "05ddf1f8835e296601842b2ed2249fac7b0156a1a12938dd14d8748fe58ff05a",
+      "size": 2244,
       "mode": 420,
       "logical_source": "reviewed-public-derivation-or-isolated-snapshot",
       "source_revision": null,
       "source_sha256": null,
-      "relationship": "derived public content; detailed historical/snapshot manifests identify immutable origins where applicable"
+      "relationship": "derived public content; post-publication factual or portability correction recorded on 2026-09-23T23:39:09.429896+00:00"
     },
     {
       "path": "development-snapshots/incomplete-packets/P-AUDIT-1/SNAPSHOT.json",
@@ -625,13 +625,13 @@
     },
     {
       "path": "development-snapshots/legacy/campaign/SNAPSHOT.json",
-      "sha256": "2ed756d29eb87833f444759603db4619cd4f1fd1f268f30c4619e4a40f214d69",
-      "size": 14904,
+      "sha256": "1556f6373854d37c8c8329fdfceda49efb31952a4fab337ad87c686edd18e062",
+      "size": 15061,
       "mode": 420,
       "logical_source": "reviewed-public-derivation-or-isolated-snapshot",
       "source_revision": null,
       "source_sha256": null,
-      "relationship": "derived public content; detailed historical/snapshot manifests identify immutable origins where applicable"
+      "relationship": "derived public content; post-publication factual or portability correction recorded on 2026-09-23T23:39:09.429896+00:00"
     },
     {
       "path": "development-snapshots/legacy/campaign/src/reward_lens/interventions/edit.py",
@@ -825,13 +825,13 @@
     },
     {
       "path": "development-snapshots/legacy/campaign/tests/test_runtime_cache_read.py",
-      "sha256": "4c4d51b838c3c4a237393958cd8ce7bb3332de5ba39620670089653d48f94dc7",
-      "size": 6633,
+      "sha256": "cf08d8dc73d4ee37dc4666b23c0a0ef35e4e5bd605006a5fcebfb577f44d963c",
+      "size": 6670,
       "mode": 420,
       "logical_source": "reviewed-public-derivation-or-isolated-snapshot",
       "source_revision": null,
       "source_sha256": null,
-      "relationship": "derived public content; detailed historical/snapshot manifests identify immutable origins where applicable"
+      "relationship": "derived public content; post-publication factual or portability correction recorded on 2026-09-23T23:39:09.429896+00:00"
     },
     {
       "path": "development-snapshots/legacy/campaign/tests/test_train_checkpoints.py",
@@ -3145,13 +3145,13 @@
     },
     {
       "path": "docs/publication-history.md",
-      "sha256": "fd9e8e80d5b4c336764fa4d074aa2e1f5307309fd3dcdf8bfbedecb860b8cea2",
-      "size": 1660,
+      "sha256": "370fe61a769761d0b5fda03d66dfbdc7d4bb17965943115984e9ce5f17e0df21",
+      "size": 2704,
       "mode": 420,
       "logical_source": "reviewed-public-derivation-or-isolated-snapshot",
       "source_revision": null,
       "source_sha256": null,
-      "relationship": "derived public content; detailed historical/snapshot manifests identify immutable origins where applicable"
+      "relationship": "derived public content; post-publication factual or portability correction recorded on 2026-09-23T23:39:09.429896+00:00"
     },
     {
       "path": "docs/requirements-docs.txt",
@@ -3392,6 +3392,16 @@
       "source_revision": "76410d1331625a14334ed7de24a62f2f3afb159f",
       "source_sha256": "e55fb5c1b3276d02d7275b4e9becb636da50f377b5bb9323c5458eafb8af0ad4",
       "relationship": "unchanged captured source"
+    },
+    {
+      "path": "provenance/publication.json",
+      "sha256": "0ea15fe4c4c00a9bc661ddc442cf5eef32e2cd3c8ff8c4e7ba8f9227443ea71e",
+      "size": 1507,
+      "mode": 420,
+      "logical_source": "verified-public-publication-event",
+      "source_revision": null,
+      "source_sha256": null,
+      "relationship": "new derived public receipt of actual publication and validation"
     },
     {
       "path": "pyproject.toml",
