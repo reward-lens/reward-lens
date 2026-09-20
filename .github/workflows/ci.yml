@@ -1,0 +1,73 @@
+name: Public CPU checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build source and wheel distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --sdist --wheel
+      - name: Check exported distribution contents
+        run: |
+          python - <<"PY"
+          import tarfile
+          import zipfile
+          from pathlib import Path
+          banned = ("/reproducibility/", "/development-snapshots/")
+          required = ("assay.schema.json", "report.js")
+          for artifact in Path("dist").iterdir():
+              if artifact.suffix == ".whl":
+                  with zipfile.ZipFile(artifact) as archive:
+                      names = archive.namelist()
+              elif artifact.name.endswith(".tar.gz"):
+                  with tarfile.open(artifact) as archive:
+                      names = archive.getnames()
+              else:
+                  continue
+              leaked = [name for name in names if any(marker in f"/{name}" for marker in banned)]
+              missing = [name for name in required if not any(name in member for member in names)]
+              if leaked or missing:
+                  raise SystemExit(f"{artifact}: leaked={leaked}; missing={missing}")
+          PY
+  cpu-contract:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install base package and CPU test harness
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest hypothesis hypothesis-jsonschema
+      - name: Run supported CPU contract
+        run: |
+          pytest -q tests/contracts
+          pytest -q tests/api --deselect tests/api/test_absence_records.py::test_dry_run_promises_what_the_run_fills_and_nothing_it_cannot_measure --deselect tests/api/test_reuse_installed.py
+          pytest -q tests/cli --deselect tests/cli/test_output_contract.py::test_the_envelope_names_the_project_and_the_text_names_the_working_directory --deselect tests/cli/test_reuse.py::test_a_second_audit_of_the_written_example_returns_the_stored_record --deselect tests/cli/test_reuse.py::test_the_second_audit_prints_the_stored_verdict_over_the_reused_line --deselect tests/cli/test_root_help.py::test_help_completes_under_100_ms_as_the_minimum_of_twenty_runs
+          pytest -q tests/errors --ignore tests/errors/test_error_catalogue.py
+          pytest -q tests/compat
+      - name: State broader-suite status
+        run: cat TEST_STATUS.md

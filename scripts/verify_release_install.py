@@ -59,7 +59,7 @@ REPO = Path(__file__).resolve().parents[1]
 # source and the wheel ships only the generated JSON, so these are read from the package.
 EXPECT_QUANTITIES = 190
 EXPECT_WEDGE = 112
-EXPECT_REFUSAL_REASONS = 17
+EXPECT_REFUSAL_REASONS = 18
 
 # Distribution names that would mean a compiled dependency reached the base install. This is the
 # list .github/workflows/tests.yml greps for in its base-install job, plus PyYAML.
@@ -420,7 +420,7 @@ def check_registry(run: Runner) -> Check:
 
 
 def check_refusal_reasons(run: Runner) -> Check:
-    """Seventeen refusal reasons, by name.
+    """Every refusal reason, by name, counted against the pin above.
 
     Refusal is a return value here, not an exception, so the enum is part of the public contract:
     a caller switches on it. Losing a member narrows what the library is able to say without
@@ -500,8 +500,8 @@ def check_nothing_compiled(run: Runner) -> Check:
 def check_py_typed(run: Runner) -> Check:
     """``py.typed`` shipped, and the spec JSON with it.
 
-    PEP 561 says a checker treats a package with no marker as untyped, and this project's
-    ``ignore_missing_imports`` then resolves every name imported from it to ``Any``.
+    SPEC-ERRATA E25. PEP 561 says a checker treats a package with no marker as untyped, and this
+    project's ``ignore_missing_imports`` then resolves every name imported from it to ``Any``.
     Under that resolution ``Blind[T]`` is a name that means nothing, the eight-error leakage
     fixture reports one unrelated error and none of the eight, and the barrier that exists to stop
     a label reaching a scorer is enforced for the maintainer and vacuous for every user of the

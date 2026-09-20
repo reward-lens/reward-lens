@@ -10,8 +10,8 @@ Three kinds of block, and the difference matters:
 - **Captured.** A subprocess runs a shipped entry point and its stdout goes on the page verbatim.
   ``reward-lens capabilities`` and the card-plan example are both this. What the page shows is what
   the reader gets, including when that is disappointing.
-- **Read from the registry.** The instrument and quantity counts, and the seventeen refusal
-  reasons, come from ``reward_lens.core`` at generation time, the same source
+- **Read from the registry.** The instrument and quantity counts, and the refusal reasons
+  themselves, come from ``reward_lens.core`` at generation time, the same source
   ``docs/gen_catalogue.py`` uses. A count on the page cannot disagree with the catalogue.
 - **Extracted.** A measured number is lifted out of the artifact that produced it, by a pattern
   anchored on the surrounding sentence, and a pattern that no longer matches is a hard failure
@@ -26,14 +26,6 @@ Markers in README.md delimit each block::
     <!-- /generated: capabilities -->
 
 Everything between them is owned by this script. Everything outside is prose a person wrote.
-
-**Optional blocks.** Some blocks are extracted from large run artifacts that are published
-separately rather than carried in the source tree. When such an artifact is not in the checkout the
-block is *skipped*: the text already in README.md is left exactly as it stands, the reason is
-printed, and ``--check`` still passes. That is deliberately different from drift. Drift means the
-source is here and no longer says what the page quotes, which is a bug and fails the build. A
-missing artifact means the page cannot be regenerated from this checkout at all, and rewriting it to
-say less would be losing a real measurement to a packaging decision.
 
 Run it:
 
@@ -62,7 +54,6 @@ import shutil
 import subprocess
 import sys
 import textwrap
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -86,16 +77,6 @@ class SourceDrift(RuntimeError):
     Raised rather than warned, and raised with the file and the pattern in the message, because the
     failure mode this whole script exists to prevent is a page that keeps saying a number after the
     thing that measured it has moved.
-    """
-
-
-class MissingArtifact(RuntimeError):
-    """A block's source artifact is not in this checkout, so the block cannot be regenerated.
-
-    Not a failure. `SourceDrift` is for an artifact that is present and no longer says what the page
-    quotes, which is a bug. This is for an artifact that was never here: a run output published
-    elsewhere, or a directory a release tree does not carry. The block is skipped and whatever the
-    README already says is left alone.
     """
 
 
@@ -258,8 +239,8 @@ def load_registry() -> Registry:
         n_series=len({i.id[0] for i in instruments if i.id}),
         reasons=reasons,
         # `trivial` is not one of them. It is the declaration a quantity makes when it has no
-        # non-trivial invariance to respect, and counting it would inflate the number. It has
-        # exactly one spelling so that the count cannot depend on which one a caller used.
+        # non-trivial invariance to respect, and counting it would inflate the number the
+        # specification gives. SPEC-ERRATA E38 is why it has exactly one spelling.
         n_invariance_groups=len([g for g in GROUPS if g != "trivial"]),
         n_regime_conditions=len(RegimeCondition),
     )
@@ -317,8 +298,8 @@ def block_capabilities() -> str:
     for name in ("ACCESS RESOLVED", "REGIME MEASURED", "AVAILABLE NOW", "REFUSED, WITH REMEDY"):
         if name not in sections:
             raise SourceDrift(
-                f"`reward-lens capabilities` printed no {name!r} section. The report has four "
-                f"sections and the README quotes all four."
+                f"`reward-lens capabilities` printed no {name!r} section. Section 4.5 gives the "
+                f"report four sections and the README quotes all four."
             )
 
     lines: list[str] = ["$ " + " ".join(CAPABILITIES_ARGV), ""]
@@ -450,23 +431,14 @@ def block_card_plan_output(tmp: Path) -> str:
 # Block: the grader card, on four real scoring programs
 # ---------------------------------------------------------------------------
 
-#: Rendered grader cards, one file per scoring program. `reward_lens.measure.card` writes them, and
-#: this script reads them rather than re-rendering them: a render needs the four graders' source and
-#: a corpus fetched from four upstream projects, which is not something a README build should do.
-#: The cards are release artifacts published beside the run, not files this tree carries, so the two
-#: blocks below are optional and skip themselves when the directory is absent.
-CARD_RELEASE = ROOT / "artifacts" / "grader_cards"
-CARD_SUBJECTS = ("is_equiv", "swebench", "verl_gsm8k", "verl_search_r1")
+#: X1's rendered output. These are real cards on real scoring programs, written to disk by
+#: `experiments/x1_card_release.py`, and this script reads them rather than re-running them: the
+#: run needs the four graders' source and a corpus fetched from four upstream projects, which is
+#: not something a README build should do.
+X1_CARDS = ROOT / "experiments" / "x1_release" / "cards"
+X1_SUBJECTS = ("is_equiv", "swebench", "verl_gsm8k", "verl_search_r1")
 
 _CARD_TOTALS_RE = re.compile(r"^\s*(\d+) of (\d+) fields read and (\d+) refused", re.M)
-
-
-def _require_cards() -> None:
-    if not CARD_RELEASE.is_dir():
-        raise MissingArtifact(
-            f"no rendered grader cards at {CARD_RELEASE.relative_to(ROOT)}. They are published "
-            f"with the run rather than carried in the source tree."
-        )
 
 
 def card_totals() -> tuple[int, int, int, int]:
@@ -475,10 +447,9 @@ def card_totals() -> tuple[int, int, int, int]:
     Computed from the cards themselves rather than restated, so a card that gains a field or starts
     reading one it used to refuse moves the front page with it.
     """
-    _require_cards()
     n_read = n_refused = n_fields = 0
-    for subject in CARD_SUBJECTS:
-        text = read(CARD_RELEASE / f"{subject}.txt")
+    for subject in X1_SUBJECTS:
+        text = read(X1_CARDS / f"{subject}.txt")
         m = _CARD_TOTALS_RE.search(text)
         if m is None:
             raise SourceDrift(
@@ -494,15 +465,15 @@ def card_totals() -> tuple[int, int, int, int]:
             f"the four cards report {n_read} read and {n_refused} refused against {n_fields} "
             f"fields, which do not add up. One of them is being parsed wrong."
         )
-    return len(CARD_SUBJECTS), n_fields, n_read, n_refused
+    return len(X1_SUBJECTS), n_fields, n_read, n_refused
 
 
 def block_card_totals() -> str:
     """One sentence, with every number in it computed from the rendered cards."""
     n_subjects, n_fields, n_read, n_refused = card_totals()
     by_reason: dict[str, int] = {}
-    for subject in CARD_SUBJECTS:
-        for line in read(CARD_RELEASE / f"{subject}.txt").splitlines():
+    for subject in X1_SUBJECTS:
+        for line in read(X1_CARDS / f"{subject}.txt").splitlines():
             m = re.match(r"^\s+\S.*?REFUSED\s+([A-Z_]+)\s*$", line)
             if m:
                 by_reason[m.group(1)] = by_reason.get(m.group(1), 0) + 1
@@ -514,7 +485,7 @@ def block_card_totals() -> str:
         f"  {n_refused} refused, and none of them for want of access:\n"
         f"      {tally}\n"
         f"\n"
-        f"  rendered by `reward_lens.measure.card` and published with the run"
+        f"  rendered by experiments/x1_card_release.py, on disk at experiments/x1_release/cards/"
     )
 
 
@@ -525,8 +496,7 @@ CARD_EXCERPT_FIELDS = ("surviving mutants", "exploit-family accounting")
 
 def block_card_excerpt() -> str:
     """Two fields from a real card: one that read and said something bad, one that refused."""
-    _require_cards()
-    text = read(CARD_RELEASE / "is_equiv.txt")
+    text = read(X1_CARDS / "is_equiv.txt")
     lines = text.splitlines()
     starts = {}
     for i, ln in enumerate(lines):
@@ -570,11 +540,7 @@ TAP_TEST = ROOT / "tests" / "acceptance" / "test_w3_1_tap.py"
 CREDIT_TEST = ROOT / "tests" / "acceptance" / "test_w5_4_credit.py"
 FORECAST_TEST = ROOT / "tests" / "acceptance" / "test_w4_6_forecast.py"
 GRPO_FIXTURE_README = ROOT / "tests" / "fixtures" / "grpo_run" / "README.md"
-
-#: The intransitivity campaign's evidence store, published with the run rather than carried here.
-#: The rows it contributes to the table below are optional for the same reason the grader cards are:
-#: absent, the table loses those rows and keeps the ones this tree can still derive.
-INTRANSITIVITY_EVIDENCE = ROOT / "artifacts" / "intransitivity" / "evidence.jsonl"
+X7_EVIDENCE = ROOT / "experiments" / "x7_intransitivity" / "evidence" / "evidence.jsonl"
 
 
 def _decode(value: object) -> object:
@@ -588,22 +554,17 @@ def _decode(value: object) -> object:
     return value
 
 
-def design_floor() -> dict[str, object]:
-    """Read the campaign's design floor straight out of the evidence row that recorded it."""
-    if not INTRANSITIVITY_EVIDENCE.is_file():
-        raise MissingArtifact(
-            f"no evidence store at {INTRANSITIVITY_EVIDENCE.relative_to(ROOT)}. It is published "
-            f"with the run rather than carried in the source tree."
-        )
-    for line in read(INTRANSITIVITY_EVIDENCE).splitlines():
+def x7_design_floor() -> dict[str, object]:
+    """Read X7's exact design floor straight out of the evidence row that recorded it."""
+    for line in read(X7_EVIDENCE).splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
         if row.get("observable") == "x7.design_floor":
             return dict(_decode(row["value"]))  # type: ignore[arg-type]
     raise SourceDrift(
-        "no `x7.design_floor` row in the intransitivity evidence store. The README states the "
-        "campaign's own floor and it has to come from the row that computed it."
+        "no `x7.design_floor` row in X7's evidence store. The README states the campaign's own "
+        "floor and it has to come from the row that computed it."
     )
 
 
@@ -660,11 +621,7 @@ def block_measured() -> str:
         what="the number of campaign evidence rows the freeze was checked against",
     )
 
-    # The last four rows come from run artifacts published beside the run rather than carried in
-    # the source tree. If either is absent the whole block is skipped rather than rebuilt short:
-    # regenerating a table of measurements minus the rows this checkout happens not to reach would
-    # quietly delete real numbers from the front page, which is the opposite of what a gate is for.
-    floor = design_floor()
+    floor = x7_design_floor()
     tally = [
         ("computed", "curl mass, campaign corpus", f"observed {floor['observed']!r}"),
         ("computed", "  lowest any grader could reach", f"floor    {floor['floor']!r}"),
@@ -675,39 +632,34 @@ def block_measured() -> str:
             f"{float(floor['threshold_as_fraction_of_floor']):.4f} of the floor",  # type: ignore[arg-type]
         ),
     ]
-    _, _, n_read, n_refused = card_totals()
-    card_rows = [
+
+    n_subjects, n_fields, n_read, n_refused = card_totals()
+
+    rows = [
+        ("kind", "what was measured", "value"),
+        ("----", "-----------------", "-----"),
+        ("recorded", "grader wrapper, added latency per call", f"{tap_range} us"),
+        ("recorded", "  against a bare callable of", f"{tap_bare} ns"),
+        ("recorded", "  measured on", tap_machine),
+        (
+            "recorded",
+            f"record replays a real trainer, {replay_groups} groups",
+            f"max abs difference {replay_resid}",
+        ),
+        ("recorded", "credit conservation, float64", credit_f64),
+        ("recorded", "  float32", credit_f32),
+        ("recorded", "  against a real torch.optim.SGD step", credit_step),
+        (
+            "computed",
+            "forecast barrier, campaign rows predating the freeze",
+            f"0 of {forecast_rows}",
+        ),
         (
             "computed",
             "grader card fields, four scoring programs",
             f"{n_read} read, {n_refused} refused",
-        )
-    ]
-
-    rows = (
-        [
-            ("kind", "what was measured", "value"),
-            ("----", "-----------------", "-----"),
-            ("recorded", "grader wrapper, added latency per call", f"{tap_range} us"),
-            ("recorded", "  against a bare callable of", f"{tap_bare} ns"),
-            ("recorded", "  measured on", tap_machine),
-            (
-                "recorded",
-                f"record replays a real trainer, {replay_groups} groups",
-                f"max abs difference {replay_resid}",
-            ),
-            ("recorded", "credit conservation, float64", credit_f64),
-            ("recorded", "  float32", credit_f32),
-            ("recorded", "  against a real torch.optim.SGD step", credit_step),
-            (
-                "computed",
-                "forecast barrier, campaign rows predating the freeze",
-                f"0 of {forecast_rows}",
-            ),
-        ]
-        + card_rows
-        + tally
-    )
+        ),
+    ] + [(k, w, v) for k, w, v in tally]
 
     kw = max(len(r[0]) for r in rows)
     ww = max(len(r[1]) for r in rows)
@@ -746,63 +698,44 @@ def block_refusal_reasons(reg: Registry) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_blocks(tmp: Path) -> tuple[dict[str, str], dict[str, str]]:
-    """Every generated block on the page, keyed by its marker name.
-
-    Returns the blocks that were built and, beside them, the ones that were skipped because their
-    source artifact is not in this checkout, each with the reason. A skipped block is not an empty
-    block: the caller leaves the README's existing text in place for it.
-    """
+def build_blocks(tmp: Path) -> dict[str, str]:
+    """Every generated block on the page, keyed by its marker name."""
     reg = load_registry()
-    builders: dict[str, Callable[[], str]] = {
-        "card-plan-code": block_card_plan_code,
-        "card-plan-output": lambda: block_card_plan_output(tmp),
-        "catalogue": lambda: block_catalogue(reg),
-        "refusal-reasons": lambda: block_refusal_reasons(reg),
+    return {
+        "capabilities": block_capabilities(),
+        "card-plan-code": block_card_plan_code(),
+        "card-plan-output": block_card_plan_output(tmp),
+        "card-totals": block_card_totals(),
+        "card-excerpt": block_card_excerpt(),
+        "catalogue": block_catalogue(reg),
+        "refusal-reasons": block_refusal_reasons(reg),
+        "measured": block_measured(),
     }
-    blocks: dict[str, str] = {}
-    skipped: dict[str, str] = {}
-    for name, build in builders.items():
-        try:
-            blocks[name] = build()
-        except MissingArtifact as exc:
-            skipped[name] = str(exc)
-            print(f"skipping block {name!r}: {exc}", file=sys.stderr)
-    return blocks, skipped
 
 
 def markers_in(text: str) -> list[str]:
     return [m.group("name") for m in _MARKER_RE.finditer(text)]
 
 
-def splice(text: str, blocks: dict[str, str], skipped: dict[str, str] | None = None) -> str:
-    """Replace the body of every marked region, leaving the prose around it alone.
-
-    A marker named in ``skipped`` is passed through untouched, body and all. Its generator ran and
-    said it had nothing to read; overwriting a measured block with silence because a release tree
-    does not carry the run output would be worse than leaving the measurement where it is.
-    """
-    skipped = skipped or {}
+def splice(text: str, blocks: dict[str, str]) -> str:
+    """Replace the body of every marked region, leaving the prose around it alone."""
     present = markers_in(text)
-    unknown = sorted(set(present) - set(blocks) - set(skipped))
+    unknown = sorted(set(present) - set(blocks))
     if unknown:
         raise ReadmeDrift(
-            f"README.md marks blocks this script does not build: {unknown}. Either add a generator "
+            f"README.md marks blocks this script does not build: {unknown}. Either add a builder "
             f"or delete the markers; a marker with no generator is a block that will go stale."
         )
     unused = sorted(set(blocks) - set(present))
     if unused:
         raise ReadmeDrift(
             f"this script builds blocks the README does not mark: {unused}. A generated block "
-            f"nobody shows is dead weight, and a generator that silently produces nothing is how a "
+            f"nobody shows is dead weight, and a builder that silently produces nothing is how a "
             f"generator stops being a gate."
         )
 
     def sub(m: re.Match[str]) -> str:
-        name = m.group("name")
-        if name in skipped:
-            return m.group(0)
-        return m.group("open") + blocks[name].rstrip() + "\n" + m.group("close")
+        return m.group("open") + blocks[m.group("name")].rstrip() + "\n" + m.group("close")
 
     return _MARKER_RE.sub(sub, text)
 
@@ -817,12 +750,6 @@ def diff(current: str, regenerated: str) -> str:
             n=2,
         )
     )
-
-
-def _skip_note(skipped: dict[str, str]) -> str:
-    if not skipped:
-        return ""
-    return f", {len(skipped)} skipped for want of an artifact ({', '.join(sorted(skipped))})"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -842,15 +769,12 @@ def main(argv: list[str] | None = None) -> int:
 
     with tempfile.TemporaryDirectory(prefix="rl-readme-") as td:
         try:
-            blocks, skipped = build_blocks(Path(td))
+            blocks = build_blocks(Path(td))
         except SourceDrift as exc:
             print(f"README generation failed: {exc}", file=sys.stderr)
             return 2
 
     if args.print:
-        if args.print in skipped:
-            print(f"block {args.print!r} was skipped: {skipped[args.print]}", file=sys.stderr)
-            return 0
         if args.print not in blocks:
             print(f"no block named {args.print!r}. Have: {sorted(blocks)}", file=sys.stderr)
             return 2
@@ -858,16 +782,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.list:
-        for name in sorted(blocks | skipped):
-            if name in skipped:
-                print(f"{name:<20} {'skipped':>10}  {skipped[name]}")
-            else:
-                print(f"{name:<20} {len(blocks[name].splitlines()):>4} lines")
+        for name in sorted(blocks):
+            print(f"{name:<20} {len(blocks[name].splitlines()):>4} lines")
         return 0
 
     current = read(README)
     try:
-        regenerated = splice(current, blocks, skipped)
+        regenerated = splice(current, blocks)
     except ReadmeDrift as exc:
         print(f"README generation failed: {exc}", file=sys.stderr)
         return 2
@@ -877,15 +798,12 @@ def main(argv: list[str] | None = None) -> int:
             print("README.md is already current.")
             return 0
         README.write_text(regenerated, encoding="utf-8")
-        print(f"README.md rewritten: {len(blocks)} generated blocks{_skip_note(skipped)}.")
+        print(f"README.md rewritten: {len(blocks)} generated blocks.")
         return 0
 
-    # --check, and the default, are the same thing: the gate. A skipped block is not drift, so it
-    # is reported and passed over rather than counted against the page.
+    # --check, and the default, are the same thing: the gate.
     if regenerated == current:
-        print(
-            f"README.md is current: {len(blocks)} generated blocks all match{_skip_note(skipped)}."
-        )
+        print(f"README.md is current: {len(blocks)} generated blocks all match.")
         return 0
     print(
         "README.md has drifted from the code it describes. Every example on the front page is "
