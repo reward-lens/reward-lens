@@ -25,6 +25,8 @@ until the production release completes.
 - Fixed invalid explicit SDK project handling, typed forecast/improvement
   refusals, and capture-index validation that could silently clamp an index and
   mutate the caller's tensor.
+- Fixed Linux audit interruption so active response graders are reaped before
+  the command prints the exact resume command. Sealed work remains reusable.
 - Added a declared release validation matrix and a manual publication path that
   checks the exact main commit and consumes its validated immutable artifacts.
 

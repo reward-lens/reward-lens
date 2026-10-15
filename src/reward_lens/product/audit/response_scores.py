@@ -12,6 +12,7 @@ import math
 import multiprocessing
 import os
 import signal
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -42,7 +43,7 @@ _CANCELLATION_EVENT: ContextVar[threading.Event | None] = ContextVar(
 
 
 class ResponseScoreCancelled(RuntimeError):
-    """The transport cancelled a response-bank run after its active children were reaped."""
+    """The caller cancelled a response-bank run after its active children were reaped."""
 
 
 def _profile(event: str) -> None:
@@ -57,7 +58,7 @@ def _profile(event: str) -> None:
 
 @contextmanager
 def response_score_cancellation(event: threading.Event):
-    """Bind an MCP request's cancellation event to one synchronous audit invocation."""
+    """Bind a caller's cancellation event to one synchronous audit invocation."""
     token = _CANCELLATION_EVENT.set(event)
     try:
         yield
@@ -176,6 +177,15 @@ def _score_in_child(
     project_dir: Path | None,
 ) -> None:
     """Run assigned scores in a killable parent of their contained grader groups."""
+    if sys.platform == "linux":
+        # launch blocks SIGINT while registering a worker. Leave the terminal's
+        # process group before unblocking it, so Ctrl+C reaches the CLI, which
+        # can reap this worker and its contained grader groups. Drop a signal
+        # that was pending during spawn; it addressed the former group.
+        os.setsid()
+        if signal.SIGINT in signal.sigpending():
+            signal.sigwait({signal.SIGINT})
+        signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
     try:
         while True:
             try:
@@ -243,9 +253,9 @@ def _reap_contained_child_groups(worker: multiprocessing.Process) -> None:
             group = os.getpgid(child_pid)
         except ProcessLookupError:
             continue
-        # The worker inherits the MCP server's group until a contained
-        # subprocess calls start_new_session().  Never signal either shared
-        # group; the worker's own SIGKILL handles that branch.
+        # A worker may share the caller's group during startup; a contained
+        # subprocess starts a distinct session. Never signal either caller or
+        # worker group; the worker's own SIGKILL handles that branch.
         if group not in {os.getpgrp(), worker_group}:
             try:
                 os.killpg(group, signal.SIGKILL)
@@ -263,7 +273,7 @@ def _score_with_killable_children(
     project_dir: Path | None,
     cancellation: threading.Event,
 ) -> tuple[ResponseScore, ...]:
-    """Keep a fixed process pool so MCP cancellation reaps active L3 child groups."""
+    """Keep a fixed process pool so cancellation reaps active contained child groups."""
     # Spawn keeps the server's transport locks out of a score worker.  The
     # guarded package command module leaves the importable worker target alone.
     context = multiprocessing.get_context("spawn")
@@ -275,29 +285,44 @@ def _score_with_killable_children(
         while not cancellation.is_set():
             if _RESPONSE_SCORE_CAPACITY.acquire(timeout=0.005):
                 return
-        raise ResponseScoreCancelled("MCP request cancellation preempted response scorer admission")
+        raise ResponseScoreCancelled("request cancellation preempted response scorer admission")
 
     def launch(worker: int) -> None:
         reserve_capacity()
-        receive, work_send = context.Pipe(duplex=False)
-        result_receive, send = context.Pipe(duplex=False)
-        child = context.Process(
-            target=_score_in_child,
-            args=(receive, send, grader, sandbox, project_dir),
-            daemon=False,
-        )
+        receive = work_send = result_receive = send = None
+        child = None
+        previous_mask = None
         try:
+            receive, work_send = context.Pipe(duplex=False)
+            result_receive, send = context.Pipe(duplex=False)
+            child = context.Process(
+                target=_score_in_child,
+                args=(receive, send, grader, sandbox, project_dir),
+                daemon=False,
+            )
+            if sys.platform == "linux":
+                # Register the child before an interrupt may reach this thread.
+                # The worker inherits the blocked mask until it leaves the
+                # terminal group, so Ctrl+C cannot strand a contained grader.
+                previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
             child.start()
-        except BaseException:
+            active[worker] = (child, work_send, result_receive, None)
             receive.close()
-            work_send.close()
-            result_receive.close()
             send.close()
-            _RESPONSE_SCORE_CAPACITY.release()
+        except BaseException:
+            active.pop(worker, None)
+            try:
+                if child is not None and child.pid is not None:
+                    _reap_contained_child_groups(child)
+            finally:
+                for endpoint in (receive, work_send, result_receive, send):
+                    if endpoint is not None:
+                        endpoint.close()
+                _RESPONSE_SCORE_CAPACITY.release()
             raise
-        receive.close()
-        send.close()
-        active[worker] = (child, work_send, result_receive, None)
+        finally:
+            if previous_mask is not None:
+                signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
 
     def assign(worker: int) -> None:
         nonlocal next_index
@@ -325,9 +350,7 @@ def _score_with_killable_children(
                     result_receive.close()
                     _RESPONSE_SCORE_CAPACITY.release()
                 active.clear()
-                raise ResponseScoreCancelled(
-                    "MCP request cancellation reaped active response scorers"
-                )
+                raise ResponseScoreCancelled("request cancellation reaped active response scorers")
 
             settled: list[int] = []
             for worker, (child, work_send, result_receive, inflight) in active.items():

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import sys
+import threading
+from contextlib import nullcontext
+
 import click
 
 from .. import registry
@@ -65,7 +69,17 @@ def run(*, out, **opts) -> int:
     )
     plan = api.dry_run(request)
     try:
-        record = api.audit(request)
+        # A terminal interrupt must be able to reap active response graders
+        # before the durable resume command is printed. The killable scorer's
+        # descendant accounting uses Linux procfs and process groups.
+        if sys.platform == "linux":
+            from reward_lens.product.audit.response_scores import response_score_cancellation
+
+            score_scope = response_score_cancellation(threading.Event())
+        else:
+            score_scope = nullcontext()
+        with score_scope:
+            record = api.audit(request)
     except KeyboardInterrupt:
         return _resumable_stop(out, code="RL0130", exit_code=130)
     except Exception as stopped:

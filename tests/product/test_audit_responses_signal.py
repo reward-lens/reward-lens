@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import multiprocessing
 import os
+import signal
 import subprocess
 import sys
 import threading
@@ -122,6 +123,86 @@ def test_response_scores_execute_the_real_grader_and_preserve_declared_prompt_gr
         ("b-up", "prompt-b", 1.0, "measured"),
         ("b-down", "prompt-b", 0.0, "measured"),
     ]
+
+
+def test_killable_response_scores_keep_order_errors_and_real_sandbox_limits(
+    tmp_path: Path,
+) -> None:
+    """The Linux CLI's killable route still scores with the supplied sandbox and per-call limits."""
+    grader, tasks, responses = _bank(tmp_path)
+    grader.write_text(
+        "import resource\nimport time\n"
+        "def score(task, response):\n"
+        "    assert resource.getrlimit(resource.RLIMIT_CPU)[0] == 30\n"
+        "    assert resource.getrlimit(resource.RLIMIT_FSIZE)[0] == 64 << 20\n"
+        "    time.sleep(0.06 if response == 'yes' else 0.01)\n"
+        "    if response == 'down':\n"
+        "        raise RuntimeError('declared scorer failure')\n"
+        "    return 1.0 if response == task['expected'] else 0.0\n",
+        encoding="utf-8",
+    )
+    with response_scores.response_score_cancellation(threading.Event()):
+        rows = score_response_bank(
+            grader_path=grader,
+            entrypoint="score",
+            corpus=build_corpus(tasks_path=tasks, responses_path=responses),
+            sandbox=default_sandbox(),
+            project_dir=tmp_path,
+        )
+    assert [(row.response_id, row.task_id, row.score, row.status) for row in rows] == [
+        ("a-yes", "prompt-a", 1.0, "measured"),
+        ("a-no", "prompt-a", 0.0, "measured"),
+        ("b-up", "prompt-b", 1.0, "measured"),
+        ("b-down", "prompt-b", None, "error"),
+    ]
+    assert "declared scorer failure" in (rows[3].reason or "")
+
+
+@pytest.mark.parametrize("interruption", ["raise", "signal"])
+def test_killable_scorer_reaps_a_started_worker_if_registration_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, interruption: str
+) -> None:
+    """An interruption during actual spawn cannot leak a worker or admission slot."""
+    grader, tasks, responses = _bank(tmp_path)
+    real_context = multiprocessing.get_context("spawn")
+    started: list[multiprocessing.Process] = []
+
+    class StartedThenInterrupted:
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            self.child = real_context.Process(*args, **kwargs)
+
+        def __getattr__(self, name):  # noqa: ANN001, ANN204
+            return getattr(self.child, name)
+
+        def start(self) -> None:
+            self.child.start()
+            started.append(self.child)
+            if interruption == "raise":
+                raise KeyboardInterrupt
+            # Delivery is deferred until launch registers the child and
+            # restores the caller thread's mask.
+            signal.pthread_kill(threading.get_ident(), signal.SIGINT)
+
+    monkeypatch.setattr(
+        response_scores.multiprocessing,
+        "get_context",
+        lambda _method: SimpleNamespace(Pipe=real_context.Pipe, Process=StartedThenInterrupted),
+    )
+    capacity = threading.BoundedSemaphore(1)
+    monkeypatch.setattr(response_scores, "_RESPONSE_SCORE_CAPACITY", capacity)
+    with pytest.raises(KeyboardInterrupt):
+        with response_scores.response_score_cancellation(threading.Event()):
+            score_response_bank(
+                grader_path=grader,
+                entrypoint="score",
+                corpus=build_corpus(tasks_path=tasks, responses_path=responses),
+                sandbox=default_sandbox(),
+                project_dir=tmp_path,
+            )
+    assert len(started) == 1
+    assert not started[0].is_alive()
+    assert capacity.acquire(blocking=False), "one scorer admission permit was leaked"
+    capacity.release()
 
 
 def test_response_scores_ignore_an_unwritable_diagnostic_profile_path(
