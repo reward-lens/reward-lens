@@ -98,6 +98,18 @@ class CaptureMount:
         self.tensors: dict[Site, "torch.Tensor"] = {}
         self._handles: list[Any] = []
 
+    def _checked_positions(self, *, batch: int, width: int, device: Any) -> "torch.Tensor":
+        """Return gather indices without clamping or changing the caller's tensor."""
+        assert self.positions is not None
+        positions = self.positions.to(device)
+        if positions.ndim != 1 or positions.numel() != batch:
+            raise ValueError(
+                f"capture needs one position per row, got shape {tuple(positions.shape)} for {batch} rows"
+            )
+        if bool(((positions < 0) | (positions >= width)).any()):
+            raise ValueError(f"capture position outside sequence width {width}")
+        return positions
+
     def _store(self, site: Site, hidden: "torch.Tensor") -> None:
         import torch
 
@@ -105,7 +117,9 @@ class CaptureMount:
             value = hidden
         else:
             batch_idx = torch.arange(hidden.shape[0], device=hidden.device)
-            pos = self.positions.to(hidden.device).clamp_(0, hidden.shape[1] - 1)
+            pos = self._checked_positions(
+                batch=hidden.shape[0], width=hidden.shape[1], device=hidden.device
+            )
             value = hidden[batch_idx, pos]
         value = value.detach()
         if self.dtype is not None:
@@ -141,7 +155,7 @@ class CaptureMount:
                     value = per_head
                 else:
                     batch_idx = torch.arange(b, device=x.device)
-                    pos = self.positions.to(x.device).clamp_(0, t - 1)
+                    pos = self._checked_positions(batch=b, width=t, device=x.device)
                     value = per_head[batch_idx, pos]
                 value = value.detach()
                 if self.dtype is not None:

@@ -1,0 +1,10 @@
+{
+  "env_id": "offline-scripted-rollout",
+  "model": "mockllm/model",
+  "rollouts_per_example": 1,
+  "num_examples": 2,
+  "examples": [
+    {"example_id": 11, "step": 0, "group_id": "offline-primes"},
+    {"example_id": 12, "step": 0, "group_id": "offline-primes"}
+  ]
+}

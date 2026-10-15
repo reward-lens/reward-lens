@@ -18,7 +18,9 @@ from dataclasses import dataclass
 
 import pytest
 
-SCRIPT = pathlib.Path(sys.executable).with_name("reward-lens")
+REPO = pathlib.Path(__file__).resolve().parents[2]
+GOLDEN = REPO / "fleet" / "golden"
+SCRIPT = pathlib.Path(sys.executable).parent / "reward-lens"
 
 
 @dataclass
@@ -46,7 +48,9 @@ def _env(extra: dict[str, str] | None = None) -> dict[str, str]:
 def cli(tmp_path):
     """Run the installed console script, with no TTY on any stream."""
 
-    def run(*argv: str, cwd: pathlib.Path | None = None, env: dict | None = None, stdin: str = "") -> Run:
+    def run(
+        *argv: str, cwd: pathlib.Path | None = None, env: dict | None = None, stdin: str = ""
+    ) -> Run:
         proc = subprocess.run(
             [str(SCRIPT), *argv],
             cwd=str(cwd or tmp_path),
@@ -105,3 +109,14 @@ def state_home(monkeypatch, tmp_path):
     return root
 
 
+def golden_body(name: str) -> str:
+    """The expected output of a golden transcript: the file minus its `$ <command>` line.
+
+    `fleet/golden/run_demo.py:parse_golden` splits these files on lines starting with `$ `, so the
+    first line of a single-command transcript is the invocation and the rest is the output.
+    """
+    path = GOLDEN / name
+    text = path.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    assert lines[0].startswith("$ "), f"{path} does not open with an invocation line"
+    return "\n".join(lines[1:])

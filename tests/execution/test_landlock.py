@@ -97,9 +97,7 @@ def test_a_new_file_outside_the_working_directory_cannot_be_created(
 
 
 @requires_l1
-@pytest.mark.skipif(
-    (abi_version() or 0) < 4, reason="TCP rules need Landlock ABI 4 (kernel 6.7)"
-)
+@pytest.mark.skipif((abi_version() or 0) < 4, reason="TCP rules need Landlock ABI 4 (kernel 6.7)")
 def test_tcp_connect_is_denied_where_the_abi_allows(work: Path) -> None:
     """The listener belongs to this process: the point is that the connect never reaches it."""
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

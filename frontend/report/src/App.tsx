@@ -248,7 +248,7 @@ function Evidence({ rows }: { rows: Json[] }) {
           {shown.length} of {rows.length}
         </span>
       </label>
-      <div className="scroller">
+      <div className="scroller" tabIndex={0} role="region" aria-label="Declared measurements">
         <table className="evidence">
           <caption>Every declared measurement, with its method and its interval</caption>
           <thead>

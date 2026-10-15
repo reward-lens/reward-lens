@@ -1,0 +1,10 @@
+{
+  "id": "default-ci-v1",
+  "version": "1.0.0",
+  "actions": ["merge_this_grader"],
+  "default_interval": "0.95",
+  "multiplicity": {"rule": "benjamini_hochberg_fdr", "family": "owner-declared CI intent checks"},
+  "checks": [
+    {"key": "validity.owner_declared_input_handling", "source": "entry_required_check", "section": "validity", "entry_id": "validity.input_handling", "fresh_for_seconds": 604800}
+  ]
+}

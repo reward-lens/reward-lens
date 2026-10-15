@@ -13,7 +13,7 @@ from conftest import JSON_BLOCK, embedded_record
 
 from reward_lens.render.report import embed, render
 
-HOSTILE = 'a </script><img src=x> b   c   d <!-- e --> f & g'
+HOSTILE = "a </script><img src=x> b   c   d <!-- e --> f & g"
 
 
 def test_escaper_leaves_no_raw_angle_bracket_or_separator() -> None:

@@ -14,14 +14,14 @@ from reward_lens import api, contracts
 from reward_lens.api import _dispatch
 
 
-def test_export_refuses_with_rl0701_until_its_engine_lands(tmp_path) -> None:
-    with pytest.raises(contracts.CapabilityUnavailable) as caught:
+def test_export_refuses_with_rl0621_when_its_requested_record_is_missing(tmp_path) -> None:
+    with pytest.raises(contracts.UsageError) as caught:
         api.export(api.ExportRequest(record=tmp_path / "a.assay.json", dest=tmp_path / "out"))
     error = caught.value
-    assert error.code == "RL0701"
-    assert error.exit_code == 5
+    assert error.code == "RL0621"
+    assert error.exit_code == 4
     assert error.remediation
-    assert json.loads(error.to_json())["code"] == "RL0701"
+    assert json.loads(error.to_json())["code"] == "RL0621"
 
 
 def test_open_record_on_a_missing_path_refuses_with_rl0621(tmp_path) -> None:

@@ -8,15 +8,14 @@ exactly, because it is the only verifier whose answer key is known.
 
 The second subject is `is_equiv` from `hendrycks/math`, the answer-equivalence checker the MATH
 benchmark ships and most open RLVR math pipelines still call. A synthetic test proves the code
-runs; a real verifier proves the instrument measures. The real run is fetched over the network and
-skipped without it, which is a documented gap rather than a pass.
+runs; a real verifier proves the instrument measures. The real run uses the byte-checked upstream source fixture, pinned to its public revision.
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
-import urllib.error
-import urllib.request
+from pathlib import Path
 
 import pytest
 
@@ -359,9 +358,6 @@ def test_preflight_names_what_it_could_not_check(grader, corpus) -> None:
 
 #: `is_equiv` from `hendrycks/math`, the answer-equivalence checker the MATH benchmark ships. It is
 #: still the verifier most open RLVR math pipelines call, directly or through a fork.
-REAL_VERIFIER_URL = (
-    "https://raw.githubusercontent.com/hendrycks/math/main/modeling/math_equivalence.py"
-)
 
 REAL_PAIRS = [
     ("\\frac{1}{2}", "\\frac{1}{2}"),
@@ -397,15 +393,13 @@ REAL_PAIRS = [
 
 @pytest.fixture(scope="module")
 def real_verifier(tmp_path_factory: pytest.TempPathFactory) -> VerifierUnderTest:
-    try:
-        with urllib.request.urlopen(REAL_VERIFIER_URL, timeout=20) as response:
-            source = response.read().decode("utf-8")
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        pytest.skip(
-            f"no network for the real-verifier run ({type(exc).__name__}). The fixture tests "
-            f"above prove the code runs; this one proves it measures, and skipping it leaves that "
-            f"unproven rather than proven."
-        )
+    path = Path(__file__).resolve().parent / "real_verifiers/math_equivalence.py"
+    source_bytes = path.read_bytes()
+    assert (
+        hashlib.sha256(source_bytes).hexdigest()
+        == "c4101b1f51a2bb65665194aecd9f761d668c0c248a0350f196c2950e87488527"
+    ), "upstream MATH fixture drift"
+    source = source_bytes.decode("utf-8")
     path = tmp_path_factory.mktemp("real") / "math_equivalence.py"
     path.write_text(source, encoding="utf-8")
     return VerifierUnderTest(source_path=path, entrypoint="is_equiv")

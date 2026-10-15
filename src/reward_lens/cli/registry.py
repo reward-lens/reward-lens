@@ -5,10 +5,9 @@ help prints, and `root_help()` renders the second from the first. Nothing here i
 nothing here imports anything outside the standard library, because this module is on the `--help`
 path (D-30).
 
-The count: D-19's heading says sixteen and its own listing carries fourteen plus `version` and
-`completion`, both marked "(unlisted in root help)". The frozen root help carries the fourteen, and
-`fleet/CLI_COMMANDS.json` names them as the contracted set, so the fourteen are what this table
-holds. `--version` is a root flag instead, which is the half of appendix G defect 1 that matters.
+The root help body stays concise. `version` and `completion` are regular commands in the live
+registry and describe tree, but D-19 leaves them unlisted in that body. `--version` is also a root
+flag for the short path.
 """
 
 from __future__ import annotations
@@ -23,6 +22,7 @@ ORDER: tuple[str, ...] = (
     "audit",
     "trace",
     "compare",
+    "join",
     "forecast",
     "improve",
     "open",
@@ -34,6 +34,8 @@ ORDER: tuple[str, ...] = (
     "explain",
     "describe",
     "mcp",
+    "version",
+    "completion",
 )
 
 #: name -> "module:attribute". The module is imported when the name is invoked, and not before.
@@ -41,6 +43,7 @@ COMMANDS: dict[str, str] = {
     "audit": "reward_lens.cli.verbs.audit:audit",
     "trace": "reward_lens.cli.verbs.trace:trace",
     "compare": "reward_lens.cli.verbs.compare:compare",
+    "join": "reward_lens.cli.verbs.join:join",
     "forecast": "reward_lens.cli.verbs.forecast:forecast",
     "improve": "reward_lens.cli.verbs.improve:improve",
     "open": "reward_lens.cli.verbs.open:open_",
@@ -52,12 +55,15 @@ COMMANDS: dict[str, str] = {
     "explain": "reward_lens.cli.verbs.explain:explain",
     "describe": "reward_lens.cli.verbs.describe:describe",
     "mcp": "reward_lens.cli.verbs.mcp:mcp",
+    "version": "reward_lens.cli.verbs.meta:version",
+    "completion": "reward_lens.cli.verbs.meta:completion",
 }
 
 SUMMARIES: dict[str, str] = {
     "audit": "what this reward accepts, reaches, pays for, and teaches",
     "trace": "what a training run optimised, and what it selected",
     "compare": "what changes if the reward changes",
+    "join": "connect audit families to their saved trace and compare evidence",
     "forecast": "freeze a prediction, resolve it, score the ledger",
     "improve": "start from a goal and run the loop",
     "open": "open a report, or the workbench",
@@ -69,10 +75,12 @@ SUMMARIES: dict[str, str] = {
     "explain": "what an error code or a finding means",
     "describe": "the command tree as versioned JSON, for tools and agents",
     "mcp": "run the agent server on stdio",
+    "version": "print the installed reward-lens version",
+    "completion": "print Click shell completion source",
 }
 
 GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("Measure", ("audit", "trace", "compare", "forecast", "improve")),
+    ("Measure", ("audit", "trace", "compare", "join", "forecast", "improve")),
     ("Records", ("open", "export", "import", "runs")),
     ("Set up", ("init", "doctor", "explain", "describe", "mcp")),
 )
@@ -87,6 +95,7 @@ SIDE_EFFECTS: dict[str, str] = {
     "audit": "reads the project, writes a record and a report, executes the grader in a sandbox",
     "trace": "reads a run record, writes a record and a report",
     "compare": "reads two records or two versions, writes a record and a report",
+    "join": "reads one saved assay and writes nothing",
     "forecast": "reads and writes the project's forecast ledger",
     "improve": "reads the project, executes the grader, writes records and a report",
     "open": "reads a record, opens a viewer",
@@ -98,6 +107,8 @@ SIDE_EFFECTS: dict[str, str] = {
     "explain": "writes nothing, reads nothing, works offline",
     "describe": "writes nothing",
     "mcp": "serves on stdio, and the tools it exposes carry their own side effects",
+    "version": "reads installed package metadata and writes nothing",
+    "completion": "writes shell completion source to stdout and changes nothing",
 }
 
 #: The shape of what each verb puts on stdout under `--format json`.
@@ -105,6 +116,7 @@ OUTPUT_SHAPES: dict[str, str] = {
     "audit": "assay-result/1.0",
     "trace": "assay-result/1.0",
     "compare": "assay-result/1.0",
+    "join": "join-column/1.0",
     "forecast": "assay-result/1.0",
     "improve": "assay-result/1.0",
     "open": "assay-result/1.0",
@@ -116,6 +128,8 @@ OUTPUT_SHAPES: dict[str, str] = {
     "explain": "error-explanation/1.0",
     "describe": "command-tree/1.0",
     "mcp": "jsonrpc on stdio",
+    "version": "version-text/1.0",
+    "completion": "shell-source/1.0",
 }
 
 _NAME_WIDTH = 12

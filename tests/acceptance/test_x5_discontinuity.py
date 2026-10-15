@@ -32,7 +32,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from experiments.x5_discontinuity import (
     CUTOFFS,
     GH_QUERIES,
@@ -50,6 +49,7 @@ from experiments.x5_discontinuity import (
     study_spec,
     summarise,
 )
+
 from reward_lens.core.evidence import Evidence
 from reward_lens.core.reading import Refusal, RefusalReason
 from reward_lens.measure.base import Context, lint_instrument

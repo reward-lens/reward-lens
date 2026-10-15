@@ -62,7 +62,14 @@ from .models import (
     estimate,
     model_for_def,
 )
-from .project import OutcomeSpec, ProjectConfig, ResponsesSpec, RewardSpec, TasksSpec
+from .project import (
+    HeldOutCapabilitySpec,
+    OutcomeSpec,
+    ProjectConfig,
+    ResponsesSpec,
+    RewardSpec,
+    TasksSpec,
+)
 from .quantise import quantise, scale_violations
 from .validate import SCHEMA_MAJOR, assay_schema, validate_record
 
@@ -88,6 +95,7 @@ __all__ = [
     "Finding",
     "Hole",
     "HoleState",
+    "HeldOutCapabilitySpec",
     "Intent",
     "InternalFailure",
     "JoinRow",

@@ -9,10 +9,11 @@ Evidence and folding its outcomes into the theorem scoreboard at T9.
 
 from __future__ import annotations
 
+from studies.s03_thermo.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s03_thermo.analysis import build_spec
 
 
 def test_s03_runs_and_registers(tmp_path):

@@ -240,7 +240,7 @@ def test_sensitivity_imports_on_the_base_closure_and_names_the_verifier_extra(
             "    s.np.array([1.0])\n"
             "except ExtraRequiredError as exc:\n"
             "    assert 'verifier' in str(exc), str(exc)\n"
-            '    assert "pip install \'reward-lens[verifier]\'" in str(exc), str(exc)\n'
+            "    assert \"pip install 'reward-lens[verifier]'\" in str(exc), str(exc)\n"
             "    assert isinstance(exc, ImportError), type(exc)\n"
             "except ModuleNotFoundError as exc:\n"
             "    raise AssertionError('the first numpy use raised a bare ModuleNotFoundError for '\n"
@@ -272,7 +272,7 @@ def test_require_extra_refuses_the_verifier_extra_on_the_base_closure(clean_pyth
             "except ExtraRequiredError as exc:\n"
             "    assert str(exc).startswith('x needs'), str(exc)\n"
             "    assert \"'verifier' extra\" in str(exc), str(exc)\n"
-            '    assert "pip install \'reward-lens[verifier]\'" in str(exc), str(exc)\n'
+            "    assert \"pip install 'reward-lens[verifier]'\" in str(exc), str(exc)\n"
             "    assert isinstance(exc, ImportError), type(exc)\n"
             "else:\n"
             "    raise AssertionError('require_extra(verifier) returned on a base install')\n"

@@ -8,10 +8,11 @@ inconclusive-because-gated on a GPU training loop.
 
 from __future__ import annotations
 
+from studies.s14_phase.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s14_phase.analysis import build_spec
 
 
 def test_s14_runs_and_registers(tmp_path):

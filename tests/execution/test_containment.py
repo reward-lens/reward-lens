@@ -206,9 +206,7 @@ def test_growth_past_the_budget_is_still_an_artifact_breach(tmp_path: Path) -> N
         "import time; time.sleep(20)\n"
     )
     sandbox = default_sandbox()
-    result = sandbox.run(
-        [sys.executable, "-c", source], limits=limits, cwd=project, env={}
-    )
+    result = sandbox.run([sys.executable, "-c", source], limits=limits, cwd=project, env={})
     assert result.breach == "artifact"
     assert result.counters.disk_bytes > limits.artifact_bytes
 

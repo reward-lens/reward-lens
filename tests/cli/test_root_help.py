@@ -1,31 +1,59 @@
-"""The frozen root help, the fourteen commands, and the cost of printing it."""
+"""The current root help, the preserved base commands plus Join, and its printing cost."""
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
 
 import pytest
+from conftest import REPO, SCRIPT, golden_body
 
-from conftest import SCRIPT
-from reward_lens.cli import registry
+CONTRACTED = json.loads((REPO / "fleet" / "CLI_COMMANDS.json").read_text(encoding="utf-8"))[
+    "commands"
+]
+CURRENT_COMMANDS = CONTRACTED[:3] + ["join"] + CONTRACTED[3:] + ["version", "completion"]
+# This is a static current-source checkpoint. Wave 1, Wave 2 and the target transcript remain
+# frozen historical/end-state references; this candidate never selects an active demo wave.
+ROOT_HELP = "candidates/current/root-help.txt"
 
-CONTRACTED = list(registry.ORDER)
-
-#: A-026 and A-027: the verbs this build contracts for but cannot run, and four it can.
-ABSENT = ("trace", "compare", "forecast", "improve")
-PRESENT = ("audit", "init", "doctor", "explain")
+#: Current engines are landed. The synthetic absence control below preserves A-026/A-027.
+ABSENT = ()
+PRESENT = ("audit", "trace", "compare", "join", "forecast", "improve", "init", "doctor", "explain")
 
 
-def test_root_help_matches_the_public_registry_contract(cli):
+def test_root_help_is_byte_identical_to_the_golden(cli):
+    """The current checkpoint transcript, not an active or frozen wave transcript.
+
+    The static current checkpoint includes the landed Join command. A separate control preserves
+    every frozen target line and allows only that commissioned command addition.
+    """
     run = cli()
     assert run.exit_code == 0
-    assert run.stdout == registry.root_help()
+    assert run.stdout == golden_body(ROOT_HELP)
 
 
-def test_help_flag_prints_the_public_registry_contract(cli):
-    assert cli("--help").stdout == registry.root_help()
+def test_help_flag_prints_the_same_root_help(cli):
+    assert cli("--help").stdout == golden_body(ROOT_HELP)
+
+
+def test_the_current_checkpoint_preserves_the_target_and_adds_the_landed_join():
+    """Preserve the frozen base transcript while naming the commissioned Join surface."""
+    from reward_lens.cli import registry
+
+    target = golden_body("target/root-help.txt").split("\n")
+    checkpoint = golden_body(ROOT_HELP).split("\n")
+
+    additions = [line for line in checkpoint if line.startswith("  join ")]
+    assert additions == [
+        "  join        connect audit families to their saved trace and compare evidence"
+    ]
+    preserved = [line for line in checkpoint if not line.startswith("  join ")]
+    assert len(preserved) == len(target)
+    for want, have in zip(target, preserved):
+        assert have.removesuffix(registry.ABSENT_MARK) == want, (want, have)
+    assert not [line for line in checkpoint if line.endswith(registry.ABSENT_MARK)]
 
 
 def test_the_root_help_marks_every_verb_whose_engine_is_not_in_this_build(cli):
@@ -43,25 +71,30 @@ def test_the_root_help_marks_every_verb_whose_engine_is_not_in_this_build(cli):
         assert not printed[0].endswith(registry.ABSENT_MARK), printed[0]
 
 
-def test_an_absent_verb_refuses_before_it_parses_and_keeps_its_help(cli):
+def test_an_absent_engine_refuses_before_it_parses_and_keeps_its_help(invoke, monkeypatch):
     """A-026 and A-027: one answer, RL0703, exit 5, whether or not an argument came with it.
 
     The refusal sits in front of the parser, so a verb that could not have run either way never
     argues about its arguments first. `--help` is the one thing it can still honestly do.
     """
-    bare = cli("trace")
-    with_argument = cli("trace", "run-0123456789ab")
+    from reward_lens.api import _dispatch
+
+    monkeypatch.setitem(_dispatch.ENGINES, "improve", "reward_lens.product.nothing_here:run")
+    bare = invoke("improve")
+    with_argument = invoke("improve", ".")
 
     assert bare.exit_code == with_argument.exit_code == 5, (bare.stderr, with_argument.stderr)
     assert bare.stderr == with_argument.stderr
     assert "RL0703" in bare.stderr
-    assert "`trace` is not in this build" in bare.stderr
+    assert "`improve` is not in this build" in bare.stderr
     assert "Traceback" not in bare.stderr
     assert bare.stdout == with_argument.stdout == ""
 
-    helped = cli("trace", "--help")
+    helped = invoke("improve", "--help")
     assert helped.exit_code == 0, helped.stderr
-    assert helped.stdout.startswith("Usage: reward-lens trace")
+    # The in-process fixture uses Click's inferred `cli` program name; the subprocess
+    # command-help controls above separately require the public `reward-lens` name.
+    assert helped.stdout.startswith("Usage: cli improve")
 
 
 def test_root_help_goes_to_stdout_and_stderr_stays_empty(cli):
@@ -69,14 +102,14 @@ def test_root_help_goes_to_stdout_and_stderr_stays_empty(cli):
     assert run.stderr == ""
 
 
-def test_the_contracted_fourteen_are_the_commands_the_registry_carries():
+def test_the_current_registry_preserves_the_base_commands_and_adds_join():
     from reward_lens.cli import registry
 
-    assert list(registry.COMMANDS) == CONTRACTED
-    assert registry.ORDER == tuple(CONTRACTED)
+    assert list(registry.COMMANDS) == CURRENT_COMMANDS
+    assert registry.ORDER == tuple(CURRENT_COMMANDS)
 
 
-@pytest.mark.parametrize("name", CONTRACTED)
+@pytest.mark.parametrize("name", CURRENT_COMMANDS)
 def test_every_command_responds_to_help(cli, name):
     run = cli(name, "--help")
     assert run.exit_code == 0, run.stderr
@@ -96,6 +129,25 @@ def test_version_flag_exists_and_names_the_version(cli):
     assert run.stdout.strip() == f"reward-lens {version('reward-lens')}"
 
 
+def test_version_leaf_matches_the_flag(cli):
+    leaf = cli("version")
+    assert leaf.exit_code == 0, leaf.stderr
+    assert leaf.stdout == cli("--version").stdout
+
+
+@pytest.mark.parametrize("shell", ("bash", "zsh", "fish"))
+def test_completion_leaf_emits_click_source(cli, shell):
+    from click.shell_completion import get_completion_class
+
+    from reward_lens.cli.main import cli as root
+
+    run = cli("completion", shell)
+    expected = get_completion_class(shell)(root, {}, "reward-lens", "_REWARD_LENS_COMPLETE")
+    assert run.exit_code == 0, run.stderr
+    assert run.stdout == expected.source()
+    assert "_REWARD_LENS_COMPLETE" in run.stdout
+
+
 def test_help_imports_no_verb_module(child_env):
     """D-30: a verb module is not imported before its verb runs."""
     probe = (
@@ -111,7 +163,17 @@ def test_help_imports_no_verb_module(child_env):
     assert "VERBS=\n" in out + "\n", out.splitlines()[-1]
 
 
-HEAVY = ("rich", "pydantic", "jsonschema_rs", "numpy", "pandas", "torch", "transformers", "httpx", "requests")
+HEAVY = (
+    "rich",
+    "pydantic",
+    "jsonschema_rs",
+    "numpy",
+    "pandas",
+    "torch",
+    "transformers",
+    "httpx",
+    "requests",
+)
 
 
 def test_import_set_after_help_holds_none_of_the_heavy_names(child_env):

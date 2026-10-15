@@ -23,19 +23,20 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from conftest import (
+from reward_lens.contracts import Assay, RecordInvalid, RewardLensError, validate_record
+from reward_lens.contracts.quantise import scale_violations
+
+from .conftest import (
     INDEX,
+    INDEXED_WITHOUT_FIXTURE,
+    INVALID_NAMES,
+    ORPHAN_FIXTURES,
     QUANTISER_LAYER,
     SCHEMA_LAYER,
     VALID_NAMES,
     invalid_instance,
     valid_instance,
 )
-
-from conftest import INDEXED_WITHOUT_FIXTURE, INVALID_NAMES, ORPHAN_FIXTURES
-
-from reward_lens.contracts import Assay, RecordInvalid, RewardLensError, validate_record
-from reward_lens.contracts.quantise import scale_violations
 
 
 def named(name: str, key: str):
@@ -72,7 +73,9 @@ def test_schema_layer_instance_rejected_by_jsonschema_rs_at_its_named_rule(rs_va
     }
     assert landed, f"{name} was accepted by the schema, but INDEX says {INDEX[name]['rule']}"
     want = (str(named(name, "instance_path")), str(named(name, "schema_path")))
-    assert want in landed, f"{name}: refused, but not at {want[0]} by {want[1]}; got {sorted(landed)}"
+    assert want in landed, (
+        f"{name}: refused, but not at {want[0]} by {want[1]}; got {sorted(landed)}"
+    )
 
 
 @pytest.mark.parametrize("name", SCHEMA_LAYER)

@@ -10,6 +10,11 @@ also asserted, so an operator can introspect the surface without a GPU.
 
 from __future__ import annotations
 
+import json
+import os
+import subprocess
+import sys
+
 from typer.testing import CliRunner
 
 from reward_lens.artifacts.atlas import Atlas
@@ -20,6 +25,111 @@ from reward_lens.core.types import GaugeStatus, ModelFP, SubjectRef
 from reward_lens.operate.cli import GPU_GATED_EXIT, app
 
 runner = CliRunner()
+
+
+def test_legacy_mcp_exports_are_lazy_typed_refusals() -> None:
+    """The deleted v3 server keeps its public shape without loading any MCP runtime."""
+
+    environment = os.environ.copy()
+    environment.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            """
+import importlib
+import inspect
+import json
+import sys
+
+import reward_lens.operate as operate
+
+def optional_runtime_modules():
+    return sorted(
+        name for name in sys.modules
+        if name == 'torch' or name.startswith('torch.') or name == 'mcp' or name.startswith('mcp.')
+        or name == 'reward_lens.integrations.mcp' or name.startswith('reward_lens._vendor.mcp2')
+    )
+
+before = optional_runtime_modules()
+symbols = [operate.Tool, operate.MCPServer, operate.build_server]
+after_symbols = optional_runtime_modules()
+from reward_lens.contracts import CapabilityUnavailable
+errors = []
+for symbol, invoke in (
+    ('Tool', lambda: operate.Tool('name', 'description', {}, lambda _: 'ok')),
+    ('MCPServer', lambda: operate.MCPServer()),
+    ('build_server', lambda: operate.build_server()),
+):
+    try:
+        invoke()
+    except CapabilityUnavailable as error:
+        errors.append({
+            'symbol': symbol,
+            'code': error.code,
+            'message': error.message,
+            'remediation': error.remediation,
+        })
+    else:
+        raise AssertionError(f'{symbol} did not refuse')
+
+try:
+    importlib.import_module('reward_lens.operate.mcp')
+except ModuleNotFoundError:
+    removed_module = True
+else:
+    removed_module = False
+
+print(json.dumps({
+    'public': operate.__all__,
+    'tool_parameters': list(inspect.signature(operate.Tool).parameters),
+    'tool_gpu_default': inspect.signature(operate.Tool).parameters['gpu_gated'].default,
+    'server_parameters': list(inspect.signature(operate.MCPServer).parameters),
+    'server_store_default': inspect.signature(operate.MCPServer).parameters['store'].default,
+    'build_parameters': list(inspect.signature(operate.build_server).parameters),
+    'build_store_default': inspect.signature(operate.build_server).parameters['store'].default,
+    'before': before,
+    'after_symbols': after_symbols,
+    'errors': errors,
+    'removed_module': removed_module,
+}, sort_keys=True))
+""",
+        ],
+        capture_output=True,
+        check=False,
+        env=environment,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, result.stderr
+    observed = json.loads(result.stdout)
+
+    assert observed["public"] == ["app", "main", "MCPServer", "Tool", "build_server"]
+    assert observed["tool_parameters"] == [
+        "name",
+        "description",
+        "input_schema",
+        "handler",
+        "gpu_gated",
+    ]
+    assert observed["tool_gpu_default"] is False
+    assert observed["server_parameters"] == ["store"]
+    assert observed["server_store_default"] is None
+    assert observed["build_parameters"] == ["store"]
+    assert observed["build_store_default"] is None
+    assert observed["before"] == []
+    assert observed["after_symbols"] == []
+    assert observed["removed_module"] is True
+    assert [error["symbol"] for error in observed["errors"]] == [
+        "Tool",
+        "MCPServer",
+        "build_server",
+    ]
+    for error in observed["errors"]:
+        assert error["code"] == "RL0701"
+        assert "removed transport-less v3 MCP API" in error["message"]
+        assert "reward-lens mcp" in error["remediation"]
+        assert "reward_lens.integrations.mcp" in error["remediation"]
 
 
 def _seed(tmp_path) -> tuple[str, str, str]:

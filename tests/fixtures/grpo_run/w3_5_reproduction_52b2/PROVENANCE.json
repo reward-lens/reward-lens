@@ -1,0 +1,138 @@
+{
+  "schema": "reward-lens-w3.5-reproduction-1",
+  "artifact_kind": "fresh actual GRPO record generated on 2026-10-04; not the original August record",
+  "historical_assertions": "all 17 original assertions and registered prediction constants preserved; revision pin reproduces historical numerical tolerances",
+  "run_id": "run:137d139be0e8cf23f4f3120590adb532",
+  "model_identifier": "trl-internal-testing/tiny-Qwen3ForCausalLM",
+  "model_revision": "52b2e48b0004586eff92c403efa5ce5547c43a45",
+  "model_and_tokenizer_assets_sha256": {
+    ".gitattributes": "34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930",
+    "README.md": "2933d9ea8da629b44be21f399b074a6e1cf9826916cdf12ec2a4136e937a4135",
+    "added_tokens.json": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680",
+    "chat_template.jinja": "b2d3c4d81cc138ef3b0c1b8f9c3ac54f15f1ca38ada2eef4c3a8690baece0074",
+    "config.json": "256eed4a1f7d3a4f63b917266030082ed5f46dce6f4cf753b4a5ac3ad2d3e6f0",
+    "generation_config.json": "19d9395705449004ddebeeaf62841338a48cc8df85cddb1ca0b2c60396d95c96",
+    "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+    "model.safetensors": "cee9ccbb3fdddfbdda9dccbb865396dfc6bc099428441cbb4fea1e7cdb193cfe",
+    "special_tokens_map.json": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+    "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "tokenizer_config.json": "443bfa629eb16387a12edbf92a76f6a6f10b2af3b53d87ba1550adfcf45f7fa0",
+    "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  },
+  "original_test_introduction_commit": "76542e34a5a6733db3c505d0354f386ff87d65ae",
+  "original_test_sha256": "0df0e884e1b4c3b1ae908f2eb11b5cbdb9c973b5ce47a5a7d717140ae24b4a47",
+  "candidate_test_sha256": "2a9f49641989eae40930e19377f03a585522956035f435602713bc5390c79c28",
+  "source_inputs_sha256": {
+    "tests/acceptance/test_w3_5_estimator.py": "0df0e884e1b4c3b1ae908f2eb11b5cbdb9c973b5ce47a5a7d717140ae24b4a47",
+    "src/reward_lens/tap/adapters/trl.py": "bcb7100f18bd807b4df442cfeeee6c8e32894b1f7cbab89191b3043c1711d301",
+    "src/reward_lens/record/scores.py": "dd43ff1987e7199f72ba520a273efa77e9bfb37fed036dab144ec643c37c249e",
+    "src/reward_lens/measure/estimator/amplifier.py": "2592298879857aa708e81de690b1154b476ab122e1b5038e926d2877ad9802ef",
+    "src/reward_lens/record/writer.py": "11a6dbf8a62c4203a5743e12ac27b82be2bb4618fec18d50788eefea7fbeb3f8",
+    "src/reward_lens/record/reader.py": "49a34e4ed7ab1f3cac48757d7d27348eda9a8b25d5422487cd4fc51cc4d83fda",
+    "tests/conftest.py": "6a9fe72d7e9af8e4b9752e2b20ec46099aa2d602ec1d19e1d31ebf89821ffb5d"
+  },
+  "runtime": {
+    "torch": "2.14.0",
+    "trl": "1.13.0",
+    "transformers": "5.17.0",
+    "datasets": "5.0.1",
+    "numpy": "2.4.6",
+    "tokenizers": "0.23.2",
+    "accelerate": "1.15.0"
+  },
+  "python": "3.11.13 (main, Aug 18 2025, 19:19:13) [Clang 20.1.4 ]",
+  "installed_packages_count": 239,
+  "installed_packages_inventory_sha256": "d1398fa1fc5ada4248b2bf4c6d3692ece3ebeafa5dc0dc59c2854074955f9a8f",
+  "training_profile": {
+    "seed": 1234,
+    "steps": 24,
+    "batch": 8,
+    "generations_per_group": 4,
+    "cpu_threads": 1,
+    "offline": true,
+    "model_init_kwargs": {
+      "revision": "52b2e48b0004586eff92c403efa5ce5547c43a45",
+      "local_files_only": true
+    }
+  },
+  "wet_proof": {
+    "exit": {
+      "exit": 0,
+      "timed_out": false,
+      "duration_s": 37.44726004298718,
+      "command": [
+        "/tmp/rlp-heavy-source-runtime-C096b/policy-source-route-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-rA",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "capture_plugin",
+        "/tmp/rlp-finish-policy-reproduce/candidate-source/tests/acceptance/test_w3_5_estimator.py"
+      ]
+    },
+    "log_sha256": "57a16f6d407e8019edb1cab21255f0586161d561a5b243db1e85689d89ba2c8a",
+    "capture_hook_sha256": "a1349dded67840a6c13a6a7c8bda848c2451884538f8d5a7f8b3c989db5e2417",
+    "record_env_absent": true,
+    "observer_only": true,
+    "passed": 17,
+    "skipped": 0
+  },
+  "record_files_sha256": {
+    "runs/run_137d139be0e8cf23f4f3120590adb532/manifest.json": "3e6ee21f70d706c04a5f2b3f0161f8642dbc04ac3d8a8185800c9c5c27a15c06",
+    "runs/run_137d139be0e8cf23f4f3120590adb532/run.json": "a577a3cd8c0436655e3367b23ec09fff8f9111028900ddc630f24eda768bff25",
+    "runs/run_137d139be0e8cf23f4f3120590adb532/steps/step_range=000000-000099/groups.jsonl": "c58e96c497b15427c7174527fa06069199751492fe0fb2769f069e99e7618438",
+    "runs/run_137d139be0e8cf23f4f3120590adb532/steps/step_range=000000-000099/steps.jsonl": "3a46403adca59cba81020ec5d8aa7c5b7b445fa693ff8e2ca3402c9f5053f9d3",
+    "runs/run_137d139be0e8cf23f4f3120590adb532/steps/step_range=000000-000099/trajectories.jsonl": "9d073c82b5cb92673fafc242e58158fc4f0c27875645b702be6e745b0f252fe6",
+    "runs/run_137d139be0e8cf23f4f3120590adb532/steps/step_range=000000-000099/turns.jsonl": "5a3c8701188290f62b52f2c5d1f4704b26203345633bdbbf4dff99599dc26209",
+    "runs/run_137d139be0e8cf23f4f3120590adb532/tensors/manifest.json": "0da76438b82d6031a8660b4405e636fe006e154d1ccade92f5851c0f2bd0f9fd"
+  },
+  "observed_metrics": {
+    "steps": 24,
+    "groups": 48,
+    "trajectories": 192,
+    "phases": {
+      "all_fail": 14,
+      "all_pass": 2,
+      "mixed": 32
+    },
+    "safety": {
+      "task_reward": 0.0,
+      "format_reward": 0.9292740046838408,
+      "length_reward": 1.864040983240826
+    },
+    "ranking": [
+      "length_reward",
+      "format_reward",
+      "task_reward"
+    ],
+    "verdicts": {
+      "task_reward": "amplifier-safe",
+      "format_reward": "watch",
+      "length_reward": "live amplifier"
+    },
+    "independent_replay": {
+      "aggregation": "TRL zero contribution for abstained leaves; weights 1.0,0.3,0.1; centered within group",
+      "epsilon": 0.0001,
+      "ddof1_max_abs_error": 9.159119727097931e-07,
+      "ddof0_max_abs_error": 0.23174813492402224,
+      "tolerance": 0.0001,
+      "historical_ddof1_expected": 9.16e-07,
+      "historical_ddof1_relative_tolerance": 0.1
+    },
+    "general_check_replay": {
+      "n_groups": 48,
+      "n_comparable": 48,
+      "n_agree": 24,
+      "max_abs_error": 1.2857665292650124,
+      "tol": 0.0001,
+      "refusals": []
+    }
+  },
+  "scope_limit": "Pin and frozen measurement replay only. Held-out collapse criterion remains unresolved. General check_replay retains abstention diagnostic; do not claim all groups agree.",
+  "candidate_base_sha": "1cbbabfe2963de18b46b4013d0cdcaf38f6a95fe",
+  "training_source_head_observed_during_execution": "32fee35ad51bb8ac1a8ef5ae747860fd6ea85f0e",
+  "bound_source_inputs_verified_unchanged_from_prior_probe": true
+}

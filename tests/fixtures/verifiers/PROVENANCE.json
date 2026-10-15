@@ -1,0 +1,7 @@
+{
+  "schema": "reward-lens-test-source-fixture/1",
+  "source_url": "https://github.com/willccbb/verifiers/blob/edafab857aabf830237068193150694cfae50c3b/verifiers/rubrics/rubric.py",
+  "source_revision": "edafab857aabf830237068193150694cfae50c3b",
+  "source_sha256": "979c163bf7c9da86822738a66c4b04341652c82a652a4b502a8ae10c9c455604",
+  "purpose": "AST-level contract for reward function shape and argument binding tests"
+}

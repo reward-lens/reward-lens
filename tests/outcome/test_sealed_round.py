@@ -46,7 +46,9 @@ def test_a_different_candidate_set_gets_its_own_round(ledger: RoundLedger) -> No
     assert {row.candidate_set for row in ledger.rounds()} == {CANDIDATE, OTHER_CANDIDATE}
 
 
-def test_the_round_is_spent_by_a_sealed_request_carrying_the_four_fields(ledger: RoundLedger) -> None:
+def test_the_round_is_spent_by_a_sealed_request_carrying_the_four_fields(
+    ledger: RoundLedger,
+) -> None:
     sealed = seal(ledger)
     request = SealedRequest(
         candidate_digest=CANDIDATE,

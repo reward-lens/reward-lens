@@ -1,0 +1,22 @@
+$ reward-lens doctor
+
+  Install
+    reward-lens 3.1.0  ·  python 3.11.13  ·  linux x86_64  ·  <captured-install-location>
+    extras installed: trace, train          audit on local graders: yes
+
+  Sandbox
+    L3: Landlock + seccomp inside bubblewrap --unshare-all     probed in 14 ms, held
+    per call: 30 s wall, 2 GB, 64 procs, no network
+
+  What this machine can measure now
+    ✔ validity (the static checks and replay), reach (static exposure only)
+    ✔ trace, forecast, improve
+
+  What it cannot, and what each would take
+    ○ soundness, exploits, framing, signal, cost      not in this build
+    ○ compare                                         not in this build
+    ○ the seeker, either arm                          not in this build
+    ○ calibration and limits of detection             no reference material for this substrate yet
+
+  Network   offline is available and is the default for local graders
+  Cost      $0.00 for everything in the first list

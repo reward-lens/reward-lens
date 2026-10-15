@@ -11,10 +11,11 @@ coerced.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Iterator, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Iterator, Literal, Mapping
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from reward_lens import errors
@@ -35,8 +36,11 @@ __all__ = [
     "ForecastLedgerRequest",
     "ForecastResolveRequest",
     "ImproveRequest",
+    "ImportRequest",
+    "ImportResult",
     "InstallInfo",
     "Plan",
+    "SeekerProposalRequest",
     "TraceRequest",
 ]
 
@@ -52,6 +56,80 @@ PathField = Annotated[Path, BeforeValidator(_as_path)]
 
 Seeker = Literal["off", "api", "local", "agent"]
 Money = str
+
+
+def _validate_weight_declarations(declarations: tuple[str, ...]) -> tuple[str, ...]:
+    names: set[str] = set()
+    for declaration in declarations:
+        name, separator, value = declaration.partition("=")
+        if not separator or not name or not value:
+            raise ValueError("each weights declaration must have the form NAME=VALUE")
+        if name in names:
+            raise ValueError(f"weights declares {name!r} more than once")
+        try:
+            number = float(value)
+        except ValueError as failure:
+            raise ValueError(f"weights value for {name!r} is not a number") from failure
+        if not math.isfinite(number):
+            raise ValueError(f"weights value for {name!r} must be finite")
+        names.add(name)
+    return declarations
+
+
+def _validate_group_size(value: int | None) -> int | None:
+    if value is not None and value <= 0:
+        raise ValueError("group_size must be a positive integer")
+    return value
+
+
+def _validate_trl_declarations(
+    reward_functions: tuple[str, ...],
+    extra_columns: tuple[str, ...],
+    weights: tuple[str, ...],
+    group_column: str | None,
+    group_size: int | None,
+) -> None:
+    reward_names = set(reward_functions)
+    extra_names = set(extra_columns)
+    if len(reward_names) != len(reward_functions):
+        raise ValueError("reward_functions names a function more than once")
+    if len(extra_names) != len(extra_columns):
+        raise ValueError("extra_columns names a column more than once")
+    overlap = reward_names & extra_names
+    if overlap:
+        raise ValueError(
+            "a column cannot be both a reward function and an extra column: "
+            + ", ".join(sorted(overlap))
+        )
+    weight_names = {declaration.partition("=")[0] for declaration in weights}
+    if weight_names and not reward_names:
+        raise ValueError("weights needs reward_functions so each component is named")
+    if weight_names and weight_names != reward_names:
+        missing = sorted(reward_names - weight_names)
+        unknown = sorted(weight_names - reward_names)
+        detail: list[str] = []
+        if missing:
+            detail.append("missing " + ", ".join(missing))
+        if unknown:
+            detail.append("not declared as reward functions: " + ", ".join(unknown))
+        raise ValueError(
+            "weights must name every declared reward function exactly once ("
+            + "; ".join(detail)
+            + ")"
+        )
+    if group_column is not None and group_column not in extra_names:
+        raise ValueError("group_column must also be named in extra_columns")
+    if group_size is not None and group_column is None:
+        raise ValueError(
+            "group_size needs group_column, because a cardinality without a source column is not evidence"
+        )
+
+
+def _weight_map(declarations: tuple[str, ...]) -> dict[str, float]:
+    return {
+        declaration.partition("=")[0]: float(declaration.partition("=")[2])
+        for declaration in declarations
+    }
 
 
 def _as_sandbox_probe(value: Any) -> "SandboxProbe | None":
@@ -116,9 +194,7 @@ def _refusal(model: type[BaseModel], invalid: PydanticValidationError) -> Reward
     field = where or model.__name__
     code = "RL0002" if where in IDENTIFIER_FIELDS else "RL0003"
     refusal = errors.make(code, field=field, detail=_detail(first))
-    refusal.context.update(
-        {"request": model.__name__, "field": field, "problems": len(problems)}
-    )
+    refusal.context.update({"request": model.__name__, "field": field, "problems": len(problems)})
     return refusal
 
 
@@ -159,6 +235,7 @@ class AuditRequest(Request):
     responses: PathField | None = None
     outcome: PathField | None = None
     seeker: Seeker = "off"
+    seeker_config: PathField | None = None
     max_budget_usd: Money | None = None
     offline: bool = True
     sandbox: str = "auto"
@@ -166,15 +243,50 @@ class AuditRequest(Request):
     dry_run: bool = False
     seed: int = DEFAULT_SEED
     run_dir: PathField | None = None
+    detection_reference: PathField | None = None
+    reward_functions: tuple[str, ...] = ()
+    extra_columns: tuple[str, ...] = ()
+    weights: tuple[str, ...] = ()
+    group_column: str | None = None
+    group_size: int | None = None
     name: str | None = None
     resume: str | None = None
+    continue_run: bool = False
     only: tuple[str, ...] = ()
     policy: PathField | str | None = None
     non_interactive: bool = False
 
+    _weight_declarations_are_finite_named_pairs = field_validator("weights")(
+        lambda declarations: _validate_weight_declarations(declarations)
+    )
+    _group_size_is_positive = field_validator("group_size")(
+        lambda value: _validate_group_size(value)
+    )
+
+    @model_validator(mode="after")
+    def _trl_declarations_describe_one_unambiguous_partition(self) -> "AuditRequest":
+        _validate_trl_declarations(
+            self.reward_functions,
+            self.extra_columns,
+            self.weights,
+            self.group_column,
+            self.group_size,
+        )
+        return self
+
+    @property
+    def weight_map(self) -> dict[str, float]:
+        return _weight_map(self.weights)
+
 
 class TraceRequest(Request):
-    """What a training run actually optimised, read back from the run record."""
+    """What a training run actually optimised, read back from the run record.
+
+    A TRL completions parquet deliberately flattens the reward-function and ``log_extra``
+    dictionaries into one table. These declarations preserve the boundary the file omitted;
+    they are caller statements, never columns inferred from position or a default weight vector.
+    Other readers receive no interpretation of them.
+    """
 
     run: str | None = None
     project: PathField | None = None
@@ -187,14 +299,91 @@ class TraceRequest(Request):
     run_dir: PathField | None = None
     name: str | None = None
     non_interactive: bool = False
+    reward_functions: tuple[str, ...] = ()
+    extra_columns: tuple[str, ...] = ()
+    weights: tuple[str, ...] = ()
+    group_column: str | None = None
+    group_size: int | None = None
+
+    @field_validator("weights")
+    @classmethod
+    def _weight_declarations_are_finite_named_pairs(
+        cls, declarations: tuple[str, ...]
+    ) -> tuple[str, ...]:
+        names: set[str] = set()
+        for declaration in declarations:
+            name, separator, value = declaration.partition("=")
+            if not separator or not name or not value:
+                raise ValueError("each weights declaration must have the form NAME=VALUE")
+            if name in names:
+                raise ValueError(f"weights declares {name!r} more than once")
+            try:
+                number = float(value)
+            except ValueError as failure:
+                raise ValueError(f"weights value for {name!r} is not a number") from failure
+            if not math.isfinite(number):
+                raise ValueError(f"weights value for {name!r} must be finite")
+            names.add(name)
+        return declarations
+
+    @field_validator("group_size")
+    @classmethod
+    def _group_size_is_positive(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            raise ValueError("group_size must be a positive integer")
+        return value
+
+    @model_validator(mode="after")
+    def _trl_declarations_describe_one_unambiguous_partition(self) -> "TraceRequest":
+        reward_names = set(self.reward_functions)
+        extra_names = set(self.extra_columns)
+        if len(reward_names) != len(self.reward_functions):
+            raise ValueError("reward_functions names a function more than once")
+        if len(extra_names) != len(self.extra_columns):
+            raise ValueError("extra_columns names a column more than once")
+        overlap = reward_names & extra_names
+        if overlap:
+            raise ValueError(
+                "a column cannot be both a reward function and an extra column: "
+                + ", ".join(sorted(overlap))
+            )
+        weight_names = {declaration.partition("=")[0] for declaration in self.weights}
+        if weight_names and not reward_names:
+            raise ValueError("weights needs reward_functions so each component is named")
+        if weight_names and weight_names != reward_names:
+            missing = sorted(reward_names - weight_names)
+            unknown = sorted(weight_names - reward_names)
+            detail: list[str] = []
+            if missing:
+                detail.append("missing " + ", ".join(missing))
+            if unknown:
+                detail.append("not declared as reward functions: " + ", ".join(unknown))
+            raise ValueError(
+                "weights must name every declared reward function exactly once ("
+                + "; ".join(detail)
+                + ")"
+            )
+        if self.group_column is not None and self.group_column not in extra_names:
+            raise ValueError("group_column must also be named in extra_columns")
+        if self.group_size is not None and self.group_column is None:
+            raise ValueError(
+                "group_size needs group_column, because a cardinality without a source column is not evidence"
+            )
+        return self
+
+    @property
+    def weight_map(self) -> dict[str, float]:
+        """The validated declaration map handed to the TRL reader, with no implicit component."""
+        return _weight_map(self.weights)
 
 
 class CompareRequest(Request):
-    """Two versions of one reward system, on as many rungs of the ladder as the build holds."""
+    """Two reward versions, with finite-bank, replay, and executable-rung inputs."""
 
     baseline: str
     candidate: str
     project: PathField | None = None
+    bank: PathField | None = None
     rungs: tuple[int, ...] = ()
     max_budget_usd: Money | None = None
     offline: bool = True
@@ -202,6 +391,12 @@ class CompareRequest(Request):
     require_tier: str | None = None
     seed: int = DEFAULT_SEED
     run_dir: PathField | None = None
+    baseline_config: PathField | None = None
+    candidate_config: PathField | None = None
+    selection_config: PathField | None = None
+    controlled_update_config: PathField | None = None
+    short_fork_config: PathField | None = None
+    transfer_config: PathField | None = None
     name: str | None = None
     non_interactive: bool = False
 
@@ -210,6 +405,7 @@ class ForecastIssueRequest(Request):
     """A claim written down before the evidence, so that the ledger can score it later."""
 
     claim: str
+    record: PathField | None = None
     project: PathField | None = None
     resolves_by: str | None = None
     horizon: str | None = None
@@ -247,7 +443,11 @@ class ForecastLedgerRequest(Request):
 
 
 class ImproveRequest(Request):
-    """What to change about a reward system, and what changing it would cost."""
+    """What to change about a reward system, and what changing it would cost.
+
+    The loop admits four equal candidate origins.  The origin says how a
+    candidate arrived; it does not confer a different evaluation path.
+    """
 
     path: PathField
     only: tuple[str, ...] = ()
@@ -259,6 +459,52 @@ class ImproveRequest(Request):
     run_dir: PathField | None = None
     name: str | None = None
     non_interactive: bool = False
+    describe: str | None = None
+    candidate_source: (
+        Literal["owner_edit", "agent_draft", "generator_output", "supported_intervention"] | None
+    ) = None
+    candidate: Mapping[str, Any] | None = None
+    forecast: Mapping[str, Any] | None = None
+    resume: str | None = None
+    mark_pair: tuple[PathField, PathField] | None = None
+    why: str | None = None
+
+    @model_validator(mode="after")
+    def _improve_payload_is_a_complete_interaction(self) -> "ImproveRequest":
+        """Refuse incomplete paired inputs rather than silently dropping them."""
+        if (self.candidate_source is None) != (self.candidate is None):
+            raise ValueError("candidate_source and candidate must be provided together")
+        if self.mark_pair is None and self.why is not None:
+            raise ValueError("why requires mark_pair")
+        if self.mark_pair is not None and not self.why:
+            raise ValueError("mark_pair requires a non-empty why")
+        if self.describe is not None and not self.describe.strip():
+            raise ValueError("describe must be non-empty when provided")
+        return self
+
+
+class SeekerProposalRequest(Request):
+    """One explicit, zero-spend caller proposal against a qualified project target.
+
+    This is deliberately neutral about transport: MCP translates its camel-case
+    arguments here, while Python callers use the same immutable request.  The
+    response is a candidate answer, never a score, outcome, actor receipt, or
+    caller-supplied evidence.
+    """
+
+    project_path: PathField
+    task_id: str
+    response: str
+    rationale: str = ""
+    spend: Literal["none"] = "none"
+    run_dir: PathField | None = None
+
+    @field_validator("task_id", "response")
+    @classmethod
+    def _required_proposal_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be a non-empty string")
+        return value
 
 
 class ExportRequest(Request):
@@ -270,6 +516,30 @@ class ExportRequest(Request):
     dest: PathField | None = None
     offline: bool = True
     non_interactive: bool = False
+    tier: Literal["A", "B", "C"] = "A"
+    backend: Literal["ed25519", "sigstore"] = "ed25519"
+    #: The single measured Reach entry a badge may project.  It is meaningful only
+    #: for ``format="badge"``; omission is accepted only when exactly one exists.
+    badge_reach_entry_id: str | None = None
+
+
+class ImportRequest(Request):
+    """One received record or Export bundle, optionally verified and durably retained."""
+
+    path: PathField
+    verify: bool = False
+    dest: PathField | None = None
+
+
+class ImportResult(Request):
+    """The parsed record and the durable evidence paths created by an import."""
+
+    record: Any
+    record_path: PathField
+    receipt_path: PathField
+    unknown_extensions: tuple[str, ...] = ()
+    signer: str | None = None
+    verification_message: str | None = None
 
 
 class DoctorRequest(Request):
@@ -323,6 +593,9 @@ class Capabilities(Request):
     """
 
     capabilities: list[Capability] = []
+    # Captured local adapter conformance, keyed by family. This is separate from the access
+    # ladder above, whose list and iteration contract remain unchanged.
+    compatibility_matrix: dict[str, dict[str, str]] = Field(default_factory=dict)
     sandbox: SandboxProbeField | None = None
     install: InstallInfo
 

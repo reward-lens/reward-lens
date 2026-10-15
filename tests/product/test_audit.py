@@ -10,27 +10,33 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from reward_lens import api, contracts
+from reward_lens.cli.format import text
 from reward_lens.contracts import RewardLensError
 from reward_lens.examples.code_reward import write as write_example
 from reward_lens.execution import default_sandbox
+from reward_lens.instruments import framing
 from reward_lens.instruments.base import Panel
 from reward_lens.product import audit
 from reward_lens.product.audit import absences, registry, static_checks
+from reward_lens.product.audit.plan import BUILTIN_PANELS, SECTIONS
 from reward_lens.product.audit.run import (
     DEFAULT_SYSTEM_NAME,
     MANIFEST_NAME,
     NAME_DIGEST_CHARS,
+    _answers,
+    _measured,
     _system_name,
     manifest_bytes,
     record_bytes,
 )
-from reward_lens.product.audit.plan import BUILTIN_PANELS, SECTIONS
 from reward_lens.store import Project
 
 # --- fixture graders, one per static check -------------------------------------------------------
@@ -213,48 +219,53 @@ def score(task, response):
 """
 
 
-def test_the_reach_panel_counts_the_crossings_the_isolation_witness_measured(
+def test_the_discovered_reach_panel_records_the_executed_surface_attempts(
     demo_record: contracts.Assay,
 ) -> None:
-    """An exposure is a crossing, not a call site, and the two panels read one set of facts.
-
-    The demo's source has twelve access sites and one of them is a path the graded process can
-    write and the grader then reads. The panel used to report the twelve as `surfaces exposed`
-    beside `crossings: 0`, in the same record as an isolation witness that had measured the
-    crossing; the census of call sites is still there, under `by_kind`, where it is a fact about
-    the source rather than a claim about reach.
-    """
-    entry = by_id(demo_record, "reach.attack_surface")
+    """The panel records each executed surface instead of the runner's static source census."""
+    reach = demo_record.measurement.reach
     isolation = [f for f in demo_record.findings if f.entries == ["validity.writable_then_read"]]
     assert [f.code for f in isolation] == ["RL0201"]
+    assert [entry.entry_id for entry in reach] == [
+        "reach.surfaces.filesystem_outside_scratch",
+        "reach.surfaces.network",
+        "reach.surfaces.environment",
+        "reach.surfaces.clock",
+        "reach.surfaces.grader_source",
+        "reach.surfaces.outcome_artifacts",
+    ]
+    assert all(entry.method.id == "reach.surfaces" for entry in reach)
+    assert all(entry.provenance.arm == "black_box" for entry in reach)
+    assert all(entry.result["grader_executed_the_response"] is True for entry in reach)
+    assert by_id(demo_record, "reach.surfaces.clock").result["reached"] is True
+    assert by_id(demo_record, "reach.surfaces.grader_source").result["reached"] is True
 
-    assert entry.result["crossings"] == 1
-    assert entry.result["summary"] == "1 surface exposed, by static analysis only"
-    assert entry.result["surfaces_exposed"] == entry.n == 1
-    assert entry.result["exposure_id"] == "REACH-EDIT-TESTS"
-    assert entry.result["note"] == "no executed witness: not in this build"
-    assert entry.result["by_kind"] == {"execute": 5, "read": 3, "write": 4}
-    assert entry.result["accesses"] == 12
 
-
-def test_two_crossings_read_as_two_surfaces_exposed(tmp_path: Path) -> None:
-    """The count is measured, not the word `1` written into the sentence."""
+def test_reach_uses_its_fixed_surface_protocol_not_a_static_crossing_count(tmp_path: Path) -> None:
+    """The source's static crossings do not substitute for executed reach attempts."""
     grader = fixture(tmp_path, "two.py", TWO_CROSSINGS)
     tasks = fixture(tmp_path, "tasks.jsonl", '{"id": "t1", "prompt": "p"}\n')
     record = audit.run(
         api.AuditRequest(path=grader, tasks=tasks), project=None, sandbox=default_sandbox()
     )
-    entry = by_id(record, "reach.attack_surface")
-    assert entry.result["crossings"] == 2
-    assert entry.result["summary"] == "2 surfaces exposed, by static analysis only"
-    assert entry.result["exposure_id"] == "REACH-EDIT-TESTS"
+    reach = record.measurement.reach
+    assert [entry.entry_id for entry in reach] == [
+        "reach.surfaces.filesystem_outside_scratch",
+        "reach.surfaces.network",
+        "reach.surfaces.environment",
+        "reach.surfaces.clock",
+        "reach.surfaces.grader_source",
+        "reach.surfaces.outcome_artifacts",
+    ]
+    assert all(entry.kind == "absence" and entry.result is None for entry in reach)
+    assert all("did not run the response" in entry.absence.missing_access for entry in reach)
 
 
-def test_reach_is_static_and_never_an_executed_claim(demo_record: contracts.Assay) -> None:
-    entry = by_id(demo_record, "reach.attack_surface")
-    assert entry.state == "partial"
-    assert "static: no executed witness" in entry.limitations
-    assert entry.kind != "witness"
+def test_reach_is_an_executed_black_box_measurement(demo_record: contracts.Assay) -> None:
+    reach = demo_record.measurement.reach
+    assert all(entry.state == "complete" for entry in reach)
+    assert all(entry.kind == "estimate" for entry in reach)
+    assert all(entry.result["attempted"] == entry.n for entry in reach)
 
 
 def test_decision_coverage_is_an_estimate_without_invented_endpoints(
@@ -275,22 +286,30 @@ def test_replay_determinism_ran(demo_record: contracts.Assay) -> None:
     assert entry.state in {"complete", "partial"}
 
 
-def test_outcome_is_unqualified_and_the_decision_is_unresolved(
+def test_demo_outcome_controls_qualify_independently_and_the_decision_is_unresolved(
     demo_record: contracts.Assay,
 ) -> None:
-    """The unqualified outcome is a hole and a decision reason, and not a finding (A-025 point 2).
-
-    It used to be all three. A finding is something the run measured about the grader, and this is
-    something the run did not measure: a reader scanning the findings for defects found a hole
-    sitting among them, and the report's count of findings disagreed with the list printed under
-    it. The record still says it twice, where it belongs, as the absence and as the reason.
-    """
-    assert demo_record.intent.outcome_check.state == "unqualified"
+    """The shipped 12 good and 12 wrong controls are executed by the independent check."""
+    assert demo_record.intent.outcome_check.state == "qualified"
     assert demo_record.decision.state == "unresolved"
     assert "RL0301" not in {finding.code for finding in demo_record.findings}
-    assert by_id(demo_record, "soundness.instrument_absent").kind == "absence"
-    assert "outcome_unqualified:protected_test_suite" in demo_record.decision.reasons
-    assert [finding.level for finding in demo_record.findings] == ["error"]
+    qualification = by_id(demo_record, "validity.outcome_qualification")
+    assert qualification.kind == "estimate"
+    assert (
+        qualification.result["known_good_passed"] == qualification.result["known_good_total"] == 12
+    )
+    assert (
+        qualification.result["known_wrong_failed"]
+        == qualification.result["known_wrong_total"]
+        == 12
+    )
+    assert qualification.provenance.offline is True
+    assert qualification.provenance.sandbox_tier in {"L1", "L2", "L3"}
+    assert not any(
+        reason.startswith("outcome_unqualified:") for reason in demo_record.decision.reasons
+    )
+    # The planted grader defect still blocks acceptance after the independent check qualifies.
+    assert any(finding.level == "error" for finding in demo_record.findings)
 
 
 def test_the_record_and_the_report_were_written(demo: Path, demo_record: contracts.Assay) -> None:
@@ -353,6 +372,39 @@ def test_bare_grader_task_set_checks_say_they_need_a_task_set(bare: Path) -> Non
         assert "task set" in entry.absence.missing_access
 
 
+def test_bare_grader_keeps_the_canonical_trace_input_absence(bare: Path) -> None:
+    """Composition's unavailable consumer cannot hide the missing public Trace input."""
+    record = audit_of(bare)
+
+    trace_absence = by_id(record, "trace.instrument_absent")
+    assert trace_absence.kind == "absence"
+    assert trace_absence.absence is not None
+    assert trace_absence.absence.missing_access == "no run record supplied"
+    assert trace_absence.absence.remedy == (
+        "record a training run and pass it to `reward-lens trace <run>`"
+    )
+    stamped = trace_absence.extensions[absences.TRANSCRIPT_EXTENSION]
+    assert stamped["needs"] == absences.RUN_RECORD
+    assert stamped["missing_code"] == "run_record"
+    assert stamped["remedy_short"] == "reward-lens trace <run>"
+
+
+def test_opened_trace_input_lifts_the_canonical_trace_absence(tmp_path: Path) -> None:
+    """The real public ``run_dir`` input is retained rather than relabelled as absent."""
+    grader = fixture(tmp_path, "grader.py", CLEAN)
+    trace_root = Path(__file__).parents[1] / "fixtures" / "grpo_run" / "short"
+
+    record = audit.run(
+        api.AuditRequest(path=grader, run_dir=trace_root, name="trace-input"),
+        sandbox=default_sandbox(),
+    )
+
+    contracts.validate_record(record.to_dict())
+    assert record.measurement.trace
+    assert any(entry.entry_id.startswith("trace.row.") for entry in record.measurement.trace)
+    assert all(entry.entry_id != "trace.instrument_absent" for entry in record.entries())
+
+
 # --- the four static checks, each on a fixture built to violate it -------------------------------
 
 
@@ -406,13 +458,31 @@ def test_plan_prices_zero_paid_calls(demo: Path) -> None:
     assert "validity" in plan.panels and "reach" in plan.panels
 
 
-def test_the_plan_estimates_the_seconds_over_the_panels_that_will_run(demo: Path) -> None:
+def test_the_plan_estimates_the_seconds_over_the_panels_that_will_run(
+    demo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A-016: `estimate_s` is a sum over the panels, so it moves when the panels do."""
     from reward_lens.product.audit.plan import PANEL_SECONDS, estimate_s
 
+    discovered = registry.discover()
+    calls = 0
+
+    def discover_once() -> tuple[Panel, ...]:
+        nonlocal calls
+        calls += 1
+        return discovered
+
+    monkeypatch.setattr(registry, "discover", discover_once)
     plan = audit.plan(request_for(demo))
-    assert plan.estimate_s == sum(PANEL_SECONDS[section] for section in plan.panels)
+    assert calls == 1
+    panel_seconds = {panel.section: panel.seconds for panel in discovered}
+    assert BUILTIN_PANELS == ("validity",)
+    assert plan.estimate_s == sum(
+        PANEL_SECONDS[section] if section in PANEL_SECONDS else panel_seconds[section]
+        for section in plan.panels
+    )
     assert plan.estimate_s == estimate_s(plan.panels) > 0
+    assert calls == 2  # standalone estimate_s discovers when its caller did not supply the tuple
     # Not a literal: one panel fewer is fewer seconds, which a written-down 30 could not be.
     assert estimate_s(plan.panels[:1]) < plan.estimate_s
     assert estimate_s(()) == 0
@@ -427,10 +497,12 @@ def test_outcome_unqualified_is_the_state_when_no_independent_check_is_supplied(
     record = audit_of(fixture(tmp_path, "clean.py", CLEAN))
     assert record.intent.outcome_check.state == "unqualified"
     assert "RL0301" not in {f.code for f in record.findings}
-    assert by_id(record, "soundness.instrument_absent").kind == "absence"
-    assert any(
-        reason.startswith("outcome_unqualified:") for reason in record.decision.reasons
-    ), record.decision.reasons
+    qualification = by_id(record, "validity.outcome_qualification")
+    assert qualification.kind == "absence"
+    assert qualification.absence.state == "NOT_MEASURED"
+    assert any(reason.startswith("outcome_unqualified:") for reason in record.decision.reasons), (
+        record.decision.reasons
+    )
     assert record.decision.state == "unresolved"
 
 
@@ -466,7 +538,7 @@ def test_an_import_the_base_closure_lacks_is_a_could_not_check_hole(tmp_path: Pa
         assert all("inconclusive" not in hole.missing_access.lower() for hole in holes)
     # the other panels ran either way
     assert by_id(record, "validity.writable_then_read").check is not None
-    assert by_id(record, "reach.attack_surface") is not None
+    assert record.measurement.reach
 
 
 def test_every_hole_from_a_failed_import_names_the_module_and_the_exception(
@@ -502,9 +574,8 @@ def test_every_hole_from_a_failed_import_names_the_module_and_the_exception(
     assert needed_the_grader <= held, sorted(held)
 
     # and the entries that did not need it still ran
-    # `reach.attack_surface` is not in this list any more: it reads the source and needs no
-    # import, but with no task set the reach panel is an absence for that reason instead (A-015),
-    # and an absence written for the wrong reason is what this test exists to catch.
+    # Reach is now a discovered black-box panel. Its own task-set refusal is separate from these
+    # static checks, which still must run when loading the grader fails.
     for entry_id in ("validity.writable_then_read", "validity.input_leakage"):
         entry = by_id(record, entry_id)
         assert entry.kind != "absence", f"{entry_id} needs no import and must still run"
@@ -549,10 +620,8 @@ def test_the_blocking_finding_is_the_first_reason_the_decision_gives(
     first_other = next(
         index for index, reason in enumerate(reasons) if not reason.startswith("blocking_finding:")
     )
-    assert all(
-        reason.startswith("blocking_finding:") for reason in reasons[:first_other]
-    ), reasons
-    assert "outcome_unqualified:protected_test_suite" in reasons
+    assert all(reason.startswith("blocking_finding:") for reason in reasons[:first_other]), reasons
+    assert not any(reason.startswith("outcome_unqualified:") for reason in reasons)
     assert any(reason.startswith("required_missing:") for reason in reasons)
 
 
@@ -575,23 +644,19 @@ def test_the_rule_names_the_arm_and_the_entry_id_does_not_move(
     assert static_checks.CHECK_IDS["validity.static.writable_then_read"] == "RL0201"
 
 
-def test_the_reasons_are_in_the_goldens_order(demo_record: contracts.Assay) -> None:
-    """A-025 point 1: blocking findings, then the outcome, then the sections, as printed.
+def test_the_reasons_are_in_report_order(demo_record: contracts.Assay) -> None:
+    """A-025 point 1: blocking findings, then the remaining sections, as printed.
 
     The reasons used to run findings, sections, outcome, and the sections in the record's field
     order, which puts reward_statistics before signal. The report prints signal first and the
-    envelope is the report's projection, so a reader comparing the two found the same eight names
+    envelope is the report's projection, so a reader comparing the two found the same names
     in two orders and had no way to tell which was the list.
     """
     reasons = demo_record.decision.reasons
     kinds = [reason.split(":", 1)[0] for reason in reasons]
-    assert kinds == ["blocking_finding"] + ["outcome_unqualified"] + ["required_missing"] * 8
-    assert reasons[1] == "outcome_unqualified:protected_test_suite"
-    assert [reason.split(":", 1)[1] for reason in reasons[2:]] == [
-        "soundness",
+    assert kinds == ["blocking_finding"] + ["required_missing"] * 5
+    assert [reason.split(":", 1)[1] for reason in reasons[1:]] == [
         "exploits",
-        "framing",
-        "signal",
         "reward_statistics",
         "trace",
         "forecast",
@@ -666,22 +731,29 @@ def discovering(*panels: Panel):
 
 def test_every_entry_an_instrument_returns_is_kept(tmp_path: Path, monkeypatch) -> None:
     """Three entries in, three entries in the record. The runner kept the first one only."""
-    panel = Panel(section="soundness", instruments=(FakeInstrument("soundness.battery", "soundness", 3),))
+    panel = Panel(
+        section="soundness", instruments=(FakeInstrument("soundness.battery", "soundness", 3),)
+    )
     monkeypatch.setattr(registry, "discover", discovering(panel))
     record = audit_of(fixture(tmp_path, "clean.py", CLEAN))
     contracts.validate_record(record.to_dict())
-    assert [entry.entry_id for entry in record.measurement.soundness] == [
+    soundness = [entry.entry_id for entry in record.measurement.soundness]
+    assert soundness[:3] == [
         "soundness.battery.0",
         "soundness.battery.1",
         "soundness.battery.2",
     ]
+    assert soundness[3:] == ["soundness.capability_floor"]
+    assert by_id(record, "soundness.capability_floor").kind == "absence"
 
 
 def test_an_instrument_that_returns_nothing_is_an_absence_naming_it(
     tmp_path: Path, monkeypatch
 ) -> None:
     """An empty list is an instrument that measured nothing, not an IndexError about the grader."""
-    panel = Panel(section="framing", instruments=(FakeInstrument("framing.context_leak", "framing", 0),))
+    panel = Panel(
+        section="framing", instruments=(FakeInstrument("framing.context_leak", "framing", 0),)
+    )
     monkeypatch.setattr(registry, "discover", discovering(panel))
     record = audit_of(fixture(tmp_path, "clean.py", CLEAN))
     contracts.validate_record(record.to_dict())
@@ -697,7 +769,9 @@ def test_a_discovered_panel_drives_the_plan_and_loses_its_absence(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Discovery names the panels; a landed panel never gets both its entries and NOT_MEASURED."""
-    panel = Panel(section="soundness", instruments=(FakeInstrument("soundness.battery", "soundness", 2),))
+    panel = Panel(
+        section="soundness", instruments=(FakeInstrument("soundness.battery", "soundness", 2),)
+    )
     monkeypatch.setattr(registry, "discover", discovering(panel))
     grader = fixture(tmp_path, "clean.py", CLEAN)
 
@@ -708,7 +782,11 @@ def test_a_discovered_panel_drives_the_plan_and_loses_its_absence(
 
     record = audit_of(grader)
     soundness = [entry.entry_id for entry in record.measurement.soundness]
-    assert soundness == ["soundness.battery.0", "soundness.battery.1"]
+    assert soundness == [
+        "soundness.battery.0",
+        "soundness.battery.1",
+        "soundness.capability_floor",
+    ]
     assert "soundness.instrument_absent" not in soundness
     # every panel this build does not fill still says what it needed
     assert by_id(record, "exploits.instrument_absent").kind == "absence"
@@ -805,10 +883,12 @@ def test_the_same_project_audited_three_ways_is_one_reward_system(
     Three copies rather than three audits of one, because the store refuses to record a subject
     version it has already recorded (RL0620).
     """
+    fixture = tmp_path / "fixture"
+    write_example(fixture)
     roots = []
     for index in range(3):
         root = tmp_path / f"copy{index}" / "project"
-        write_example(root)
+        shutil.copytree(fixture, root)
         roots.append(root)
 
     monkeypatch.chdir(roots[0])
@@ -893,9 +973,7 @@ def test_the_record_declares_its_tier_before_it_is_sealed(tmp_path: Path) -> Non
 
 def manifest_beside(record_path: Path) -> dict:
     """The bundle manifest that names `record_path`, loaded from beside it."""
-    return json.loads(
-        record_path.with_name(MANIFEST_NAME).read_text(encoding="utf-8")
-    )
+    return json.loads(record_path.with_name(MANIFEST_NAME).read_text(encoding="utf-8"))
 
 
 def meta_digest(page: bytes) -> str:
@@ -986,12 +1064,18 @@ def test_the_fixed_manifest_name_means_the_latest_bundle_is_the_one_on_disk(
     root = tmp_path / "twice"
     write_example(root)
     first = api.audit(api.AuditRequest(path=root, name="first"))
+    first_bytes = (root / "assays" / "first.assay.json").read_bytes()
+    assert first.intent.outcome_check.state == "qualified"
 
     grader = root / "grader.py"
     grader.write_text(grader.read_text(encoding="utf-8") + "\n# a changed subject\n", "utf-8")
     second = api.audit(api.AuditRequest(path=root, name="second"))
+    assert second.intent.outcome_check.state == "unqualified"
+    assert by_id(second, "validity.outcome_qualification").kind == "absence"
+    assert first.subject.version.digest != second.subject.version.digest
 
     directory = root / "assays"
+    assert (directory / "first.assay.json").read_bytes() == first_bytes
     manifest = manifest_beside(directory / "second.assay.json")
     assert manifest["assay"]["id"] == second.assay_id != first.assay_id
     assert manifest["artifacts"][0]["path"] == "second.assay.json"
@@ -1241,7 +1325,7 @@ def test_a_file_in_assays_that_is_not_a_record_is_stepped_over_not_raised_on(
         Project.open(root).open_record("zz-decoy")
     assert refused.value.code == "RL0604"
 
-    second = api.audit(api.AuditRequest(path=root))
+    _second = api.audit(api.AuditRequest(path=root))
     reused = audit.last_reuse()
     assert reused is not None and reused.assay_id == first.assay_id
     assert reused.name != "zz-decoy"
@@ -1284,18 +1368,24 @@ def test_the_demo_record_says_what_it_could_establish_and_what_it_could_not(
     assert replay.check is not None and replay.check.passed
     assert "deterministic and replayable" in block["could_establish"]
 
-    failing = [finding for finding in demo_record.findings if finding.kind == "fail"]
-    assert [finding.code for finding in failing] == ["RL0201"]
+    failing = [
+        finding
+        for finding in demo_record.findings
+        if finding.kind == "fail" and finding.code is not None
+    ]
+    assert [finding.code for finding in failing].count("RL0201") == 1
+    assert [finding.code for finding in failing].count("RL0225") == 24
     assert failing[0].entries == ["validity.writable_then_read"]
     assert "one isolation defect" in block["could_establish"]
+    assert "24 relations.order-swap defects" in block["could_establish"]
     assert block["could_establish"].endswith(".")
 
     wanted = {
         (entry.extensions or {}).get(absences.TRANSCRIPT_EXTENSION, {}).get("needs")
         for entry in demo_record.entries()
     } - {None}
-    assert wanted == {absences.RUN_RECORD}
-    assert block["could_not"] == "everything that needs a run record."
+    assert wanted == {absences.PROTECTED_CHECK, absences.RUN_RECORD}
+    assert block["could_not"] == "everything that needs a protected check or a run record."
 
 
 def test_the_bare_graders_two_sentences_are_the_ones_the_transcript_prints(bare: Path) -> None:
@@ -1304,15 +1394,19 @@ def test_the_bare_graders_two_sentences_are_the_ones_the_transcript_prints(bare:
     The replay check runs on a bare grader now, so the first sentence has something to establish;
     the defect clause is named from the finding's rule (RL0210 is input handling, and RL0201 would
     be isolation). The second names only the inputs nothing else is waiting on, which for a grader
-    with neither is tasks and responses; the protected check and the run record stand on those and
-    are carried by the remedy table instead, with all four `needs` intact.
+    with neither is tasks and responses; the outcome qualification now carries its own explicit
+    protocol absence, while the run record is carried by the remedy table.
     """
     record = audit_of(bare)
     block = transcript_of(record)
 
     replay = by_id(record, "validity.replay_determinism")
     assert replay.kind != "absence" and replay.check is not None and replay.check.passed
-    failing = [finding for finding in record.findings if finding.kind == "fail"]
+    failing = [
+        finding
+        for finding in record.findings
+        if finding.kind == "fail" and finding.code is not None
+    ]
     assert [finding.code for finding in failing] == ["RL0210"]
     assert (
         block["could_establish"]
@@ -1327,7 +1421,6 @@ def test_the_bare_graders_two_sentences_are_the_ones_the_transcript_prints(bare:
     assert needs == {
         absences.TASK_SET,
         absences.SAMPLED_RESPONSES,
-        absences.PROTECTED_CHECK,
         absences.RUN_RECORD,
     }
 
@@ -1346,8 +1439,8 @@ def test_the_bare_grader_record_says_both_sentences_of_itself(bare: Path) -> Non
 
     Replay runs here on the pair the declaration asks for (A-020), so the sentence says so; the
     defect it did find is the input-handling one; and what it could not reach is named by the two
-    inputs nothing else is waiting on, with the protected check and the run record left to the
-    remedy table, which carries all four with what each unlocks.
+    inputs nothing else is waiting on, with the run record left to the remedy table. Outcome
+    qualification carries its protocol absence directly.
     """
     record = audit_of(bare)
     block = transcript_of(record)
@@ -1355,7 +1448,11 @@ def test_the_bare_grader_record_says_both_sentences_of_itself(bare: Path) -> Non
     replay = by_id(record, "validity.replay_determinism")
     assert replay.kind == "check" and replay.check is not None and replay.check.passed
 
-    failing = [finding for finding in record.findings if finding.kind == "fail"]
+    failing = [
+        finding
+        for finding in record.findings
+        if finding.kind == "fail" and finding.code is not None
+    ]
     assert [finding.code for finding in failing] == ["RL0210"]
     assert failing[0].entries == ["validity.input_handling"]
     assert block["could_establish"] == (
@@ -1369,7 +1466,6 @@ def test_the_bare_grader_record_says_both_sentences_of_itself(bare: Path) -> Non
     ]
     assert ("validity.task_validity", absences.TASK_SET) in needs
     assert ("signal.instrument_absent", absences.SAMPLED_RESPONSES) in needs
-    assert ("soundness.instrument_absent", absences.PROTECTED_CHECK) in needs
     assert ("trace.instrument_absent", absences.RUN_RECORD) in needs
     assert block["could_not"] == "everything that needs tasks or responses."
 
@@ -1397,7 +1493,6 @@ def test_every_absence_carries_a_code_for_what_is_missing_and_the_shortest_remed
         ("instrument_not_in_this_build", "a later build"),
         ("task_set", "--tasks t.jsonl"),
         ("response_bank", "--responses r.jsonl"),
-        ("protected_check", "--outcome ./tests"),
         ("run_record", "reward-lens trace <run>"),
         ("reference_material", "none for this substrate yet"),
     }
@@ -1407,16 +1502,21 @@ def test_every_absence_carries_a_code_for_what_is_missing_and_the_shortest_remed
         "none for this substrate yet",
     )
     assert by_id(record, "validity.flakiness").absence.missing_access == (
-        "no task set was supplied, and this check needs one"
-    )  # the sentence is untouched beside the code
+        "a complete task set was unavailable"
+    )
 
-    # The demo supplies every input, so the only holes left are the ones no input lifts.
+    # The demo's protected controls cover 12 of 40 tasks, so full-set checks still refuse.
     supplied = {
         entry.extensions[absences.TRANSCRIPT_EXTENSION]["missing_code"]
         for entry in demo_record.entries()
         if entry.kind == "absence"
     }
-    assert supplied == {"instrument_not_in_this_build", "run_record", "reference_material"}
+    assert supplied == {
+        "instrument_not_in_this_build",
+        "protected_check",
+        "run_record",
+        "reference_material",
+    }
 
 
 def test_the_bare_graders_replay_is_the_pair_its_own_signature_asks_for(bare: Path) -> None:
@@ -1508,10 +1608,10 @@ def test_the_decision_names_the_use_the_project_declares(
     assert audit_of(bare).decision.action is None
 
 
-def test_the_verdict_counts_one_blocking_finding_and_eight_required_panels(
+def test_the_verdict_counts_one_blocking_finding_and_five_required_panels(
     demo_record: contracts.Assay,
 ) -> None:
-    """The transcript's `1 blocking finding, and 8 required panels could not run.` counts from here.
+    """The decision counts one blocking finding and five still-unmeasured required panels.
 
     One error-level finding is one reason. It used to be named twice, by rule and by finding id, so
     the reasons said two where the report prints one. `outcome_unqualified:` is not counted with
@@ -1520,18 +1620,16 @@ def test_the_verdict_counts_one_blocking_finding_and_eight_required_panels(
     reasons = demo_record.decision.reasons
     blocking = [r for r in reasons if r.startswith("blocking_finding:")]
     missing = [r for r in reasons if r.startswith("required_missing:")]
-    assert (len(blocking), len(missing)) == (1, 8)
+    assert (len(blocking), len(missing)) == (1, 5)
     assert blocking == ["blocking_finding:RGX-local-0001"]
-    assert [r for r in reasons if r.startswith("outcome_unqualified:")] == [
-        "outcome_unqualified:protected_test_suite"
-    ]
+    assert not any(r.startswith("outcome_unqualified:") for r in reasons)
     assert len([f for f in demo_record.findings if f.level == "error"]) == 1
 
 
-def test_eight_required_panels_could_not_run_and_calibration_is_one_of_them(
+def test_five_required_panels_could_not_run_and_calibration_is_one_of_them(
     demo_record: contracts.Assay,
 ) -> None:
-    """The transcript counts 8 over 8 dark sections: no required panel is waived out of the count.
+    """The demo counts five missing panels after soundness runs; none is waived from the count.
 
     Calibration was once counted out, on the reading that nothing in the remedy table brings a
     certified reference material for this substrate, so naming it would send a reader after what
@@ -1542,43 +1640,35 @@ def test_eight_required_panels_could_not_run_and_calibration_is_one_of_them(
     missing = [
         reason for reason in demo_record.decision.reasons if reason.startswith("required_missing:")
     ]
-    assert len(missing) == 8
+    assert len(missing) == 5
     assert "required_missing:calibration" in missing
-    dark = {
-        entry.section for entry in demo_record.entries() if entry.kind == "absence"
-    } - {"validity", "reach"}
-    assert len(dark) == 8 and "calibration" in dark
     named = {reason.split(":", 1)[1] for reason in missing}
-    assert named == dark  # every dark section is named, none is held back
     assert named == {
-        "soundness",
         "exploits",
-        "framing",
         "reward_statistics",
-        "signal",
         "trace",
         "forecast",
         "calibration",
     }
 
 
-def test_the_reach_section_is_one_detection_and_the_witness_it_could_not_execute(
+def test_the_discovered_reach_section_holds_each_surface_estimate(
     demo_record: contracts.Assay,
 ) -> None:
-    """A-014: the section is lit and carries a COULD_NOT_CHECK absence, which is what `!` is."""
+    """The discovered reach panel owns its six executed surface estimates."""
     reach = [entry for entry in demo_record.entries() if entry.section == "reach"]
     assert [(entry.entry_id, entry.kind) for entry in reach] == [
-        ("reach.attack_surface", "detection"),
-        ("reach.executed_witness", "absence"),
+        ("reach.surfaces.filesystem_outside_scratch", "estimate"),
+        ("reach.surfaces.network", "estimate"),
+        ("reach.surfaces.environment", "estimate"),
+        ("reach.surfaces.clock", "estimate"),
+        ("reach.surfaces.grader_source", "estimate"),
+        ("reach.surfaces.outcome_artifacts", "estimate"),
     ]
-    found, witness = reach
-    assert found.check is None
-    assert found.n == found.result["surfaces_exposed"] >= 1  # the count is on the detection
-    assert "exposure_id" in found.result
-    assert found.result["summary"].endswith("exposed, by static analysis only")
-    assert found.result["note"] == "no executed witness: not in this build"
-    assert witness.absence.state == "COULD_NOT_CHECK"
-    assert witness.absence.missing_access == "not in this build"
+    assert all(entry.state == "complete" and entry.value is not None for entry in reach)
+    assert {entry.entry_id for entry in reach}.isdisjoint(
+        {"reach.attack_surface", "reach.executed_witness"}
+    )
 
 
 def test_a_bare_grader_names_no_trainer_and_claims_nothing_about_one(bare: Path) -> None:
@@ -1632,6 +1722,94 @@ def test_the_demo_declares_its_trainer_so_the_sentence_is_measured(tmp_path: Pat
 # --- reuse is scope-aware (A-016, section 6.1) ----------------------------------------------------
 
 
+def test_a_reserved_method_absence_does_not_answer_a_newly_landed_instrument() -> None:
+    """The old build reserved real method IDs in its absences, so ID equality alone is insufficient."""
+    method = SimpleNamespace(id="reach.surfaces", params_digest="sha256:fixture")
+    placeholder = SimpleNamespace(
+        entry_id="reach.surfaces",
+        method=method,
+        kind="absence",
+        absence=SimpleNamespace(missing_access="not in this build"),
+        extensions={
+            "https://reward-lens.github.io/x/transcript": {
+                "missing_code": "instrument_not_in_this_build"
+            }
+        },
+    )
+    record = SimpleNamespace(entries=lambda: (placeholder,))
+    wanted = {"reach.surfaces": "reach.surfaces@sha256:fixture"}
+    assert _answers(record, wanted) is False
+
+    # An instrument that ran and found its required input missing has still answered that question.
+    input_absence = SimpleNamespace(
+        entry_id="reach.surfaces",
+        method=method,
+        kind="absence",
+        absence=SimpleNamespace(missing_access="the local fixture did not provide a response"),
+        extensions={
+            "https://reward-lens.github.io/x/transcript": {
+                "missing_code": "instrument_not_in_this_build"
+            }
+        },
+    )
+    assert _answers(SimpleNamespace(entries=lambda: (input_absence,)), wanted) is True
+    assert _measured(record) != _measured(SimpleNamespace(entries=lambda: (input_absence,)))
+
+    old_spelling = SimpleNamespace(
+        entry_id="reach.surfaces",
+        method=method,
+        kind="absence",
+        absence=SimpleNamespace(missing_access="instrument not in this build"),
+        extensions=placeholder.extensions,
+    )
+    assert _answers(SimpleNamespace(entries=lambda: (old_spelling,)), wanted) is False
+
+
+def test_a_landed_panel_gets_a_new_record_beside_reserved_old_build_slots(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An old reserved method ID must not block a new local measurement of the same subject."""
+    from reward_lens.instruments.reach import ReachSurfaces
+
+    root = tmp_path / "reserved-upgrade"
+    write_example(root)
+    live_run = ReachSurfaces.run
+
+    def reserved(self, subject, corpus, ctx):  # noqa: ANN001, ANN201
+        return [
+            ctx.absence(
+                "reach",
+                "reach.surfaces",
+                "what the graded process can touch",
+                "not in this build",
+                "run a build with the reach probe",
+                subject_ref=contracts.digest({"source": subject.source}),
+                method=self.method,
+            )
+        ]
+
+    monkeypatch.setattr(ReachSurfaces, "run", reserved)
+    first = api.audit(api.AuditRequest(path=root))
+    project = Project.open(root)
+    (first_name,) = project.names()
+    first_bytes = project.path_for(first_name).read_bytes()
+    assert by_id(first, "reach.surfaces").absence.missing_access == "not in this build"
+
+    monkeypatch.setattr(ReachSurfaces, "run", live_run)
+    second = api.audit(api.AuditRequest(path=root))
+    assert audit.last_reuse() is None
+    assert second.assay_id != first.assay_id
+    names = project.names()
+    assert len(names) == 2 and names[0] == first_name
+    assert names[1].startswith(first_name + "-")
+    assert project.path_for(first_name).read_bytes() == first_bytes
+    assert all(
+        entry.absence is None or entry.absence.missing_access != "not in this build"
+        for entry in second.measurement.reach
+    )
+
+
 class CountingInstrument(FakeInstrument):
     """A `FakeInstrument` that says how many times it was asked to measure."""
 
@@ -1657,6 +1835,7 @@ def test_the_same_request_twice_runs_no_instrument_the_second_time(
 
     first = api.audit(api.AuditRequest(path=root))
     assert instrument.calls == 1
+    assert first.intent.outcome_check.state == "unqualified"
     second = api.audit(api.AuditRequest(path=root))
 
     assert instrument.calls == 1, "the second audit measured again"
@@ -1672,17 +1851,16 @@ def test_a_panel_that_lands_between_two_audits_is_measured_and_not_reused(
     """Section 6.1, and the reproduction the principal's reviewer ran.
 
     The dependency set is unchanged, so the old check said reuse and the run reported that no
-    instrument had run. But the request is wider than the record: the stored one carries
-    `soundness.instrument_absent`, which is the runner saying that panel had nothing to run. So
-    the panel runs, its entries are in a new record, and the record that could not answer is left
-    exactly as it was.
+    instrument had run. But the request is wider than the record: the stored one carries the
+    shipped soundness batteries, not this newly requested instrument id. So the panel runs, its
+    entries are in a new record, and the record that could not answer is left exactly as it was.
     """
     root = tmp_path / "landed"
     write_example(root)
     first = api.audit(api.AuditRequest(path=root))
     (first_name,) = Project.open(root).names()
     first_bytes = Project.open(root).path_for(first_name).read_bytes()
-    assert by_id(first, "soundness.instrument_absent").kind == "absence"
+    assert by_id(first, "soundness.batteries.known_good").kind != "absence"
 
     instrument = CountingInstrument("soundness.battery", "soundness", 2)
     monkeypatch.setattr(
@@ -1695,6 +1873,7 @@ def test_a_panel_that_lands_between_two_audits_is_measured_and_not_reused(
     assert [entry.entry_id for entry in second.measurement.soundness] == [
         "soundness.battery.0",
         "soundness.battery.1",
+        "soundness.capability_floor",
     ]
     assert second.assay_id != first.assay_id
     # The old record is still on disk, sealed, and is the bytes it was.
@@ -1759,6 +1938,14 @@ class DeclaringInstrument(CountingInstrument):
             )
             for n in range(self.count)
         ]
+
+
+class EmptyDeclaringInstrument(DeclaringInstrument):
+    """A declared method that runs but returns no entry, so the runner writes its refusal."""
+
+    def run(self, subject, corpus, ctx):  # noqa: ANN001, ANN201
+        self.calls += 1
+        return []
 
 
 def test_a_method_added_beside_one_that_already_ran_is_measured_and_not_reused(
@@ -1841,6 +2028,33 @@ def test_one_entry_id_measured_by_a_method_that_moved_is_measured_again(
     assert project.path_for(first_name).read_bytes() == first_bytes
 
 
+def test_a_changed_declared_method_retries_after_its_old_run_returned_no_entry(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A generic runner refusal does not erase the declared method identity it stands for."""
+    root = tmp_path / "refusal-method-moved"
+    write_example(root)
+    before = EmptyDeclaringInstrument("reach.refusal", "reach", 0, "probes=4")
+    monkeypatch.setattr(
+        registry, "discover", discovering(Panel(section="reach", instruments=(before,)))
+    )
+    first = api.audit(api.AuditRequest(path=root))
+    refusal = by_id(first, "reach.refusal")
+    assert refusal.kind == "absence" and refusal.method.params_digest == before.method.params_digest
+    assert before.calls == 1
+
+    after = EmptyDeclaringInstrument("reach.refusal", "reach", 0, "probes=16")
+    assert after.method.params_digest != before.method.params_digest
+    monkeypatch.setattr(
+        registry, "discover", discovering(Panel(section="reach", instruments=(after,)))
+    )
+    second = api.audit(api.AuditRequest(path=root))
+
+    assert audit.last_reuse() is None
+    assert after.calls == 1
+    assert second.assay_id != first.assay_id
+
+
 def test_an_unchanged_declared_method_is_reused_without_running_it(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -1916,4 +2130,70 @@ def test_a_changed_grader_leaves_the_record_of_the_old_one_alone(tmp_path: Path)
 
     assert audit.last_reuse() is None
     assert Project.open(root).path_for(name).read_bytes() == before
-    assert second.subject.version.digest != contracts.Assay.model_validate_json(before).subject.version.digest
+    assert (
+        second.subject.version.digest
+        != contracts.Assay.model_validate_json(before).subject.version.digest
+    )
+
+
+# --- a discovered panel's own findings (wave-2 interfaces 8.1) ------------------------------------
+
+
+#: The framing suite's leaky prompt, quoted so that the cue that fires here is the cue that suite
+#: pins. A prompt that names the grader file and the threshold is the disclosure RL0231 is about.
+LEAKY_PROMPT = (
+    "Answer the question. You will be scored by the rubric in reward.py: "
+    "you need at least 0.8 to pass."
+)
+
+
+def _leaky_project(root: Path) -> Path:
+    """The shipped example with one thing changed: every task prompt discloses the grader."""
+    write_example(root)
+    tasks = root / "tasks.jsonl"
+    rewritten = []
+    for line in tasks.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        task = json.loads(line)
+        task["prompt"] = LEAKY_PROMPT
+        rewritten.append(json.dumps(task))
+    tasks.write_text("\n".join(rewritten) + "\n", encoding="utf-8")
+    return root
+
+
+def test_a_discovered_panels_finding_reaches_the_record_and_the_text_surface(
+    tmp_path: Path,
+) -> None:
+    """8.1: the panel raises it, the runner carries it, and the reader sees it under the panel.
+
+    Before the harvest the framing panel measured the disclosure, wrote the entry and the witness,
+    and said nothing about it anywhere a reader looks: `findings` was the runner's own list and a
+    discovered panel could not reach it. The entry is not the finding. The entry says the prompt
+    names `reward.py`; the finding says that is a disclosure of the grader, which is the judgement
+    the panel exists to make.
+    """
+    root = _leaky_project(tmp_path / "leaky")
+    record = audit_of(root, project=Project.open(root))
+
+    raised = [finding for finding in record.findings if finding.code == "RL0231"]
+    assert raised, [f.code for f in record.findings]
+    one = raised[0]
+    # The panel's own finding, not one the runner rebuilt: the id is the package's `FINDING_ID`,
+    # the witness path points into the entry's own leak, and the entry it names is the panel's.
+    assert one.id == framing.FINDING_ID
+    assert one.entries and one.entries[0].startswith("framing.")
+    assert one.witness_path and one.witness_path.startswith("/measurement/framing/")
+    assert one.message.startswith("task[0].prompt discloses the grader to the policy:")
+    witness = by_id(record, one.entries[0])
+    assert witness.result["leaks"], witness.result
+
+    # A-028: under its panel, as continuation lines, never as a second glyph line.
+    printed = text.render(record).split("\n")
+    glyphs = [index for index, line in enumerate(printed) if re.match(r"^\s*\S\s+\w+\s{2,}", line)]
+    heads = [index for index in glyphs if re.match(r"^\s*\S\s+framing\s", printed[index])]
+    assert len(heads) == 1, printed
+    after = [index for index in glyphs if index > heads[0]]
+    under = printed[heads[0] : after[0] if after else len(printed)]
+    assert any("discloses the grader" in line for line in under[1:]), under
+    assert any("RL0231" in line for line in under[1:]), under

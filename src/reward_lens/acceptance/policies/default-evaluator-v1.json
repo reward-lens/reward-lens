@@ -1,0 +1,14 @@
+{
+  "id": "default-evaluator-v1",
+  "version": "1.0.0",
+  "actions": ["train_on_this_version", "merge_this_grader"],
+  "default_interval": "0.95",
+  "multiplicity": {"rule": "benjamini_hochberg_fdr", "family": "registered evaluator checks"},
+  "checks": [
+    {"key": "validity.complete", "source": "all_checks_complete", "section": "validity", "fresh_for_seconds": 604800},
+    {"key": "outcome.qualified", "source": "outcome_qualified", "fresh_for_seconds": 604800},
+    {"key": "reach.open_findings", "source": "finding_guard", "section": "reach", "fresh_for_seconds": 604800},
+    {"key": "exploits.reproducible_severity", "source": "finding_guard", "section": "exploits", "threshold": "warning", "fresh_for_seconds": 604800},
+    {"key": "signal.measured", "source": "section_measured", "section": "signal", "fresh_for_seconds": 604800}
+  ]
+}

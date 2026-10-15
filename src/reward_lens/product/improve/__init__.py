@@ -1,2 +1,43 @@
-"""The improve loop (section 7.7, D-46): six states, and a planner that picks the cheapest rung that separates the live explanations by rules it can show and writes its expectation down before the run. Loop owned by P-IMPROVE; planner.py and discrimination.yaml owned by P-PLANNER.
-"""
+"""The improve loop's rule-table planning seam (section 7.7, D-46)."""
+
+from .planner import (
+    EXPLANATION_KINDS,
+    MANDATORY_ORDERINGS,
+    DiscriminationCell,
+    EvaluatorContract,
+    ExecutionEvidence,
+    Explanation,
+    HmacEvidenceAuthenticator,
+    PlanAlternative,
+    PlanChoice,
+    PlannerLedger,
+    PlannerRefusal,
+    PlannerRefusalInfo,
+    PlannerResult,
+    RungCost,
+    TrustedEvaluator,
+    load_discrimination_table,
+    plan,
+    record_result,
+)
+
+__all__ = [
+    "EXPLANATION_KINDS",
+    "MANDATORY_ORDERINGS",
+    "DiscriminationCell",
+    "EvaluatorContract",
+    "ExecutionEvidence",
+    "Explanation",
+    "HmacEvidenceAuthenticator",
+    "PlanAlternative",
+    "PlanChoice",
+    "PlannerRefusal",
+    "PlannerRefusalInfo",
+    "PlannerLedger",
+    "PlannerResult",
+    "RungCost",
+    "TrustedEvaluator",
+    "load_discrimination_table",
+    "plan",
+    "record_result",
+]

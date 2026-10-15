@@ -30,7 +30,9 @@ def bad_format(value: str):
     return errors.make("RL0004", format=value, formats=", ".join(FORMATS))
 
 
-def resolve_format(flag: str | None, *, json_flag: bool, stdout_is_tty: bool, env: dict | None = None) -> str:
+def resolve_format(
+    flag: str | None, *, json_flag: bool, stdout_is_tty: bool, env: dict | None = None
+) -> str:
     """D-23: the flag, then `--json`, then the environment twin, then text on a TTY and json off it."""
     environ = os.environ if env is None else env
     chosen = flag or ("json" if json_flag else None) or environ.get("REWARD_LENS_FORMAT") or None

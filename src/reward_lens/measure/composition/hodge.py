@@ -561,7 +561,14 @@ def hodge_split(
     if e_total > 0.0:
         assert ortho <= STRUCTURAL_TOL * e_total, f"components not orthogonal: {ortho}"
         assert recon <= STRUCTURAL_TOL * (1.0 + e_total**0.5), f"reconstruction failed: {recon}"
-        masses = (e_grad / e_total, e_curl / e_total, e_harm / e_total)
+        # The component energies are mathematically a partition, but the three independently
+        # rounded float64 dot products are not.  The campaign stores curl and harmonic mass as the
+        # measured intransitive fraction, then records gradient as its complement.  Preserve that
+        # identity here rather than letting the least-significant rounding residue make an
+        # otherwise identical re-adjudication disagree with its stored measurement.
+        curl_mass = e_curl / e_total
+        harmonic_mass = e_harm / e_total
+        masses = (1.0 - curl_mass - harmonic_mass, curl_mass, harmonic_mass)
         assert abs(sum(masses) - 1.0) <= STRUCTURAL_TOL, f"masses sum to {sum(masses)}"
     else:
         masses = (0.0, 0.0, 0.0)

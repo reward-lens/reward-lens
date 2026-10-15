@@ -55,6 +55,7 @@ compute `D_t` from a small-sample Fisher and asks for the logged KL instead.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -492,6 +493,17 @@ SMALL_STEP = 0.5
 #: not turn on it.
 N_SAMPLES = 16
 
+# The record began from this immutable snapshot.  `main` subsequently gained 267 vocabulary rows;
+# because Qwen keeps separate input and output embeddings (hidden size 8), that otherwise changes
+# the subject by 267 * 2 * 8 = 4,272 parameters.
+TINY_POLICY = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
+TINY_POLICY_CONFIG_SHA256 = "256eed4a1f7d3a4f63b917266030082ed5f46dce6f4cf753b4a5ac3ad2d3e6f0"
+TINY_POLICY_VOCAB_SIZE = 151_669
+TINY_POLICY_PARAMETER_COUNT = 2_453_368
+BEFORE_SAMPLE_SEED = 1234
+AFTER_SAMPLE_SEED = 4321
+
 
 def _two_checkpoint_experiment(eta: float):
     """One real policy-gradient step on the real policy, and the cost book across it.
@@ -509,9 +521,29 @@ def _two_checkpoint_experiment(eta: float):
     from reward_lens.measure.efficiency.scores import sequence_scores
     from reward_lens.measure.ledger.features import surface_features
 
-    name = "trl-internal-testing/tiny-Qwen3ForCausalLM"
-    tokenizer = AutoTokenizer.from_pretrained(name)
-    model = AutoModelForCausalLM.from_pretrained(name, dtype=torch.float32)
+    tokenizer = AutoTokenizer.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
+    model = AutoModelForCausalLM.from_pretrained(
+        TINY_POLICY,
+        revision=TINY_POLICY_REVISION,
+        local_files_only=True,
+        dtype=torch.float32,
+    )
+    from huggingface_hub import hf_hub_download
+
+    config_path = Path(
+        hf_hub_download(
+            TINY_POLICY,
+            "config.json",
+            revision=TINY_POLICY_REVISION,
+            local_files_only=True,
+        )
+    )
+    assert hashlib.sha256(config_path.read_bytes()).hexdigest() == TINY_POLICY_CONFIG_SHA256
+    assert model.config._commit_hash == TINY_POLICY_REVISION
+    assert model.config.vocab_size == TINY_POLICY_VOCAB_SIZE
+    assert model.num_parameters() == TINY_POLICY_PARAMETER_COUNT
     model.eval()
     featuriser = SurfaceFeatures()
 
@@ -607,7 +639,7 @@ def _two_checkpoint_experiment(eta: float):
     g = metric_g([base], method="fisher_kernel", scores=sequence_scores(model, tokenizer, pairs))
     assert not isinstance(g, Refusal), g
 
-    before = as_sample(0, draw(1234))
+    before = as_sample(0, draw(BEFORE_SAMPLE_SEED))
     initial = {k: v.clone() for k, v in model.state_dict().items()}
 
     model.zero_grad(set_to_none=True)
@@ -620,7 +652,7 @@ def _two_checkpoint_experiment(eta: float):
             parameter -= eta * parameter.grad
     model.zero_grad(set_to_none=True)
 
-    drawn_after = draw(4321)
+    drawn_after = draw(AFTER_SAMPLE_SEED)
     after = as_sample(1, drawn_after)
     on_policy = [(p, c) for p in prompts for c in drawn_after[p] if c.strip()]
     at_one = log_prob_rows(on_policy)

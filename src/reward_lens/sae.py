@@ -1,4 +1,4 @@
-"""Sparse dictionaries over reward-model activations, behind the ``[dict]`` extra.
+"""Sparse dictionaries over reward-model activations, behind the ``[white-box]`` extra.
 
 A TopK sparse autoencoder decomposes the residual stream into a dictionary of directions. Because
 the reward is a linear read of that stream, ``r = w_r . h + b`` and ``h ~ D f`` give
@@ -12,10 +12,12 @@ dictionary direction is a hypothesis about what a coordinate means; nothing in t
 ties a feature to a causal role, and a feature with a large ``w_r . d_i`` that never fires
 contributes nothing to any reward anyone will observe. Results from this module belong upstream of
 an intervention that tests them, never downstream of one as evidence. Putting the whole module
-behind ``[dict]`` is that position expressed in the packaging: you install the sparse-dictionary
-tooling deliberately, and the one instrument that reaches for it
-(``measure.battery.feature.FeatureRewardAlignment``) refuses rather than substituting a number when
-you have not.
+behind ``[white-box]`` is that position expressed in the packaging: the sparse-dictionary code uses
+the same declared PyTorch substrate as the other activation-inspection tools, and is installed with
+``pip install 'reward-lens[white-box]'``. The one instrument that reaches for it
+(``measure.battery.feature.FeatureRewardAlignment``) refuses when neither that substrate nor a
+caller-supplied dictionary is available. When the substrate is available it may run the explicitly
+flagged, untrained fallback; that is a mechanics check, never a feature ranking.
 
 The gate is ``require_extra`` rather than a bare import failure so that the error names the extra
 and the ``pip`` line that installs it. It runs above the torch imports on purpose, which is why this
@@ -33,9 +35,8 @@ from __future__ import annotations
 
 from reward_lens.core.extras import require_extra
 
-# `dict` was this module's extra in v3 and is not a declared extra in 4.0, so the guard that was
-# meant to name an installable group raised `KeyError: 'dict'` at import instead. The module needs
-# torch, which is what `white-box` installs.
+# ``dict`` was this module's v3 extra and is not declared in 3.1.0. The module needs the PyTorch
+# activation-inspection substrate, which the declared ``white-box`` extra installs.
 require_extra("white-box", subsystem="reward_lens.sae")
 
 import json

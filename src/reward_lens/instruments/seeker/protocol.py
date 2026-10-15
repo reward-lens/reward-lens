@@ -12,6 +12,7 @@ is a record that can be replayed by anyone holding it, rather than a claim that 
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Protocol, Sequence, runtime_checkable
 
@@ -27,6 +28,7 @@ __all__ = [
     "FindingNotReplayable",
     "GraderScorer",
     "NOT_FOUND",
+    "OutcomeCheckResult",
     "Proposal",
     "ScoreResult",
     "Scored",
@@ -65,6 +67,7 @@ class ScoreResult:
     outcome_passed: bool | None
     verdict: str = "scored"
     envelope_digest: str = ""
+    outcome_evidence: Mapping[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -72,7 +75,21 @@ class ScoreResult:
             "outcome_passed": self.outcome_passed,
             "verdict": self.verdict,
             "envelope_digest": self.envelope_digest,
+            "outcome_evidence": dict(self.outcome_evidence),
         }
+
+
+@dataclass(frozen=True)
+class OutcomeCheckResult:
+    """A qualified outcome decision and the receipt identities that established it.
+
+    A raw boolean carries no way to tell an actual supervised target resolution from a host
+    callback.  The optional evidence is stored beside the score so the saved actor record names
+    the qualification, target and supervisor receipt used for the decision.
+    """
+
+    passed: bool | None
+    evidence: Mapping[str, Any] = field(default_factory=dict)
 
 
 class Scorer(Protocol):
@@ -112,9 +129,20 @@ class Proposal:
     rationale: str = ""
     cost_usd: str = "0.00"
     calls: int = 0
+    response_digest: str = ""
+    response_codec: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "inputs", dict(self.inputs))
+        from reward_lens.product.trace.record import response_text_identity
+
+        digest, codec = response_text_identity(self.response)
+        if self.response_digest and self.response_digest != digest:
+            raise ValueError("proposal response_digest does not identify its exact response text")
+        if self.response_codec and self.response_codec != codec:
+            raise ValueError("proposal response_codec does not identify its exact response text")
+        object.__setattr__(self, "response_digest", digest)
+        object.__setattr__(self, "response_codec", codec)
         if not self.inputs:
             raise ValueError(
                 "a proposal carries the inputs it was made from; one with none cannot be replayed"
@@ -150,6 +178,9 @@ class Proposal:
         cost_usd: str = "0.00",
         calls: int = 0,
     ) -> "Proposal":
+        from reward_lens.product.trace.record import response_text_identity
+
+        response_digest, response_codec = response_text_identity(response)
         return cls(
             actor=actor,
             task_id=task_id,
@@ -161,6 +192,8 @@ class Proposal:
             rationale=rationale,
             cost_usd=cost_usd,
             calls=calls,
+            response_digest=response_digest,
+            response_codec=response_codec,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -173,6 +206,8 @@ class Proposal:
             "rationale": self.rationale,
             "cost_usd": self.cost_usd,
             "calls": self.calls,
+            "response_digest": self.response_digest,
+            "response_codec": self.response_codec,
         }
 
     @classmethod
@@ -191,6 +226,7 @@ class Scored:
     threshold: float
     exploit: bool
     envelope_digest: str = ""
+    outcome_evidence: Mapping[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -201,6 +237,7 @@ class Scored:
             "threshold": self.threshold,
             "exploit": self.exploit,
             "envelope_digest": self.envelope_digest,
+            "outcome_evidence": dict(self.outcome_evidence),
         }
 
     @classmethod
@@ -236,6 +273,7 @@ class ActorRecord:
     arm: str = "black_box"
     intent: str = ""
     threshold: float = DEFAULT_THRESHOLD
+    outcome_protocol: Mapping[str, Any] = field(default_factory=dict)
 
     def not_found_sentence(self) -> str:
         """The negative with its two facts filled in, for a reader rather than for a field."""
@@ -258,6 +296,7 @@ class ActorRecord:
             "arm": self.arm,
             "intent": self.intent,
             "threshold": self.threshold,
+            "outcome_protocol": dict(self.outcome_protocol),
         }
 
     @classmethod
@@ -271,10 +310,11 @@ class ActorRecord:
 
 @runtime_checkable
 class Actor(Protocol):
-    """The three methods, and the two facts every actor states about itself."""
+    """The public actor contract: proposing, scoring, then exposing its own record.
 
-    name: str
-    budget: Budget
+    Search drivers may not assume a concrete actor is a ``BaseActor``.  In particular, lifecycle,
+    metering and replay details belong to the actor implementation, not to this public protocol.
+    """
 
     def propose(self, state: SeekerState) -> Proposal: ...
 
@@ -286,7 +326,7 @@ class Actor(Protocol):
 # --- the shared base the four actors differ from only in where a response comes from --------------
 
 
-class BaseActor:
+class BaseActor(ABC):
     """Everything but `propose`, which is the only thing the four actors disagree about."""
 
     name = "base"
@@ -297,11 +337,13 @@ class BaseActor:
         self.intent = ""
         self._proposals: list[Proposal] = []
         self._scores: list[Scored] = []
+        self._stopped = ""
 
     # --- the protocol ------------------------------------------------------------------------
 
-    def propose(self, state: SeekerState) -> Proposal:  # pragma: no cover - abstract
-        raise NotImplementedError
+    @abstractmethod
+    def propose(self, state: SeekerState) -> Proposal:
+        """Offer one proposal from the actor-specific response source."""
 
     def score(self, proposal: Proposal) -> Scored:
         """Score a proposal from its own recorded inputs, and record the score once.
@@ -313,10 +355,21 @@ class BaseActor:
             if already.proposal.proposal_id == proposal.proposal_id:
                 return already
         scored = self.rescore(proposal)
+        if scored.exploit:
+            replayed = self.rescore(proposal)
+            if (replayed.reward, replayed.outcome_passed, replayed.exploit) != (
+                scored.reward,
+                scored.outcome_passed,
+                scored.exploit,
+            ):
+                raise FindingNotReplayable(
+                    f"the finding on proposal {proposal.proposal_id} does not replay from its own "
+                    "recorded inputs"
+                )
         self._scores.append(scored)
         return scored
 
-    def record(self, stopped: str = "") -> ActorRecord:
+    def record(self) -> ActorRecord:
         found = tuple(s.proposal.proposal_id for s in self._scores if s.exploit)
         return ActorRecord(
             actor=self.name,
@@ -332,9 +385,10 @@ class BaseActor:
                 if found
                 else NOT_FOUND
             ),
-            stopped=stopped or ("exploit_found" if found else "proposals_exhausted"),
+            stopped=self._stopped or ("exploit_found" if found else "proposals_exhausted"),
             intent=self.intent,
             threshold=self.threshold,
+            outcome_protocol=dict(getattr(self.scorer, "outcome_identity", {})),
         )
 
     # --- what the base supplies to its subclasses ---------------------------------------------
@@ -348,6 +402,11 @@ class BaseActor:
         self.intent = intent
         self._proposals = []
         self._scores = []
+        self._stopped = ""
+
+    def mark_stopped(self, reason: str) -> None:
+        """Implementation detail used by concrete actors when a route cannot continue."""
+        self._stopped = str(reason)
 
     def rescore(self, proposal: Proposal) -> Scored:
         """Score without recording, from the proposal's recorded inputs alone."""
@@ -361,6 +420,7 @@ class BaseActor:
             threshold=self.threshold,
             exploit=is_exploit(result, self.threshold),
             envelope_digest=result.envelope_digest,
+            outcome_evidence=result.outcome_evidence,
         )
 
     def seal(
@@ -374,6 +434,8 @@ class BaseActor:
         calls: int = 0,
     ) -> Proposal:
         """Record one proposal. Every actor goes through here; nothing else appends a proposal."""
+        if not state.attempts:
+            self.begin(state.intent)
         recorded: dict[str, Any] = {
             "task": dict(state.task),
             "prompt": state.prompt,
@@ -426,14 +488,21 @@ class GraderScorer:
             dict(task), str(response), sandbox=self.sandbox, limits=self.limits
         )
         try:
-            passed: bool | None = bool(self.outcome_check(dict(task), str(response)))
+            checked = self.outcome_check(dict(task), str(response))
         except Exception:
-            passed = None
+            checked = None
+        if isinstance(checked, OutcomeCheckResult):
+            passed = checked.passed if type(checked.passed) is bool else None
+            outcome_evidence = dict(checked.evidence)
+        else:
+            passed = checked if type(checked) is bool else None
+            outcome_evidence = {}
         return ScoreResult(
             reward=envelope.score,
             outcome_passed=passed,
             verdict=envelope.verdict,
             envelope_digest=envelope.digest(),
+            outcome_evidence=outcome_evidence,
         )
 
 

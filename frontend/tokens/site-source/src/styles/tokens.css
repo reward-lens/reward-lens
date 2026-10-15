@@ -1,0 +1,491 @@
+/* =============================================================================
+   reward-lens design tokens
+   Version 2026.09.17. Root-owned semantic tokens for the product website.
+   Historical aliases remain for preserved research and documentation routes.
+
+   Product roles are defined in the versioned override block below. Historical
+   aliases preserve older documentation and research layouts. Graphite surfaces,
+   neutral text, cyan signal, amber comparison, and labelled semantic states share
+   one source. The versioned JSON export is generated from this stylesheet.
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     TYPE FACES
+     Two families, one skeleton, both OFL, both self-hosted and latin-subset.
+     Instrument Serif was dropped: single weight, high stroke contrast, and its
+     thins drop out on the dark ground. See DECISIONS.md D-12.
+     --------------------------------------------------------------------------- */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---------------------------------------------------------------------------
+     TYPE SCALE
+     Every size, its line height, its tracking, and the one role it serves.
+     Sizes are rem against a 16px root. Do not interpolate between steps.
+     Display tracking never goes tighter than -0.03em (§6.5 numeric floor).
+     --------------------------------------------------------------------------- */
+
+  /* display-1: the homepage headline, and nothing else on the site */
+  --type-display-1-size: clamp(2.375rem, 1.55rem + 3.4vw, 4.125rem); /* 38 -> 66px */
+  --type-display-1-lh: 1.04;
+  --type-display-1-track: -0.028em;
+  --type-display-1-weight: 400;
+
+  /* display-2: the opening heading of a route (/see/, /start/, /limits/ ...) */
+  --type-display-2-size: clamp(1.75rem, 1.3rem + 1.9vw, 2.625rem);   /* 28 -> 42px */
+  --type-display-2-lh: 1.10;
+  --type-display-2-track: -0.022em;
+  --type-display-2-weight: 400;
+
+  /* h2: a section opener inside a page */
+  --type-h2-size: clamp(1.375rem, 1.15rem + 0.95vw, 1.875rem);       /* 22 -> 30px */
+  --type-h2-lh: 1.18;
+  --type-h2-track: -0.016em;
+  --type-h2-weight: 400;
+
+  /* h3: a subsection, and the title row of a card */
+  --type-h3-size: 1.1875rem;                                          /* 19px */
+  --type-h3-lh: 1.32;
+  --type-h3-track: -0.010em;
+  --type-h3-weight: 600;
+
+  /* body: long-form prose. Sits at 17px because the dark ground eats weight. */
+  --type-body-size: 1.0625rem;                                        /* 17px */
+  --type-body-lh: 1.62;
+  --type-body-track: 0em;
+  --type-body-weight: 400;
+
+  /* body-sm: figure captions, secondary prose, the version row */
+  --type-body-sm-size: 0.875rem;                                      /* 14px */
+  --type-body-sm-lh: 1.52;
+  --type-body-sm-track: 0.002em;
+
+  /* mono-lg: the install command in its hero treatment */
+  --type-mono-lg-size: 0.9375rem;                                     /* 15px */
+  --type-mono-lg-lh: 1.0;
+  --type-mono-lg-track: -0.004em;
+  --type-mono-lg-weight: 500;
+
+  /* mono-base: code blocks, data tables, API signatures */
+  --type-mono-base-size: 0.875rem;                                    /* 14px */
+  --type-mono-base-lh: 1.62;
+  --type-mono-base-track: 0em;
+
+  /* mono-sm: margin-column metadata, axis labels, provenance chips */
+  --type-mono-sm-size: 0.75rem;                                       /* 12px */
+  --type-mono-sm-lh: 1.55;
+  --type-mono-sm-track: 0.01em;
+
+  /* mono-label: the FIG. number, the section kicker, a trust chip.
+     Tracking is wide because these are set in caps. Line height 1.0 minimum
+     for all-caps display is the §6.5 floor; 1.9 here is the chip's box height. */
+  --type-mono-label-size: 0.6875rem;                                  /* 11px */
+  --type-mono-label-lh: 1.0;
+  --type-mono-label-track: 0.09em;
+  --type-mono-label-weight: 500;
+  --type-mono-label-transform: uppercase;
+
+  /* ---------------------------------------------------------------------------
+     MEASURE
+     Body copy is held between 62 and 78 characters (§7.3).
+     --------------------------------------------------------------------------- */
+  --measure-prose: 68ch;    /* long-form body text */
+  --measure-heading: 26ch;  /* a display or h2 line, so it breaks where intended */
+  --measure-caption: 84ch;  /* captions run wider than body; they are read once */
+  --measure-command: 34rem; /* the install strip's maximum width */
+
+  /* ---------------------------------------------------------------------------
+     SPACE  -  a 4px base, geometric above space-4.
+     Named by step, not by pixel value, so a step can be retuned once.
+     --------------------------------------------------------------------------- */
+  --space-1: 0.25rem;   /*  4px  the gap inside a chip */
+  --space-2: 0.5rem;    /*  8px  icon to label */
+  --space-3: 0.75rem;   /* 12px  rows inside a card */
+  --space-4: 1rem;      /* 16px  a card's internal padding, small */
+  --space-5: 1.5rem;    /* 24px  a card's internal padding, default */
+  --space-6: 2rem;      /* 32px  between sibling blocks */
+  --space-7: 3rem;      /* 48px  between a heading and its content group */
+  --space-8: 4.5rem;    /* 72px  between sections on a dense page */
+  --space-9: 6.5rem;    /* 104px between acts, and the hero's top inset */
+
+  /* ---------------------------------------------------------------------------
+     GRID
+     12 columns at >=1200px, 8 at >=760px, 4 below. The margin column is a real
+     grid track, not a float: it carries metadata a reader needs (provenance,
+     figure number, trust level), never a decorative label. See DESIGN.md §7.
+     --------------------------------------------------------------------------- */
+  --grid-max: 74rem;           /* 1184px content maximum */
+  --grid-gutter: 1.5rem;
+  --grid-margin-col: 9.5rem;   /* 152px, the metadata column */
+  --grid-margin-gap: 2.75rem;  /* 44px between margin column and body */
+  --page-pad: clamp(1.25rem, 4vw, 2.5rem);
+
+  /* Breakpoints. Each exists because a specific thing breaks there.        */
+  --bp-xs: 22.5rem; /* 360px  the wordmark stops fitting beside the controls */
+  --bp-sm: 30rem;   /* 480px  the install strip stops fitting on one line   */
+  --bp-md: 47.5rem; /* 760px  the margin column stops fitting beside prose  */
+  --bp-lg: 64rem;   /* 1024px the docs contents rail becomes affordable     */
+  --bp-xl: 75rem;   /* 1200px the 12-column grid opens                      */
+
+  /* ---------------------------------------------------------------------------
+     SHAPE
+     Small radii throughout. This is an instrument housing, not a phone app.
+     --------------------------------------------------------------------------- */
+  --radius-1: 2px;   /* chips, badges, inline code */
+  --radius-2: 3px;   /* cards, code blocks, the install strip, figure frames */
+  --radius-pill: 999px; /* used only for the scene's performance-tier dot */
+  --border-w: 1px;
+  --border-w-accent: 2px; /* the left rule on a refusal card */
+
+  /* ---------------------------------------------------------------------------
+     MOTION
+     Four curves, named for what they do. Springs for anything interactive,
+     because a spring survives interruption and a duration does not.
+     Full contract in motion/MOTION.md.
+     --------------------------------------------------------------------------- */
+  --curve-ui: cubic-bezier(0.32, 0.08, 0.24, 1);      /* hover, focus, small state */
+  --curve-enter: cubic-bezier(0.16, 0.84, 0.28, 1);   /* something arriving */
+  --curve-exit: cubic-bezier(0.5, 0, 0.78, 0.24);     /* something leaving */
+  --curve-scrub: linear;                               /* anything bound to scroll */
+
+  --dur-1: 90ms;    /* a colour or border change on an element under the cursor */
+  --dur-2: 160ms;   /* a small element appearing or moving a short distance */
+  --dur-3: 260ms;   /* a panel, a disclosure, a figure state change */
+  --dur-4: 420ms;   /* a full-width or full-height transition. The ceiling. */
+
+  /* Spring parameters for interactive motion. Stated so an implementation
+     using a spring library and one using a hand-rolled integrator agree. */
+  --spring-stiffness: 210;
+  --spring-damping: 26;
+  --spring-mass: 1;
+
+  /* Stagger. Never stagger more than 7 items; beyond that animate the group. */
+  --stagger: 28ms;
+  --stagger-max-items: 7;
+
+  /* ---------------------------------------------------------------------------
+     Z LAYERS
+     --------------------------------------------------------------------------- */
+  --z-scene: 0;
+  --z-content: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-skip-link: 40;
+}
+
+/* =============================================================================
+   DARK THEME  -  the default, and the one the design was drawn for.
+
+   Ground hue is 170 (green-cyan) at chroma 0.006 to 0.010. This is an anodised
+   instrument housing, not the blue-black that falls out of a template.
+   See DECISIONS.md D-13.
+   ============================================================================= */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* --- ground and elevation. Five steps. Light comes from upper-left, so a
+         surface facing the light is one step lighter, always. --- */
+  --ground:    oklch(0.145 0.006 170); /* #080b0a  the room. The page background. */
+  --surface-1: oklch(0.196 0.007 170); /* #121615  the bench. Figure frames, code blocks. */
+  --surface-2: oklch(0.246 0.008 170); /* #1d2220  a panel. Cards, the install strip. */
+  --surface-3: oklch(0.296 0.009 170); /* #292e2c  a raised face. Hover, active rows. */
+  --surface-4: oklch(0.350 0.010 170); /* #363c3a  a lit edge. Inline code, table zebra. */
+
+  --ground-hex:    #080b0a;
+  --surface-1-hex: #121615;
+  --surface-2-hex: #1d2220;
+  --surface-3-hex: #292e2c;
+  --surface-4-hex: #363c3a;
+
+  /* --- rules. Three, and they are not interchangeable. --- */
+  --line:         oklch(0.290 0.008 170); /* #282d2b  decorative separation only */
+  --line-strong:  oklch(0.395 0.010 170); /* #414845  a card or figure boundary */
+  --line-control: oklch(0.480 0.010 170); /* #585f5d  a control's boundary. Meets 3:1
+                                             against the ground for WCAG 1.4.11. Any
+                                             input, button or focusable edge uses this. */
+
+  /* --- ink. Three levels. --- */
+  --ink:   oklch(0.925 0.006 170); /* #e2e7e5  body text, headings, table values */
+  --ink-2: oklch(0.730 0.008 170); /* #a3a9a7  secondary prose, captions on any surface */
+  --ink-3: oklch(0.610 0.008 170); /* #7f8582  metadata and labels.
+                                      USAGE RULE: permitted on --ground and --surface-1
+                                      only. On surface-2 and above it drops to 4.29:1,
+                                      which is AA-large, not AA-body. Use --ink-2 there. */
+
+  /* --- the light source. The only near-white, and the brightest thing on the
+         page. It is not a brand colour; it is what the beam in the scene is
+         made of. Used on: the install command, an alarm marker, a focused
+         scene band. Nothing else. --- */
+  --beam: oklch(0.985 0.008 95); /* #fcfaf4 */
+  --beam-wash: rgba(252, 250, 244, 0.10); /* the top-edge highlight on a lit surface */
+
+  /* --- REWARD COMPONENTS. Six, because a decomposition shows at most six at
+         once. Worst-case separation across normal, protanopia, deuteranopia
+         and tritanopia is 7.29 (pair comp-1/comp-5). Every one clears 3:1
+         against the ground so it works as a mark, not just as a fill.
+         Order is fixed and is the order the library returns. --- */
+  --comp-1: oklch(0.720 0.130 240); /* #4baeed  first component in the returned order */
+  --comp-2: oklch(0.800 0.130 175); /* #49d9b9 */
+  --comp-3: oklch(0.870 0.150  95); /* #f3d350 */
+  --comp-4: oklch(0.690 0.155  32); /* #eb725b */
+  --comp-5: oklch(0.745 0.135 318); /* #d090e3 */
+  --comp-6: oklch(0.640 0.130 140); /* #5e9f50 */
+
+  /* --- TRUST LADDER. Ordered, and it must read as increasing confidence:
+         lightness and chroma both rise monotonically. Verified monotone.
+         trust-4 is the brightest chip in the system and it will almost never
+         render, because nothing in the repository has reached the top rung.
+         That is deliberate. See DECISIONS.md D-15. --- */
+  --trust-1: oklch(0.560 0.012 170); /* #6e7773  exploratory. Near-neutral on purpose:
+                                        the starting position is not a colour. */
+  --trust-2: oklch(0.680 0.055 205); /* #6fa3a8  calibrated */
+  --trust-3: oklch(0.790 0.095 215); /* #6bcae1  registered */
+  --trust-4: oklch(0.900 0.130 225); /* #6ff0ff  adjudicated */
+
+  /* --- READING STATE. Three, and they are the library's three outcomes.
+         This mapping is the reason the palette cannot be generic: it comes
+         from the three-outcome rule in analytical chemistry, which is what
+         Evidence / bounded Refusal / Refusal actually are. --- */
+  --state-evidence: oklch(0.925 0.006 170); /* #e2e7e5  a value was produced */
+  --state-refusal:  oklch(0.735 0.075 225); /* #74b4cd  declined, with a remedy.
+                                               Blue, never red: this is not an error. */
+  --state-bounded:  oklch(0.800 0.115  85); /* #e0b861  detected, not quantifiable.
+                                               A bound was returned. */
+
+  /* --- WRITTEN vs REALIZED. The project's central divergence. Two colours
+         that must read as two things pulling apart, at 31.1 worst-case CVD. --- */
+  --written:  oklch(0.780 0.090 235); /* #7cc1e9  the objective as written */
+  --realized: oklch(0.700 0.150  32); /* #ed7761  the objective as realized */
+
+  /* --- ALARM / COMPARATOR / CONTROL, for the forecasting exhibit. --- */
+  --alarm:      oklch(0.985 0.008  95); /* #fcfaf4  the shipped signal fired here */
+  --comparator: oklch(0.690 0.030 170); /* #8aa298  the registered baseline */
+  --control:    oklch(0.610 0.008 170); /* #7f8582  the scrambled-surrogate rate */
+
+  /* --- interaction surfaces the browser would otherwise theme for us.
+         Theming these is the cheapest available signal that a person made
+         this. See DESIGN.md §6.5. --- */
+  --focus: oklch(0.790 0.095 215);      /* #6bcae1  the focus ring */
+  --focus-offset: 2px;
+  --focus-width: 2px;
+  --selection-bg: rgba(107, 202, 225, 0.26);
+  --selection-fg: oklch(0.925 0.006 170);
+  --caret: oklch(0.985 0.008 95);
+  --scrollbar-track: oklch(0.196 0.007 170);
+  --scrollbar-thumb: oklch(0.350 0.010 170);
+  --link-underline-thickness: 1px;
+  --link-underline-offset: 0.18em;
+
+  /* --- elevation. Declared once per surface: a border OR a shadow, never a
+         hairline border under a wide soft shadow (§6.5). Shadows fall down and
+         to the right because the light is upper-left, everywhere, always. --- */
+  --shadow-raised: 0 14px 36px -20px rgba(0, 0, 0, 0.92);
+  --shadow-overlay: 0 22px 60px -24px rgba(0, 0, 0, 0.96);
+
+  /* --- code block syntax, both themes checked for contrast rather than
+         assumed. Shiki theme: github-dark-high-contrast. --- */
+  --code-bg: oklch(0.196 0.007 170);
+  --code-inline-bg: oklch(0.296 0.009 170);
+}
+
+/* =============================================================================
+   LIGHT THEME
+   A different design, not an inversion. The same instrument in daylight: the
+   ground keeps the hue-170 bias so the object is recognisably the same one.
+
+   Two things genuinely differ rather than flip:
+   - The trust ladder inverts direction. On dark, more confident is lighter.
+     On light, more confident is darker. Both read as "more".
+   - The beam becomes ink. There is no light source to depict on paper, so the
+     brightest-thing role is taken by the darkest thing.
+   ============================================================================= */
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { color-scheme: light; }
+}
+
+:root[data-theme="light"],
+:root:not([data-theme="dark"]) {
+  /* This block is applied by the light media query and by the explicit
+     attribute. The attribute must win in both directions, which is why the
+     dark block above also carries [data-theme="dark"]. */
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ground:    oklch(0.985 0.004 170); /* #f8fbfa */
+    --surface-1: oklch(0.998 0.002 170); /* #fdfffe  paper, one step toward the light */
+    --surface-2: oklch(0.962 0.005 170); /* #eff4f2 */
+    --surface-3: oklch(0.935 0.006 170); /* #e6ebe9 */
+    --surface-4: oklch(0.900 0.007 170); /* #dadfdd */
+
+    --ground-hex:    #f8fbfa;
+    --surface-1-hex: #fdfffe;
+    --surface-2-hex: #eff4f2;
+    --surface-3-hex: #e6ebe9;
+    --surface-4-hex: #dadfdd;
+
+    --line:         oklch(0.880 0.006 170); /* #d4d9d7 */
+    --line-strong:  oklch(0.780 0.009 170); /* #b2b9b6 */
+    --line-control: oklch(0.620 0.012 170); /* #7f8985  meets 3:1 */
+
+    --ink:   oklch(0.235 0.010 170); /* #1a201d */
+    --ink-2: oklch(0.450 0.012 170); /* #4f5854 */
+    --ink-3: oklch(0.535 0.012 170); /* #67706c  4.91:1, AA-body on ground */
+
+    --beam: oklch(0.320 0.012 170);  /* #2d3532  the brightest role becomes the darkest ink */
+    --beam-wash: rgba(26, 32, 29, 0.06);
+
+    --comp-1: oklch(0.520 0.150 240); /* #0070b5 */
+    --comp-2: oklch(0.610 0.105 175); /* #259780 */
+    --comp-3: oklch(0.600 0.130  80); /* #a87600 */
+    --comp-4: oklch(0.560 0.170  32); /* #c4422c */
+    --comp-5: oklch(0.500 0.160 318); /* #883e9d */
+    --comp-6: oklch(0.470 0.120 140); /* #316a23 */
+
+    /* inverted direction: darker is more confident */
+    --trust-1: oklch(0.640 0.012 170); /* #858f8b */
+    --trust-2: oklch(0.560 0.060 215); /* #487e8b */
+    --trust-3: oklch(0.470 0.095 225); /* #006583 */
+    --trust-4: oklch(0.380 0.120 235); /* #004978 */
+
+    --state-evidence: oklch(0.235 0.010 170); /* #1a201d */
+    --state-refusal:  oklch(0.500 0.090 225); /* #116d8a */
+    --state-bounded:  oklch(0.520 0.110  75); /* #8d5e00 */
+
+    --written:  oklch(0.500 0.110 235); /* #006c98 */
+    --realized: oklch(0.545 0.170  32); /* #bf3d27 */
+
+    --alarm:      oklch(0.300 0.090  60); /* #4d1f00 */
+    --comparator: oklch(0.585 0.022 170); /* #6f807a */
+    --control:    oklch(0.625 0.012 170); /* #818a86 */
+
+    --focus: oklch(0.470 0.095 225);
+    --selection-bg: rgba(0, 101, 131, 0.18);
+    --selection-fg: oklch(0.235 0.010 170);
+    --caret: oklch(0.235 0.010 170);
+    --scrollbar-track: oklch(0.962 0.005 170);
+    --scrollbar-thumb: oklch(0.780 0.009 170);
+
+    --shadow-raised: 0 10px 26px -18px rgba(26, 32, 29, 0.34);
+    --shadow-overlay: 0 18px 48px -22px rgba(26, 32, 29, 0.40);
+
+    --code-bg: oklch(0.962 0.005 170);
+    --code-inline-bg: oklch(0.935 0.006 170);
+  }
+}
+
+/* The explicit attribute repeats the light block so the toggle wins over the
+   OS preference in both directions. Duplication is deliberate: a single source
+   of these values lives in DESIGN.md §5 and both blocks are generated from it. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ground: oklch(0.985 0.004 170);    --surface-1: oklch(0.998 0.002 170);
+  --surface-2: oklch(0.962 0.005 170); --surface-3: oklch(0.935 0.006 170);
+  --surface-4: oklch(0.900 0.007 170);
+  --ground-hex: #f8fbfa; --surface-1-hex: #fdfffe; --surface-2-hex: #eff4f2;
+  --surface-3-hex: #e6ebe9; --surface-4-hex: #dadfdd;
+  --line: oklch(0.880 0.006 170); --line-strong: oklch(0.780 0.009 170);
+  --line-control: oklch(0.620 0.012 170);
+  --ink: oklch(0.235 0.010 170); --ink-2: oklch(0.450 0.012 170);
+  --ink-3: oklch(0.535 0.012 170);
+  --beam: oklch(0.320 0.012 170); --beam-wash: rgba(26, 32, 29, 0.06);
+  --comp-1: oklch(0.520 0.150 240); --comp-2: oklch(0.610 0.105 175);
+  --comp-3: oklch(0.600 0.130 80);  --comp-4: oklch(0.560 0.170 32);
+  --comp-5: oklch(0.500 0.160 318); --comp-6: oklch(0.470 0.120 140);
+  --trust-1: oklch(0.640 0.012 170); --trust-2: oklch(0.560 0.060 215);
+  --trust-3: oklch(0.470 0.095 225); --trust-4: oklch(0.380 0.120 235);
+  --state-evidence: oklch(0.235 0.010 170); --state-refusal: oklch(0.500 0.090 225);
+  --state-bounded: oklch(0.520 0.110 75);
+  --written: oklch(0.500 0.110 235); --realized: oklch(0.545 0.170 32);
+  --alarm: oklch(0.300 0.090 60); --comparator: oklch(0.585 0.022 170);
+  --control: oklch(0.625 0.012 170);
+  --focus: oklch(0.470 0.095 225);
+  --selection-bg: rgba(0, 101, 131, 0.18); --selection-fg: oklch(0.235 0.010 170);
+  --caret: oklch(0.235 0.010 170);
+  --scrollbar-track: oklch(0.962 0.005 170); --scrollbar-thumb: oklch(0.780 0.009 170);
+  --shadow-raised: 0 10px 26px -18px rgba(26, 32, 29, 0.34);
+  --shadow-overlay: 0 18px 48px -22px rgba(26, 32, 29, 0.40);
+  --code-bg: oklch(0.962 0.005 170); --code-inline-bg: oklch(0.935 0.006 170);
+}
+
+/* =============================================================================
+   REDUCED MOTION
+   Not "animation off". Each animated thing has a stated replacement, in
+   motion/MOTION.md. Here, the durations collapse and the curves go linear so
+   any transition that survives is instant rather than janky.
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0.01ms; --dur-2: 0.01ms; --dur-3: 0.01ms; --dur-4: 0.01ms;
+    --stagger: 0ms;
+    --curve-ui: linear; --curve-enter: linear; --curve-exit: linear;
+    --spring-stiffness: 100000; --spring-damping: 1000;
+  }
+}
+
+/* =============================================================================
+   BASE  -  the surfaces nobody specifies, themed from the palette above.
+   ============================================================================= */
+::selection { background: var(--selection-bg); color: var(--selection-fg); }
+:root { accent-color: var(--focus); caret-color: var(--caret); }
+* { scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+  /* Focus rings appear instantly and never fade in (§6.5). */
+  transition: none;
+}
+a {
+  text-decoration-thickness: var(--link-underline-thickness);
+  text-underline-offset: var(--link-underline-offset);
+}
+/* Numbers are compared and stacked all over this site. */
+table, .tabular, [data-numeric] { font-variant-numeric: tabular-nums; }
+/* No heading may end in a widow. */
+h1, h2, h3 { text-wrap: balance; overflow-wrap: anywhere; min-width: 0; }
+/* A grid track carrying an image takes its minimum from the image without this,
+   which pushes wide figures past the viewport on a phone (§6.5). */
+.grid-track { min-width: 0; }
+
+/* Product website token export, 2026.09.17. Shared renderer overrides consume
+   these values; the upstream report source remains pinned. */
+:root, :root[data-theme=dark] {
+  --grid-max: 82rem;
+  --page-pad: clamp(1.25rem, 4.2vw, 4.5rem);
+  --type-mono-label-transform: none;
+  --type-mono-label-track: 0;
+  --shadow-sheet: 0 12px 36px rgb(0 0 0 / 8%);
+  --signal: #83dae7;
+  --candidate: #e9ba70;
+  --danger: #f09a90;
+  --success: #9bcebb;
+  --ground: #101416;
+  --surface-1: #1a2023;
+  --surface-2: #222a2e;
+  --surface-3: #2a3439;
+  --ink: #f3f5f5;
+  --ink-2: #b1bdc1;
+  --ink-3: #9aabb1;
+  --line: #344147;
+  --line-strong: #52636b;
+  --line-control: #697e87;
+  --focus: #b9eef4;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme=dark]) {
+    --ground: #f4f6f5; --surface-1: #e9eeed; --surface-2: #dfe7e5;
+    --surface-3: #d2deda; --ink: #152326; --ink-2: #44595e; --ink-3: #52666b;
+    --line: #c3cfcb; --line-strong: #93a6a2; --line-control: #6b8580;
+    --signal: #086c7a; --candidate: #865014; --danger: #a23227; --success: #21644d; --focus: #086c7a;
+  }
+}
+:root[data-theme=light] {
+  --ground: #f4f6f5; --surface-1: #e9eeed; --surface-2: #dfe7e5;
+  --surface-3: #d2deda; --ink: #152326; --ink-2: #44595e; --ink-3: #52666b;
+  --line: #c3cfcb; --line-strong: #93a6a2; --line-control: #6b8580;
+  --signal: #086c7a; --candidate: #865014; --danger: #a23227; --success: #21644d; --focus: #086c7a;
+}

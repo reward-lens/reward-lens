@@ -14,9 +14,9 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from conftest import INDEX, invalid_instance, valid_instance
-
 from reward_lens.contracts import NO_INTERVAL, Assay, RewardLensError, Uncertainty, validate_record
+
+from .conftest import INDEX, invalid_instance, valid_instance
 
 REASON = "9 task clusters, below the 15 at which rule 9 stops reporting an interval"
 BOUNDED = {"method": "wilson", "level": 0.95, "interval": [0.7354, 1.0]}

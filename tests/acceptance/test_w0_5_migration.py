@@ -11,7 +11,7 @@ What moved, and what each consumer now resolves against:
   - `diagnostic_data_v2.py` -> `data/builtin/diagnostic_seeds.py`. A pure data module, 598 lines of
     prose, no torch. Its one consumer is `data/builtin/diagnostic_v3.py`, which now imports its
     seeds from the file next to it.
-  - `sae.py` -> behind the `[dict]` extra. One class, `TopKSAE`, reached from one call site in
+  - `sae.py` -> behind the `[white-box]` extra. One class, `TopKSAE`, reached from one call site in
     `measure/battery/feature.py`. The specification demotes sparse dictionaries to candidate
     generators that may never be a claim substrate; the extra is that position in the packaging.
   - `model_adapters/`'s grader-side half -> `signals/adapters.py`. `policy/arch.py` (W5.1) already
@@ -36,6 +36,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import tomllib
 import types
 
 import pytest
@@ -66,7 +67,35 @@ def _module_level_imports(path: pathlib.Path) -> set[str]:
     return found
 
 
-def _modules_with_module_level_torch() -> dict[str, bool]:
+_KNOWN_MALFORMED_EXAMPLE = (
+    SRC / "examples" / "code_reward" / "outcome" / "known_wrong" / "task-04.py"
+)
+
+
+def _parse_import_graph_source(path: pathlib.Path) -> ast.Module | None:
+    """Parse an import-graph subject, skipping only the one declared malformed task input.
+
+    ``task-04.py`` is data for a code-reward failure case and intentionally has invalid syntax.
+    Every other Python file under ``src/``, including valid examples, remains an import-graph
+    subject. A new syntax error anywhere else therefore fails the control instead of becoming a
+    directory-wide coverage waiver.
+    """
+    try:
+        return ast.parse(path.read_text(encoding="utf-8"))
+    except SyntaxError:
+        if path == _KNOWN_MALFORMED_EXAMPLE:
+            return None
+        raise
+
+
+def _import_graph_sources(root: pathlib.Path = SRC):
+    for path in sorted(root.rglob("*.py")):
+        tree = _parse_import_graph_source(path)
+        if tree is not None:
+            yield path, tree
+
+
+def _modules_with_module_level_torch(root: pathlib.Path = SRC) -> dict[str, bool]:
     """Every module whose body imports torch, mapped to whether an extras guard runs first.
 
     A guarded import is not the same defect as an unguarded one. `require_extra` runs above it and
@@ -75,8 +104,7 @@ def _modules_with_module_level_torch() -> dict[str, bool]:
     is told. This reports both so the count cannot be improved by moving a guard around.
     """
     out: dict[str, bool] = {}
-    for path in sorted(SRC.rglob("*.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
+    for path, tree in _import_graph_sources(root):
         guarded = False
         for node in tree.body:
             if (
@@ -92,9 +120,25 @@ def _modules_with_module_level_torch() -> dict[str, bool]:
                     else [node.module or ""]
                 )
                 if any(n.split(".")[0] == "torch" for n in names):
-                    out[str(path.relative_to(SRC))] = guarded
+                    out[str(path.relative_to(root))] = guarded
                     break
     return out
+
+
+def _model_adapter_consumers(root: pathlib.Path = SRC) -> set[str]:
+    consumers = set()
+    for path, tree in _import_graph_sources(root):
+        if path.parts[-2:] == ("model_adapters", "__init__.py"):
+            continue
+        for node in ast.walk(tree):
+            module = (
+                node.module
+                if isinstance(node, ast.ImportFrom)
+                else (node.names[0].name if isinstance(node, ast.Import) else None)
+            )
+            if module and module.startswith("reward_lens.model_adapters"):
+                consumers.add(str(path.relative_to(root)))
+    return consumers
 
 
 # ---------------------------------------------------------------------------
@@ -155,20 +199,28 @@ def test_the_only_remaining_consumer_of_model_adapters_is_v1_itself():
     `model.py` imports it and `organisms/_tiny.py` builds the tiny trunk with it, so retiring
     `model.py` retires both. Nothing else in `src/` names it.
     """
-    consumers = set()
-    for path in sorted(SRC.rglob("*.py")):
-        if path.parts[-2:] == ("model_adapters", "__init__.py"):
-            continue
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            module = (
-                node.module
-                if isinstance(node, ast.ImportFrom)
-                else (node.names[0].name if isinstance(node, ast.Import) else None)
-            )
-            if module and module.startswith("reward_lens.model_adapters"):
-                consumers.add(str(path.relative_to(SRC)))
+    consumers = _model_adapter_consumers()
     assert consumers == {"model.py", "organisms/_tiny.py"}, consumers
+
+
+def test_import_graph_parses_valid_examples_and_rejects_only_the_named_fixture(tmp_path):
+    """Valid examples stay covered; the syntax exception is one exact code-reward input."""
+    example_paths = sorted((SRC / "examples").rglob("*.py"))
+    parsed = [(path, _parse_import_graph_source(path)) for path in example_paths]
+    skipped = [path for path, tree in parsed if tree is None]
+    assert skipped == [_KNOWN_MALFORMED_EXAMPLE]
+    assert len(parsed) == 42
+    assert sum(tree is not None for _, tree in parsed) == 41
+
+    probe = tmp_path / "valid_example.py"
+    probe.write_text("import torch\nfrom reward_lens.model_adapters import get_adapter\n")
+    assert _modules_with_module_level_torch(tmp_path) == {"valid_example.py": False}
+    assert _model_adapter_consumers(tmp_path) == {"valid_example.py"}
+
+    unexpected = tmp_path / "unexpected_syntax_error.py"
+    unexpected.write_text("def broken(:\n")
+    with pytest.raises(SyntaxError):
+        tuple(_import_graph_sources(tmp_path))
 
 
 def test_the_battery_reaches_the_dictionary_through_the_gate_only():
@@ -181,36 +233,39 @@ def test_the_battery_reaches_the_dictionary_through_the_gate_only():
 
 
 # ---------------------------------------------------------------------------
-# Clause 2: the [dict] extra, absent and present
+# Clause 2: the [white-box] extra, absent and present
 # ---------------------------------------------------------------------------
 
 
-def test_sae_raises_a_typed_error_naming_an_installable_extra_when_dict_is_absent():
-    """The gate, on an install without `[dict]`. This environment is one, which is the point.
+def test_sae_raises_a_typed_error_naming_an_installable_extra_when_torch_is_blocked():
+    """The missing-probe route is fresh-process, typed, and names the declared group.
 
-    `sae_lens` is not installed here, so this is the real path rather than a simulated one. What the
-    clause asks for is that the error be *typed* and name an extra that `pip` can actually install:
-    the failure `core/extras.py` exists to prevent is `loops/integrations/base.py` telling three
-    frameworks to `Install reward-lens[trl]` when no such extra was declared, which is a dead end
-    with a helpful tone.
+    The current test process may contain torch. Blocking it with a finder in a new interpreter
+    makes ``require_extra`` exercise the same probe boundary as a base install before ``sae.py``
+    can import torch. It does not pretend that a missing ``sae_lens`` package controls this module.
     """
-    from reward_lens.core.extras import EXTRA_PROBE, ExtraRequiredError
-
-    assert importlib.util.find_spec("sae_lens") is None, (
-        "sae_lens is installed here, so this test cannot exercise the absent branch. Run it in an "
-        "environment without the [dict] extra."
+    prog = (
+        "import sys\n"
+        "class BlockTorch:\n"
+        "    def find_spec(self, name, path=None, target=None):\n"
+        "        if name == 'torch' or name.startswith('torch.'):\n"
+        "            raise ImportError('torch blocked by C094 acceptance')\n"
+        "        return None\n"
+        "sys.meta_path.insert(0, BlockTorch())\n"
+        "try:\n"
+        "    import reward_lens.sae\n"
+        "except Exception as error:\n"
+        "    print(type(error).__name__)\n"
+        "    print(str(error))\n"
+        "else:\n"
+        "    raise AssertionError('reward_lens.sae imported despite a blocked torch probe')\n"
     )
-    sys.modules.pop("reward_lens.sae", None)
-    with pytest.raises(ExtraRequiredError) as excinfo:
-        importlib.import_module("reward_lens.sae")
-
-    message = str(excinfo.value)
-    assert "'dict'" in message
-    assert "pip install 'reward-lens[dict]'" in message
-    assert "candidate generators and never a claim substrate" in message
-    # Typed, and typed as something an `except ImportError` around an optional import still catches.
-    assert isinstance(excinfo.value, ImportError)
-    assert "dict" in EXTRA_PROBE
+    result = subprocess.run(
+        [sys.executable, "-c", prog], capture_output=True, text=True, cwd=SRC.parents[1]
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ExtraRequiredError" in result.stdout, result.stdout
+    assert "reward-lens[white-box]" in result.stdout, result.stdout
 
 
 def test_the_extra_the_error_names_is_one_pip_can_install():
@@ -218,79 +273,57 @@ def test_the_extra_the_error_names_is_one_pip_can_install():
 
     This is the assertion that makes the one above worth having. `test_w0_3_dependencies.py` holds
     the general form over every extra; this pins the one this migration newly depends on, so a
-    rename of the `[dict]` stanza fails here with the reason attached rather than in a general test
+    rename of the `[white-box]` stanza fails here with the reason attached rather than in a general test
     that does not know why anyone cared.
     """
     root = pathlib.Path(__file__).resolve().parents[2]
-    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
-    assert "\ndict = [" in pyproject, "[dict] is not declared in pyproject.toml"
+    optional = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "optional-dependencies"
+    ]
+    assert optional["white-box"], "[white-box] has no installable requirements"
 
 
-def test_sae_imports_and_topk_works_when_the_extra_is_present():
-    """The present branch, with the probe satisfied rather than the package vendored in.
-
-    `require_extra` asks `importlib.util.find_spec` whether the probe module resolves, and
-    `find_spec` answers from `sys.modules` first. Installing a stub there is therefore an honest
-    exercise of the gate's own question: it makes the probe say yes, and everything after the gate
-    is the real module doing real work. What it deliberately does not do is pretend `sae_lens` is
-    present for any other purpose, because `TopKSAE` does not use `sae_lens` (see the report note on
-    the probe).
-    """
-    import torch
-
-    stub = types.ModuleType("sae_lens")
-    stub.__spec__ = importlib.machinery.ModuleSpec("sae_lens", loader=None)
-    sys.modules["sae_lens"] = stub
+def test_sae_imports_and_topk_works_when_white_box_is_present():
+    """The present route uses the actual torch probe and real TopK calculations."""
+    torch = pytest.importorskip("torch", reason="requires the declared [white-box] runtime")
     sys.modules.pop("reward_lens.sae", None)
-    try:
-        sae_module = importlib.import_module("reward_lens.sae")
-        sae = sae_module.TopKSAE(d_model=8, n_features=32, k=4)
+    sae_module = importlib.import_module("reward_lens.sae")
+    sae = sae_module.TopKSAE(d_model=8, n_features=32, k=4)
 
-        # The one method the v3 instrument path calls, on real numbers.
-        w_r = torch.arange(8, dtype=torch.float32)
-        alignments = sae.feature_reward_alignments(w_r)
-        assert alignments.shape == (32,)
-        assert torch.allclose(alignments, sae.W_dec @ w_r, atol=1e-6)
+    # The one method the v3 instrument path calls, on real numbers.
+    w_r = torch.arange(8, dtype=torch.float32)
+    alignments = sae.feature_reward_alignments(w_r)
+    assert alignments.shape == (32,)
+    assert torch.allclose(alignments, sae.W_dec @ w_r, atol=1e-6)
 
-        # And the reconstruction, so "works" means more than "imports": exactly k features fire.
-        x = torch.randn(3, 8)
-        recon, features, _ = sae(x)
-        assert recon.shape == x.shape
-        assert int((features != 0).sum(dim=-1).max()) == 4
-    finally:
-        sys.modules.pop("sae_lens", None)
-        sys.modules.pop("reward_lens.sae", None)
+    # And the reconstruction, so "works" means more than "imports": exactly k features fire.
+    x = torch.randn(3, 8)
+    recon, features, _ = sae(x)
+    assert recon.shape == x.shape
+    assert int((features != 0).sum(dim=-1).max()) == 4
 
 
-def test_the_battery_refuses_rather_than_fabricating_a_dictionary():
-    """No `[dict]`, no supplied dictionary: a refusal with a remedy, not a number.
+def test_the_battery_uses_the_documented_untrained_topk_fallback():
+    """With torch present and no supplied SAE, preflight permits a flagged untrained fallback.
 
-    `FeatureRewardAlignment`'s untrained fallback was reaching a module the packaging never declared
-    a dependency on. With the dependency declared, an install without it has no dictionary, and the
-    instrument says so. The remedy names both routes because both are real: supply one, or install
-    the tooling to fit one.
+    This checks the runtime behaviour only. Presence of torch proves the probe is available; it does
+    not prove how the package was installed or what dependency group an environment selected.
     """
-    from reward_lens.core.reading import RefusalReason
+    pytest.importorskip("torch", reason="requires the declared [white-box] runtime")
     from reward_lens.measure.base import Context
     from reward_lens.measure.battery import FeatureRewardAlignment
 
     result = FeatureRewardAlignment().preflight(Context(signal=None, view=None))
-    assert result.ok is False
-    assert result.refusal is not None
-    assert result.refusal.reason is RefusalReason.ACCESS_INSUFFICIENT
-    assert "pip install 'reward-lens[dict]'" in result.refusal.remedy
-    assert "ctx.regime['sae']" in result.refusal.remedy
-    assert result.refusal.statistics == {"supplied_sae": False, "dict_extra_installed": False}
+    assert result.ok is True
+    assert result.refusal is None
 
 
-def test_a_supplied_dictionary_needs_no_extra_at_all():
+def test_a_supplied_dictionary_needs_no_additional_dictionary_extra():
     """The path that matters scientifically does not touch `reward_lens.sae`.
 
     A dictionary fitted elsewhere is an object with one method. That is the documented contract, and
-    it means the `[dict]` gate costs nothing to anyone who has a real dictionary: it only stops the
-    instrument from inventing one.
+    it means no separate dictionary extra is required for a supplied real dictionary.
     """
-    assert importlib.util.find_spec("sae_lens") is None
     source = _module_source("measure.battery.feature")
     assert "feature_reward_alignments" in source
     assert 'ctx.regime.get("sae")' in source

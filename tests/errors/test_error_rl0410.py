@@ -44,8 +44,8 @@ def test_a_code_with_one_surface_is_an_error_whoever_breached_it() -> None:
         assert surface_for(code, internal=True) == ("error", spec.exit_code), code
 
 
-def test_rl0410_is_the_only_code_with_a_second_surface() -> None:
-    assert [code for code, spec in CATALOGUE.items() if spec.verdicts] == ["RL0410"]
+def test_the_two_source_backed_codes_with_a_second_surface_are_explicit() -> None:
+    assert [code for code, spec in CATALOGUE.items() if spec.verdicts] == ["RL0229", "RL0410"]
 
 
 def test_explain_says_which_surface_is_which() -> None:

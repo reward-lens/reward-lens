@@ -11,14 +11,22 @@ import json
 import os
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 
-__all__ = ["AccessEvent", "AccessLog", "utc_now"]
+__all__ = ["AccessEvent", "AccessEventCode", "AccessLog", "utc_now"]
 
 
 def utc_now() -> str:
     """The record's timestamp shape: whole seconds, UTC, `Z`."""
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class AccessEventCode(str, Enum):
+    """Named outcomes for a measured acceptance-boundary access attempt."""
+
+    ACCEPTANCE_ACCESS_DENIED = "ACCEPTANCE_ACCESS_DENIED"
+    ACCEPTANCE_ACCESS_ALLOWED = "ACCEPTANCE_ACCESS_ALLOWED"
 
 
 @dataclass(frozen=True)
@@ -34,6 +42,9 @@ class AccessEvent:
     reason: str
     use_count: int
     action: str = "read"
+    #: Optional so existing JSONL events, written before named boundary outcomes,
+    #: remain readable without being silently relabelled.
+    code: AccessEventCode | None = None
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -62,6 +73,8 @@ class AccessLog:
             row = json.loads(line)
             if row.get("partition_id") != self.partition_id:
                 continue
+            if row.get("code") is not None:
+                row["code"] = AccessEventCode(row["code"])
             rows.append(AccessEvent(**row))
         return rows
 
@@ -86,6 +99,7 @@ class AccessLog:
         granted: bool,
         reason: str = "",
         action: str = "read",
+        code: AccessEventCode | None = None,
     ) -> AccessEvent:
         """Append one event, on disk and flushed, and return it."""
         count = self.uses(item_id) + (1 if granted and action == "read" else 0)
@@ -99,6 +113,7 @@ class AccessLog:
             reason=reason,
             use_count=count,
             action=action,
+            code=code,
         )
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as handle:

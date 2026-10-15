@@ -15,6 +15,7 @@ run, which is an entry in the record rather than a gap in it.
 
 from __future__ import annotations
 
+from . import panel  # noqa: F401  the audit's own tests reach for it by name
 from .actors import (
     SESSIONS,
     AgentActor,
@@ -39,15 +40,13 @@ from .protocol import (
     GraderScorer,
     Proposal,
     Scored,
-    ScoreResult,
     Scorer,
+    ScoreResult,
     SeekerState,
     is_exploit,
     scorer_for,
 )
 from .search import replay, rescore, seek
-
-from . import panel  # noqa: F401  the audit's own tests reach for it by name
 
 __all__ = [
     "Actor",

@@ -16,17 +16,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from reward_lens.core.invariance import InvariancePayload, check_invariance
-from reward_lens.core.reading import Refusal, RefusalReason
-from reward_lens.core.store import EvidenceStore
-from reward_lens.core.types import TrustLevel
-from reward_lens.measure.base import lint_instrument, lint_reading
-from reward_lens.measure.ledger.features import RecordedFeatures, SurfaceFeatures
-from reward_lens.record.schema import make_trajectory
-from reward_lens.record.turns import Turn
-from reward_lens.stats.baselines import ALL_SIX, BaselineBank, lint_claim
-from reward_lens.studies import render_report, run_study
 from studies.w6_distillation.analysis import build_spec, frozen_study
 from studies.w6_distillation.fit import ShiftDesign, corrected_slope, raw_slope, reliability
 from studies.w6_distillation.instrument import DistillationGap
@@ -45,6 +34,17 @@ from studies.w6_distillation.reading import distillation_survival
 from studies.w6_distillation.regions import RegionFeatures, region_of, split_region
 from studies.w6_distillation.runbook import render_runbook
 from studies.w6_distillation.survival import Arm, shared_prompts
+
+from reward_lens.core.invariance import InvariancePayload, check_invariance
+from reward_lens.core.reading import Refusal, RefusalReason
+from reward_lens.core.store import EvidenceStore
+from reward_lens.core.types import TrustLevel
+from reward_lens.measure.base import lint_instrument, lint_reading
+from reward_lens.measure.ledger.features import RecordedFeatures, SurfaceFeatures
+from reward_lens.record.schema import make_trajectory
+from reward_lens.record.turns import Turn
+from reward_lens.stats.baselines import ALL_SIX, BaselineBank, lint_claim
+from reward_lens.studies import render_report, run_study
 
 
 def _featuriser() -> RecordedFeatures:

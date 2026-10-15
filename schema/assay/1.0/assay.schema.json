@@ -65,7 +65,13 @@
         "applied_update_weight": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0, "maximum": 1, "x-scale": 4}]},
         "fix_changes_pressure": {"oneOf": [{"type": "null"}, {"type": "number", "x-scale": 4}]},
         "fix_cost": {"oneOf": [{"type": "null"}, {"type": "string", "maxLength": 200}]},
-        "missing": {"type": "string", "description": "which input a null cell is waiting for, and what it would take"}}}},
+        "missing": {"anyOf": [{"type": "string", "description": "legacy summary of which input a null cell is waiting for"}, {"type": "object", "additionalProperties": false, "minProperties": 1, "properties": {"selected": {"$ref": "#/$defs/join_cell_absence"}, "applied_update_weight": {"$ref": "#/$defs/join_cell_absence"}, "fix_changes_pressure": {"$ref": "#/$defs/join_cell_absence"}, "fix_cost": {"$ref": "#/$defs/join_cell_absence"}}}]}},
+      "allOf": [
+        {"if": {"required": ["missing"], "properties": {"missing": {"type": "object", "required": ["selected"]}}}, "then": {"properties": {"selected": {"const": "not_measured"}}}},
+        {"if": {"required": ["missing"], "properties": {"missing": {"type": "object", "required": ["applied_update_weight"]}}}, "then": {"properties": {"applied_update_weight": {"type": "null"}}}},
+        {"if": {"required": ["missing"], "properties": {"missing": {"type": "object", "required": ["fix_changes_pressure"]}}}, "then": {"properties": {"fix_changes_pressure": {"type": "null"}}}},
+        {"if": {"required": ["missing"], "properties": {"missing": {"type": "object", "required": ["fix_cost"]}}}, "then": {"properties": {"fix_cost": {"type": "null"}}}}
+      ]}},
     "decision": {
       "type": "object", "additionalProperties": false, "required": ["state", "action", "policy", "reasons", "tradeoff", "signature", "regression_cases"],
       "properties": {
@@ -109,6 +115,7 @@
     "entry_id": {"type": "string", "pattern": "^(validity|soundness|reach|exploits|framing|reward_statistics|signal|trace|forecast|calibration)\\.[a-z0-9_.]+$"},
     "rule_id": {"type": "string", "pattern": "^[a-z_]+\\.[a-z0-9_.]+$"},
     "finding_id": {"type": "string", "pattern": "^(RGX-[0-9]{4}-[0-9]{4}|RGX-local-[0-9]{4})$"},
+    "join_cell_absence": {"type": "object", "additionalProperties": false, "required": ["reason", "remedy"], "properties": {"reason": {"type": "string", "minLength": 1}, "remedy": {"type": "string", "minLength": 1}}},
     "section": {"enum": ["validity", "soundness", "reach", "exploits", "framing", "reward_statistics", "signal", "trace", "forecast", "calibration"]},
     "scope": {"enum": ["evaluator_comparison", "selection_stress", "reconstructed_training_pressure", "controlled_update_response", "short_fork_behavior", "held_out_transfer"]},
     "hole_state": {"enum": ["NOT_MEASURED", "COULD_NOT_CHECK", "REFUSED"]},

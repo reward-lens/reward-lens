@@ -26,7 +26,9 @@ REPORT_SUFFIX = ".assay.html"
 SELFTEST_FLAG = "REWARD_LENS_SELFTEST"
 SELFTEST_RAISE = "REWARD_LENS_SELFTEST_RAISE"
 
-FORMAT_HELP = "text, json, jsonl, sarif or github; text on a TTY and json off it" + config.env_note("format")
+FORMAT_HELP = "text, json, jsonl, sarif or github; text on a TTY and json off it" + config.env_note(
+    "format"
+)
 EPILOG = config.PRECEDENCE_LINE
 
 
@@ -36,18 +38,39 @@ def common(function):
         [
             click.option("-f", "--format", "format_", type=str, default=None, help=FORMAT_HELP),
             click.option("--json", "json_flag", is_flag=True, help="shorthand for --format json"),
-            click.option("--color", "colour", type=click.Choice(["auto", "always", "never"]),
-                         default=None, help="when to colour the output" + config.env_note("color")),
+            click.option(
+                "--color",
+                "colour",
+                type=click.Choice(["auto", "always", "never"]),
+                default=None,
+                help="when to colour the output" + config.env_note("color"),
+            ),
             click.option("--no-color", "no_colour", is_flag=True, help="alias for --color never"),
-            click.option("--progress", type=click.Choice(["auto", "plain", "quiet"]), default=None,
-                         help="progress on stderr" + config.env_note("no_progress")),
-            click.option("--no-progress", "no_progress", is_flag=True, help="alias for --progress quiet"),
+            click.option(
+                "--progress",
+                type=click.Choice(["auto", "plain", "quiet"]),
+                default=None,
+                help="progress on stderr" + config.env_note("no_progress"),
+            ),
+            click.option(
+                "--no-progress", "no_progress", is_flag=True, help="alias for --progress quiet"
+            ),
             click.option("--fields", default=None, help="bound the result to these dotted fields"),
-            click.option("--exit-zero", is_flag=True, help="exit 0 even when the decision is rejected or unresolved"),
+            click.option(
+                "--exit-zero",
+                is_flag=True,
+                help="exit 0 even when the decision is rejected or unresolved",
+            ),
             click.option("--no-config", is_flag=True, help="ignore every configuration file"),
-            click.option("-y", "--yes", is_flag=True, help="make the decision this command would ask for"),
-            click.option("--non-interactive", is_flag=True,
-                         help="never ask; print the pending action and exit 3" + config.env_note("non_interactive")),
+            click.option(
+                "-y", "--yes", is_flag=True, help="make the decision this command would ask for"
+            ),
+            click.option(
+                "--non-interactive",
+                is_flag=True,
+                help="never ask; print the pending action and exit 3"
+                + config.env_note("non_interactive"),
+            ),
         ]
     ):
         function = decorator(function)
@@ -58,16 +81,36 @@ def measuring(function):
     """The options a command that executes, spends or writes also carries."""
     for decorator in reversed(
         [
-            click.option("--offline/--no-offline", default=None,
-                         help="block every outbound request" + config.env_note("offline")),
-            click.option("--max-budget-usd", default=None,
-                         help="cap the whole tree of work in dollars" + config.env_note("max_budget_usd")),
-            click.option("-n", "--dry-run", is_flag=True, help="plan, price and print; execute nothing"),
-            click.option("--seeker", type=click.Choice(["off", "api", "local", "agent"]), default="off",
-                         help="how hard to look for exploits"),
+            click.option(
+                "--offline/--no-offline",
+                default=None,
+                help="block every outbound request" + config.env_note("offline"),
+            ),
+            click.option(
+                "--max-budget-usd",
+                default=None,
+                help="cap the whole tree of work in dollars" + config.env_note("max_budget_usd"),
+            ),
+            click.option(
+                "-n", "--dry-run", is_flag=True, help="plan, price and print; execute nothing"
+            ),
+            click.option(
+                "--seeker",
+                type=click.Choice(["off", "api", "local", "agent"]),
+                default="off",
+                help="how hard to look for exploits",
+            ),
             click.option("--name", default=None, help="a human name for this run"),
             click.option("--resume", default=None, help="continue a run by id or name"),
-            click.option("--seed", type=int, default=None, help="the seed this run records and reuses"),
+            click.option(
+                "--continue",
+                "continue_run",
+                is_flag=True,
+                help="continue the most recent unfinished audit for this project",
+            ),
+            click.option(
+                "--seed", type=int, default=None, help="the seed this run records and reuses"
+            ),
             click.option("--only", multiple=True, help="restrict the run to these instruments"),
         ]
     ):
@@ -79,7 +122,9 @@ def make_output(opts: dict) -> output.Output:
     """Resolve the streams and the format by D-29's precedence, and refuse an unknown format."""
     no_config = bool(opts.get("no_config"))
     fmt = output.resolve_format(
-        opts.get("format_"), json_flag=bool(opts.get("json_flag")), stdout_is_tty=sys.stdout.isatty()
+        opts.get("format_"),
+        json_flag=bool(opts.get("json_flag")),
+        stdout_is_tty=sys.stdout.isatty(),
     )
     colour_choice = "never" if opts.get("no_colour") else opts.get("colour")
     progress = "quiet" if opts.get("no_progress") else (opts.get("progress") or "auto")
@@ -154,6 +199,47 @@ def artifacts_for_record(record, *roots) -> tuple[dict, str | None]:
             directory = _directory_of(pathlib.Path(str(root)))
             return _artifact_pair(found, directory), str(directory)
     return {}, None
+
+
+def write_trace_artifacts(record, root: pathlib.Path) -> tuple[dict, str | None]:
+    """Write the trace assay/report pair beside the source run and name it for the envelope.
+
+    Trace reads an artifact that already exists and therefore has no project-store writer to call.
+    The returned assay remains the exact record `api.trace` built; this function serialises it by
+    the established RFC 8785 record rule, renders that same record, and then points the existing
+    ``artifacts.assay`` and ``artifacts.report`` keys at the two files. A non-directory run id is
+    an honest no-artifact result rather than an invented path.
+    """
+    source = pathlib.Path(root)
+    if not source.is_dir():
+        return {}, None
+    record_id = _assay_id(record)
+    if not record_id:
+        return {}, None
+    import rfc8785
+
+    from reward_lens.render.report import render
+
+    name = "trace-" + record_id.removeprefix("sha256:")
+    directory = source / "assays"
+    assay_path = directory / f"{name}{RECORD_SUFFIX}"
+    report_path = directory / f"{name}{REPORT_SUFFIX}"
+    payload = rfc8785.dumps(record.to_dict() if hasattr(record, "to_dict") else dict(record))
+    html = render(record)
+    directory.mkdir(parents=True, exist_ok=True)
+    _write_exact(assay_path, payload)
+    _write_exact(report_path, html)
+    return _artifact_pair(assay_path, source), str(source)
+
+
+def _write_exact(path: pathlib.Path, expected: bytes) -> None:
+    """Make an id-named trace artifact once; a different pre-existing byte string is a defect."""
+    if path.exists():
+        existing = path.read_bytes()
+        if existing != expected:
+            raise RuntimeError(f"{path} already exists with bytes that do not match this assay id")
+        return
+    path.write_bytes(expected)
 
 
 def _directory_of(root: pathlib.Path) -> pathlib.Path:
@@ -278,11 +364,26 @@ def selftest_raise() -> None:
 
 
 #: A-016: the `Reused` fields the envelope carries verbatim, in the order A-016 names them.
-REUSED_FIELDS = ("name", "assay_id", "subject_version", "record_path", "rendered_report", "wrote_manifest", "says")
+REUSED_FIELDS = (
+    "name",
+    "assay_id",
+    "subject_version",
+    "record_path",
+    "rendered_report",
+    "wrote_manifest",
+    "says",
+)
 
 
 def deliver_record(
-    out: output.Output, record, *, command: str, artifacts=None, project=None, plan=None, reused=None
+    out: output.Output,
+    record,
+    *,
+    command: str,
+    artifacts=None,
+    project=None,
+    plan=None,
+    reused=None,
 ) -> int:
     """Turn an Assay into the envelope, the text panel and the exit code, in one place.
 
@@ -300,7 +401,9 @@ def deliver_record(
     from ..format import text as text_format
 
     reused_fields = reused_from(reused)
-    document = envelope_from_record(record, command=command, artifacts=artifacts, reused=reused_fields)
+    document = envelope_from_record(
+        record, command=command, artifacts=artifacts, reused=reused_fields
+    )
     rendered = (
         text_format.render(
             record,
@@ -497,7 +600,7 @@ def refuse_without_yes(out: output.Output, *, decision: str, argv: list[str], co
 
 def budget_guard(out: output.Output, *, seeker: str, max_budget_usd, command: str) -> None:
     """D-33: no paid work starts without a cap that could cover it."""
-    if seeker in (None, "off", "local"):
+    if seeker in (None, "off", "local", "agent"):
         return
     if max_budget_usd is None:
         raise _no_budget(command)

@@ -47,8 +47,9 @@ FORBIDDEN = frozenset(
 EXPECTED_CLOSURE = frozenset(
     {
         "reward-lens",
-        # declared, per D-58 plus addendum A-001
+        # declared, per D-58 plus addenda A-001 and the offline-signature closure
         "click",
+        "cryptography",
         "pyyaml",
         "pydantic",
         "jsonschema-rs",
@@ -60,7 +61,11 @@ EXPECTED_CLOSURE = frozenset(
         "pydantic-core",
         "typing-extensions",
         "typing-inspection",
+        # cryptography's resolved native-interface closure
+        "cffi",
+        "pycparser",
     }
+    | ({"pyyaml-ft"} if sys.version_info[:2] == (3, 13) else set())
 )
 
 
@@ -103,7 +108,7 @@ def clean_python(wheel: Path) -> Path:
     """A venv holding the wheel and its closure and nothing else; returns its interpreter."""
     if CLEAN_VENV.exists():
         shutil.rmtree(CLEAN_VENV)
-    proc = run(["uv", "venv", str(CLEAN_VENV), "-q"])
+    proc = run(["uv", "venv", "--python", sys.executable, str(CLEAN_VENV), "-q"])
     if proc.returncode != 0:
         pytest.fail(f"uv venv failed:\n{proc.stdout}\n{proc.stderr}")
     python = CLEAN_VENV / "bin" / "python"

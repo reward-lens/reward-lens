@@ -20,7 +20,13 @@ import sys
 
 import pytest
 
-from reward_lens.artifacts.claims import baseline_key, check_files, find_unbound_numbers, main
+from reward_lens.artifacts.claims import (
+    baseline_key,
+    check_files,
+    find_unbound_numbers,
+    load_baseline,
+    main,
+)
 
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
 _WORKFLOW = _ROOT / ".github" / "workflows" / "tests.yml"
@@ -106,6 +112,20 @@ def test_the_baseline_key_survives_an_edit_above_it(tmp_path):
     page.write_text("A new heading paragraph.\n\nOld number 0.41 here.\n", encoding="utf-8")
     after = [baseline_key(u) for u in check_files([page]).unbound]
     assert before == after
+
+
+def test_the_baseline_key_drops_whitespace_exposed_by_context_truncation(tmp_path):
+    """The 120-character key is canonical even when the cutoff lands after a word boundary."""
+    page = tmp_path / "page.md"
+    page.write_text("x" * 119 + " 0.41 is unbound.\n", encoding="utf-8")
+
+    [unbound] = check_files([page]).unbound
+    assert unbound.context == "x" * 119
+    assert not baseline_key(unbound).endswith(" ")
+
+    baseline = tmp_path / "baseline.txt"
+    baseline.write_text(baseline_key(unbound) + " \n", encoding="utf-8")
+    assert load_baseline(baseline) == {baseline_key(unbound)}
 
 
 def test_the_workflow_actually_calls_the_checker():

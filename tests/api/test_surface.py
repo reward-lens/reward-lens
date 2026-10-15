@@ -73,5 +73,7 @@ def test_doctor_returns_capabilities_and_dry_run_returns_a_plan() -> None:
 
 
 def test_the_module_exports_nothing_it_did_not_declare() -> None:
-    public = {n for n in vars(api) if not n.startswith("_") and not inspect.ismodule(getattr(api, n))}
+    public = {
+        n for n in vars(api) if not n.startswith("_") and not inspect.ismodule(getattr(api, n))
+    }
     assert public == set(api.__all__)

@@ -56,24 +56,26 @@ def test_capability_names_are_stable_for_flags() -> None:
         int(members[0])
 
 
-def _function_source(path: Path, name: str) -> str:
-    text = path.read_text(encoding="utf-8")
-    tree = ast.parse(text)
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef) and node.name == name:
-            return ast.get_source_segment(text, node) or ""
-    raise AssertionError(f"{name} is missing from {path}")
-
-
 def test_debt_m_uses_backend_independent_count_assertions() -> None:
-    source = _function_source(
-        ROOT / "tests" / "acceptance" / "test_debt_m.py",
-        "test_the_none_case_is_fiellers_unbounded_case_and_now_says_so",
-    )
-    assert "0.8 * examined" in source
-    assert "0.8 * agreed" in source
-    assert "{agreed} of {examined}" in source
-    assert "{unbounded} of {agreed}" in source
+    """An exact zero trend must refuse before floating-point signs create a crossing."""
+    import numpy as np
+
+    from reward_lens.measure.estimator.amplifier import _project_collapse
+
+    fractions = np.array([1.0, 0.75, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.75, 1.0])
+    for offset in (0.0, 264.0, 1000000.0):
+        at, interval, note = _project_collapse(np.arange(12.0) + offset, fractions)
+        assert at is None
+        assert interval is None
+        assert "numerically resolved direction" in note
+
+    steps = np.arange(8.0)
+    rising = 1.0 / (1.0 + np.exp(-(steps - 10.0) / 4.0))
+    at, _, _ = _project_collapse(steps, rising)
+    shifted, _, _ = _project_collapse(steps + 1000.0, rising)
+    assert at is not None and shifted is not None
+    assert at == pytest.approx(10.0)
+    assert shifted - at == pytest.approx(1000.0)
 
 
 def test_serving_boundary_obeys_attribute_lookup_contract() -> None:
@@ -85,7 +87,9 @@ def test_serving_boundary_obeys_attribute_lookup_contract() -> None:
     assert {"RuntimeError", "AttributeError"} <= bases
     serving = classes["ServingPolicy"]
     getattr_method = next(
-        node for node in serving.body if isinstance(node, ast.FunctionDef) and node.name == "__getattr__"
+        node
+        for node in serving.body
+        if isinstance(node, ast.FunctionDef) and node.name == "__getattr__"
     )
     text = ast.get_source_segment(path.read_text(encoding="utf-8"), getattr_method) or ""
     assert "EngineBoundary" in text

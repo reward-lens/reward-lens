@@ -34,7 +34,9 @@ def record(*, task_set=None, named=None, entries=None, holes=None, findings=None
 
 
 def replay_entry(**fields) -> dict:
-    return dict({"entry_id": formatter.REPLAY_ENTRY, "section": "validity", "kind": "check"}, **fields)
+    return dict(
+        {"entry_id": formatter.REPLAY_ENTRY, "section": "validity", "kind": "check"}, **fields
+    )
 
 
 def replay_line(doc: dict) -> str:
@@ -86,7 +88,9 @@ def test_a_directory_is_not_what_makes_a_project(tmp_path):
 
 
 def test_the_project_subject_clauses_are_read_from_the_extension():
-    subject = subject_line(record(task_set="tasks.jsonl", named={"grader": "grader.py", "tasks": 12, "responses": 128}))
+    subject = subject_line(
+        record(task_set="tasks.jsonl", named={"grader": "grader.py", "tasks": 12, "responses": 128})
+    )
 
     assert subject == "  Subject   demo 3  ·  grader.py  ·  12 tasks  ·  128 responses"
 
@@ -95,7 +99,10 @@ def test_the_bare_grader_subject_clauses_are_read_from_the_extension():
     named = {"grader": "grader", "signature": "score(task, response)", "shape": "plain shape"}
     subject = subject_line(record(task_set=None, named=named))
 
-    assert subject == "  Subject   grader  ·  `score(task, response)`, plain shape  ·  no task set supplied"
+    assert (
+        subject
+        == "  Subject   grader  ·  `score(task, response)`, plain shape  ·  no task set supplied"
+    )
 
 
 def test_a_record_without_the_extension_subject_drops_the_clauses():
@@ -130,14 +137,20 @@ def subject_line(doc: dict) -> str:
 def test_an_absent_replay_entry_prints_the_reason_it_names():
     entry = replay_entry(kind="absence", absence={"missing_access": "no rollouts to replay"})
 
-    assert replay_line(record(entries=[entry])) == "○ replay        not measured: no rollouts to replay"
+    assert (
+        replay_line(record(entries=[entry]))
+        == "○ replay        not measured: no rollouts to replay"
+    )
 
 
 def test_an_absent_replay_entry_with_no_reason_falls_back_to_its_section_hole():
     entry = replay_entry(kind="absence", absence={})
     holes = [{"section": "validity", "missing_access": "no response bank"}]
 
-    assert replay_line(record(entries=[entry], holes=holes)) == "○ replay        not measured: no response bank"
+    assert (
+        replay_line(record(entries=[entry], holes=holes))
+        == "○ replay        not measured: no response bank"
+    )
 
 
 def test_a_measured_replay_entry_prints_the_summary_the_record_carries():
@@ -163,7 +176,9 @@ def test_a_measured_replay_entry_with_no_summary_falls_back_to_its_own_fields():
 
 
 def test_a_replay_entry_with_neither_falls_back_to_the_predicate_it_asserts():
-    entry = replay_entry(check={"passed": True, "predicate": "every input re-graded yields the same score"})
+    entry = replay_entry(
+        check={"passed": True, "predicate": "every input re-graded yields the same score"}
+    )
 
     assert replay_line(record(entries=[entry])) == (
         "✔ replay        every input re-graded yields the same score"

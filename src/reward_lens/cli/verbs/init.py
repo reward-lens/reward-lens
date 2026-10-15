@@ -8,10 +8,44 @@ from .. import ids, registry
 from . import _shared
 
 
-def run(*, out, dest, example, detect, **opts) -> int:
+def run(*, out, dest, example, detect, skill, agent, **opts) -> int:
     from reward_lens.examples import REGISTRY
 
     destination = ids.validate_path_argument(dest, field="dest")
+    if skill:
+        if detect or example is not None:
+            from reward_lens import errors
+
+            raise errors.make(
+                "RL0001",
+                detail="--skill cannot be combined with --example or --detect",
+                command="init",
+            )
+        from reward_lens.cli.skill_install import SkillInstallRefusal, install_skill
+
+        try:
+            installed = install_skill(destination, agent=agent)
+        except SkillInstallRefusal as caught:
+            from reward_lens import errors
+
+            raise errors.make("RL0001", detail=str(caught), command="init") from caught
+        document = {
+            "schema_version": "assay-result/1.0",
+            "command": "init",
+            "execution": {"state": "complete"},
+            "subject": {"skill": "reward-lens", "agent": installed.agent},
+            "decision": None,
+            "findings": [],
+            "holes": [],
+            "artifacts": {"written": [str(installed.destination)], "sha256": installed.digest},
+            "error": None,
+        }
+        text = f"  reward-lens skill installed for {installed.agent}: {installed.destination}\n"
+        return out.deliver(document=document, text=text, exit_code=0)
+    if agent is not None:
+        from reward_lens import errors
+
+        raise errors.make("RL0001", detail="--agent requires --skill", command="init")
     if detect:
         return _detect(out=out, dest=dest, destination=destination)
     name = ids.validate_identifier(example or "code-reward", field="example")
@@ -54,7 +88,6 @@ def _detect(*, out, dest, destination) -> int:
     from reward_lens import errors
     from reward_lens.graders.connect import (
         Shape,
-        ShapeUnsupported,
         detect_project,
         render_detect_transcript,
     )
@@ -67,8 +100,11 @@ def _detect(*, out, dest, destination) -> int:
 
     for found in project.callables:
         if found.shape is Shape.UNSUPPORTED:
-            raise ShapeUnsupported(
-                shape=found.unsupported_label, entry=found.entry, detail=found.reason
+            raise errors.make(
+                "RL0710",
+                shape=found.unsupported_label,
+                entry=found.entry,
+                detail=found.reason,
             )
 
     written = project.write_project_file(displayed=displayed)
@@ -106,7 +142,12 @@ def _text(destination, manifest) -> str:
     lines = [f"  Wrote {destination}"]
     for entry, description in manifest:
         lines.append(f"    {entry:<{_NAME_WIDTH}}  {description}")
-    lines += ["", "  This example contains a real defect. Find it with:", f"    reward-lens audit {destination}", ""]
+    lines += [
+        "",
+        "  This example contains a real defect. Find it with:",
+        f"    reward-lens audit {destination}",
+        "",
+    ]
     return "\n".join(lines)
 
 
@@ -114,6 +155,12 @@ def _text(destination, manifest) -> str:
 @click.argument("dest", required=False, default=".")
 @click.option("--example", default=None, help="start from an example that ships in the wheel")
 @click.option("--detect", is_flag=True, help="connect the reward system already in this directory")
+@click.option("--skill", is_flag=True, help="install the reward-lens agent skill for this project")
+@click.option(
+    "--agent",
+    type=click.Choice(("claude", "codex", "copilot"), case_sensitive=False),
+    help="agent layout to use with --skill; otherwise detect one marker directory",
+)
 @_shared.common
 @_shared.verb("init")
 def init(**opts) -> int:

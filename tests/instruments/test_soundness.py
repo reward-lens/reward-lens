@@ -21,6 +21,7 @@ from typing import Any, Sequence
 import pytest
 
 from reward_lens import contracts
+from reward_lens.instruments import soundness as soundness_module
 from reward_lens.instruments.base import RunContext
 from reward_lens.instruments.soundness import (
     FINDING_CODES,
@@ -32,10 +33,24 @@ from reward_lens.instruments.soundness import (
     Relations,
     SelfCheckFailed,
     findings_for,
+    intervals,
+    mutation,
+    premium,
+    relations,
     self_check,
 )
 from reward_lens.instruments.soundness import batteries as batteries_module
-from reward_lens.instruments.soundness import intervals, mutation, premium, relations
+from reward_lens.outcome import (
+    OutcomeCheck,
+    SuiteResult,
+    TaskValidity,
+    UnqualifiedReason,
+    qualified_protocol,
+    qualify,
+    resolved_fail,
+    resolved_pass,
+    unqualified,
+)
 
 # --- the grader under test ----------------------------------------------------------------------
 
@@ -69,7 +84,9 @@ TASK: dict[str, Any] = {
     ],
 }
 
-GOOD = "def solve(xs):\n    total = 0\n    for x in xs:\n        total = total + x\n    return total\n"
+GOOD = (
+    "def solve(xs):\n    total = 0\n    for x in xs:\n        total = total + x\n    return total\n"
+)
 GOOD_2 = "def solve(xs):\n    return sum(xs)\n"
 GOOD_3 = "def solve(xs):\n    acc = 0\n    for item in xs:\n        acc += item\n    return acc\n"
 WRONG_OFF_BY_ONE = "def solve(xs):\n    return sum(xs) + 1\n"
@@ -177,9 +194,11 @@ def test_wilson_at_twelve_of_twelve_is_the_lower_bound_the_commission_states() -
     assert high == 1.0
 
 
-def test_a_lower_bound_of_point_nine_nine_needs_two_hundred_and_ninety_nine() -> None:
+def test_the_one_sided_exact_anchor_is_not_substituted_for_two_sided_wilson() -> None:
     assert intervals.n_for_lower_bound(0.99) == 299
     assert intervals.exact_one_sided_lower(298) < 0.99 <= intervals.exact_one_sided_lower(299)
+    assert intervals.n_for_wilson_lower_bound(0.99) == 381
+    assert intervals.wilson(380, 380)[0] < 0.99 <= intervals.wilson(381, 381)[0]
 
 
 def test_the_method_is_wilson_below_forty_one_and_clopper_pearson_when_load_bearing() -> None:
@@ -189,9 +208,11 @@ def test_the_method_is_wilson_below_forty_one_and_clopper_pearson_when_load_bear
 
 
 def test_no_interval_this_module_produces_is_a_wald_or_a_jeffreys_interval() -> None:
-    named = {intervals.method_for(k, n, load_bearing=lb)
-             for k, n in ((0, 5), (0, 40), (5, 5), (12, 12), (3, 90))
-             for lb in (False, True)}
+    named = {
+        intervals.method_for(k, n, load_bearing=lb)
+        for k, n in ((0, 5), (0, 40), (5, 5), (12, 12), (3, 90))
+        for lb in (False, True)
+    }
     assert named <= {"wilson", "clopper_pearson", "exact_zero_event"}
 
 
@@ -209,6 +230,8 @@ def test_what_n_can_establish_names_both_of_the_commission_s_anchors() -> None:
     said = intervals.what_n_can_establish(12, 12)
     assert "0.76" in said
     assert "299" in said
+    assert "381" in said
+    assert "two-sided" in said
 
 
 def test_the_uncertainty_block_carries_the_method_and_the_interval() -> None:
@@ -217,6 +240,89 @@ def test_the_uncertainty_block_carries_the_method_and_the_interval() -> None:
     assert block.method == "wilson"
     assert block.bounded is True
     assert round(block.interval[0], 2) == 0.76
+
+
+def _qualified_outcome_protocol(tmp_path: Path):
+    from reward_lens.partitions import Partition, PartitionKind
+
+    suite = suite_dir(tmp_path / "outcome-suite")
+    partition = Partition.from_dir(
+        "soundness-outcome-suite",
+        PartitionKind.PROTECTED_SUITE,
+        suite,
+        log_path=tmp_path / "outcome-access.jsonl",
+    )
+    provenance = context().provenance()
+    qualification = qualify(
+        check=OutcomeCheck(
+            owner="independent owner",
+            source_digest="sha256:" + "1" * 64,
+            interface="protected tests",
+            partition_id=partition.id,
+        ),
+        suite=partition,
+        grader_owner="grader owner",
+        grader_source_digest="sha256:" + "2" * 64,
+        subject_ref=SUBJECT_REF,
+        provenance=provenance,
+        result=SuiteResult(
+            known_good_passed=1,
+            known_good_total=1,
+            known_wrong_failed=1,
+            known_wrong_total=1,
+        ),
+    )
+    assert qualification.qualified is True
+    return qualified_protocol(qualification)
+
+
+def test_battery_outcome_counts_exclude_unknowns_and_refuse_a_zero_resolved_rate(
+    tmp_path: Path,
+) -> None:
+    protocol = _qualified_outcome_protocol(tmp_path)
+    outcomes = (
+        resolved_pass(
+            item_id="good-0",
+            reason="independent protected test passed",
+            protocol=protocol,
+            task_validity=TaskValidity.VALID,
+        ),
+        resolved_fail(
+            item_id="wrong-off-by-one",
+            reason="independent protected test failed",
+            protocol=protocol,
+            task_validity=TaskValidity.VALID,
+        ),
+        unqualified(
+            item_id="timed-out",
+            reason=UnqualifiedReason.TIMEOUT,
+            protocol=protocol,
+            task_validity=TaskValidity.UNKNOWN,
+        ),
+    )
+    report = batteries_module.outcome_resolution(outcomes)
+    assert report["measurement_state"] == "MEASURED"
+    assert report["pass_count"] == 1
+    assert report["fail_count"] == 1
+    assert report["unqualified_count"] == 1
+    assert report["resolved_count"] == 2
+    assert report["resolved_pass_rate"] == pytest.approx(0.5)
+    assert report["interval"]["sidedness"] == "two-sided"
+
+    only_unknown = batteries_module.outcome_resolution(
+        (
+            unqualified(
+                item_id="timeout-only",
+                reason=UnqualifiedReason.TIMEOUT,
+                protocol=protocol,
+                task_validity=TaskValidity.UNKNOWN,
+            ),
+        )
+    )
+    assert only_unknown["measurement_state"] == "NOT_MEASURED"
+    assert only_unknown["resolved_count"] == 0
+    assert only_unknown["resolved_pass_rate"] is None
+    assert only_unknown["interval"] is None
 
 
 # --- the batteries --------------------------------------------------------------------------------
@@ -235,6 +341,82 @@ def test_the_known_good_battery_reports_a_rate_with_an_interval_and_the_n_line(
     assert entry.uncertainty.method in {"wilson", "clopper_pearson", "exact_zero_event"}
     assert entry.result["what_n_can_establish"]
     assert "299" in entry.result["what_n_can_establish"]
+    assert entry.result["interval"] == {
+        "method": "wilson",
+        "confidence_level": 0.95,
+        "sidedness": "two-sided",
+        "bounds": list(entry.uncertainty.interval),
+    }
+
+
+def test_public_batteries_run_serialises_mixed_and_all_unknown_outcomes_without_coercion(
+    grader_path: Path, tmp_path: Path
+) -> None:
+    protocol = _qualified_outcome_protocol(tmp_path)
+    corpus = FakeCorpus(
+        (TASK,),
+        rollouts=(
+            {"task_id": TASK["id"], "id": "good-0", "response": GOOD, "honest": True},
+            {"task_id": TASK["id"], "id": "good-1", "response": GOOD_2, "honest": True},
+            {"task_id": TASK["id"], "id": "good-2", "response": GOOD_3, "honest": True},
+        ),
+    )
+    subject = FakeSubject(grader_path)
+    subject.independent_outcomes = (
+        resolved_pass(
+            item_id="good-0",
+            reason="independent protected test passed",
+            protocol=protocol,
+            task_validity=TaskValidity.VALID,
+        ),
+        resolved_fail(
+            item_id="good-1",
+            reason="independent protected test failed",
+            protocol=protocol,
+            task_validity=TaskValidity.VALID,
+        ),
+        unqualified(
+            item_id="good-2",
+            reason=UnqualifiedReason.TIMEOUT,
+            protocol=protocol,
+            task_validity=TaskValidity.UNKNOWN,
+        ),
+    )
+    mixed = Batteries().run(subject, corpus, context())
+    entry = next(row for row in mixed if row.entry_id == "soundness.batteries.known_good")
+    resolution = entry.result["independent_outcome_resolution"]
+    assert resolution["pass_count"] == 1
+    assert resolution["fail_count"] == 1
+    assert resolution["unqualified_count"] == 1
+    assert resolution["resolved_count"] == 2
+    assert resolution["measurement_state"] == "MEASURED"
+    assert resolution["resolved_pass_rate"] == pytest.approx(0.5)
+    assert resolution["interval"] == {
+        "method": "wilson",
+        "confidence_level": 0.95,
+        "sidedness": "two-sided",
+        "bounds": [0.094531, 0.905469],
+    }
+
+    unknown_subject = FakeSubject(grader_path)
+    unknown_subject.independent_outcomes = tuple(
+        unqualified(
+            item_id=f"good-{index}",
+            reason=UnqualifiedReason.TIMEOUT,
+            protocol=protocol,
+            task_validity=TaskValidity.UNKNOWN,
+        )
+        for index in range(3)
+    )
+    all_unknown = Batteries().run(unknown_subject, corpus, context())
+    unknown_entry = next(
+        row for row in all_unknown if row.entry_id == "soundness.batteries.known_good"
+    )
+    unknown_resolution = unknown_entry.result["independent_outcome_resolution"]
+    assert unknown_resolution["measurement_state"] == "NOT_MEASURED"
+    assert unknown_resolution["resolved_count"] == 0
+    assert unknown_resolution["resolved_pass_rate"] is None
+    assert unknown_resolution["interval"] is None
 
 
 def test_the_known_wrong_battery_requires_the_expected_reason_not_only_a_rejection(
@@ -269,9 +451,7 @@ def test_the_gold_sanity_gate_calls_a_rejected_gold_an_evaluator_defect(grader_p
     broken = grader_path.parent / "broken.py"
     broken.write_text(GRADER.replace('"score": 1.0', '"score": 0.0'), encoding="utf-8")
     failing = batteries_module.gold_sanity(
-        batteries_module.run_battery(
-            FakeSubject(broken), known_good_cases(), kind="known_good"
-        )
+        batteries_module.run_battery(FakeSubject(broken), known_good_cases(), kind="known_good")
     )
     assert failing.passed is False
     assert len(failing.failures) == 3
@@ -302,10 +482,14 @@ def test_the_differential_against_a_stricter_reference_names_the_over_accepted_c
     assert report.n == 4
     assert report.over_accepted == 1
     assert [row.case_id for row in report.disagreements] == ["exploit-imports"]
-    entry = batteries_module.differential_entry(
-        report, subject, context(), subject_ref=SUBJECT_REF
-    )
+    entry = batteries_module.differential_entry(report, subject, context(), subject_ref=SUBJECT_REF)
     assert entry.uncertainty is not None and entry.uncertainty.bounded
+    assert entry.result["interval"] == {
+        "method": "wilson",
+        "confidence_level": 0.95,
+        "sidedness": "two-sided",
+        "bounds": list(entry.uncertainty.interval),
+    }
 
 
 def test_an_empty_protected_suite_refuses_with_rl0341_rather_than_scoring_nothing(
@@ -337,6 +521,53 @@ def test_a_filled_protected_suite_reads_back_every_case(tmp_path: Path) -> None:
     cases = batteries_module.cases_from_partition(partition)
     assert len(cases) == 6
     assert {case.kind for case in cases} == {"known_good", "known_wrong"}
+
+
+def test_python_controls_are_cases_not_their_reasons_index(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    root = tmp_path / "outcome"
+    (root / "known_good").mkdir(parents=True)
+    (root / "known_wrong").mkdir()
+    (root / "known_good" / "task-01.py").write_text("def solve():\n    return 1\n")
+    (root / "known_wrong" / "task-01.py").write_text("def solve():\n    return 0\n")
+    (root / "known_wrong" / "reasons.json").write_text(
+        json.dumps({"task-01.py": {"reason": "wrong_answer", "task_id": "task-01"}})
+    )
+    task = {"task_id": "task-01", "entry_point": "solve"}
+    project = SimpleNamespace(
+        root=tmp_path,
+        config=SimpleNamespace(outcome=SimpleNamespace(path="outcome")),
+    )
+    cases, origin = soundness_module._cases(None, FakeCorpus((task,)), RunContext(project=project))
+    assert [case.id for case in cases] == ["known_good:task-01", "known_wrong:task-01"]
+    assert [case.kind for case in cases] == ["known_good", "known_wrong"]
+    assert cases[0].response.startswith("```python\n")
+    assert cases[1].expected_reason == ""  # this audited grader returns a score, not a reason
+    assert all(case.task["id"] == "task-01" for case in cases)
+    assert all(case.task["entry_point"] == "solve" for case in cases)
+    assert "Python good and wrong controls" in origin
+
+
+def test_soundness_runner_stages_a_grader_and_its_protected_sibling(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    (tmp_path / "outcome").mkdir()
+    (tmp_path / "outcome" / "expected.txt").write_text("correct")
+    grader = tmp_path / "grader.py"
+    grader.write_text(
+        "from pathlib import Path\n"
+        "EXPECTED = (Path(__file__).parent / 'outcome' / 'expected.txt').read_text()\n"
+        "def score(task, response):\n"
+        "    return 1.0 if response == EXPECTED else 0.0\n"
+    )
+    case = batteries_module.Case(
+        id="control-1", task={"id": "task-1", "prompt": "respond"}, response="correct"
+    )
+    rows = batteries_module.runner_for(SimpleNamespace(grader_path=grader))(
+        grader.read_text(), "score", (case,)
+    )
+    assert rows == [{"case_id": "control-1", "score": 1.0, "reason": "", "error": ""}]
 
 
 # --- mutation -------------------------------------------------------------------------------------
@@ -375,15 +606,20 @@ def test_the_score_is_reported_both_ways_with_the_sampling_fraction() -> None:
         assert score.uncertainty.bounded
         assert 0.0 <= score.value <= 1.0
     assert 0.0 < ledger.sampling_fraction < 1.0
+    entry = mutation.score_entry(ledger, context(), subject_ref=SUBJECT_REF)
+    for key in ("score_over_generated", "score_over_non_equivalent"):
+        interval = entry.result[key]["interval"]
+        assert interval["method"] == "wilson"
+        assert interval["confidence_level"] == 0.95
+        assert interval["sidedness"] == "two-sided"
+        assert interval["bounds"]
 
 
 def test_an_unresolved_equivalence_mutant_is_never_subtracted() -> None:
     ledger = _ledger()
     unresolved = ledger.counts()["unresolved_equivalence"]
     assert unresolved > 0
-    subtracted = (
-        ledger.counts()["proposed"] - ledger.score_over_non_equivalent().denominator
-    )
+    subtracted = ledger.counts()["proposed"] - ledger.score_over_non_equivalent().denominator
     assert subtracted == ledger.confirmed_equivalent_count()
     assert subtracted < unresolved + ledger.confirmed_equivalent_count()
     assert "undecidable" in ledger.equivalence_statement()
@@ -529,6 +765,14 @@ def test_the_premium_entry_states_its_interval_or_why_it_has_none() -> None:
     assert entry.uncertainty.method == "no_interval_below_15_clusters"
     assert entry.uncertainty.bounded is False
     assert entry.uncertainty.clusters == 4
+    assert entry.result["interval"] == {
+        "method": "no_interval_below_15_clusters",
+        "confidence_level": 0.95,
+        "sidedness": None,
+        "bounds": None,
+        "reason": entry.uncertainty.reason,
+        "remedy": "supply at least 15 matched tasks before requesting an interval",
+    }
     big = premium.exploit_premium(
         tuple(
             row
@@ -542,6 +786,12 @@ def test_the_premium_entry_states_its_interval_or_why_it_has_none() -> None:
     entry_big = premium.premium_entry(big, context(), subject_ref=SUBJECT_REF)
     assert entry_big.uncertainty.method == "task_level_bootstrap"
     assert entry_big.uncertainty.bounded is True
+    assert entry_big.result["interval"] == {
+        "method": "task_level_bootstrap",
+        "confidence_level": 0.95,
+        "sidedness": "two-sided",
+        "bounds": list(entry_big.uncertainty.interval),
+    }
 
 
 # --- the panel, discovery, findings and the self-check ----------------------------------------------

@@ -8,11 +8,14 @@ verdict instead.
 
 from __future__ import annotations
 
+from enum import Enum
+
 from reward_lens.contracts.errors import CapabilityUnavailable, RewardLensError
 
 __all__ = [
     "SandboxTierUnavailable",
     "SandboxTierBelowRequired",
+    "ExecutionBreachReason",
     "ExecutionLimitBreached",
 ]
 
@@ -53,16 +56,40 @@ class SandboxTierBelowRequired(CapabilityUnavailable):
         )
 
 
+class ExecutionBreachReason(str, Enum):
+    """The named reason attached to an actual resource-limit breach.
+
+    This is deliberately separate from financial accounting.  It describes the
+    supervisor-enforced resource budget that the child exceeded, while the
+    dimension identifies which resource, such as memory or CPU.
+    """
+
+    BUDGET_EXCEEDED = "BUDGET_EXCEEDED"
+
+
 class ExecutionLimitBreached(RewardLensError):
     """RL0410: a run exceeded one of its limits, and the dimension is named."""
 
     default_exit_code = 7
 
-    def __init__(self, *, dimension: str, limit: object, observed: object = None) -> None:
+    def __init__(
+        self,
+        *,
+        dimension: str,
+        limit: object,
+        observed: object = None,
+        reason: ExecutionBreachReason = ExecutionBreachReason.BUDGET_EXCEEDED,
+    ) -> None:
         super().__init__(
             code="RL0410",
             message=f"execution limit breached on {dimension} (limit {limit})",
             remediation=f"raise the {dimension} limit, or fix the grader that consumes it",
-            context={"dimension": dimension, "limit": limit, "observed": observed},
+            context={
+                "reason": reason.value,
+                "dimension": dimension,
+                "limit": limit,
+                "observed": observed,
+            },
         )
+        self.reason = reason
         self.dimension = dimension

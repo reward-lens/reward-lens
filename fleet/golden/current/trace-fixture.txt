@@ -1,0 +1,20 @@
+$ reward-lens trace tests/fixtures/grpo_run/short --format text --no-color
+
+  Subject   short  ·  no task set supplied
+
+  ○ validity      not measured: instrument not in this build
+  ○ replay        not measured: instrument not in this build
+  ○ soundness     not measured: instrument not in this build
+  ○ reach         not measured: instrument not in this build
+  ○ exploits      not measured: instrument not in this build
+  ○ signal        not measured: instrument not in this build
+
+  Verdict   unresolved
+            No independent check was supplied, so no correctness claim was made.
+
+  Report    ./tests/fixtures/grpo_run/short/assays/trace-77cd1b99083d244b47f13c9f56f08bba0f04d7b0ad57d1fa6dafd4edb2cdb167.assay.html   559 KB
+
+  Trace evidence  run_record · 96 rows · source tests/fixtures/grpo_run/short
+                 Assay: ./tests/fixtures/grpo_run/short/assays/trace-77cd1b99083d244b47f13c9f56f08bba0f04d7b0ad57d1fa6dafd4edb2cdb167.assay.json
+
+  0.066 s  ·  0 paid calls  ·  $0.00

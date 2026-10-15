@@ -29,6 +29,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+import rfc8785
+
 from reward_lens.contracts import canonical_bytes, validate_record
 from reward_lens.contracts.errors import RecordInvalid
 
@@ -119,9 +121,7 @@ def _notice(document: dict[str, Any], plan: Embedding) -> str:
     elif plan.tier == "B":
         carried = total - len(omitted)
         rest = (
-            f" The other {carried} are carried in this file as Parquet blocks."
-            if carried
-            else ""
+            f" The other {carried} are carried in this file as Parquet blocks." if carried else ""
         )
         head = "Not every table is on this page"
         body = (
@@ -155,10 +155,16 @@ def _compose(
     *,
     blocks: dict[str, str],
     bundle_manifest_digest: str | None,
+    join_html: str = "",
+    evidence_targets: str = "",
 ) -> bytes:
     """The whole file, for a record the caller has already decided the tier of."""
     js, css = _assets()
-    payload = escape_json_text(json.dumps(document, separators=(",", ":"), ensure_ascii=False))
+    # The embedded record is the full sealed record, rather than the digest projection that drops
+    # its identity and attestation. RFC 8785 also normalises equivalent JSON numbers (0.0 -> 0),
+    # so the in-memory record used while sealing and the record reopened from disk produce the
+    # same page and the stored html_bytes remains an honest measurement.
+    payload = escape_json_text(rfc8785.dumps(document).decode("utf-8"))
     subject = document.get("subject", {}).get("reward_system", {})
     title = subject.get("name") or subject.get("id") or "reward system"
     version = document.get("subject", {}).get("version", {}).get("id", "")
@@ -190,6 +196,8 @@ def _compose(
         f"</head>\n<body{digest_attr}>\n"
         f"{_notice(document, plan)}\n"
         '<div id="rl-report"></div>\n'
+        f"{join_html}\n"
+        f"{evidence_targets}\n"
         "<noscript>This report renders the record embedded below; its script has to run once."
         "</noscript>\n"
         f'<script type="application/json" id="assay">{payload}</script>\n'
@@ -253,12 +261,17 @@ def plan_embedding(
             omission_notes=tuple(sorted(notes.items())),
             past_soft_limit=tier == "A" and record_bytes > SOFT_A,
         )
+        from .join import render_evidence_targets, render_join
+
+        join_html = render_join(candidate)
         html_bytes = len(
             _compose(
                 candidate,
                 measured,
                 blocks=blocks,
                 bundle_manifest_digest=bundle_manifest_digest,
+                join_html=join_html,
+                evidence_targets=render_evidence_targets(candidate),
             )
         )
         if tier == "B" and html_bytes > CEILING_B:
@@ -275,6 +288,8 @@ def plan_embedding(
                     measured,
                     blocks={},
                     bundle_manifest_digest=bundle_manifest_digest,
+                    join_html=join_html,
+                    evidence_targets=render_evidence_targets(candidate),
                 )
             )
         settled = Embedding(
@@ -511,8 +526,15 @@ def render(
             raise _claimed_absent(absent, notes)
         blocks = {ident: blocks[ident] for ident in claimed}
         plan = replace(plan, omission_notes=tuple(sorted(notes.items())))
+    from .join import render_evidence_targets, render_join
+
     html = _compose(
-        document, plan, blocks=blocks, bundle_manifest_digest=bundle_manifest_digest
+        document,
+        plan,
+        blocks=blocks,
+        bundle_manifest_digest=bundle_manifest_digest,
+        join_html=render_join(document),
+        evidence_targets=render_evidence_targets(document),
     )
     if plan.tier == "B" and len(html) > CEILING_B:
         raise _refuse("B", "the whole HTML file", CEILING_B, len(html))

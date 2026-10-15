@@ -3,12 +3,14 @@
   "version": "3.1.0",
   "private": true,
   "type": "module",
-  "description": "The reward-lens component tree. One workspace, one entry in wave 1: the offline single-file report.",
+  "description": "The reward-lens component tree for the offline report and local workbench.",
   "workspaces": [
-    "report"
+    "report",
+    "workbench"
   ],
   "scripts": {
     "build:report": "vite build --config vite.config.ts && node report/build/extract.mjs",
+    "build:workbench": "vite build --config vite.config.ts --mode workbench",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

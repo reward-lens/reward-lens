@@ -14,7 +14,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 __all__ = ["CHECK_IDS", "STATIC_ARM", "StaticResult", "rule_name", "run_static_checks"]
 
@@ -45,6 +45,7 @@ def rule_name(entry_id: str, arm: str) -> str:
         return entry_id
     return f"{section}.{arm}.{rest}"
 
+
 #: Names that, read out of a task, are the task's own solution rather than a declared output shape.
 ANSWER_KEYS = frozenset(
     {
@@ -65,13 +66,24 @@ ANSWER_KEYS = frozenset(
 #: Calls through which a graded response is executed by the grader itself.
 _EXEC_NAMES = frozenset({"exec", "eval", "execfile"})
 _EXEC_DOTTED = frozenset(
-    {"os.system", "os.popen", "subprocess.run", "subprocess.call", "subprocess.Popen",
-     "subprocess.check_output", "subprocess.check_call", "runpy.run_path", "runpy.run_module"}
+    {
+        "os.system",
+        "os.popen",
+        "subprocess.run",
+        "subprocess.call",
+        "subprocess.Popen",
+        "subprocess.check_output",
+        "subprocess.check_call",
+        "runpy.run_path",
+        "runpy.run_module",
+    }
 )
 
 #: Calls through which the grader reads a file back.
 _READ_ATTRS = frozenset({"read_text", "read_bytes", "read", "readlines", "readline"})
-_READ_DOTTED = frozenset({"json.load", "yaml.safe_load", "yaml.load", "pickle.load", "tomllib.load"})
+_READ_DOTTED = frozenset(
+    {"json.load", "yaml.safe_load", "yaml.load", "pickle.load", "tomllib.load"}
+)
 
 
 @dataclass
@@ -151,7 +163,8 @@ def _module_constants(tree: ast.Module) -> dict[str, str]:
         targets = (
             statement.targets
             if isinstance(statement, ast.Assign)
-            else [statement.target] if isinstance(statement, ast.AnnAssign) and statement.value
+            else [statement.target]
+            if isinstance(statement, ast.AnnAssign) and statement.value
             else []
         )
         value = getattr(statement, "value", None)
@@ -276,9 +289,7 @@ def _writable_then_read(tree: ast.Module, source_name: str) -> StaticResult:
                 f"response in the same working directory, so the response can write what the "
                 f"grader then reads"
             ),
-            message=(
-                f"{source_name} line {line} reads {path}, which the graded process can write"
-            ),
+            message=(f"{source_name} line {line} reads {path}, which the graded process can write"),
             source_name=source_name,
             result={
                 "read_line": line,
@@ -379,7 +390,11 @@ def _input_leakage(
                 f"the task input carries {', '.join(leaking)}, which names the answer rather than "
                 f"the question; anything that can see the task can see the answer"
             ),
-            result={"leaking_keys": leaking, "task_keys_read": sorted(keys), "tasks_scanned": scanned},
+            result={
+                "leaking_keys": leaking,
+                "task_keys_read": sorted(keys),
+                "tasks_scanned": scanned,
+            },
             line=line,
             target_path=None,
             limitations=limitations,
@@ -415,7 +430,9 @@ def _unreachable_score_branch(tree: ast.Module, source_name: str, entrypoint: st
             test_names = _names_in(node.test)
             constant = _numeric(node.test) if isinstance(node.test, ast.Constant) else None
             if isinstance(node.test, ast.Constant) and not node.test.value:
-                dead.append({"line": node.lineno, "why": "the guard is a constant that is never true"})
+                dead.append(
+                    {"line": node.lineno, "why": "the guard is a constant that is never true"}
+                )
             elif constant is not None and constant:
                 pass
             returns = [
@@ -427,8 +444,10 @@ def _unreachable_score_branch(tree: ast.Module, source_name: str, entrypoint: st
                 value = _numeric(statement.value)
                 if value is None or value <= 0.0:
                     continue  # the score-domain floor is how a grader declines to pay, not a branch
-                if task_param and task_param in test_names and (
-                    not response_param or response_param not in test_names
+                if (
+                    task_param
+                    and task_param in test_names
+                    and (not response_param or response_param not in test_names)
                 ):
                     task_alone.append(
                         {"line": statement.lineno, "value": value, "guard_line": node.lineno}

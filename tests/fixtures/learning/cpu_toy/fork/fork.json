@@ -1,0 +1,17 @@
+{
+  "fixture": "p-learn-fork-cpu-toy-v2",
+  "seed": 31,
+  "profile": {
+    "version": "1.10.0",
+    "mutable_objects": ["adapter_weights", "adam_moments", "scheduler_counter", "rng_states", "dataloader_position", "buffered_inputs", "trl_step", "state_global_step"],
+    "fingerprint": "cpu-toy-fork-v2"
+  },
+  "vocab": ["<pad>", "<unk>", "<eos>", "say", "one", "two"],
+  "prompts": ["say one", "say two"],
+  "model": {"n_positions": 32, "n_embd": 16, "n_layer": 1, "n_head": 1},
+  "training": {"batch_size": 2, "generations": 2, "completion_length": 3, "learning_rate": 0.0001},
+  "target": {"name": "embedding_0_0", "embedding_index": [0, 0], "value": 0.5, "tolerance": 0.000001},
+  "useful_task": {"name": "next_token_logit", "prompt": "say one", "token": "two"},
+  "interventions": {"null": [0.0, 0.0], "candidate": [0.25, -0.25], "placebo": [-0.25, 0.25]},
+  "limits": {"steps": 1, "cpu_threads": 1, "max_correction": 2.0, "max_iterations": 4}
+}

@@ -14,6 +14,7 @@ import pytest
 
 import reward_lens.outcome as outcome
 import reward_lens.partitions as partitions
+from reward_lens.errors import CATALOGUE
 
 SRC = Path(__file__).resolve().parents[2] / "src" / "reward_lens"
 PACKAGES = (SRC / "outcome", SRC / "partitions")
@@ -39,14 +40,22 @@ def test_no_source_line_names_a_field_called_hidden() -> None:
     assert offenders == []
 
 
-def test_the_only_code_allocated_here_is_RL0302() -> None:
+def test_the_only_packet_allocation_is_RL0302_and_borrowed_codes_are_catalogued() -> None:
     found: dict[str, list[str]] = {}
     for path in sources():
         for number, line in enumerate(path.read_text().splitlines(), start=1):
             for code in CODE.findall(line):
                 found.setdefault(code, []).append(f"{path.name}:{number}")
     assert "RL0302" in found
-    assert set(found) <= {"RL0001", "RL0002", "RL0301", "RL0302", "RL0341", "RL0401", "RL0402"}
+    allocated_here = {"RL0302"}
+    borrowed = set(found) - allocated_here
+    # The project execution loader now rejects malformed project-local declarations with the
+    # product-wide configuration code RL0003.  It is a borrowed catalogue contract, not a second
+    # allocation by Outcome/partitions; retain the finite local boundary and prove every borrowed
+    # code has a current central catalogue row.
+    assert borrowed <= {"RL0001", "RL0002", "RL0003", "RL0301", "RL0341", "RL0401", "RL0402"}
+    assert borrowed <= set(CATALOGUE)
+    assert "RL0003" in borrowed
 
 
 def test_RL0301_is_imported_and_never_redefined() -> None:

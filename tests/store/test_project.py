@@ -21,7 +21,9 @@ def align(record: dict, project, *, methods: tuple[str, ...] | None = None) -> d
     """
     from reward_lens.contracts import Assay, digest
 
-    version = project.version(methods=methods) if methods is not None else project.version_of(record)
+    version = (
+        project.version(methods=methods) if methods is not None else project.version_of(record)
+    )
     was = record["subject"]["version"]["digest"]
     now = version.digest()
     record = dict(record)
@@ -264,14 +266,18 @@ def test_a_record_that_names_its_instrument_methods_records_and_reads_back(proje
 
     named = {
         section: [
-            dict(entry, method=dict(entry["method"], id="rl.verifier.replay_fidelity",
-                                    version="3.1.0"))
+            dict(
+                entry,
+                method=dict(entry["method"], id="rl.verifier.replay_fidelity", version="3.1.0"),
+            )
             for entry in entries
         ]
         for section, entries in record_dict["measurement"].items()
     }
     record = align(
-        dict(record_dict, measurement=named), project, methods=("rl.verifier.replay_fidelity@3.1.0",)
+        dict(record_dict, measurement=named),
+        project,
+        methods=("rl.verifier.replay_fidelity@3.1.0",),
     )
     path = project.record(Assay.model_validate(record), name="instrumented")
     assert path.is_file()
@@ -368,9 +374,9 @@ def test_a_record_survives_a_reload_byte_for_byte(project, aligned):
 
 def test_the_reference_record_written_by_the_store_reads_back_identical(project):
     """STEER: the frozen reference fixture, written by the store, round-trips byte for byte."""
-    from .conftest import reference_dict
-
     from reward_lens.contracts import Assay
+
+    from .conftest import reference_dict
 
     path = project.record(Assay.model_validate(align(reference_dict(), project)), name="ref")
     payload = path.read_bytes()

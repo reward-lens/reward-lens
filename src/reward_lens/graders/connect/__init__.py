@@ -7,10 +7,19 @@ framework that defines it. Nothing under here imports `trl`, `verifiers`, `trans
 Owned by P-CONNECT.
 """
 
-from .bind import ConnectedGrader, bind
+from .bind import (
+    ConnectedGrader,
+    ConnectorCapability,
+    ConnectorCapabilityReport,
+    ConnectorCapabilityState,
+    ConnectorSelectionRanking,
+    PretrainedModelBinding,
+    bind,
+    overrides_from_project_file,
+)
 from .detect import (
-    ProjectDetection,
     SILENT_MODES,
+    ProjectDetection,
     detect,
     detect_project,
     probe,
@@ -23,6 +32,11 @@ from .verifiers_discriminator import GROUP_INDICATORS, bound_names, is_group_rub
 
 __all__ = [
     "ConnectedGrader",
+    "ConnectorCapability",
+    "ConnectorCapabilityReport",
+    "ConnectorCapabilityState",
+    "ConnectorSelectionRanking",
+    "PretrainedModelBinding",
     "DECLARED_SHAPES",
     "Detection",
     "Finding",
@@ -38,6 +52,7 @@ __all__ = [
     "detect",
     "detect_project",
     "is_group_rubric",
+    "overrides_from_project_file",
     "probe",
     "render_detect_transcript",
     "shape_for_declared",

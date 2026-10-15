@@ -28,14 +28,12 @@ def test_there_is_a_page_for_every_code_and_no_page_without_one() -> None:
 def test_regenerating_reproduces_the_committed_pages(tmp_path: Path) -> None:
     _generator().write_pages(tmp_path)
     produced = sorted(p.name for p in tmp_path.iterdir() if p.is_file())
-    committed = sorted(
-        p.name for p in DOCS.iterdir() if p.is_file() and p.name != "generate.py"
-    )
+    committed = sorted(p.name for p in DOCS.iterdir() if p.is_file() and p.name != "generate.py")
     assert produced == committed
     for name in produced:
-        assert (tmp_path / name).read_text(encoding="utf-8") == (
-            DOCS / name
-        ).read_text(encoding="utf-8"), name
+        assert (tmp_path / name).read_text(encoding="utf-8") == (DOCS / name).read_text(
+            encoding="utf-8"
+        ), name
 
 
 def test_the_index_lists_every_code() -> None:
@@ -43,6 +41,14 @@ def test_the_index_lists_every_code() -> None:
     for code, spec in CATALOGUE.items():
         assert code in index, code
         assert spec.title in index, code
+
+
+def test_wave_two_capability_pages_need_no_runtime_context() -> None:
+    generator = _generator()
+    for code in ("RL0704", "RL0711"):
+        page = generator.page(CATALOGUE[code])
+        assert CATALOGUE[code].long_form_cause in page
+        assert "{" not in page
 
 
 def test_no_page_names_an_internal_module_or_a_document_section() -> None:

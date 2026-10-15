@@ -94,7 +94,9 @@ class LinuxSandbox:
         The write roots are not in here and do not need to be: a write root is a read root too,
         at every tier (`write_roots_for`).
         """
-        return tuple(sorted(set(BASE_READ_ROOTS) | set(_landlock.interpreter_read_roots(executable))))
+        return tuple(
+            sorted(set(BASE_READ_ROOTS) | set(_landlock.interpreter_read_roots(executable)))
+        )
 
     # --- what the ruleset may write ------------------------------------------------------------
 
@@ -136,7 +138,9 @@ class LinuxSandbox:
 
         def setup() -> None:  # pragma: no cover - runs in the forked child
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-            resource.setrlimit(resource.RLIMIT_FSIZE, (limits.artifact_bytes, limits.artifact_bytes))
+            resource.setrlimit(
+                resource.RLIMIT_FSIZE, (limits.artifact_bytes, limits.artifact_bytes)
+            )
             resource.setrlimit(resource.RLIMIT_NOFILE, (nofile, nofile))
             if tier != "T0":
                 # Above the budget on purpose: the supervisor's rule is what ends a run that grows,
@@ -200,9 +204,7 @@ class LinuxSandbox:
                 seccomp_fd=seccomp_file.fileno(),
                 env=child_env,
             )
-        setup = self._child_setup(
-            limits=limits, cwd=cwd, read_roots=read_roots, write_roots=write
-        )
+        setup = self._child_setup(limits=limits, cwd=cwd, read_roots=read_roots, write_roots=write)
         try:
             result = supervise(
                 launch,

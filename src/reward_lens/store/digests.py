@@ -13,6 +13,7 @@ makes reuse safe. `instrument_method` is never absent: this build is always some
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -42,7 +43,12 @@ DIGEST_NAMES: tuple[str, ...] = (
 )
 
 #: Where a project declares the environment it pins, most specific first.
-ENVIRONMENT_FILES: tuple[str, ...] = ("uv.lock", "poetry.lock", "requirements.txt", "pyproject.toml")
+ENVIRONMENT_FILES: tuple[str, ...] = (
+    "uv.lock",
+    "poetry.lock",
+    "requirements.txt",
+    "pyproject.toml",
+)
 
 
 @dataclass(frozen=True)
@@ -80,7 +86,7 @@ def _line_count(path: Path) -> int | None:
     return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
 
 
-def _tree(root: Path) -> list[list[str | None]]:
+def _tree(root: Path, *, exclude: frozenset[str] = frozenset()) -> list[list[str | None]]:
     """Every file under `root`, as sorted `[relative path, digest]` pairs."""
     if root.is_file():
         return [[root.name, file_digest(root)]]
@@ -88,7 +94,9 @@ def _tree(root: Path) -> list[list[str | None]]:
         return []
     out: list[list[str | None]] = []
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
-        out.append([path.relative_to(root).as_posix(), file_digest(path)])
+        relative = path.relative_to(root).as_posix()
+        if relative not in exclude:
+            out.append([relative, file_digest(path)])
     return out
 
 
@@ -167,11 +175,60 @@ def _samples(config: ProjectConfig, root: Path) -> str | None:
 def _outcome_protocol(config: ProjectConfig, root: Path) -> str | None:
     if config.outcome is None:
         return None
+    outcome = config.outcome
+    capability = outcome.held_out_capability
+    execution_declaration: dict[str, Any] | None = None
+    outcome_tree_exclude: frozenset[str] = frozenset()
+    if outcome.execution is not None:
+        execution_path = root / outcome.execution
+        try:
+            outcome_tree_exclude = frozenset(
+                {execution_path.relative_to(root / outcome.path).as_posix()}
+            )
+        except ValueError:
+            # The loader independently refuses an execution file outside the project.  It cannot
+            # belong to this protected-suite tree in that malformed case, so there is nothing to
+            # subtract here.
+            pass
+        try:
+            loaded = json.loads(execution_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            # The invalid bytes still invalidate a subject.  A valid execution declaration below
+            # instead has one narrowly-defined exclusion to avoid its expected-subject fixed
+            # point, while retaining every other declared candidate, task, partition and control.
+            execution_declaration = {
+                "path": outcome.execution,
+                "invalid_content": file_digest(execution_path),
+            }
+        else:
+            if isinstance(loaded, Mapping):
+                execution_declaration = {
+                    "path": outcome.execution,
+                    "declaration_without_expected_subject_ref": {
+                        key: value for key, value in loaded.items() if key != "subject_ref"
+                    },
+                }
+            else:
+                execution_declaration = {
+                    "path": outcome.execution,
+                    "invalid_content": file_digest(execution_path),
+                }
     return digest(
         {
-            "kind": config.outcome.kind,
-            "path": config.outcome.path,
-            "tree": _tree(root / config.outcome.path),
+            "kind": outcome.kind,
+            "path": outcome.path,
+            "tree": _tree(root / outcome.path, exclude=outcome_tree_exclude),
+            "held_out_capability": (
+                None
+                if capability is None
+                else {
+                    "partition_id": capability.partition_id,
+                    "path": capability.path,
+                    "floor": capability.floor,
+                    "tree": _tree(root / capability.path),
+                }
+            ),
+            "execution_declaration": execution_declaration,
         }
     )
 
@@ -239,5 +296,3 @@ def compute(config: ProjectConfig, root: Path, *, methods: Iterable[str] = ()) -
         training_semantics=_training_semantics(config),
         instrument_method=instrument_method_digest(methods),
     )
-
-

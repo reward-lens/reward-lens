@@ -10,7 +10,9 @@ from reward_lens.partitions import ACCEPTANCE_EVALUATOR, Partition, PartitionKin
 
 def test_a_disclosed_item_is_retired_and_the_digest_changes(protected: Partition) -> None:
     before = protected.digest
-    after = protected.retire("test_case_0.py", disclosed_to="repair-agent", reason="shown in a diff")
+    after = protected.retire(
+        "test_case_0.py", disclosed_to="repair-agent", reason="shown in a diff"
+    )
     assert after != before
     assert protected.digest == after
     assert protected.retired == frozenset({"test_case_0.py"})
@@ -56,7 +58,9 @@ def test_retirement_survives_a_restart(protected: Partition) -> None:
         reopened.read("test_case_0.py", capability=ACCEPTANCE_EVALUATOR, purpose="score")
 
 
-def test_retiring_twice_refuses_rather_than_logging_a_second_disclosure(protected: Partition) -> None:
+def test_retiring_twice_refuses_rather_than_logging_a_second_disclosure(
+    protected: Partition,
+) -> None:
     protected.retire("test_case_0.py", disclosed_to="repair-agent", reason="shown in a diff")
     with pytest.raises(UsageError) as caught:
         protected.retire("test_case_0.py", disclosed_to="repair-agent", reason="again")

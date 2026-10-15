@@ -94,6 +94,8 @@ load_quantities()
 register_all()
 
 MODEL = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+# The historical W3.5 measurement uses this immutable model and tokenizer revision.
+MODEL_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 SEED = 1234
 STEPS = 24
 BATCH = 8
@@ -262,6 +264,7 @@ def _train() -> object:
     with tempfile.TemporaryDirectory() as out:
         args = GRPOConfig(
             output_dir=out,
+            model_init_kwargs={"revision": MODEL_REVISION, "local_files_only": True},
             per_device_train_batch_size=BATCH,
             num_generations=K,
             max_completion_length=12,

@@ -55,7 +55,9 @@ def test_the_use_count_rises_with_each_granted_read(protected: Partition) -> Non
     assert [event.use_count for event in protected.access_log.events] == [1, 2, 3]
 
 
-def test_the_log_survives_a_restart_and_is_never_rewritten(protected: Partition, tmp_path: Path) -> None:
+def test_the_log_survives_a_restart_and_is_never_rewritten(
+    protected: Partition, tmp_path: Path
+) -> None:
     protected.read("test_case_0.py", capability=ACCEPTANCE_EVALUATOR, purpose="score")
     reopened = AccessLog(protected.access_log.path, partition_id=protected.id)
     assert len(reopened.events) == 1
@@ -79,8 +81,9 @@ def test_a_reference_partition_logs_its_reads_too(reference: Partition) -> None:
 
 
 def test_the_event_carries_a_utc_timestamp_the_record_accepts(protected: Partition) -> None:
-    from reward_lens.contracts.models import Timestamp  # noqa: F401
     import re
+
+    from reward_lens.contracts.models import Timestamp  # noqa: F401
 
     protected.read("test_case_0.py", capability=ACCEPTANCE_EVALUATOR, purpose="score")
     at = protected.access_log.events[-1].at

@@ -22,7 +22,15 @@ def test_json_writes_only_the_envelope_to_stdout(cli, grader):
     payload = json.loads(run.stdout)
     assert payload["schema_version"] == "assay-result/1.0"
     assert payload["command"] == "audit"
-    assert set(payload) >= {"execution", "subject", "decision", "findings", "holes", "artifacts", "error"}
+    assert set(payload) >= {
+        "execution",
+        "subject",
+        "decision",
+        "findings",
+        "holes",
+        "artifacts",
+        "error",
+    }
 
 
 def test_json_is_the_default_without_a_tty(cli, grader):

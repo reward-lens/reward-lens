@@ -1,0 +1,14 @@
+[
+  {
+    "id": "seed-score-selection",
+    "explanation_kinds": ["score_treatment", "selection_response"],
+    "rung": 1,
+    "analogy": "re-scoring frozen responses distinguishes a changed score treatment from a changed selection response without training"
+  },
+  {
+    "id": "seed-advantage-update",
+    "explanation_kinds": ["advantage_pressure", "update_mechanism"],
+    "rung": 3,
+    "analogy": "a recorded advantage replay can reject an advantage-normalisation account before an update experiment is considered"
+  }
+]

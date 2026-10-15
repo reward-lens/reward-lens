@@ -12,16 +12,25 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_serializer,
+    model_validator,
+)
 
 from .serialise import bind
 
 __all__ = [
     "ProjectConfig",
+    "OpenEnvSpec",
     "RewardSpec",
     "TasksSpec",
     "ResponsesSpec",
     "OutcomeSpec",
+    "HeldOutCapabilitySpec",
     "SCHEMA_PATH",
     "project_schema",
 ]
@@ -52,6 +61,7 @@ def project_schema() -> dict:
         f"looked in {', '.join(str(c) for c in _CANDIDATES)}"
     )
 
+
 Ident = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$")]
 Text = Annotated[str, Field(min_length=1)]
 
@@ -68,6 +78,22 @@ SystemName = Annotated[str, Field(min_length=1, max_length=200, pattern=r"\S")]
 #: what the named trainer would do with it (D-65).
 Watch = Literal["none_to_nan", "exception_to_zero", "bool_as_score"]
 Shape = Literal["plain", "trl", "verifiers", "inspect"]
+_OPENENV_LOOPBACK_URL = r"^wss?://(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]{1,5})?(?:/[^\s]*)?$"
+
+
+class OpenEnvSpec(BaseModel):
+    """The explicit local OpenEnv 0.6.0 binding, separate from callable shapes."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+    package: Literal["openenv"]
+    version: Literal["0.6.0"]
+    wheel_sha256: Literal["dd1033006d17c3c0147a02f73fc6deef881e15dc5501aea28930765708292641"]
+    base_url: Annotated[str, Field(pattern=_OPENENV_LOOPBACK_URL)]
+    connect_timeout_s: Annotated[float, Field(gt=0)]
+    message_timeout_s: Annotated[float, Field(gt=0)]
+    reset: Text
+    action: Text
 
 
 class Base(BaseModel):
@@ -100,11 +126,20 @@ class ComponentSpec(Base):
 
 class RewardSpec(Base):
     entry: Text
-    kind: Literal["plain", "composite"] = "plain"
+    kind: Literal["plain", "composite", "openenv"] = "plain"
     shape: Shape | None = None
     components: list[ComponentSpec] = Field(default_factory=list)
     watch: list[Watch] = Field(default_factory=list)
     trainer: Shape | None = None
+    openenv: OpenEnvSpec | None = None
+
+    @model_validator(mode="after")
+    def _require_openenv_binding_only_for_openenv(self) -> "RewardSpec":
+        if self.kind == "openenv" and self.openenv is None:
+            raise ValueError("reward.openenv is required when reward.kind is openenv")
+        if self.kind != "openenv" and self.openenv is not None:
+            raise ValueError("reward.openenv is only valid when reward.kind is openenv")
+        return self
 
 
 class TasksSpec(Base):
@@ -118,9 +153,42 @@ class ResponsesSpec(Base):
     path: Text
 
 
+class HeldOutCapabilitySpec(Base):
+    """One explicitly declared held-out target, separate from the outcome check.
+
+    ``OutcomeSpec.path`` continues to identify the protected evaluator suite.
+    This declaration identifies the distinct capability partition whose items a
+    scorecard may measure.  It is optional for compatibility with project files
+    written before C026; an absent declaration yields a measured absence later.
+    """
+
+    partition_id: Ident
+    path: Text
+    # Optional preserves projects that declare a held-out target for a different capability
+    # consumer.  When present, this is the only public source of a scorecard threshold.
+    floor: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+
+
 class OutcomeSpec(Base):
     kind: Literal["protected_test_suite"]
     path: Text
+    held_out_capability: HeldOutCapabilitySpec | None = None
+    execution: Text | None = None
+
+    @model_validator(mode="after")
+    def _require_a_project_local_execution_file(self) -> "OutcomeSpec":
+        """Keep an optional execution declaration beneath the project that owns it.
+
+        The checked-in loader resolves this field again before it reads anything.  Refusing an
+        absolute or upward path here gives an editor the field-level configuration error rather
+        than leaving a syntactically valid project file to point at host state.
+        """
+        if self.execution is None:
+            return self
+        declared = Path(self.execution)
+        if declared.is_absolute() or ".." in declared.parts or "\\" in self.execution:
+            raise ValueError("outcome.execution must name a project-local relative file")
+        return self
 
 
 class VersionSpec(Base):

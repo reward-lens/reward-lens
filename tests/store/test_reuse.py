@@ -176,7 +176,8 @@ def test_one_version_measured_further_is_recorded_beside_the_first_and_not_over_
     from .conftest import CORPUS, SUBJECT, build_record
 
     wider = build_record(
-        CORPUS + (("reach.attack_surface", "check", ("digest:source",), SUBJECT, "evaluator_comparison"),)
+        CORPUS
+        + (("reach.attack_surface", "check", ("digest:source",), SUBJECT, "evaluator_comparison"),)
     )
     first = Assay.model_validate(align(record_dict, project))
     second = Assay.model_validate(align(wider, project))
@@ -188,3 +189,63 @@ def test_one_version_measured_further_is_recorded_beside_the_first_and_not_over_
     assert path.is_file()
     assert tuple(project.names()) == ("first", "second")
     assert project.open_record("first").to_dict() == first.to_dict()
+
+
+def test_reserved_method_absence_can_be_followed_by_input_refusal_and_measurement(project):
+    """An unbuilt method's reserved identity cannot freeze later evidence for that method."""
+    import copy
+
+    from reward_lens.contracts import Assay
+
+    from .conftest import reference_dict
+
+    transcript = "https://reward-lens.github.io/x/transcript"
+    original = reference_dict()
+    placeholder = copy.deepcopy(original)
+    entry = placeholder["measurement"]["signal"][0]
+    entry["extensions"] = {transcript: {"missing_code": "instrument_not_in_this_build"}}
+    entry["absence"]["missing_access"] = "instrument not in this build"
+    placeholder["holes"][0]["missing_access"] = "instrument not in this build"
+
+    input_refusal = copy.deepcopy(original)
+    input_refusal["measurement"]["signal"][0]["extensions"] = {
+        transcript: {"missing_code": "response_bank"}
+    }
+    present_refusal = copy.deepcopy(input_refusal)
+    present_refusal["measurement"]["signal"][0]["extensions"][transcript]["missing_code"] = (
+        "instrument_not_in_this_build"
+    )
+
+    measured = copy.deepcopy(original)
+    completed = copy.deepcopy(measured["measurement"]["validity"][0])
+    completed.update(
+        entry_id=entry["entry_id"],
+        section="signal",
+        method=copy.deepcopy(entry["method"]),
+        depends_on=entry["depends_on"],
+    )
+    measured["measurement"]["signal"] = [completed]
+    measured["holes"] = []
+
+    old = Assay.model_validate(align(placeholder, project))
+    gap = Assay.model_validate(align(input_refusal, project))
+    present_gap = Assay.model_validate(align(present_refusal, project))
+    actual = Assay.model_validate(align(measured, project))
+    assert len({item.subject.version.digest for item in (old, gap, present_gap, actual)}) == 1
+    assert (
+        len(
+            {
+                item.measurement.signal[0].method.params_digest
+                for item in (old, gap, present_gap, actual)
+            }
+        )
+        == 1
+    )
+
+    first = project.record(old, name="unbuilt")
+    before = first.read_bytes()
+    assert project.record(gap, name="needs-responses").is_file()
+    assert project.record(present_gap, name="present-refusal").is_file()
+    assert project.record(actual, name="measured").is_file()
+    assert first.read_bytes() == before
+    assert project.names() == ("unbuilt", "needs-responses", "present-refusal", "measured")

@@ -19,11 +19,11 @@ channel bit counts) are population/GPU-gated and invent no number. The study fol
 from __future__ import annotations
 
 import numpy as np
+from studies.s08_factorization.analysis import build_spec
 
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s08_factorization.analysis import build_spec
 
 
 def test_s08_runs_and_registers(tmp_path):

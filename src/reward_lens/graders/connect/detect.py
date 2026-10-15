@@ -30,6 +30,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
+from reward_lens import errors
+
 from .errors import SHAPE_UNSUPPORTED_PAGE
 from .shapes import DECLARED_SHAPES, Detection, Finding, Shape, shape_for_declared
 from .verifiers_discriminator import GROUP_INDICATORS, bound_names, is_group_rubric
@@ -49,7 +51,9 @@ _VERL_NAMES = frozenset({"data_source", "solution_str", "ground_truth"})
 _TRL_NAMES = frozenset({"prompts", "completions", "completion_ids"})
 
 #: Names only `verifiers` puts in a reward signature. TRL never passes any of them.
-_VERIFIERS_NAMES = frozenset({"state", "states", "answer", "answers", "info", "infos", "task", "tasks"})
+_VERIFIERS_NAMES = frozenset(
+    {"state", "states", "answer", "answers", "info", "infos", "task", "tasks"}
+)
 
 #: The three modes of D-65, in the order the transcript's `watch` list prints them.
 SILENT_MODES: tuple[tuple[str, str], ...] = (
@@ -131,7 +135,11 @@ def module_callables(module) -> list[tuple[str, Callable[..., Any]]]:
         if getattr(value, "__module__", None) != module.__name__:
             continue
         found.append((name, value))
-    found.sort(key=lambda pair: getattr(pair[1], "__code__", None).co_firstlineno if hasattr(pair[1], "__code__") else 0)
+    found.sort(
+        key=lambda pair: (
+            getattr(pair[1], "__code__", None).co_firstlineno if hasattr(pair[1], "__code__") else 0
+        )
+    )
     return found
 
 
@@ -296,7 +304,9 @@ def _classify(target: Any, entry: str) -> Detection:
 # --- the probe, and the three findings it can produce ---------------------------------------------
 
 
-def _finding(code: str, rule: str, trainer: str, behaviour: str, message: str, witness: dict) -> Finding:
+def _finding(
+    code: str, rule: str, trainer: str, behaviour: str, message: str, witness: dict
+) -> Finding:
     return Finding(
         code=code,
         rule=rule,
@@ -330,7 +340,9 @@ def probe(detection: Detection) -> list[Finding]:
                 "exception_to_zero",
                 "verifiers",
                 "Rubric logs the exception and records 0.0 for that reward function",
-                f"{detection.entry} raised {type(caught).__name__} on a well formed row",
+                errors.make(
+                    "RL0214", entry=detection.entry, exception=type(caught).__name__
+                ).message,
                 {
                     "called": True,
                     "entry": detection.entry,
@@ -351,7 +363,7 @@ def probe(detection: Detection) -> list[Finding]:
                     "none_to_nan",
                     "trl",
                     "GRPOTrainer turns the None into NaN and drops that reward function for the row",
-                    f"{detection.entry} returned None for row {index}",
+                    errors.make("RL0213", entry=detection.entry).message,
                     {
                         "called": True,
                         "entry": detection.entry,
@@ -370,7 +382,7 @@ def probe(detection: Detection) -> list[Finding]:
                     "bool_as_score",
                     "trl",
                     "float() accepts the boolean, so 1.0 and 0.0 are recorded as though measured",
-                    f"{detection.entry} returned a bool for row {index}",
+                    errors.make("RL0215", entry=detection.entry).message,
                     {
                         "called": True,
                         "entry": detection.entry,
@@ -457,7 +469,11 @@ def detect_project(root: str | Path) -> ProjectDetection:
     """
     base = Path(root)
     reward_file = next(
-        (name for name in ("rewards.py", "reward.py", "rewards/__init__.py") if (base / name).is_file()),
+        (
+            name
+            for name in ("rewards.py", "reward.py", "rewards/__init__.py")
+            if (base / name).is_file()
+        ),
         "",
     )
     if not reward_file:

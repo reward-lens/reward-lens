@@ -91,18 +91,19 @@ def test_every_extra_the_code_can_name_is_an_extra_pip_can_install():
     assert set(EXTRA_PURPOSE) == set(EXTRA_PROBE), "every extra needs a stated purpose"
 
 
-#: The 4.0 extras, and `all`. The v3 file asserted `{"trl", "verl"} <= declared`, which was the
-#: shape of the specific defect it was written for: three extras named in an error message and
-#: declared nowhere. D-58 replaced that list wholesale, so the assertion below is the same claim
-#: against the set 4.0 actually declares, and `tests/packaging/test_wheel_metadata.py` makes it
-#: again against the built wheel's `Provides-Extra`, which is the copy that binds a user.
-EXPECTED_EXTRAS_4_0 = frozenset(
+#: The 3.1 extras, excluding the aggregate ``all`` group. The packaging suite independently reads
+#: this set from a built wheel's ``Provides-Extra`` fields; this source-level control makes a
+#: declaration regression fail before an archive build is scheduled.
+EXPECTED_EXTRAS_3_1 = frozenset(
     {
         "judge",
+        "mcp",
+        "openenv",
         "organisms",
         "record",
         "sigstore",
         "trace",
+        "trackers",
         "train",
         "verifier",
         "viz",
@@ -111,9 +112,9 @@ EXPECTED_EXTRAS_4_0 = frozenset(
 )
 
 
-def test_the_declared_extras_are_the_four_zero_set():
+def test_the_declared_extras_are_the_published_three_one_set():
     declared = set(_declared()["optional-dependencies"])
-    assert declared - {"all"} == set(EXPECTED_EXTRAS_4_0), sorted(declared)
+    assert declared - {"all"} == set(EXPECTED_EXTRAS_3_1), sorted(declared)
 
 
 def test_all_is_a_superset_of_every_other_extra():
@@ -185,18 +186,9 @@ def test_a_white_box_module_raises_the_typed_error_when_the_extra_is_absent():
     assert "reward-lens[white-box]" in r.stdout
 
 
-#: Base dependencies that nothing under `src/` imports yet, each with the packet that will. A name
-#: here is a promise, not an exemption: when its packet lands the import appears and the entry comes
-#: out, and until then the list says out loud what the closure carries on spec.
-DECLARED_BEFORE_THEIR_IMPORTER = {
-    "click": "P-CLI. D-30 makes the CLI click; `reward_lens.cli` does not exist yet and the "
-    "console scripts in `pyproject.toml` point at `reward_lens.cli.main:main`.",
-    "jsonschema-rs": "the packet that lands schema validation over the record. Declared on D-58's "
-    "reasoning that the Rust validator is the runtime one and the pure-Python `jsonschema` stays "
-    "a dev cross-check; nothing under `src/` calls either yet.",
-    "rfc8785": "the packet that lands the canonical byte form. D-10 makes RFC 8785 JCS the form "
-    "every digest is taken over; `core/types.content_hash` does not use it yet.",
-}
+#: Temporary exceptions belong here only until their importer lands. The three historical entries
+#: (click, jsonschema-rs, rfc8785) now have runtime importers, so this is deliberately empty.
+DECLARED_BEFORE_THEIR_IMPORTER: dict[str, str] = {}
 
 
 def test_no_declared_dependency_is_unused():

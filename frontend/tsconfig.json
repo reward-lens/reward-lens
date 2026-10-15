@@ -15,5 +15,5 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true
   },
-  "include": ["report/src", "vite.config.ts"]
+  "include": ["report/src", "workbench/src", "shared", "vite.config.ts", "node-url.d.ts"]
 }

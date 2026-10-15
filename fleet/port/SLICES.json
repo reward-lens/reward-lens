@@ -1,0 +1,41 @@
+{
+ "base": [
+  "pyproject.toml",
+  "src/reward_lens/__init__.py",
+  "src/reward_lens/spec",
+  "src/reward_lens/monitor",
+  "src/reward_lens/tap",
+  "src/reward_lens/concepts",
+  "src/reward_lens/verifier",
+  "src/reward_lens/forecast",
+  "src/reward_lens/experiments",
+  "src/reward_lens/interventions",
+  "src/reward_lens/artifacts",
+  "src/reward_lens/attribution",
+  "src/reward_lens/operate",
+  "src/reward_lens/oracles",
+  "src/reward_lens/sae.py",
+  "src/reward_lens/py.typed",
+  "src/reward_lens/model.py"
+ ],
+ "measure": [
+  "src/reward_lens/measure"
+ ],
+ "record-core": [
+  "src/reward_lens/record",
+  "src/reward_lens/core",
+  "src/reward_lens/organisms",
+  "src/reward_lens/signals"
+ ],
+ "studies-runtime": [
+  "src/reward_lens/studies",
+  "src/reward_lens/policy",
+  "src/reward_lens/data",
+  "src/reward_lens/access",
+  "src/reward_lens/dynamics",
+  "src/reward_lens/runtime",
+  "src/reward_lens/loops",
+  "src/reward_lens/geometry",
+  "src/reward_lens/stats"
+ ]
+}

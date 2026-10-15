@@ -137,9 +137,7 @@ def strip_annotations(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
     return {
-        k: strip_annotations(v)
-        for k, v in node.items()
-        if not k.startswith("x-") and k != "format"
+        k: strip_annotations(v) for k, v in node.items() if not k.startswith("x-") and k != "format"
     }
 
 

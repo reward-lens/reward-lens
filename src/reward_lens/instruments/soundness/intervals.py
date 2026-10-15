@@ -29,8 +29,10 @@ __all__ = [
     "exact_one_sided_lower",
     "exact_zero_event_upper",
     "interval_for",
+    "interval_metadata",
     "method_for",
     "n_for_lower_bound",
+    "n_for_wilson_lower_bound",
     "rule_of_three",
     "uncertainty_for",
     "what_n_can_establish",
@@ -127,21 +129,22 @@ def _betainc(a: float, b: float, x: float) -> float:
     if x >= 1.0:
         return 1.0
     front = math.exp(
-        math.lgamma(a + b)
-        - math.lgamma(a)
-        - math.lgamma(b)
-        + a * math.log(x)
-        + b * math.log1p(-x)
+        math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b) + a * math.log(x) + b * math.log1p(-x)
     )
     if x < (a + 1.0) / (a + b + 2.0):
         return front * _betacf(a, b, x) / a
-    return 1.0 - math.exp(
-        math.lgamma(a + b)
-        - math.lgamma(a)
-        - math.lgamma(b)
-        + b * math.log1p(-x)
-        + a * math.log(x)
-    ) * _betacf(b, a, 1.0 - x) / b
+    return (
+        1.0
+        - math.exp(
+            math.lgamma(a + b)
+            - math.lgamma(a)
+            - math.lgamma(b)
+            + b * math.log1p(-x)
+            + a * math.log(x)
+        )
+        * _betacf(b, a, 1.0 - x)
+        / b
+    )
 
 
 def _beta_quantile(p: float, a: float, b: float) -> float:
@@ -217,6 +220,29 @@ def n_for_lower_bound(target: float, *, level: float = LEVEL) -> int:
     return math.ceil(math.log(alpha) / math.log(target))
 
 
+def n_for_wilson_lower_bound(target: float, *, level: float = LEVEL) -> int:
+    """The first all-success count whose two-sided Wilson lower endpoint reaches ``target``.
+
+    This is deliberately separate from :func:`n_for_lower_bound`: the latter is the exact
+    *one-sided* binomial anchor.  A report using a two-sided Wilson interval must not borrow that
+    smaller sample requirement.  The doubling search gives a finite bracket, then binary search
+    finds the first integer in it without treating a rounded display value as the criterion.
+    """
+    if not 0.0 < target < 1.0:
+        raise ValueError("a lower bound to reach is strictly between 0 and 1")
+    high = 1
+    while wilson(high, high, level=level)[0] < target:
+        high *= 2
+    low = high // 2
+    while low + 1 < high:
+        middle = (low + high) // 2
+        if wilson(middle, middle, level=level)[0] >= target:
+            high = middle
+        else:
+            low = middle
+    return high
+
+
 def method_for(k: int, n: int, *, load_bearing: bool = False) -> str:
     """Which interval rule 1 and rule 4 name for this count.
 
@@ -232,7 +258,9 @@ def method_for(k: int, n: int, *, load_bearing: bool = False) -> str:
     return "wilson"
 
 
-def interval_for(k: int, n: int, *, load_bearing: bool = False, level: float = LEVEL) -> list[float]:
+def interval_for(
+    k: int, n: int, *, load_bearing: bool = False, level: float = LEVEL
+) -> list[float]:
     """The endpoints the method `method_for` names produces."""
     method = method_for(k, n, load_bearing=load_bearing)
     if method == "exact_zero_event":
@@ -255,6 +283,36 @@ def uncertainty_for(
     )
 
 
+def interval_metadata(
+    uncertainty: contracts.Uncertainty, *, remedy: str | None = None
+) -> dict[str, object]:
+    """Reader-facing method metadata for a bounded interval or its documented absence.
+
+    The frozen assay uncertainty object names a method and confidence level but has no sidedness
+    field.  Soundness results repeat those facts in their public payload so a reader sees whether
+    the endpoint is a two-sided interval or a one-sided zero-event bound.  A deliberately absent
+    interval carries neither invented endpoints nor invented sidedness, and says what is needed to
+    measure it.
+    """
+    if not uncertainty.bounded:
+        payload: dict[str, object] = {
+            "method": uncertainty.method,
+            "confidence_level": uncertainty.level,
+            "sidedness": None,
+            "bounds": None,
+            "reason": uncertainty.reason,
+        }
+        if remedy is not None:
+            payload["remedy"] = remedy
+        return payload
+    return {
+        "method": uncertainty.method,
+        "confidence_level": uncertainty.level,
+        "sidedness": "one-sided" if uncertainty.method == "exact_zero_event" else "two-sided",
+        "bounds": None if uncertainty.interval is None else list(uncertainty.interval),
+    }
+
+
 def what_n_can_establish(k: int, n: int, *, level: float = LEVEL) -> str:
     """Rule 3 in words: what this run could not have shown, whatever it did show.
 
@@ -270,14 +328,17 @@ def what_n_can_establish(k: int, n: int, *, level: float = LEVEL) -> str:
             "no trials were run, so this rate establishes nothing: an empty denominator is not a "
             "rate of zero"
         )
-    needed = n_for_lower_bound(0.99, level=level)
+    one_sided_needed = n_for_lower_bound(0.99, level=level)
+    wilson_needed = n_for_wilson_lower_bound(0.99, level=level)
     if k == n:
         low = wilson(k, n, level=level)[0]
         exact_low = exact_one_sided_lower(n, level=level)
         return (
             f"{k} of {n} passed, and a perfect run is not a rate of 1: the {percent}% Wilson lower "
-            f"bound is {low:.2f} and the exact one-sided lower bound is {exact_low:.2f}. A lower "
-            f"bound of 0.99 needs n >= {needed}, so this n cannot establish one."
+            f"bound is {low:.2f} and the exact one-sided lower bound is {exact_low:.2f}. A "
+            f"two-sided Wilson lower bound of 0.99 needs n >= {wilson_needed}, so this n cannot "
+            f"establish one. The separate exact one-sided bound reaches 0.99 at n >= "
+            f"{one_sided_needed}; that is a different method and sidedness."
         )
     if k == 0:
         exact = exact_zero_event_upper(n, level=level)
@@ -298,6 +359,7 @@ def what_n_can_establish(k: int, n: int, *, level: float = LEVEL) -> str:
     low, high = interval_for(k, n, level=level)
     return (
         f"{k} of {n} is {k / n:.3f}, and the claim is the interval and not the point: the "
-        f"{percent}% interval runs {low:.3f} to {high:.3f}. A lower bound of 0.99 needs n >= "
-        f"{needed} with no failures at all, which this run is not."
+        f"{percent}% two-sided interval runs {low:.3f} to {high:.3f}. A two-sided Wilson lower "
+        f"bound of 0.99 needs n >= {wilson_needed} with no failures at all, which this run is not "
+        f"(the separate exact one-sided anchor is n >= {one_sided_needed})."
     )

@@ -9,7 +9,7 @@ number", exercised in isolation.
 
 from __future__ import annotations
 
-from reward_lens.artifacts.claims import check_text
+from reward_lens.artifacts.claims import check_files, check_text
 from reward_lens.core.evidence import make_evidence
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import ModelFP, SubjectRef
@@ -68,3 +68,32 @@ def test_bare_reference_resolves(tmp_path):
     rep = check_text(doc, store)
     assert rep.ok
     assert not rep.unresolved_refs
+
+
+def test_check_files_preserves_a_per_file_mixed_provenance_failure(tmp_path):
+    store, first_id = _store_with_e04(tmp_path / "evidence")
+    second = make_evidence(
+        observable="E04Faithfulness",
+        observable_version="1.0",
+        subject=SubjectRef(signals=(ModelFP("mfp:other-skywork"),)),
+        value={"per_model_mean_rho": {"Skywork": -0.1800}},
+    )
+    store.append(second)
+    conflicted = tmp_path / "conflicted.md"
+    conflicted.write_text(
+        "\n".join(
+            (
+                f"[[claim value=-0.1709 ev={first_id} field=per_model_mean_rho.Skywork]]",
+                f"[[claim value=-0.1800 ev={second.id} field=per_model_mean_rho.Skywork]]",
+            )
+        ),
+        encoding="utf-8",
+    )
+    independent = tmp_path / "independent.md"
+    independent.write_text("Narrative only.\n", encoding="utf-8")
+
+    report = check_files([conflicted, independent], store)
+
+    assert not report.ok
+    assert report.mixed_provenance
+    assert "different evidence ids" in report.mixed_provenance[0]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -17,7 +18,24 @@ from reward_lens.contracts import (
 )
 from reward_lens.errors import CATALOGUE, explain, make, render_two_line
 
-# This public literal protects the rendered error contract without a private transcript.
+# The frozen shape, read from the golden transcript rather than retyped here: a copy kept by hand
+# can only ever agree with the hand that kept it.
+GOLDEN_FILE = (
+    Path(__file__).resolve().parents[2] / "fleet" / "golden" / "target" / "error-lines.txt"
+)
+
+
+def golden_block() -> str:
+    """The error itself from the golden transcript. Its first line is the invocation, not the error."""
+    lines = GOLDEN_FILE.read_text(encoding="utf-8").splitlines()
+    assert lines and lines[0].startswith("$ "), (
+        f"{GOLDEN_FILE.name} does not open with an invocation"
+    )
+    block = [line for line in lines[1:] if line.strip()]
+    assert len(block) == 3, f"{GOLDEN_FILE.name} does not hold a three-line error"
+    return "\n".join(block)
+
+
 TYPE_FOR_EXIT = {
     3: PendingDecision,
     4: UsageError,
@@ -27,12 +45,9 @@ TYPE_FOR_EXIT = {
 }
 
 
-def test_error_render_has_stable_three_line_shape() -> None:
-    assert render_two_line(make("RL0341", path="./tests")) == (
-        "error: the outcome check at ./tests collected 0 tests, so it cannot qualify a correctness claim\n"
-        "help:  check the path, or run: reward-lens doctor --outcome ./tests\n"
-        "       reward-lens explain RL0341"
-    )
+def test_the_golden_two_line_shape() -> None:
+    assert render_two_line(make("RL0341", path="./tests")) == golden_block()
+
 
 def test_make_builds_the_type_that_matches_the_exit_code() -> None:
     for code, spec in CATALOGUE.items():

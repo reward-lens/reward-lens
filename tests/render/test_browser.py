@@ -59,11 +59,15 @@ def test_the_first_screen_renders_with_the_network_off(rendered) -> None:
 
 def test_the_six_sections_are_in_the_order_6_4_fixes(rendered) -> None:
     seen = [n.attrs["data-section"] for n in rendered.find_all(attr="data-section")]
-    assert seen == SECTION_ORDER
+    # Section 7.8 adds the saved audit/trace join after the six required report sections.
+    # Keep their complete order fixed and allow exactly this additional product section.
+    assert seen == [*SECTION_ORDER, "join"]
 
 
 def test_the_scope_is_on_the_first_screen_and_not_in_a_footer(rendered) -> None:
-    answer = [n for n in rendered.find_all(attr="data-section") if n.attrs["data-section"] == "answer"][0]
+    answer = [
+        n for n in rendered.find_all(attr="data-section") if n.attrs["data-section"] == "answer"
+    ][0]
     scope = answer.find_all(attr="data-scope")
     assert scope, "a certificate without its scope is a lie"
     assert "evaluator comparison" in scope[0].text.lower()
@@ -75,14 +79,18 @@ def test_every_status_is_a_word_and_a_glyph_and_a_colour(rendered) -> None:
     for node in statuses:
         glyphs = node.find_all(cls="glyph")
         words = node.find_all(cls="word")
-        assert glyphs and words, f"status {node.attrs['data-status']!r} is missing a glyph or a word"
+        assert glyphs and words, (
+            f"status {node.attrs['data-status']!r} is missing a glyph or a word"
+        )
         assert glyphs[0].attrs.get("aria-hidden") == "true"
         assert words[0].text.strip()
         assert node.attrs.get("data-tone") in {"pass", "fail", "warn", "absent", "info"}
 
 
 def test_not_measured_is_never_zero_and_never_a_pass(rendered) -> None:
-    absences = [n for n in rendered.find_all(attr="data-entry") if n.attrs.get("data-state") == "absent"]
+    absences = [
+        n for n in rendered.find_all(attr="data-entry") if n.attrs.get("data-state") == "absent"
+    ]
     assert absences
     for node in absences:
         value = node.find_all(attr="data-value")
@@ -102,14 +110,18 @@ def test_an_interval_is_drawn_wherever_a_point_estimate_is(rendered) -> None:
 
 
 def test_the_holes_carry_their_missing_access_and_remedy(rendered) -> None:
-    holes = [n for n in rendered.find_all(attr="data-section") if n.attrs["data-section"] == "holes"][0]
+    holes = [
+        n for n in rendered.find_all(attr="data-section") if n.attrs["data-section"] == "holes"
+    ][0]
     assert "sampled responses grouped by prompt" in holes.text
     assert "reward-lens audit ./demo --responses r.jsonl" in holes.text
 
 
 def test_provenance_carries_the_bundle_digest_offline_state_and_sandbox_tier(rendered) -> None:
     assert "sha256:" + "ef" * 32 in rendered.text
-    prov = [n for n in rendered.find_all(attr="data-section") if n.attrs["data-section"] == "provenance"][0]
+    prov = [
+        n for n in rendered.find_all(attr="data-section") if n.attrs["data-section"] == "provenance"
+    ][0]
     assert "L2" in prov.text
     assert "offline" in prov.text.lower()
 
@@ -120,7 +132,9 @@ def test_a_panel_that_could_not_detect_states_its_limitation(rendered) -> None:
 
 def test_a_record_with_no_finding_renders_the_6_2_sentence(no_finding) -> None:
     assert "No blocking finding under this protocol" in no_finding.text
-    findings = [n for n in no_finding.find_all(attr="data-section") if n.attrs["data-section"] == "findings"][0]
+    findings = [
+        n for n in no_finding.find_all(attr="data-section") if n.attrs["data-section"] == "findings"
+    ][0]
     named = findings.find_all(attr="data-holes")
     assert named, "the sentence stands beside the holes the record names"
     assert "signal.contrast_fraction" in named[0].attrs["data-holes"]
@@ -130,13 +144,13 @@ def test_a_record_with_no_finding_renders_the_6_2_sentence(no_finding) -> None:
 
 def test_every_chart_has_a_table_alternative(rendered) -> None:
     for chart in rendered.find_all(attr="data-chart"):
-        assert chart.find_all(tag="table"), f"chart {chart.attrs['data-chart']} has no table alternative"
+        assert chart.find_all(tag="table"), (
+            f"chart {chart.attrs['data-chart']} has no table alternative"
+        )
         assert chart.find_all(tag="svg"), "the report's marks are SVG, not canvas"
 
 
-def test_a_truncated_report_says_it_is_truncated(
-    reference, tmp_path_factory, monkeypatch
-) -> None:
+def test_a_truncated_report_says_it_is_truncated(reference, tmp_path_factory, monkeypatch) -> None:
     """Tier C in a browser, with no constant patched: the writer tier B needs is not installed.
 
     A record that reaches tier C by size alone is a 26 MB page, and what this test is for is the
@@ -274,7 +288,12 @@ def three_kinds_record(reference) -> dict:
     holes = [
         ("reach.holdout_sweep", "reach", "NOT_MEASURED", "held-out prompts the grader never saw"),
         ("exploits.seed_probe", "exploits", "COULD_NOT_CHECK", "a sandbox that may execute code"),
-        ("framing.vendor_prompt", "framing", "REFUSED", "the vendor prompt, which the vendor withheld"),
+        (
+            "framing.vendor_prompt",
+            "framing",
+            "REFUSED",
+            "the vendor prompt, which the vendor withheld",
+        ),
     ]
     for entry_id, section, state, missing in holes:
         record["measurement"][section] = [_absence(absence, entry_id, section, state, missing)]
@@ -362,7 +381,7 @@ def test_no_number_on_the_findings_panel_was_computed_in_the_browser(rendered, r
     assert "Executed share" not in app and "data-coverage" not in app
     ui = (src / "ui.tsx").read_text(encoding="utf-8").replace(" ", "")
     assert "Math.min(1" not in ui, "the mark clamp is gone"
-    bundle = (ROOT / "src" / "reward_lens" / "render" / "report" / "assets" / "report.js")
+    bundle = ROOT / "src" / "reward_lens" / "render" / "report" / "assets" / "report.js"
     built = bundle.read_text(encoding="utf-8")
     assert "Executed share of each section" not in built
     assert "data-coverage" not in built

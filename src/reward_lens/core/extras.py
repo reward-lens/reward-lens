@@ -120,7 +120,9 @@ class _LazyModule:
     this tree does that, and it would be an honest failure rather than a silent one.
     """
 
-    def __init__(self, name: str, *, extra: str | None = None, subsystem: str | None = None) -> None:
+    def __init__(
+        self, name: str, *, extra: str | None = None, subsystem: str | None = None
+    ) -> None:
         self.__dict__["_name"] = name
         self.__dict__["_extra"] = extra
         self.__dict__["_subsystem"] = subsystem or name
@@ -164,4 +166,3 @@ __all__ = [
     "lazy_module",
     "require_extra",
 ]
-

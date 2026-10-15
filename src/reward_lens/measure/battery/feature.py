@@ -18,11 +18,12 @@ Where the dictionary comes from, and what happens when there is none. A trained 
 ``ctx.regime['sae']`` and this module never imports anything to read it: any object with a
 ``feature_reward_alignments`` method works, so a dictionary fitted elsewhere needs no dependency
 here at all. The untrained fallback is built from ``reward_lens.sae.TopKSAE``, which lives behind
-the ``[dict]`` extra because sparse dictionaries are candidate generators and never a claim
-substrate. On an install without that extra and without a supplied dictionary there is nothing to
-align against, so this refuses. It does not quietly return the alignment of something else, and it
-does not fabricate a dictionary out of a module it can reach by accident: that dependency was
-undeclared until W0.5's second half, which is the only reason the fallback ever looked free.
+the declared ``[white-box]`` extra because it needs the PyTorch activation-inspection substrate.
+Sparse dictionaries remain candidate generators rather than claim substrate. On an install without
+that extra and without a supplied dictionary there is nothing to align against, so this refuses. It
+does not quietly return the alignment of something else. The fallback is an explicitly labelled
+random dictionary used to check the computation; it is not fitted to the signal and cannot support
+a feature ranking or a research outcome.
 """
 
 from __future__ import annotations
@@ -54,7 +55,7 @@ if TYPE_CHECKING:
 _NO_DICTIONARY_REMEDY = (
     "Supply a trained sparse autoencoder as ctx.regime['sae'] (any object with a "
     "feature_reward_alignments(w_r) method fitted on this signal's residual stream at the readout "
-    "site), or install the dictionary tooling with:  pip install 'reward-lens[dict]'  and rerun to "
+    "site), or install the white-box tooling with:  pip install 'reward-lens[white-box]'  and rerun to "
     "get the untrained-dictionary mechanics check. The second route does not produce a feature "
     "ranking: it produces the alignment of random directions, reported with trained_sae=False."
 )
@@ -63,7 +64,7 @@ _NO_DICTIONARY_REMEDY = (
 def _load_topk_sae() -> Any:
     """``TopKSAE``, or the typed error naming the extra that installs it.
 
-    Imported here rather than at module scope so that an install without ``[dict]`` can still
+    Imported here rather than at module scope so that an install without ``[white-box]`` can still
     import the battery, register this instrument, lint it and preflight it. Only the fallback
     construction needs the class, and a caller supplying its own dictionary never reaches this.
     """
@@ -120,7 +121,7 @@ class FeatureRewardAlignment(BaseObservable):
         """The base checks, plus: is there a dictionary to align against at all?
 
         Answered here because it is answerable with no compute and no GPU, which is the whole point
-        of a preflight. A caller planning a study on a machine without ``[dict]`` finds out now
+        of a preflight. A caller planning a study on a machine without ``[white-box]`` finds out now
         rather than after loading a signal.
         """
         result = super().preflight(ctx)
@@ -137,7 +138,7 @@ class FeatureRewardAlignment(BaseObservable):
                     reason=RefusalReason.ACCESS_INSUFFICIENT,
                     detail=(
                         "no sparse dictionary is reachable. ctx.regime carries no 'sae', and the "
-                        f"[dict] extra that ships this library's own TopKSAE is not installed: {exc}"
+                        f"[white-box] extra that ships this library's own TopKSAE is not installed: {exc}"
                     ),
                     remedy=_NO_DICTIONARY_REMEDY,
                     statistics={"supplied_sae": False, "dict_extra_installed": False},

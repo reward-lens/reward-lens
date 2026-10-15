@@ -36,7 +36,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from experiments.x9_position import (
     CAMPAIGN_STORE,
     HIGHER_IS_POSITIVE,
@@ -50,6 +49,7 @@ from experiments.x9_position import (
     controls,
     load_stored,
 )
+
 from reward_lens.artifacts.claims import check_files, find_unbound_numbers
 from reward_lens.core.store import EvidenceStore
 from reward_lens.measure.labels import load_step_scores, rescore_against_position

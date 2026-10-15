@@ -59,6 +59,10 @@ class LocalActor(BaseActor):
     def propose(self, state: SeekerState) -> Proposal:
         payload = self.payload_for(state)
         completion = Completion.from_reply(self._endpoint.complete(payload))
+        # The local arm costs no project money, but it did make a real protocol call.  Keep that
+        # count in the shared meter so the persisted actor record never reports a measured call as
+        # zero merely because its price was zero.
+        self.budget.settle(0, calls=1)
         return self.seal(
             state,
             completion.text,

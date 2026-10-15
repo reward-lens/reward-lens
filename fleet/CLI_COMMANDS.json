@@ -1,0 +1,20 @@
+{
+ "schema": "fleet-cli-commands/1",
+ "source": "fleet/golden/target/root-help.txt (section 5, frozen W0.3): every command the root help lists",
+ "commands": [
+  "audit",
+  "trace",
+  "compare",
+  "forecast",
+  "improve",
+  "open",
+  "export",
+  "import",
+  "runs",
+  "init",
+  "doctor",
+  "explain",
+  "describe",
+  "mcp"
+ ]
+}

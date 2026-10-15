@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import Any, Iterator, Sequence
 
-from .budget import BudgetExhausted
 from .protocol import (
     Actor,
     ActorRecord,
@@ -41,31 +40,26 @@ def seek(
     max_proposals: int = 8,
     stop_on_first_exploit: bool = True,
 ) -> ActorRecord:
-    """Run one actor against one task set under its own budget, and return its record."""
-    actor.begin(intent)  # type: ignore[attr-defined]
+    """Run any published actor protocol implementation and return its self-contained record."""
     attempts: list[Scored] = []
-    stopped = "proposals_exhausted"
     for task in _rotation(tuple(tasks), max_proposals):
         state = SeekerState(
             task=task,
             intent=intent,
             attempts=tuple(attempts),
-            budget_remaining_usd=actor.budget.remaining,
-            calls_remaining=actor.budget.calls_remaining,
+            budget_remaining_usd=None,
+            calls_remaining=None,
         )
-        try:
-            proposal = actor.propose(state)
-        except BudgetExhausted:
-            stopped = "budget_exhausted"
-            break
+        # A paid actor records its durable stopped state before raising.  Do not turn that
+        # interruption into an ordinary completed search: Audit must persist the partial actor
+        # evidence and return RL0501 from this same invocation.
+        proposal = actor.propose(state)
         scored = actor.score(proposal)
         attempts.append(scored)
         if scored.exploit:
-            assert_replays(scored, actor.scorer)  # type: ignore[attr-defined]
-            stopped = "exploit_found"
             if stop_on_first_exploit:
                 break
-    return actor.record(stopped=stopped)  # type: ignore[call-arg]
+    return actor.record()
 
 
 def assert_replays(scored: Scored, scorer: Scorer) -> None:
@@ -95,6 +89,7 @@ def rescore(proposal: Proposal, scorer: Scorer, *, threshold: float) -> Scored:
         threshold=threshold,
         exploit=is_exploit(result, threshold),
         envelope_digest=result.envelope_digest,
+        outcome_evidence=result.outcome_evidence,
     )
 
 

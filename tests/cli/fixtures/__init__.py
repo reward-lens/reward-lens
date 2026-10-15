@@ -245,7 +245,9 @@ def grader_record(
         "summary": f"{repeats} repeats, identical output, no hidden state",
         "n_nondeterministic": 0,
     }
-    entries.extend(check(f"validity.check_{index}", "validity") for index in range(checks - failed - 1))
+    entries.extend(
+        check(f"validity.check_{index}", "validity") for index in range(checks - failed - 1)
+    )
     entries.append(check(culprit, "validity", passed=False))
     entries.extend(
         check(f"validity.failed_{index}", "validity", passed=False) for index in range(failed - 1)

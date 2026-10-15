@@ -1,0 +1,10 @@
+- id: reward-lens-static-validity
+  name: reward-lens static validity subset
+  description: >-
+    Run reward-lens' four fast validity checks only. This hook does not run a full Audit
+    and does not create an Assay record.
+  entry: .github/actions/reward-lens-static-validity/pre_commit.py
+  language: python
+  additional_dependencies: [.]
+  pass_filenames: false
+  require_serial: true

@@ -123,7 +123,9 @@ def fixture(tmp_path: Path, leaking: frozenset[str] = frozenset()) -> tuple[Any,
     return subject, FakeCorpus(tasks=(task,), n_tasks=1)
 
 
-def entries_for(tmp_path: Path, leaking: frozenset[str] = frozenset()) -> dict[str, contracts.Entry]:
+def entries_for(
+    tmp_path: Path, leaking: frozenset[str] = frozenset()
+) -> dict[str, contracts.Entry]:
     subject, corpus = fixture(tmp_path, leaking)
     produced = framing.ContextInference().run(subject, corpus, context())
     return {entry.entry_id.rsplit(".", 1)[-1]: entry for entry in produced}
@@ -335,9 +337,7 @@ def test_rl0231_is_allocated_here_and_nowhere_else() -> None:
         and catalogue not in path.resolve().parents
     ]
     assert elsewhere == []
-    assert any(
-        "RL0231" in path.read_text(encoding="utf-8") for path in sorted(mine.rglob("*.py"))
-    )
+    assert any("RL0231" in path.read_text(encoding="utf-8") for path in sorted(mine.rglob("*.py")))
 
 
 # --- the refusals --------------------------------------------------------------------------------
@@ -623,3 +623,16 @@ def test_the_refusal_takes_its_message_from_the_catalogue(tmp_path: Path) -> Non
     assert catalogued.message.endswith("the sentinel detail")
     assert raised.value.message.startswith(catalogued.message.removesuffix("the sentinel detail"))
     assert raised.value.remediation == catalogued.remediation
+
+
+def test_full_audit_reuse_also_requires_the_builtin_validity_controls(tmp_path: Path) -> None:
+    wanted = run_module._requested((framing.PANEL,), include_builtin_checks=True)
+    assert {"framing.context_inference", "framing.belief_assay"} <= wanted.keys()
+    assert {"validity.fresh_state_sterility", "validity.pass_rate_floor"} <= wanted.keys()
+    subject, corpus = fixture(tmp_path)
+    after = tuple(
+        entry
+        for instrument in framing.PANEL.instruments
+        for entry in instrument.run(subject, corpus, context())
+    )
+    assert run_module._answers(FakeRecord(after), wanted) is False

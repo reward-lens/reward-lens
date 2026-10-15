@@ -102,9 +102,7 @@ def test_the_working_directory_is_read_and_write_at_every_tier(tier: str, tmp_pa
     (work / "payload.txt").write_text("hello", encoding="utf-8")
     script = _stage(work, "runner.py", WORK_SOURCE)
 
-    result = LinuxSandbox(tier=tier).run(
-        _argv(script), limits=_LIMITS, cwd=work, env={}
-    )
+    result = LinuxSandbox(tier=tier).run(_argv(script), limits=_LIMITS, cwd=work, env={})
 
     assert result.exit_code == 0, result.stderr.decode()
     assert result.tier == tier

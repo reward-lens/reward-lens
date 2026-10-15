@@ -1,0 +1,2 @@
+{"example_id": 11, "prompt": [{"role": "user", "content": "Name a prime."}], "completion": [{"role": "assistant", "content": "2"}], "reward": 1.0, "timing": {}, "is_completed": true, "is_truncated": false, "metrics": {"correct": 1.0}}
+{"example_id": 12, "prompt": [{"role": "user", "content": "Name an even prime."}], "completion": [{"role": "assistant", "content": "2"}], "reward": 0.0, "timing": {}, "is_completed": true, "is_truncated": false, "metrics": {"correct": 0.0}}

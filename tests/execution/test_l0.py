@@ -114,9 +114,8 @@ def test_rlimit_nproc_is_relative_to_the_users_load_and_forks_hit_eagain(work: P
     out = r.stdout.decode().splitlines()
     assert out[0].startswith("soft ")
     assert int(out[0].split()[1]) > 0
-    assert r.breach in {"processes", "wall"}
-    if r.breach == "processes":
-        assert r.counters.processes > limits.processes
+    assert r.breach == "processes"
+    assert r.counters.processes > limits.processes
 
 
 def test_process_budget_names_the_processes_dimension(work: Path) -> None:

@@ -15,14 +15,43 @@
       "type": "object", "additionalProperties": false, "required": ["entry"],
       "properties": {
         "entry": {"type": "string", "minLength": 1, "description": "module:callable, or a path to a file with a scoring callable in it"},
-        "kind": {"enum": ["plain", "composite"], "default": "plain"},
+        "kind": {"enum": ["plain", "composite", "openenv"], "default": "plain"},
         "shape": {"oneOf": [{"type": "null"}, {"enum": ["plain", "trl", "verifiers", "inspect"]}]},
         "components": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "entry"],
           "properties": {"name": {"type": "string", "minLength": 1}, "entry": {"type": "string", "minLength": 1}, "weight": {"type": "number"}}}},
         "watch": {"type": "array", "items": {"enum": ["none_to_nan", "exception_to_zero", "bool_as_score"]},
           "description": "the three ways a grader misleads a trainer without raising (D-65)"},
-        "trainer": {"oneOf": [{"type": "null"}, {"enum": ["plain", "trl", "verifiers", "inspect"]}]}
-      }
+        "trainer": {"oneOf": [{"type": "null"}, {"enum": ["plain", "trl", "verifiers", "inspect"]}]},
+        "openenv": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["package", "version", "wheel_sha256", "base_url", "connect_timeout_s", "message_timeout_s", "reset", "action"],
+              "properties": {
+                "package": {"const": "openenv"},
+                "version": {"const": "0.6.0"},
+                "wheel_sha256": {"const": "dd1033006d17c3c0147a02f73fc6deef881e15dc5501aea28930765708292641"},
+                "base_url": {"type": "string", "pattern": "^wss?://(?:localhost|127\\.0\\.0\\.1|\\[::1\\])(?::[0-9]{1,5})?(?:/[^\\s]*)?$"},
+                "connect_timeout_s": {"type": "number", "exclusiveMinimum": 0},
+                "message_timeout_s": {"type": "number", "exclusiveMinimum": 0},
+                "reset": {"type": "string", "minLength": 1},
+                "action": {"type": "string", "minLength": 1}
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "openenv"}}, "required": ["kind"]},
+          "then": {"required": ["openenv"], "properties": {"openenv": {"type": "object"}}}
+        },
+        {
+          "if": {"required": ["openenv"]},
+          "then": {"required": ["kind"], "properties": {"kind": {"const": "openenv"}}}
+        }
+      ]
     },
     "tasks": {
       "type": "object", "additionalProperties": false, "required": ["path", "prompt"],
@@ -35,7 +64,41 @@
     },
     "outcome": {
       "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["kind", "path"],
-        "properties": {"kind": {"const": "protected_test_suite"}, "path": {"type": "string", "minLength": 1}}}],
+        "properties": {
+          "kind": {"const": "protected_test_suite"},
+          "path": {"type": "string", "minLength": 1},
+          "held_out_capability": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["partition_id", "path"],
+                "properties": {
+                  "partition_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$"},
+                  "path": {"type": "string", "minLength": 1},
+                  "floor": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              }
+            ],
+            "description": "the explicitly declared HELD_OUT_TASKS target for a capability floor; distinct from the protected outcome-check path"
+          },
+          "execution": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "string",
+                "minLength": 1,
+                "allOf": [
+                  {"not": {"pattern": "^/"}},
+                  {"not": {"pattern": "(^|/)\\.\\.(/|$)"}},
+                  {"not": {"pattern": "\\\\"}}
+                ]
+              }
+            ],
+            "description": "optional project-local JSON declaration for actual supervised outcome execution"
+          }
+        }}],
       "description": "null is a declaration that there is no outcome check, which the record carries as an unqualified outcome, not as a passing one"
     },
     "success": {"oneOf": [{"type": "null"}, {"type": "string"}]},

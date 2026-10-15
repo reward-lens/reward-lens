@@ -1,6 +1,6 @@
 # Artifacts and operate
 
-**Can a report say more than the evidence store can back?** No, and that is the whole point of `reward_lens.artifacts`: cards, atlases, and safety cases are views over the store, not fresh computations, so a claim on a card exists only if a piece of evidence in the store supports it. `reward_lens.operate` is the command-line and MCP surface that drives all of it.
+**Can a report say more than the evidence store can back?** No, and that is the whole point of `reward_lens.artifacts`: cards, atlases, and safety cases are views over the store, not fresh computations, so a claim on a card exists only if a piece of evidence in the store supports it. `reward_lens.operate` is the command-line surface that drives them; the supported MCP surface lives in `reward_lens.integrations.mcp`.
 
 ## Cards and the atlas
 
@@ -36,4 +36,4 @@
 
 ## The command line and MCP
 
-`reward_lens.operate` exposes the `reward-lens` command. The CPU-pure verbs read and check the store: `card`, `scoreboard`, `claims`, `atlas export`, and `study freeze`. The verbs that need a model are gated: `score`, `serve`, `audit`, `study run`, and `organism train` print the exact dispatch they would make and exit with code 3 rather than fabricate a result. The same module carries a minimal, in-process MCP server, honest in its own docstring about being transport-less. The full walkthrough is on [the command line](../cli.md).
+`reward_lens.operate` exposes the `reward-lens` command. The CPU-pure verbs read and check the store: `card`, `scoreboard`, `claims`, `atlas export`, and `study freeze`. The verbs that need a model are gated: `score`, `serve`, `audit`, `study run`, and `organism train` print the exact dispatch they would make and exit with code 3 rather than fabricate a result. The former in-process MCP API was removed with the 3.1 migration. Run `reward-lens mcp` for the supported isolated MCP 2 server, or use `reward_lens.integrations.mcp` from Python. The full CLI walkthrough is on [the command line](../cli.md).

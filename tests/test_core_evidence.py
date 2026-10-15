@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -27,6 +28,12 @@ from reward_lens.core import (
     Uncertainty,
     make_evidence,
 )
+from reward_lens.core.evidence import ValueCodec
+
+
+def test_value_codec_serializes_immutable_mapping_with_the_existing_map_wire_shape():
+    encoded = ValueCodec().encode(MappingProxyType({"nested": MappingProxyType({"value": 1})}))
+    assert encoded == {"__map__": {"nested": {"__map__": {"value": 1}}}}
 
 
 def _subject() -> SubjectRef:

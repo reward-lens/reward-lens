@@ -220,7 +220,7 @@ class ValueCodec:
                 return int(value)
         if isinstance(value, (list, tuple)):
             return {"__seq__": [self.encode(v, sidecar_dir) for v in value]}
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             return {"__map__": {str(k): self.encode(v, sidecar_dir) for k, v in value.items()}}
         if numpy is not None and isinstance(value, numpy.ndarray):
             return self._encode_array(value, sidecar_dir)

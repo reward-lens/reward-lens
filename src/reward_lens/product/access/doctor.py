@@ -80,6 +80,7 @@ def doctor(*, project: Path | str | None = None) -> Capabilities:
         ],
         sandbox=probe,
         install=_install(),
+        compatibility_matrix=matrix.build(),
     )
 
 
@@ -137,6 +138,19 @@ def render_text(capabilities: Capabilities, *, plan: Plan | None = None) -> str:
     )
     lines.append(f"    extras installed: {extras}          audit on local graders: {local}")
     lines.append("")
+    if capabilities.compatibility_matrix:
+        lines.append("  Adapter compatibility (local fixtures; live providers unverified)")
+        for family, row in capabilities.compatibility_matrix.items():
+            status = row["conformance"]
+            if status == "ran":
+                detail = f"{row['framework_version']}; {row['supported_records']}; {row['fixture_identity']}"
+            else:
+                detail = row["reason"]
+            route = row.get("install_route", "")
+            lines.append(f"    {family}: {status}; {detail}; live {row['live']}")
+            if route:
+                lines.append(f"      install: {route}")
+        lines.append("")
     lines.append("  Sandbox")
     label, milliseconds = ladder.sandbox_line(probe)
     lines.append(f"    {label}     probed in {milliseconds} ms, held")
@@ -161,7 +175,11 @@ def render_text(capabilities: Capabilities, *, plan: Plan | None = None) -> str:
             lines.append(f"    {note}")
         lines.append("")
     lines.append(f"  Network   {_network_line(probe)}")
-    first = "for everything in the first list" if resolution.available else "and nothing is in the first list"
+    first = (
+        "for everything in the first list"
+        if resolution.available
+        else "and nothing is in the first list"
+    )
     lines.append(f"  Cost      $0.00 {first}")
     lines.append("")
     return "\n".join(lines)

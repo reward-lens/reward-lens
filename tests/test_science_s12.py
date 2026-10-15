@@ -12,16 +12,16 @@ GRPO/PPO hump, and the real-model certified radius are recorded as inconclusive-
 from __future__ import annotations
 
 import numpy as np
-
-from reward_lens.core.store import EvidenceStore
-from reward_lens.core.types import TrustLevel
-from reward_lens.loops.bon import expected_bon_reward
-from reward_lens.studies import Scoreboard, render_report, run_study
 from studies.s12_hackability.analysis import (
     _bon_expect,
     _planted_hack_draw,
     build_spec,
 )
+
+from reward_lens.core.store import EvidenceStore
+from reward_lens.core.types import TrustLevel
+from reward_lens.loops.bon import expected_bon_reward
+from reward_lens.studies import Scoreboard, render_report, run_study
 
 
 def test_s12_runs_and_registers(tmp_path):

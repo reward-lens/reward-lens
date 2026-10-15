@@ -18,16 +18,6 @@ so no real-model number is invented.
 from __future__ import annotations
 
 import numpy as np
-
-from reward_lens.core.store import EvidenceStore
-from reward_lens.core.types import TrustLevel
-from reward_lens.measure.indices.coherence import (
-    coherence_matrix,
-    effective_dimension,
-    max_offdiagonal_coherence,
-    welch_bound,
-)
-from reward_lens.studies import Scoreboard, render_report, run_study
 from studies.s05_capacity.analysis import (
     _ANCHOR_CORRELATION,
     _CONTAM_STEER,
@@ -42,6 +32,16 @@ from studies.s05_capacity.analysis import (
     _welch_floor_rows,
     build_spec,
 )
+
+from reward_lens.core.store import EvidenceStore
+from reward_lens.core.types import TrustLevel
+from reward_lens.measure.indices.coherence import (
+    coherence_matrix,
+    effective_dimension,
+    max_offdiagonal_coherence,
+    welch_bound,
+)
+from reward_lens.studies import Scoreboard, render_report, run_study
 
 # ---------------------------------------------------------------------------
 # The Welch floor (Appendix A9), proven on planted frames

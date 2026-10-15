@@ -54,7 +54,7 @@ The layout follows the kernel. `import reward_lens` and the two pure-Python subs
 
 -   __[Artifacts and operate](artifacts-operate.md)__
 
-    Cards, the population Atlas, the manuscript claims checker, the CLI, and the in-process MCP surface.
+    Cards, the population Atlas, the manuscript claims checker, the CLI, and the isolated MCP 2 surface.
 
 -   __[Legacy (1.0 API)](legacy.md)__
 

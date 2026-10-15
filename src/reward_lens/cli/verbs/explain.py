@@ -9,22 +9,11 @@ from . import _shared
 
 
 def run(*, out, code, **opts) -> int:
-    from reward_lens import errors
+    from reward_lens import api, errors
 
     wanted = ids.validate_identifier(code, field="code").upper()
     long_form = errors.explain(wanted)
-    spec = errors.CATALOGUE[wanted]
-    document = {
-        "schema_version": "error-explanation/1.0",
-        "command": "explain",
-        "code": spec.code,
-        "title": spec.title,
-        "cause": spec.cause,
-        "remedies": list(spec.remedies),
-        "exit_code": spec.exit_code,
-        "surface": spec.surface,
-        "error": None,
-    }
+    document = api.explain(wanted).model_dump()
     return out.deliver(document=document, text=long_form, exit_code=0)
 
 

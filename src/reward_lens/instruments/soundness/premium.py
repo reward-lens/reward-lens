@@ -27,6 +27,8 @@ from typing import Any, Sequence
 from reward_lens import contracts
 from reward_lens.instruments.base import RunContext
 
+from . import intervals
+
 __all__ = [
     "MIN_CLUSTERS",
     "PremiumReport",
@@ -181,6 +183,10 @@ def premium_entry(
             clusters=report.n,
         )
     worst = report.worst
+    interval = intervals.interval_metadata(
+        uncertainty,
+        remedy="supply at least 15 matched tasks before requesting an interval",
+    )
     return contracts.estimate(
         "soundness",
         "soundness.exploit_premium",
@@ -213,6 +219,7 @@ def premium_entry(
         denominator="tasks carrying both an exploiting and an honest response",
         exclusions=tuple(f"task {task}: no matched honest response" for task in report.unmatched),
         result={
+            "interval": interval,
             "per_task": [row.to_dict() for row in report.per_task],
             "unmatched": list(report.unmatched),
             "no_exploit": list(report.no_exploit),

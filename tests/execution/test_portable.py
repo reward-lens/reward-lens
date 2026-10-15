@@ -131,15 +131,18 @@ def test_w0_sets_exactly_the_four_limits_on_the_job(monkeypatch: pytest.MonkeyPa
     class FakeKernel32:
         def CreateJobObjectW(self, a, b):  # noqa: N802
             return 7
+
         def SetInformationJobObject(self, h, cls, info, size):  # noqa: N802
             recorded["class"] = cls
             recorded["limits"] = ctypes.cast(
                 info, ctypes.POINTER(WindowsSandbox.EXTENDED_LIMIT_INFORMATION)
             ).contents
             return 1
+
         def AssignProcessToJobObject(self, h, p):  # noqa: N802
             recorded["assigned"] = p
             return 1
+
         def CloseHandle(self, h):  # noqa: N802
             return 1
 

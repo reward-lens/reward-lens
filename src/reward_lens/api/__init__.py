@@ -6,11 +6,10 @@ The stability rule is the schema's (D-64): fields and functions are added, nothi
 renamed inside a major version, and a deprecated name keeps working for one major with a shim.
 The page at `docs/api.md` is the contract a caller reads.
 
-In wave 1 most engines are not in the build. A verb whose engine is absent returns a record whose
-ten sections are honest absences and whose holes index says what is missing and what would fix it;
-it does not raise, and it does not guess. `export` is the exception: it reads the same seam as the
-other verbs, and when the renderer behind it is absent it refuses with RL0701 rather than writing
-an empty file that looks like a report.
+An engine absent from a build makes its record-returning verb return a record whose ten sections
+are honest absences and whose holes index says what is missing and what would fix it; it does not
+raise, and it does not guess. The export renderer is in this build and preserves the record
+boundary's RL0621 refusal when its requested record is missing.
 """
 
 import json
@@ -34,11 +33,15 @@ from .requests import (
     ForecastIssueRequest,
     ForecastLedgerRequest,
     ForecastResolveRequest,
+    ImportRequest,
+    ImportResult,
     ImproveRequest,
     InstallInfo,
     Plan,
+    SeekerProposalRequest,
     TraceRequest,
 )
+from .results import ErrorExplanation, SeekerProposalResult
 
 if typing.TYPE_CHECKING:  # pragma: no cover - the engine is never imported at runtime here
     from reward_lens.product.audit import Reused
@@ -51,26 +54,62 @@ __all__ = [
     "DEFAULT_SEED",
     "DoctorRequest",
     "ExportRequest",
+    "ErrorExplanation",
     "ForecastIssueRequest",
     "ForecastLedgerRequest",
     "ForecastResolveRequest",
     "ImproveRequest",
+    "ImportRequest",
+    "ImportResult",
     "InstallInfo",
     "Plan",
+    "SeekerProposalRequest",
+    "SeekerProposalResult",
     "TraceRequest",
     "audit",
     "compare",
     "doctor",
+    "describe",
     "dry_run",
     "export",
+    "explain",
     "forecast_issue",
     "forecast_resolve",
     "forecast_ledger",
     "improve",
+    "import_record",
     "last_reuse",
     "open_record",
+    "seeker_propose",
     "trace",
 ]
+
+
+def explain(code: str) -> ErrorExplanation:
+    """Read one stable error or finding code from the offline catalogue.
+
+    Unknown codes raise the catalogue's RL0001 usage error, as the CLI does.
+    """
+    from reward_lens import errors
+
+    wanted = code.upper() if isinstance(code, str) else code
+    errors.explain(wanted)
+    spec = errors.CATALOGUE[wanted]
+    return ErrorExplanation(
+        code=spec.code,
+        title=spec.title,
+        cause=spec.cause,
+        remedies=list(spec.remedies),
+        exit_code=spec.exit_code,
+        surface=spec.surface,
+    )
+
+
+def describe() -> dict[str, typing.Any]:
+    """Return the live, versioned CLI command tree for SDK and agent callers."""
+    from reward_lens.cli.describe import tree
+
+    return tree()
 
 
 def _honest(
@@ -167,7 +206,9 @@ def forecast_issue(request: ForecastIssueRequest) -> contracts.Assay:
     started = time.monotonic()
     engine = _dispatch.engine("forecast_issue")
     if engine is not None:
-        return engine(request, **_dispatch.context(request.project))
+        return _dispatch.call_expected_refusal(
+            engine, request, verb="forecast_issue", **_dispatch.forecast_context(request.project)
+        )
     return _honest(
         "forecast_issue",
         path=request.project,
@@ -183,7 +224,9 @@ def forecast_resolve(request: ForecastResolveRequest) -> contracts.Assay:
     started = time.monotonic()
     engine = _dispatch.engine("forecast_resolve")
     if engine is not None:
-        return engine(request, **_dispatch.context(request.project))
+        return _dispatch.call_expected_refusal(
+            engine, request, verb="forecast_resolve", **_dispatch.forecast_context(request.project)
+        )
     return _honest(
         "forecast_resolve",
         path=request.project,
@@ -199,7 +242,9 @@ def forecast_ledger(request: ForecastLedgerRequest) -> contracts.Assay:
     started = time.monotonic()
     engine = _dispatch.engine("forecast_ledger")
     if engine is not None:
-        return engine(request, **_dispatch.context(request.project))
+        return _dispatch.call_expected_refusal(
+            engine, request, verb="forecast_ledger", **_dispatch.forecast_context(request.project)
+        )
     return _honest(
         "forecast_ledger",
         path=request.project,
@@ -220,7 +265,9 @@ def improve(request: ImproveRequest) -> contracts.Assay:
     started = time.monotonic()
     engine = _dispatch.engine("improve")
     if engine is not None:
-        return engine(request, **_dispatch.context(request.path))
+        return _dispatch.call_expected_refusal(
+            engine, request, verb="improve", **_dispatch.context(request.path)
+        )
     return _honest(
         "improve",
         path=request.path,
@@ -228,6 +275,24 @@ def improve(request: ImproveRequest) -> contracts.Assay:
         seed=request.seed,
         reproduce=[f"reward-lens improve {request.path}"],
         started=started,
+    )
+
+
+def seeker_propose(request: SeekerProposalRequest) -> SeekerProposalResult:
+    """Persist one caller-provided response through the qualified Audit path.
+
+    This is not the legacy session helper.  The engine owns construction of the
+    actor and qualified outcome target, then returns identifiers from the
+    normal saved record.
+    """
+    engine = _dispatch.engine("seeker_propose")
+    if engine is not None:
+        return engine(request)
+    raise contracts.CapabilityUnavailable(
+        code="RL0701",
+        message="seeker proposals need the qualified Audit proposal engine",
+        remediation="install a reward-lens build that includes the Audit proposal engine",
+        context={"project_path": str(request.project_path), "task_id": request.task_id},
     )
 
 
@@ -261,7 +326,33 @@ def open_record(path: pathlib.Path) -> contracts.Assay:
         invalid.context.setdefault("original_bytes", raw)
         invalid.context.setdefault("path", str(path))
         raise
+    computed = contracts.digest(data)
+    declared = data["assay_id"]
+    if declared != computed:
+        raise contracts.RecordInvalid(
+            message=f"the record at {path} declares assay_id {declared}, but its contents digest to {computed}",
+            remediation="restore the original record bytes or open a newly sealed assay; opening never changes a saved identity",
+            context={
+                "path": str(path),
+                "declared_assay_id": declared,
+                "computed_assay_id": computed,
+                "original_bytes": raw,
+            },
+        )
     return contracts.Assay.model_validate(data)
+
+
+def import_record(request: ImportRequest) -> ImportResult:
+    """Receive, validate, persist, and reopen an external record through the Import engine."""
+    engine = _dispatch.engine("import_record")
+    if engine is None:
+        raise contracts.CapabilityUnavailable(
+            code="RL0701",
+            message="import needs the record-ingest capability, which is not in this build",
+            remediation="install a reward-lens build that ships Import and retry",
+            context={"path": str(request.path)},
+        )
+    return engine(request)
 
 
 def export(request: ExportRequest):

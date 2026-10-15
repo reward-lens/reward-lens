@@ -1,0 +1,103 @@
+{
+  "default-ci-v1": {
+    "action": "merge_this_grader",
+    "evaluated": {
+      "validity.owner_declared_input_handling": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      }
+    },
+    "policy_digest": "sha256:9ee2f4cf543d38e56c5a129653abffbd80dd76566aa25d964c4b8f9c2a28fa0b",
+    "policy_id": "default-ci-v1",
+    "reasons": [
+      "required_missing:validity.owner_declared_input_handling"
+    ],
+    "state": "unresolved"
+  },
+  "default-evaluator-v1": {
+    "action": "train_on_this_version",
+    "evaluated": {
+      "exploits.reproducible_severity": {
+        "reason": "the required panel is absent",
+        "state": "missing"
+      },
+      "outcome.qualified": {
+        "reason": "the outcome check is unqualified",
+        "state": "rejected"
+      },
+      "reach.open_findings": {
+        "reason": "the required panel is absent",
+        "state": "missing"
+      },
+      "signal.measured": {
+        "reason": "the required producer entry is absent",
+        "state": "missing"
+      },
+      "validity.complete": {
+        "reason": "a required validity check is absent",
+        "state": "missing"
+      }
+    },
+    "policy_digest": "sha256:74dd03b74cacaee5d6742cfbaac747078598ca721426b0b83bfaad1311fa9e8f",
+    "policy_id": "default-evaluator-v1",
+    "reasons": [
+      "blocking_finding:outcome.qualified"
+    ],
+    "state": "rejected"
+  },
+  "default-learning-v1": {
+    "action": "train_on_this_version",
+    "evaluated": {
+      "capability_floor.held": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      },
+      "null_replay.passed": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      },
+      "placebo.passed": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      },
+      "rung4_or_5.complete": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      }
+    },
+    "policy_digest": "sha256:f7a8ac0aaa1da288c7746f70ad2be46d8bb3b5401331f91311ba12e0be0d8120",
+    "policy_id": "default-learning-v1",
+    "reasons": [
+      "required_missing:rung4_or_5.complete",
+      "required_missing:null_replay.passed",
+      "required_missing:placebo.passed",
+      "required_missing:capability_floor.held"
+    ],
+    "state": "unresolved"
+  },
+  "default-selection-v1": {
+    "action": "use_for_selection",
+    "evaluated": {
+      "capability_floor.held": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      },
+      "rung2.complete": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      },
+      "susceptibility.calibration_conditions": {
+        "reason": "the policy-named producer entry is missing",
+        "state": "missing"
+      }
+    },
+    "policy_digest": "sha256:fe60ee534b888bcff941c3ef69b732a9383d6c0a4310fce0dd326d5f44e77a95",
+    "policy_id": "default-selection-v1",
+    "reasons": [
+      "required_missing:rung2.complete",
+      "required_missing:capability_floor.held",
+      "required_missing:susceptibility.calibration_conditions"
+    ],
+    "state": "unresolved"
+  }
+}

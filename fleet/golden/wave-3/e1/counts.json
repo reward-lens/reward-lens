@@ -1,0 +1,28 @@
+{
+ "schema": "fleet-e1-counts/1",
+ "recorded_by": "the controller, 2026-09-14, from the artifacts metadata (A-030 (3)); computed by a read-only scout from e1_analysis/ with an independent recomputation from the rollouts parquet",
+ "recorded_path": "release/public_inputs/e1_analysis",
+ "counts": {
+  "groups": 1604,
+  "groups_with_contrast": 517,
+  "accepted_hacks": 18590,
+  "solutions": 10,
+  "functions_summed": 9,
+  "advantage_components": 2,
+  "registered_analysis_support": 67
+ },
+ "provenance": {
+  "groups": "e1_analysis/REGISTERED.md:16 (\"Measured, on all 1604 groups of the subject run\"); recomputed: 25664 parquet rows / 16 per group = 1604",
+  "groups_with_contrast": "e1_analysis/REGISTERED.md:20, column \"groups with `M >= 2`\", binarised row = 517 (0.3223); recomputed over blocks of 16 with thinking_format_ok := thinking_format == 1.0",
+  "accepted_hacks": "e1_analysis/REGISTERED.md:46 (\"**18,590** hacked rollouts also sit at `5.0`\"); recomputed: reward_hacked true AND composite == 5.0 (the run maximum) = 18590. NOT the raw reward_hacked total, which is 18653",
+  "solutions": "e1_analysis/REGISTERED.md:44 (\"`actually_solved` is 1 on exactly **10** of 25,664 rollouts\"); recomputed: sum(actually_solved) = 10",
+  "functions_summed": "e1_analysis/COMPOSITION.md:11 (\"## 1. Nine reward functions, and the weights are published\") with e1_analysis/PLAN.md:34 (\"the logged `reward` key is an unweighted sum over all nine\")",
+  "advantage_components": "e1_analysis/COMPOSITION.md:34 (\"So the objective is `1 . thinking_format + 4 . training_passed`\") with e1_analysis/PLAN.md:33 (weights `(1, 4, 0, 0, 0, 0, 0, 0, 0)`, \"the advantage path uses that weighted composite\"): 2 non-zero components",
+  "registered_analysis_support": "e1_analysis/REGISTERED.md:20, column \"groups with `M >= 3`\", binarised row = **67 (0.0418)**; recomputed as above. Distinct from groups_with_contrast; the native row of the same table is 141, not 67"
+ },
+ "notes": {
+  "assay_tree_root_original": "historical reward-lens-assay/e1_analysis checkout; local root redacted",
+  "identical": "md5 over the six .md files matches between the two copies",
+  "row_level_artifact": "historical ignored extraction (25664 rows, 38 cols); not shipped in reward-lens source"
+ }
+}

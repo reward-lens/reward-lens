@@ -3,17 +3,20 @@
 Written by `tests/packaging/test_closure.py`. This is what `uv pip list` prints in a venv
 holding only the built wheel, which is the count D-58 says binds.
 
-12 distributions.
+15 distributions.
 
 | distribution | version |
 |---|---|
 | annotated-types | 0.8.0 |
+| cffi | 2.1.1 |
 | click | 8.5.0 |
-| coverage | 7.16.1 |
-| jsonschema-rs | 0.56.0 |
+| coverage | 7.16.2 |
+| cryptography | 50.0.2 |
+| jsonschema-rs | 0.58.6 |
 | libcst | 1.9.0 |
-| pydantic | 2.13.5 |
-| pydantic-core | 2.46.5 |
+| pycparser | 3.11 |
+| pydantic | 2.14.1 |
+| pydantic-core | 2.50.1 |
 | pyyaml | 6.0.3 |
 | reward-lens | 3.1.0 |
 | rfc8785 | 0.1.4 |
@@ -44,7 +47,7 @@ pin, to save one pure-payload distribution. `requires-python >= 3.11` is unchang
 
 ## Cold `uvx reward-lens --help`
 
-pending P-CLI. The console script's entry point is in the wheel's metadata and is asserted
-by `test_wheel_metadata.py`, but `reward_lens.cli.main:main` does not exist yet, so there
-is nothing to time. D-30's ceiling is 100 ms and gate 5 checks the import set as well as
+The console script is present and checked against the installed wheel. A cold `uvx`
+measurement on a clean machine is pending final release qualification; no timing claim
+is made here. D-30's ceiling is 100 ms and gate 5 checks the import set as well as
 the clock.

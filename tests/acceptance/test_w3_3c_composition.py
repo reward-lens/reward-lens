@@ -34,10 +34,9 @@ the departure from it.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -82,11 +81,7 @@ needs_campaign = pytest.mark.skipif(
     ),
 )
 
-#: `is_equiv` from `hendrycks/math`. Fetched rather than vendored, so what is measured is what is
-#: actually published today rather than a copy that could have drifted.
-REAL_VERIFIER_URL = (
-    "https://raw.githubusercontent.com/hendrycks/math/main/modeling/math_equivalence.py"
-)
+#: `is_equiv` from the exact upstream revision recorded in the real_verifiers fixture manifest.
 
 #: Answer pairs in the shapes the MATH benchmark's own normaliser is written for, plus four it is
 #: not. The last four are the ones that exercise the bare `except`.
@@ -324,15 +319,13 @@ class CallCounter:
 
 @pytest.fixture(scope="module")
 def real_verifier():
-    try:
-        with urllib.request.urlopen(REAL_VERIFIER_URL, timeout=20) as response:
-            source = response.read().decode("utf-8")
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        pytest.skip(
-            f"no network for the real-verifier run ({type(exc).__name__}). The fixtures in "
-            f"tests/test_measure_composition.py prove the code runs; this one proves it measures "
-            f"something published, and skipping it leaves that unproven rather than proven."
-        )
+    path = Path(__file__).resolve().parent / "real_verifiers/math_equivalence.py"
+    source_bytes = path.read_bytes()
+    assert (
+        hashlib.sha256(source_bytes).hexdigest()
+        == "c4101b1f51a2bb65665194aecd9f761d668c0c248a0350f196c2950e87488527"
+    ), "upstream MATH fixture drift"
+    source = source_bytes.decode("utf-8")
     namespace: dict[str, Any] = {}
     exec(compile(source, "math_equivalence.py", "exec"), namespace)  # noqa: S102
     assert "except:" in source, "the bare except this instrument is about is no longer there"

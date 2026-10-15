@@ -134,7 +134,11 @@ def self_check(entries: Sequence[contracts.Entry]) -> None:
         if result.get("mutation_score"):
             missing = [
                 field
-                for field in ("score_over_generated", "score_over_non_equivalent", "sampling_fraction")
+                for field in (
+                    "score_over_generated",
+                    "score_over_non_equivalent",
+                    "sampling_fraction",
+                )
                 if field not in result
             ]
             if missing:
@@ -160,7 +164,9 @@ def findings_for(entry: contracts.Entry) -> tuple[contracts.Finding, ...]:
                     "code": code,
                     "kind": "notApplicable",
                     "level": "note",
-                    "message": (entry.absence.missing_access if entry.absence else FINDING_TITLES[code]),
+                    "message": (
+                        entry.absence.missing_access if entry.absence else FINDING_TITLES[code]
+                    ),
                 },
             ),
         )
@@ -170,7 +176,9 @@ def findings_for(entry: contracts.Entry) -> tuple[contracts.Finding, ...]:
 
 def _finding(entry: contracts.Entry, index: int, row: dict[str, Any]) -> contracts.Finding:
     code = str(row["code"])
-    arm = getattr(entry.provenance, "arm", None) or ("static" if entry.kind == "absence" else "black_box")
+    arm = getattr(entry.provenance, "arm", None) or (
+        "static" if entry.kind == "absence" else "black_box"
+    )
     return contracts.Finding(
         id=FINDING_CODES[code],
         rule=entry.entry_id,
@@ -180,7 +188,12 @@ def _finding(entry: contracts.Entry, index: int, row: dict[str, Any]) -> contrac
         scope=entry.scope,
         entries=[entry.entry_id],
         partial_fingerprint=contracts.digest(
-            {"code": code, "entry": entry.entry_id, "index": index, "message": row.get("message", "")}
+            {
+                "code": code,
+                "entry": entry.entry_id,
+                "index": index,
+                "message": row.get("message", ""),
+            }
         ).removeprefix("sha256:")[:16],
         message=str(row.get("message", FINDING_TITLES[code])),
         code=code,
@@ -221,6 +234,14 @@ def _cases(subject: Any, corpus: Any, ctx: RunContext) -> tuple[tuple[Case, ...]
     """The battery cases: the protected suite when the project declares one, else the corpus."""
     partition = _protected_suite(ctx)
     if partition is not None:
+        root = Path(getattr(partition, "root"))
+        if (root / "known_good").is_dir() or (root / "known_wrong").is_dir():
+            return (
+                batteries_module.cases_from_code_controls(
+                    partition, tuple(getattr(corpus, "tasks", ()) or ())
+                ),
+                "the project's declared Python good and wrong controls joined to its task set",
+            )
         return batteries_module.cases_from_partition(partition), "the project's protected suite"
     built: list[Case] = []
     for index, rollout in enumerate(getattr(corpus, "rollouts", ()) or ()):
@@ -249,6 +270,13 @@ def _cases(subject: Any, corpus: Any, ctx: RunContext) -> tuple[tuple[Case, ...]
             )
         )
     return tuple(built), "the corpus supplied to this run"
+
+
+def _independent_outcomes(subject: Any, cases: Sequence[Case]) -> tuple[Any, ...]:
+    """Select owner-supplied Outcome3 records for this battery without inventing any outcomes."""
+    supplied = getattr(subject, "independent_outcomes", ()) or ()
+    case_ids = {case.id for case in cases}
+    return tuple(outcome for outcome in supplied if getattr(outcome, "item_id", None) in case_ids)
 
 
 def _no_cases(ctx: RunContext, entry_id: str, subject_ref: str, measurand: str) -> contracts.Entry:
@@ -289,12 +317,24 @@ class Batteries:
         produced: list[contracts.Entry] = []
         good = tuple(case for case in cases if case.kind == "known_good")
         wrong = tuple(case for case in cases if case.kind != "known_good")
-        good_report = batteries_module.run_battery(subject, good, kind="known_good")
+        good_report = batteries_module.run_battery(
+            subject,
+            good,
+            kind="known_good",
+            runner=batteries_module.runner_for(subject, sandbox=ctx.sandbox),
+            independent_outcomes=_independent_outcomes(subject, good),
+        )
         produced.append(
             batteries_module.battery_entry(good_report, subject, ctx, subject_ref=subject_ref)
         )
         if wrong:
-            wrong_report = batteries_module.run_battery(subject, wrong, kind="known_wrong")
+            wrong_report = batteries_module.run_battery(
+                subject,
+                wrong,
+                kind="known_wrong",
+                runner=batteries_module.runner_for(subject, sandbox=ctx.sandbox),
+                independent_outcomes=_independent_outcomes(subject, wrong),
+            )
             produced.append(
                 batteries_module.battery_entry(
                     wrong_report, subject, ctx, subject_ref=subject_ref, load_bearing=True
@@ -360,7 +400,13 @@ class Mutation:
                     "how much of the grader the protected suite tests",
                 )
             ]
-        ledger = mutation.run(subject, cases, limit=self.limit, seed=self.seed)
+        ledger = mutation.run(
+            subject,
+            cases,
+            limit=self.limit,
+            seed=self.seed,
+            runner=batteries_module.runner_for(subject, sandbox=ctx.sandbox),
+        )
         produced = [
             mutation.score_entry(ledger, ctx, subject_ref=subject_ref),
             mutation.survival_entry(ledger, ctx, subject_ref=subject_ref),
@@ -380,7 +426,9 @@ class Relations:
         subject_ref = _subject_ref(subject)
         source = batteries_module.source_of(subject)
         if not source:
-            return [_source_absence(ctx, "soundness.relations.source", subject_ref, "the relations")]
+            return [
+                _source_absence(ctx, "soundness.relations.source", subject_ref, "the relations")
+            ]
         cases, _origin = _cases(subject, corpus, ctx)
         if not cases:
             return [
@@ -391,7 +439,9 @@ class Relations:
                     "whether the score is invariant under transformations that preserve correctness",
                 )
             ]
-        outcomes = relations.run_relations(subject, cases)
+        outcomes = relations.run_relations(
+            subject, cases, runner=batteries_module.runner_for(subject, sandbox=ctx.sandbox)
+        )
         produced = relations.relation_entries(outcomes, ctx, subject_ref=subject_ref)
         self_check(produced)
         return produced
@@ -427,7 +477,7 @@ class ExploitPremium:
             ]
         rows = {
             str(row.get("case_id")): row
-            for row in batteries_module.sandbox_runner(
+            for row in batteries_module.runner_for(subject, sandbox=ctx.sandbox)(
                 batteries_module.source_of(subject),
                 str(getattr(subject, "entrypoint", "score") or "score"),
                 cases,
@@ -449,9 +499,7 @@ class ExploitPremium:
         return produced
 
 
-def _source_absence(
-    ctx: RunContext, entry_id: str, subject_ref: str, what: str
-) -> contracts.Entry:
+def _source_absence(ctx: RunContext, entry_id: str, subject_ref: str, what: str) -> contracts.Entry:
     return ctx.absence(
         "soundness",
         entry_id,

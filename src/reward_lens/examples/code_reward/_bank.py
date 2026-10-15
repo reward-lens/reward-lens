@@ -227,7 +227,13 @@ TASKS: list[tuple[str, str, str, list[list[Any]]]] = [
             "        while not w.startswith(out):\n            out = out[:-1]\n"
             "    return out\n"
         ),
-        [[["flow", "flower"]], [[]], [["a", "b"]], [["same", "same"]], [["prefix", "pre", "president"]]],
+        [
+            [["flow", "flower"]],
+            [[]],
+            [["a", "b"]],
+            [["same", "same"]],
+            [["prefix", "pre", "president"]],
+        ],
     ),
     (
         "word_lengths",
@@ -545,7 +551,9 @@ def responses() -> list[dict[str, str]]:
             if index % 2 == 0:
                 third = source  # correct, but no code fence: the format term notices
             else:
-                other = _wrong_raises(entry) if kind == "constant" else _wrong_constant(entry, first)
+                other = (
+                    _wrong_raises(entry) if kind == "constant" else _wrong_constant(entry, first)
+                )
                 third = FENCED.format(lead=leads[2], code=other)
             texts = [
                 FENCED.format(lead=leads[0], code=source),
@@ -624,6 +632,104 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _write_outcome_execution(
+    dest: Path, written: list[Path], task_rows: list[dict[str, Any]]
+) -> None:
+    """Bind the shipped controls and all 40 actual task inputs to a qualified local check.
+
+    The evaluator embeds the shipped protected test source before any candidate runs. This is the
+    same independence boundary as ``outcome/check.py`` and lets PythonGrader run it in an isolated
+    scratch tree without granting candidate code access to the project directory.
+    """
+    from reward_lens.graders.python_grader import PythonGrader
+    from reward_lens.product.audit.instruments import build_corpus
+    from reward_lens.product.audit.registry import discover
+    from reward_lens.product.audit.run import _planned_project_method_ids
+    from reward_lens.store.project import Project
+
+    outcome = dest / "outcome"
+    check_source = (outcome / "check.py").read_text(encoding="utf-8")
+    protected_source = (outcome / "test_solution.py").read_text(encoding="utf-8")
+    old_line = 'PROTECTED_SOURCE = (HERE / "test_solution.py").read_text(encoding="utf-8")'
+    if check_source.count(old_line) != 1:
+        raise ValueError("the independent outcome source no longer has its protected-source load")
+    evaluator_source = check_source.replace(old_line, f"PROTECTED_SOURCE = {protected_source!r}")
+    evaluator_source += (
+        "\n\ndef score(task, response):\n"
+        "    return 1.0 if run_outcome(task, response)['passed'] else 0.0\n"
+    )
+    evaluator_path = outcome / "independent_evaluator.py"
+    evaluator_path.write_text(evaluator_source, encoding="utf-8")
+    written.append(evaluator_path)
+
+    by_id = {row["task_id"]: {**row, "id": row["task_id"]} for row in task_rows}
+    controls_root = outcome / "execution_controls"
+    target_root = outcome / "execution_targets"
+    controls: dict[str, list[dict[str, Any]]] = {"known_good": [], "known_wrong": []}
+    for kind in controls:
+        (controls_root / kind).mkdir(parents=True, exist_ok=True)
+        for source_path in sorted((outcome / kind).glob("*.py")):
+            item_id = f"{kind}/{source_path.name}"
+            item_path = controls_root / item_id
+            shutil.copyfile(source_path, item_path)
+            written.append(item_path)
+            controls[kind].append(
+                {
+                    "item_id": item_id,
+                    "task": by_id[source_path.stem],
+                    "response": source_path.read_text(encoding="utf-8"),
+                }
+            )
+    target_root.mkdir(parents=True, exist_ok=True)
+    targets: list[dict[str, Any]] = []
+    for task_id, task in sorted(by_id.items()):
+        item_id = f"{task_id}.json"
+        target_path = target_root / item_id
+        target_path.write_text(json.dumps(task, sort_keys=True) + "\n", encoding="utf-8")
+        written.append(target_path)
+        targets.append({"item_id": item_id, "task": task})
+
+    evaluator_digest = PythonGrader.from_path(evaluator_path).describe().source_digest
+    grader_digest = PythonGrader.from_path(dest / "grader.py").describe().source_digest
+    declaration = {
+        "version": 1,
+        "evaluator": {"path": "outcome/independent_evaluator.py", "entrypoint": "score"},
+        "check": {
+            "owner": "independent-code-outcome",
+            "source_digest": evaluator_digest,
+            "interface": "reward_lens.graders.python_grader.PythonGrader.score/v1",
+            "partition_id": "code-reward-controls-v1",
+        },
+        "candidate_owner": "candidate-response",
+        "audited_grader": {"owner": "code-reward", "source_digest": grader_digest},
+        "subject_ref": "sha256:" + "0" * 64,
+        "controls": {
+            "partition_path": "outcome/execution_controls",
+            "partition_id": "code-reward-controls-v1",
+            **controls,
+        },
+        "target": {
+            "partition_path": "outcome/execution_targets",
+            "partition_id": "code-reward-targets-v1",
+            "tasks": targets,
+        },
+    }
+    execution_path = outcome / "execution.json"
+    execution_path.write_text(
+        json.dumps(declaration, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    project = Project.open(dest)
+    corpus = build_corpus(tasks_path=dest / "tasks.jsonl", responses_path=dest / "responses.jsonl")
+    methods = _planned_project_method_ids(
+        discover(), response_bank=True, project=project, corpus=corpus
+    )
+    declaration["subject_ref"] = project.version(methods=methods).digest()
+    execution_path.write_text(
+        json.dumps(declaration, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    written.append(execution_path)
+
+
 def build(dest: Path) -> list[Path]:
     """Write the whole example into `dest`: the static files copied, the bank computed."""
     dest = Path(dest)
@@ -638,7 +744,8 @@ def build(dest: Path) -> list[Path]:
             shutil.copyfile(HERE / name, target)
         written.append(target)
 
-    _write_jsonl(dest / "tasks.jsonl", tasks())
+    task_rows = tasks()
+    _write_jsonl(dest / "tasks.jsonl", task_rows)
     _write_jsonl(dest / "responses.jsonl", responses())
     written += [dest / "tasks.jsonl", dest / "responses.jsonl"]
 
@@ -655,5 +762,7 @@ def build(dest: Path) -> list[Path]:
     reasons_path = dest / "outcome" / "known_wrong" / "reasons.json"
     reasons_path.write_text(json.dumps(reasons, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     written.append(reasons_path)
+
+    _write_outcome_execution(dest, written, task_rows)
 
     return sorted(p.resolve() for p in written)

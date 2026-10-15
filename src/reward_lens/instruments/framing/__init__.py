@@ -164,9 +164,7 @@ class ContextInference:
         credited_to="reward_lens.instruments.framing (section 7.3)",
     )
 
-    def run(
-        self, subject: Any, corpus: Any, ctx: RunContext
-    ) -> list[contracts.Entry]:  # noqa: D102
+    def run(self, subject: Any, corpus: Any, ctx: RunContext) -> list[contracts.Entry]:  # noqa: D102
         subject_ref = _subject_ref(subject)
         produced: list[contracts.Entry] = []
         for one in CHANNELS:
@@ -269,9 +267,7 @@ class BeliefAssay:
         credited_to="reward_lens.instruments.framing (section 7.3)",
     )
 
-    def run(
-        self, subject: Any, corpus: Any, ctx: RunContext
-    ) -> list[contracts.Entry]:  # noqa: D102
+    def run(self, subject: Any, corpus: Any, ctx: RunContext) -> list[contracts.Entry]:  # noqa: D102
         return [
             assert_scope_honest(
                 contracts.absence(

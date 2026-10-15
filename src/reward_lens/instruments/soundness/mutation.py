@@ -180,8 +180,7 @@ class Score:
             "denominator_label": self.label,
             "is_lower_bound": self.lower_bound,
             "value": self.value,
-            "interval": None if not self.uncertainty.bounded else list(self.uncertainty.interval),
-            "interval_method": self.uncertainty.method,
+            "interval": intervals.interval_metadata(self.uncertainty),
             "sampling_fraction": self.sampling_fraction,
         }
 
@@ -212,11 +211,7 @@ class MutationLedger:
         return round(len(self.records) / self.sites_available, 6)
 
     def confirmed_equivalent(self) -> tuple[MutantRecord, ...]:
-        found = tuple(
-            record
-            for record in self.records
-            if record.equivalence_procedure is not None
-        )
+        found = tuple(record for record in self.records if record.equivalence_procedure is not None)
         for record in found:
             if "surviving" not in record.states:
                 raise EquivalenceNotFromTheStates(
@@ -810,9 +805,7 @@ def score_entry(
             "sampled": len(ledger.records),
             "states": counts,
             "equivalence_statement": ledger.equivalence_statement(),
-            "confirmed_equivalent": [
-                record.mutant.id for record in ledger.confirmed_equivalent()
-            ],
+            "confirmed_equivalent": [record.mutant.id for record in ledger.confirmed_equivalent()],
             "mutants": [record.to_dict() for record in ledger.records],
             "findings": [
                 {

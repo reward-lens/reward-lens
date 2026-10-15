@@ -17,15 +17,14 @@ implementation reaching for ``len(text)`` fails every assertion.
 
 from __future__ import annotations
 
-from test_blk010_completion_tokens import (  # noqa: E402
+from reward_lens.tap.adapters.trl import TRLTap
+from tests.test_blk010_completion_tokens import (  # noqa: E402
     COMPLETION_IDS,
     COMPLETION_TEXTS,
     GENEROUS,
     drive,
     rollouts,
 )
-
-from reward_lens.tap.adapters.trl import TRLTap
 
 
 def _turns(run):

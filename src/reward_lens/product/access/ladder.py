@@ -44,8 +44,8 @@ NOT_IN_BUILD = "not in this build"
 MEASURED = "measured on this machine"
 PARTLY = ", in part"
 
-#: What the interfaces say wave 1's audit fills, used when the audit engine is in the build and has
-#: not declared `PANELS_FILLED` itself (interfaces section 10).
+#: What the historical wave-1 audit stub fills when it declares no panel list. A real audit
+#: package reads its registered panels instead.
 INTERFACE_WAVE_1_PANELS: dict[str, str] = {"validity": "partial", "reach": "partial"}
 
 #: Where an API actor's key is read from when the seeker packet is not in the build to name its own
@@ -99,43 +99,118 @@ ROWS: tuple[Row, ...] = (
 
 RUNGS: tuple[Rung, ...] = (
     # The report's panels, in the order the text formatter prints them (interfaces section 9).
-    Rung("panel.validity", "panels", "validity", ("panel:validity",),
-         ("the validity panel: the static checks, replay and decision coverage",),
-         partial_fragment="validity (the static checks and replay)"),
-    Rung("panel.soundness", "panels", "soundness", ("panel:soundness",),
-         ("the soundness panel: whether the score means what the reward system claims",)),
-    Rung("panel.reach", "panels", "reach", ("panel:reach",),
-         ("the reach panel: what a policy can get at",),
-         partial_fragment="reach (static exposure only)"),
-    Rung("panel.exploits", "panels", "exploits", ("panel:exploits",),
-         ("the exploits panel: what a seeker found and what it cost",)),
-    Rung("panel.framing", "panels", "framing", ("panel:framing",),
-         ("the framing panel: what the reward leaves out",)),
-    Rung("panel.signal", "panels", "signal", ("panel:signal",),
-         ("the signal panel: whether the score separates anything",)),
-    Rung("panel.cost", "panels", "cost", ("panel:cost",),
-         ("the cost panel: what a run of this reward system costs",)),
+    Rung(
+        "panel.validity",
+        "panels",
+        "validity",
+        ("panel:validity",),
+        ("the validity panel: the static checks, replay and decision coverage",),
+        partial_fragment="validity (the static checks and replay)",
+    ),
+    Rung(
+        "panel.soundness",
+        "panels",
+        "soundness",
+        ("panel:soundness",),
+        ("the soundness panel: whether the score means what the reward system claims",),
+    ),
+    Rung(
+        "panel.reach",
+        "panels",
+        "reach",
+        ("panel:reach",),
+        ("the reach panel: what a policy can get at",),
+        partial_fragment="reach (static exposure only)",
+    ),
+    Rung(
+        "panel.exploits",
+        "panels",
+        "exploits",
+        ("panel:exploits",),
+        ("the exploits panel: what a seeker found and what it cost",),
+    ),
+    Rung(
+        "panel.framing",
+        "panels",
+        "framing",
+        ("panel:framing",),
+        ("the framing panel: what the reward leaves out",),
+    ),
+    Rung(
+        "panel.signal",
+        "panels",
+        "signal",
+        ("panel:signal",),
+        ("the signal panel: whether the score separates anything",),
+    ),
+    Rung(
+        "panel.cost",
+        "panels",
+        "cost",
+        ("panel:cost",),
+        ("the cost panel: what a run of this reward system costs",),
+    ),
     # The other verbs.
-    Rung("verb.trace", "verbs", "trace", ("verb:trace",),
-         ("`reward-lens trace`: a run record read back as evidence",)),
-    Rung("verb.compare", "verbs", "compare", ("verb:compare",),
-         ("`reward-lens compare`: two reward systems on the six-rung ladder",)),
-    Rung("verb.forecast", "verbs", "forecast", ("verb:forecast_issue",),
-         ("`reward-lens forecast`: a pre-registered claim and its ledger",)),
-    Rung("verb.improve", "verbs", "improve", ("verb:improve",),
-         ("`reward-lens improve`: the repair a finding implies",)),
+    Rung(
+        "verb.trace",
+        "verbs",
+        "trace",
+        ("verb:trace",),
+        ("`reward-lens trace`: a run record read back as evidence",),
+    ),
+    Rung(
+        "verb.compare",
+        "verbs",
+        "compare",
+        ("verb:compare",),
+        ("`reward-lens compare`: two reward systems on the six-rung ladder",),
+    ),
+    Rung(
+        "verb.forecast",
+        "verbs",
+        "forecast",
+        ("verb:forecast_issue",),
+        ("`reward-lens forecast`: a pre-registered claim and its ledger",),
+    ),
+    Rung(
+        "verb.improve",
+        "verbs",
+        "improve",
+        ("verb:improve",),
+        ("`reward-lens improve`: the repair a finding implies",),
+    ),
     # The seeker's two arms. Each needs the engine first and then its own actor.
-    Rung("seeker.api", "seeker", "seeker with an API model", ("seeker", "key:api"),
-         ("the seeker's black-box arm with an API model as the actor",),
-         cost="2.00"),
-    Rung("seeker.local", "seeker", "seeker with a local model", ("seeker", "endpoint:local"),
-         ("the seeker's black-box arm with a local model as the actor, at no cost",)),
+    Rung(
+        "seeker.api",
+        "seeker",
+        "seeker with an API model",
+        ("seeker", "key:api"),
+        ("the seeker's black-box arm with an API model as the actor",),
+        cost="2.00",
+    ),
+    Rung(
+        "seeker.local",
+        "seeker",
+        "seeker with a local model",
+        ("seeker", "endpoint:local"),
+        ("the seeker's black-box arm with a local model as the actor, at no cost",),
+    ),
     # Metrology.
-    Rung("calibration", "calibration", "calibration and limits of detection", ("reference",),
-         ("a limit of detection for this substrate, and a calibrated reading rather than a number",)),
+    Rung(
+        "calibration",
+        "calibration",
+        "calibration and limits of detection",
+        ("reference",),
+        ("a limit of detection for this substrate, and a calibrated reading rather than a number",),
+    ),
     # The input, when one was given.
-    Rung("input.project", "input", "the project this report is scoped to", ("input:project",),
-         ("a report scoped to this reward system rather than to the machine alone",)),
+    Rung(
+        "input.project",
+        "input",
+        "the project this report is scoped to",
+        ("input:project",),
+        ("a report scoped to this reward system rather than to the machine alone",),
+    ),
 )
 
 
@@ -168,15 +243,35 @@ def _audit_module() -> Any:
 def audit_panels() -> dict[str, str]:
     """Which panels the audit engine fills, and whether each is full or partial.
 
-    Asked of the engine, never assumed: `PANELS_FILLED` when it declares one, the interfaces'
-    wave-1 list when the engine is in the build and has not, and nothing at all when it is not.
+    An explicit `PANELS_FILLED` declaration wins. Otherwise the shipped audit package uses the
+    same plan and instrument registry as its runner. A registered section is partial here: the
+    instrument exists, but a particular project may still lack its required inputs. A hand-built
+    historical stub has no package path and retains the wave-1 interface projection.
     """
     module = _audit_module()
     if module is None:
         return {}
     declared = getattr(module, "PANELS_FILLED", None)
     if declared is None:
-        return dict(INTERFACE_WAVE_1_PANELS)
+        if not hasattr(module, "__path__"):
+            return dict(INTERFACE_WAVE_1_PANELS)
+        try:
+            plan = importlib.import_module(f"{module.__name__}.plan")
+            registry = importlib.import_module(f"{module.__name__}.registry")
+            discovered = registry.discover()
+            supported = {section: "partial" for section in plan.panels(discovered)}
+            # Doctor's cost row is a display projection of Reward Statistics, not a literal
+            # Measurement.cost section. Require both recorded price and latency instruments.
+            for panel in discovered:
+                if panel.section != "reward_statistics":
+                    continue
+                instrument_ids = {instrument.id for instrument in panel.instruments}
+                if {"reward_statistics.price", "reward_statistics.latency"} <= instrument_ids:
+                    supported["cost"] = "partial"
+                    break
+            return supported
+        except Exception:
+            return {}
     if isinstance(declared, dict):
         return {str(name): str(state) for name, state in declared.items()}
     return {str(name): "full" for name in declared}
@@ -198,14 +293,15 @@ def _importable(module: str) -> bool:
 
 
 def _seeker_module() -> Any:
-    """`reward_lens.product.seeker` if this build holds it, consulting `sys.modules` first."""
-    module = sys.modules.get("reward_lens.product.seeker")
+    """The shipped seeker instrument, if importable, consulting `sys.modules` first."""
+    name = "reward_lens.instruments.seeker"
+    module = sys.modules.get(name)
     if module is not None:
         return module
-    if not _importable("reward_lens.product.seeker"):
+    if not _importable(name):
         return None
     try:
-        return importlib.import_module("reward_lens.product.seeker")
+        return importlib.import_module(name)
     except Exception:
         return None
 
@@ -306,9 +402,7 @@ def measure(project: Path | str | None = None) -> dict[str, Token]:
             elif kind == "verb":
                 tokens[need] = Token(present=_verb_engine(argument), reason=NOT_IN_BUILD)
             elif kind == "seeker":
-                tokens[need] = Token(
-                    present=_importable("reward_lens.product.seeker"), reason=NOT_IN_BUILD
-                )
+                tokens[need] = Token(present=_seeker_module() is not None, reason=NOT_IN_BUILD)
             elif kind == "extra":
                 marker = _EXTRA_MARKERS.get(argument)
                 tokens[need] = Token(
@@ -321,7 +415,7 @@ def measure(project: Path | str | None = None) -> dict[str, Token]:
                 tokens[need] = Token(
                     present=found is not None,
                     reason=(
-                        "a key and a cap: "
+                        "an API seeker actor configuration (--seeker-config), a key and a cap: "
                         + " or ".join(looked_in)
                         + " in the environment, then --seeker api --max-budget-usd 2.00"
                     ),
@@ -330,10 +424,11 @@ def measure(project: Path | str | None = None) -> dict[str, Token]:
                 found = endpoints.scan()
                 tokens[need] = Token(
                     present=bool(found),
-                    reason="an OpenAI-compatible endpoint; none found here",
-                    unlocks=tuple(
-                        f"{endpoints.actor_name(one)} as the actor" for one in found
+                    reason=(
+                        "a local seeker actor configuration (--seeker-config) and an "
+                        "OpenAI-compatible endpoint; none found here"
                     ),
+                    unlocks=tuple(f"{endpoints.actor_name(one)} as the actor" for one in found),
                 )
             elif kind == "reference":
                 root, materials = reference_set()
@@ -390,6 +485,8 @@ class Resolved:
     def label(self) -> str:
         if self.partial and self.rung.partial_fragment:
             return self.rung.partial_fragment
+        if self.partial:
+            return f"{self.rung.fragment} (in part)"
         return self.rung.fragment
 
 

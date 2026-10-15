@@ -1,0 +1,13 @@
+{
+  "id": "default-learning-v1",
+  "version": "1.3.0",
+  "actions": ["train_on_this_version"],
+  "default_interval": "0.95",
+  "multiplicity": {"rule": "benjamini_hochberg_fdr", "family": "registered learning checks"},
+  "checks": [
+    {"key": "rung4_or_5.complete", "source": "entry_any_complete", "section": "reward_statistics", "entry_id": "reward_statistics.controlled_update_response", "alternate_entry_ids": ["reward_statistics.short_fork_response"], "fresh_for_seconds": 604800},
+    {"key": "null_replay.passed", "source": "entry_any_control_field", "section": "reward_statistics", "entry_id": "reward_statistics.controlled_update_response", "alternate_entry_ids": ["reward_statistics.short_fork_response"], "result_field": "null_replay", "fresh_for_seconds": 604800},
+    {"key": "placebo.passed", "source": "entry_any_control_field", "section": "reward_statistics", "entry_id": "reward_statistics.controlled_update_response", "alternate_entry_ids": ["reward_statistics.short_fork_response"], "result_field": "placebo", "fresh_for_seconds": 604800},
+    {"key": "capability_floor.held", "source": "entry_required_check", "section": "soundness", "entry_id": "soundness.capability_floor", "fresh_for_seconds": 604800}
+  ]
+}

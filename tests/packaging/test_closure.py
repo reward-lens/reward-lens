@@ -8,6 +8,7 @@ assertion and this file writes the artifact.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from .conftest import EXPECTED_CLOSURE, FORBIDDEN, normalise
@@ -29,10 +30,11 @@ def test_nothing_numeric_or_rendering_is_in_the_closure(installed: dict[str, str
     assert intruders == [], f"forbidden distributions in the base closure: {intruders}"
 
 
-def test_the_seven_declared_packages_are_present(installed: dict[str, str]) -> None:
-    """D-58 plus addenda A-001 and A-002: the seven declared names."""
+def test_the_eight_declared_packages_are_present(installed: dict[str, str]) -> None:
+    """D-58 plus A-001/A-002 and offline signatures: the eight declared names."""
     declared = [
         "click",
+        "cryptography",
         "pyyaml",
         "pydantic",
         "jsonschema-rs",
@@ -44,21 +46,25 @@ def test_the_seven_declared_packages_are_present(installed: dict[str, str]) -> N
     assert missing == [], f"declared base dependencies missing from the clean venv: {missing}"
 
 
-def test_the_closure_is_twelve_distributions(installed: dict[str, str]) -> None:
-    """The count the release notes quote: seven declared, four from pydantic, and reward-lens.
+def test_the_closure_has_the_platform_count(installed: dict[str, str]) -> None:
+    """The count the release notes quote, including libcst's Python 3.13-only dependency.
 
-    Asserted separately from the set so a diff in the release-notes number is its own failure
-    rather than a line buried in a set difference.
+    ``cryptography`` deliberately adds ``cffi`` and ``pycparser`` for offline signatures; current
+    libcst resolution adds ``pyyaml-ft`` only on Python 3.13. Asserted separately from the set
+    so a count change is visible rather than buried in a set difference.
     """
-    assert len(installed) == 12, f"the base closure is {len(installed)}, not 12: {sorted(installed)}"
+    expected = 16 if sys.version_info[:2] == (3, 13) else 15
+    assert len(installed) == expected, (
+        f"the base closure is {len(installed)}, not {expected}: {sorted(installed)}"
+    )
 
 
 def test_closure_document_is_written(installed: dict[str, str]) -> None:
     """Write the measured closure where the release notes can quote it.
 
-    The cold `uvx reward-lens --help` time belongs beside it and cannot be measured until P-CLI
-    lands a runnable console script, so the line says so rather than carrying a placeholder number
-    that would read as a measurement.
+    The cold `uvx reward-lens --help` time belongs beside it. The console script is now present,
+    but the clean-machine measurement belongs to final release qualification, so the line says
+    that rather than carrying a placeholder number that would read as a measurement.
     """
     rows = "\n".join(f"| {name} | {version} |" for name, version in sorted(installed.items()))
     CLOSURE_DOC.write_text(
@@ -87,9 +93,9 @@ def test_closure_document_is_written(installed: dict[str, str]) -> None:
         "`sys.monitoring` (3.12+), which would replace a tracer whose semantics the inherited tests\n"
         "pin, to save one pure-payload distribution. `requires-python >= 3.11` is unchanged.\n\n"
         "## Cold `uvx reward-lens --help`\n\n"
-        "pending P-CLI. The console script's entry point is in the wheel's metadata and is asserted\n"
-        "by `test_wheel_metadata.py`, but `reward_lens.cli.main:main` does not exist yet, so there\n"
-        "is nothing to time. D-30's ceiling is 100 ms and gate 5 checks the import set as well as\n"
+        "The console script is present and checked against the installed wheel. A cold `uvx`\n"
+        "measurement on a clean machine is pending final release qualification; no timing claim\n"
+        "is made here. D-30's ceiling is 100 ms and gate 5 checks the import set as well as\n"
         "the clock.\n",
         encoding="utf-8",
     )

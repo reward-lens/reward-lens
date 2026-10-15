@@ -1,0 +1,4 @@
+$ reward-lens audit ./grader.py --outcome ./tests
+error: the outcome check at ./tests collected 0 tests, so it cannot qualify a correctness claim
+help:  check the path, or run: reward-lens doctor --outcome ./tests
+       reward-lens explain RL0341

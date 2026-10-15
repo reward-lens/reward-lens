@@ -138,6 +138,7 @@ def needs_note(entry: contracts.Entry, input_name: str) -> contracts.Entry:
     entry.extensions = extensions
     return entry
 
+
 #: The four dynamic checks of section 7.3 that wave 1 does not run (replay is the fifth, and it
 #: does run). Entry id suffix, measurand, what it would need, what it costs not to have it.
 DYNAMIC_CHECKS: tuple[tuple[str, str, str, str], ...] = (

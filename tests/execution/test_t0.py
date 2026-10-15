@@ -6,7 +6,6 @@ call was made would be the thing D-37 forbids.
 
 from __future__ import annotations
 
-import os
 import resource
 import time
 from pathlib import Path
@@ -152,11 +151,11 @@ def test_timeout_kills_the_whole_process_group(work: Path) -> None:
     src = (
         "import subprocess, sys, time, pathlib\n"
         "beat = (\n"
-        "    \"import time, pathlib\\n\"\n"
+        '    "import time, pathlib\\n"\n'
         "    \"p = pathlib.Path('beat.txt')\\n\"\n"
-        "    \"while True:\\n\"\n"
+        '    "while True:\\n"\n'
         "    \"    p.open('a').write('x')\\n\"\n"
-        "    \"    time.sleep(0.02)\\n\"\n"
+        '    "    time.sleep(0.02)\\n"\n'
         ")\n"
         "kids = [subprocess.Popen([sys.executable, '-c', beat]) for _ in range(3)]\n"
         "time.sleep(120)\n"

@@ -3,9 +3,9 @@
 
 def fizzbuzz(n):
     if n % 15 == 0:
-        return 'FizzBuzz'
+        return "FizzBuzz"
     if n % 3 == 0:
-        return 'Fizz'
+        return "Fizz"
     if n % 5 == 0:
-        return 'Buzz'
+        return "Buzz"
     return str(n)

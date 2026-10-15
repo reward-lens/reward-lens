@@ -25,7 +25,7 @@ from typing import Callable
 
 from reward_lens.contracts import Counters
 
-from .errors import ExecutionLimitBreached
+from .errors import ExecutionBreachReason, ExecutionLimitBreached
 from .limits import Limits
 
 __all__ = ["Result", "supervise"]
@@ -55,14 +55,23 @@ class Result:
     argv: tuple[str, ...] = ()
     detail: dict[str, object] = field(default_factory=dict)
 
-    def raise_for_breach(self) -> None:
-        """RL0410 naming the dimension, for a caller that wants the refusal rather than the field."""
+    @property
+    def breach_reason(self) -> ExecutionBreachReason | None:
+        """The typed resource-budget reason from this run's actual supervisor breach."""
         if self.breach is None:
+            return None
+        return ExecutionBreachReason.BUDGET_EXCEEDED
+
+    def raise_for_breach(self) -> None:
+        """Raise RL0410 with the actual resource reason and breached dimension."""
+        reason = self.breach_reason
+        if reason is None:
             return
         raise ExecutionLimitBreached(
             dimension=self.breach,
             limit=self.detail.get("limit"),
             observed=self.detail.get("observed"),
+            reason=reason,
         )
 
 
@@ -272,9 +281,10 @@ def supervise(
             if room > 0:
                 chunks[name].append(data[:room])
                 sizes[name] += min(room, len(data))
-            if sizes[name] + max(0, len(data) - max(room, 0)) > limits.stdout_bytes or len(
-                data
-            ) > room:
+            if (
+                sizes[name] + max(0, len(data) - max(room, 0)) > limits.stdout_bytes
+                or len(data) > room
+            ):
                 record("stdout", limits.stdout_bytes, sizes[name] + len(data))
 
         ticks += 1
@@ -284,6 +294,13 @@ def supervise(
             peak_rss = max(peak_rss, rss)
             cpu_s = max(cpu_s, cpu)
             peak_vsz = max(peak_vsz, vsz)
+        # A process fan-out can cross both the process and aggregate-RSS limits between samples:
+        # dozens of fresh interpreters have a material resident set before the next 30 ms tick.
+        # The process count is the causal limit in that case, so name it first.  This also keeps
+        # RLIMIT_NPROC's per-uid, time-varying backstop from changing the reported dimension when
+        # unrelated same-uid processes leave after its baseline was measured.
+        if peak_processes > limits.processes:
+            record("processes", limits.processes, peak_processes)
         # One rule, on the dimension the counters carry: a resident set over budget. It is
         # reachable because RLIMIT_AS is set above the budget (`address_space_ceiling`), so the
         # allocator no longer ends the run before the supervisor can see it. This is the early
@@ -291,8 +308,6 @@ def supervise(
         # for the child, which no sampler can miss.
         if peak_rss > limits.memory_bytes:
             record("memory", limits.memory_bytes, peak_rss)
-        if peak_processes > limits.processes:
-            record("processes", limits.processes, peak_processes)
         if cpu_s > limits.cpu_s:
             record("cpu", limits.cpu_s, round(cpu_s, 3))
         if ticks % _DISK_EVERY == 0:

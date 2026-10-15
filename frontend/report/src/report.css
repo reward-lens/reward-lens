@@ -118,6 +118,12 @@ h3 {
   border-top: 1px solid var(--line);
 }
 
+.report-join {
+  max-width: 68rem;
+  margin: 0 auto 3rem;
+  padding: 1rem;
+}
+
 .answer {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -267,6 +273,11 @@ h3 {
   overflow-x: auto;
 }
 
+.scroller:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
@@ -378,6 +389,8 @@ tr[data-tone="absent"] th[scope="row"] {
 
 .chart-data {
   margin-top: 0.4rem;
+  table-layout: fixed;
+  overflow-wrap: anywhere;
 }
 
 .truncation {

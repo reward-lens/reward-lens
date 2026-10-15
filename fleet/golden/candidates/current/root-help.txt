@@ -1,0 +1,32 @@
+$ reward-lens
+Build better rewards. Test what they teach.
+
+Usage: reward-lens <command> [options]
+
+Measure
+  audit       what this reward accepts, reaches, pays for, and teaches
+  trace       what a training run optimised, and what it selected
+  compare     what changes if the reward changes
+  join        connect audit families to their saved trace and compare evidence
+  forecast    freeze a prediction, resolve it, score the ledger
+  improve     start from a goal and run the loop
+
+Records
+  open        open a report, or the workbench
+  export      write a revision, a bundle, a badge, or a SARIF file
+  import      validate a report and attach it to a project
+  runs        list, show, continue or remove the runs on this machine
+
+Set up
+  init        connect a reward system, or start from an example
+  doctor      what can be measured here, and what it would cost
+  explain     what an error code or a finding means
+  describe    the command tree as versioned JSON, for tools and agents
+  mcp         run the agent server on stdio
+
+Start here
+  reward-lens init --example code-reward ./demo
+  reward-lens audit ./demo
+
+Per-command options: reward-lens audit --help
+Docs: https://reward-lens.github.io/docs/

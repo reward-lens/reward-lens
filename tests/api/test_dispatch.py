@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import os
+import subprocess
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
@@ -88,6 +92,71 @@ def test_the_engine_table_names_every_verb() -> None:
         assert sep == ":" and module.startswith("reward_lens.") and attribute
 
 
+def test_explicit_missing_forecast_project_refuses_instead_of_relocating(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    missing = tmp_path / "missing-project"
+    with pytest.raises(contracts.UsageError) as caught:
+        api.forecast_ledger(api.ForecastLedgerRequest(project=missing))
+    assert caught.value.code == "RL0003"
+    assert caught.value.context["field"] == "project"
+    assert not (tmp_path / ".reward-lens").exists()
+
+
+def test_unknown_forecast_id_is_a_typed_identifier_refusal(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(contracts.UsageError) as caught:
+        api.forecast_resolve(
+            api.ForecastResolveRequest(forecast_id="sha256:" + "0" * 64, outcome="true")
+        )
+    assert caught.value.code == "RL0002"
+    assert caught.value.context["field"] == "forecast_id"
+
+
+def test_malformed_issue_record_is_a_typed_input_refusal(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    issue_record = tmp_path / "issue.json"
+    issue_record.write_text("{}", encoding="utf-8")
+    with pytest.raises(contracts.UsageError) as caught:
+        api.forecast_issue(api.ForecastIssueRequest(claim="test", record=issue_record))
+    assert caught.value.code == "RL0003"
+    assert caught.value.context["field"] == "record"
+
+
+def test_improve_missing_project_is_a_typed_path_refusal(tmp_path) -> None:
+    with pytest.raises(contracts.UsageError) as caught:
+        api.improve(api.ImproveRequest(path=tmp_path / "missing", describe="test"))
+    assert caught.value.code == "RL0003"
+    assert caught.value.context["field"] == "path"
+
+
+def test_forecast_resolve_rejects_invalid_outcome_as_typed_input(tmp_path, monkeypatch) -> None:
+    from tests.product.test_forecast import _issue_row
+
+    monkeypatch.chdir(tmp_path)
+    issue_record = tmp_path / "issue.json"
+    issue_record.write_text(json.dumps({"issues": [_issue_row("T1")]}), encoding="utf-8")
+    api.forecast_issue(api.ForecastIssueRequest(claim="test", record=issue_record))
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / ".reward-lens/forecast-ledger.jsonl").read_text().splitlines()
+    ]
+    digest = next(row["sealed_digest"] for row in rows if row["kind"] == "issue")
+    with pytest.raises(contracts.UsageError) as caught:
+        api.forecast_resolve(api.ForecastResolveRequest(forecast_id=digest, outcome="maybe"))
+    assert caught.value.code == "RL0003"
+    assert caught.value.context["field"] == "outcome"
+
+
+def test_expected_refusal_mapping_does_not_hide_programming_value_errors() -> None:
+    def broken(request, **kwargs):
+        raise ValueError("unexpected engine bug")
+
+    with pytest.raises(ValueError, match="unexpected engine bug"):
+        _dispatch.call_expected_refusal(broken, object(), verb="forecast_issue")
+
+
 def test_an_absent_module_a_missing_attribute_and_a_non_callable_all_resolve_to_none() -> None:
     assert _dispatch.load("reward_lens.product.nothing_here:run") is None
     module = types.ModuleType("reward_lens.product.halfway")
@@ -101,29 +170,43 @@ def test_an_absent_module_a_missing_attribute_and_a_non_callable_all_resolve_to_
         sys.modules.pop("reward_lens.product.halfway", None)
 
 
-def test_resolution_imports_nothing_outside_the_pointer_table() -> None:
-    """Resolving a verb must import the module the table names, its parents, and nothing else.
+def test_resolution_imports_only_the_requested_engine_tree() -> None:
+    """The lazy seam must not load other engines merely because one verb is resolved.
 
-    Three of the names the table points at are already taken by modules left over from v3
-    (`product.trace`, `product.improve`, `product.export`). Resolution imports them and finds no
-    engine attribute, which is why a leftover module cannot quietly answer a verb.
-
-    A name the table points at may be a package rather than a module, and a package imports its
-    own submodules: `product.access` brings its `doctor`, `ladder`, `matrix` and `endpoints` with
-    it. What is forbidden is a module outside the pointed names' own subtrees.
+    An engine module may import its own implementation dependencies while it defines its callable.
+    The public lazy-dispatch boundary is earlier: resolving audit must not also resolve a different
+    pointer such as compare, improve, export, trace, or forecast.
     """
-    pointed = {target.split(":")[0] for target in _dispatch.ENGINES.values()}
-    parents = {name.rsplit(".", 1)[0] for name in pointed}
-    for target in _dispatch.ENGINES.values():
-        _dispatch.load(target)
-    touched = {name for name in sys.modules if name.startswith("reward_lens.product")}
-    allowed = pointed | parents
-    stray = {
-        name
+    source_root = Path(__file__).parents[2] / "src"
+    probe = """
+import json
+import sys
+from reward_lens.api import _dispatch
+before = {name for name in sys.modules if name.startswith('reward_lens.product')}
+assert _dispatch.engine('audit') is not None
+after = {name for name in sys.modules if name.startswith('reward_lens.product')}
+print(json.dumps(sorted(after - before)))
+"""
+    environment = dict(os.environ)
+    environment.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=source_root.parent,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    touched = set(json.loads(result.stdout))
+    assert any(
+        name == "reward_lens.product.audit" or name.startswith("reward_lens.product.audit.")
         for name in touched
-        if name not in allowed and not any(name.startswith(f"{one}.") for one in pointed)
-    }
-    assert stray == set()
+    )
+    unrelated = ("compare", "improve", "export", "trace", "forecast")
+    assert not any(
+        name.startswith("reward_lens.product." + branch) for branch in unrelated for name in touched
+    )
 
 
 @pytest.fixture
@@ -158,12 +241,14 @@ def test_export_dispatches_to_the_renderer_when_the_module_is_there(
     assert set(calls[0]) == {"req", "project", "sandbox"}
 
 
-def test_export_refuses_with_rl0701_because_the_seam_is_empty_and_not_by_decree(
+def test_export_propagates_the_missing_record_refusal_from_the_landed_engine(
     project_dir,
 ) -> None:
-    """RL0701 is what the absent seam means. The leftover `product.export` carries no `run`."""
-    assert _dispatch.engine("export") is None
-    with pytest.raises(contracts.CapabilityUnavailable) as caught:
-        api.export(api.ExportRequest(project=project_dir))
-    assert caught.value.code == "RL0701"
-    assert caught.value.exit_code == 5
+    """The landed renderer opens its record before rendering, preserving RL0621 for a missing one."""
+    assert _dispatch.engine("export") is not None
+    with pytest.raises(contracts.UsageError) as caught:
+        api.export(
+            api.ExportRequest(project=project_dir, record=project_dir / "missing.assay.json")
+        )
+    assert caught.value.code == "RL0621"
+    assert caught.value.exit_code == 4

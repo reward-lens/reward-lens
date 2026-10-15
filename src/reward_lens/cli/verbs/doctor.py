@@ -25,6 +25,7 @@ def _document(capabilities) -> dict:
         "install": _fields(capabilities.install),
         "sandbox": _fields(capabilities.sandbox),
         "capabilities": [_fields(item) for item in capabilities.capabilities],
+        "compatibility_matrix": capabilities.compatibility_matrix,
         "error": None,
     }
 
@@ -37,6 +38,8 @@ def _fields(value):
     serialisation gap into `TypeError` inside the verb (RL0900) rather than into a report. This
     asks each object for its fields and refuses to guess.
     """
+    if value is None:
+        return None
     if hasattr(value, "to_dict"):
         return value.to_dict()
     if hasattr(value, "model_dump"):

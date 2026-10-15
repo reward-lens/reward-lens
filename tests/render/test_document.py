@@ -115,3 +115,35 @@ def test_the_record_is_not_mutated_by_rendering(reference: dict) -> None:
 def test_embedding_tier_is_written_into_the_embedded_record(reference: dict, html: bytes) -> None:
     assert embedded_record(html)["embedding"]["tier"] == "A"
     assert embedded_record(html)["embedding"]["omitted_tables"] == []
+
+
+def test_saved_record_reopens_to_identical_report_bytes_regardless_of_mapping_order(
+    reference: dict, tmp_path
+) -> None:
+    from copy import deepcopy
+
+    from reward_lens import api
+    from reward_lens.contracts.models import Assay
+    from reward_lens.render.report import plan_embedding
+    from reward_lens.store.project import digest
+
+    bundle_digest = "sha256:" + "ab" * 32
+    document = Assay.model_validate(reference).to_dict()
+    document["embedding"] = plan_embedding(document, bundle_manifest_digest=bundle_digest).to_dict()
+    document = Assay.model_validate(document).to_dict()
+    document["assay_id"] = digest(document)
+    saved = tmp_path / "reproducible.assay.json"
+    saved.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+    raw = json.loads(saved.read_text(encoding="utf-8"))
+    reopened = api.open_record(saved)
+    reversed_mapping = deepcopy(raw)
+    reversed_mapping["measurement"] = dict(reversed(list(raw["measurement"].items())))
+
+    assert raw == reopened.to_dict() == reversed_mapping
+    assert digest(raw) == digest(reopened) == digest(reversed_mapping) == document["assay_id"]
+    reports = [
+        render(value, bundle_manifest_digest=bundle_digest)
+        for value in (raw, reopened, reversed_mapping)
+    ]
+    assert all(len(report) == document["embedding"]["html_bytes"] for report in reports)
+    assert reports[0] == reports[1] == reports[2]

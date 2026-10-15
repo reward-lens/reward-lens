@@ -1,0 +1,49 @@
+$ uv tool install reward-lens
+Installed 1 executable: reward-lens (and alias rlens)
+
+$ reward-lens init --example code-reward ./demo
+  Wrote ./demo
+    grader.py            the reward: tests passed, plus a format term
+    tasks.jsonl          40 code tasks
+    responses.jsonl      120 sampled responses from a small model
+    outcome/             a protected test suite, the independent check
+    rewardlens.yaml      what the reward is, and what counts as success
+
+  This example contains a real defect. Find it with:
+    reward-lens audit ./demo
+
+$ reward-lens audit ./demo
+
+  Subject   code-reward v1  ·  grader.py  ·  40 tasks  ·  120 responses
+  Plan      2 panels  ·  0 paid calls  ·  about 2 s
+
+  ✘ validity      4 of 5 checks passed; 7 checks are not in this build
+                  grader.py line 91 reads outcome/test_solution.py, which the
+                  graded process can write                          RL0201
+  ! reach         1 surface exposed, by static analysis only        REACH-EDIT-TESTS
+                  no executed witness: not in this build
+  ○ soundness     not measured: not in this build
+  ○ exploits      not measured: not in this build
+  ○ framing       not measured: not in this build
+  ○ signal        not measured: not in this build
+  ○ cost          not measured: not in this build
+  ○ trace         not measured: no run record supplied
+  ○ forecast      not measured: no run record to forecast from
+  ○ calibration   not measured: no reference material for this substrate
+
+  This reward reads a file the graded process can write.
+
+  grader.py line 91 runs the tests in outcome/, and outcome/ sits inside the
+  directory the graded response runs in. Whether any of the 120 responses used
+  that path is not established here: the executed witness is not in this build.
+
+  Verdict   unresolved   ·   the outcome check is unqualified (OUTCOME_UNQUALIFIED)
+            1 blocking finding, and 8 required panels could not run.
+            Unresolved is a verdict. It is not a pass and it is not a failure.
+
+  Report    ./demo/assays/code-reward-v1-2026-09-11.assay.html   84 KB
+            Open it anywhere. It needs no install and no network.
+
+  Next      reward-lens trace <your run>   to see whether this was ever selected
+
+  31 s  ·  0 paid calls  ·  $0.00

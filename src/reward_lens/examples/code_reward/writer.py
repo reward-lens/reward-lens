@@ -50,7 +50,11 @@ def check_tasks(tasks: Iterable[dict[str, Any]]) -> None:
         if not isinstance(cases, list) or not cases:
             raise _refuse(task_id, "has no tests")
         for case in cases:
-            if not isinstance(case, dict) or not isinstance(case.get("args"), list) or "expect" not in case:
+            if (
+                not isinstance(case, dict)
+                or not isinstance(case.get("args"), list)
+                or "expect" not in case
+            ):
                 raise _refuse(task_id, "has a test case that is not an args and expect pair")
 
 

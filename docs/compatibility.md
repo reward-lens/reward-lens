@@ -1,12 +1,27 @@
-# Retained v3 compatibility fixes
+# Adapter compatibility
 
-The 3.1.0 source retains six behavior fixes that were verified against the published 3.0.0 line and the current source snapshot. The private port ledger that coordinated the transfer is intentionally not published. The evidence below points to source and public behavior tests instead.
+`reward-lens doctor` probes the adapter families available in the current Python environment. Its compatibility matrix comes from `reward_lens.product.access.matrix.build()`. A row marked `ran` means a local adapter was constructed and accepted a valid input while refusing a malformed one. The family test suites exercise scoring and evidence records separately. Neither result verifies a live provider.
 
-1. Base-install test collection excludes white-box tests when Torch is absent. `tests/conftest.py` scans test source before import, so a base environment does not import model-only tests during collection.
-2. `reward_lens.tap.adapters.trl.TRLTap` attaches a callback even when `transformers` is unavailable. `tests/compat/test_v3_reconciliation.py` uses a trainer-shaped fixture.
-3. `reward_lens.measure.base.capability_name` names `Flag` combinations without calling `int()` on a `Flag`. The compatibility test covers empty, atomic, and composite sets.
-4. The public-surface checker retains its reachability rules for deliberately private and dual-use module paths. Its broad optional-dependency run is recorded as incomplete in `TEST_STATUS.md`; this evidence preserves the rule without claiming a base-install pass.
-5. `tests/acceptance/test_debt_m.py` uses floors and ratios for backend-sensitive window counts instead of exact totals. The compatibility test reads that assertion source without importing optional runtime code.
-6. `reward_lens.policy.vllm.EngineBoundary` inherits both `RuntimeError` and `AttributeError`, so unavailable serving-engine attributes make `hasattr` return `False`. The compatibility test checks the class and its `__getattr__` boundary from source.
+The table below records a run in the development environment on 2026-10-13. This environment has the OpenEnv 0.6.0 extra and lacks the `train` extra. Run `reward-lens doctor` on the machine that will perform an audit to see its current status.
 
-These tests preserve behavior. They do not claim that all unfinished product work has been reconciled or released.
+| Family | Local input probe | Fixture | Framework | Install route for the 3.1.0 release | Live profile |
+| --- | --- | --- | --- | --- | --- |
+| Local deterministic | ran | packaged `code_reward/my_grader.py` | built in | `pip install reward-lens` | unverified |
+| Stateful tool environment | ran | local OpenEnv contract fixture | OpenEnv 0.6.0 | `pip install 'reward-lens[openenv]'` | unverified |
+| LLM judge | ran | local judge JSON protocol fixture | local protocol v1 | `pip install reward-lens` | unverified |
+| Neural reward model | missing extra | in-memory tiny CPU scoring head | PyTorch local CPU | `pip install 'reward-lens[train]'` | unverified |
+| Composite | ran | one-component packaged Python grader | built in | `pip install reward-lens` | unverified |
+| Remote black box | ran | local remote wire-protocol fixture | remote protocol v1 | `pip install reward-lens` | unverified |
+
+The 3.1.0 target is unreleased. In a source checkout, use `python -m pip install -e .`, `python -m pip install -e '.[openenv]'`, or `python -m pip install -e '.[train]'` for the corresponding routes. The distribution commands in the table apply when 3.1.0 is published.
+
+Each successful row reports support for `manifest` and `evidence_envelope` records. The row also exposes the adapter's measured capability flags, determinism class, network policy, access level, and replay mode. A `missing extra` row names the install route. A `did not run` row carries the probe error. The matrix does not promote fixture responses to measurements of a named commercial model or to independent task outcomes.
+
+For a machine-readable snapshot, call `reward-lens doctor --format json` and read its `compatibility_matrix` field. The existing capability list remains a separate part of that response. In Python:
+
+```python
+from reward_lens.product.access.matrix import build
+
+for family, row in build().items():
+    print(family, row["conformance"], row["live"], row.get("install_route", ""))
+```

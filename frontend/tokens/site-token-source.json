@@ -1,0 +1,8 @@
+{
+  "schema": "reward-lens-site-token-source/1",
+  "fixture_root": "frontend/tokens/site-source",
+  "source_path": "src/styles/tokens.css",
+  "source_sha256": "sha256:5ff0073f991be7a6437de6740784f8539a5a1a4e9a1b007c6e326c703546a4a7",
+  "source_repository": "https://github.com/reward-lens/reward-lens.github.io",
+  "source_revision": "preserved-development-snapshot:53c02a4f5e4fcf4f9c1e475f9a60363ea2cc3dc1"
+}

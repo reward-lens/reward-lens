@@ -38,7 +38,6 @@ from typing import Any
 
 import numpy as np
 import pytest
-
 from experiments.x6_verdict_timing import (
     CAMPAIGN_STORE,
     MID_STACK_LAYERS,
@@ -51,6 +50,7 @@ from experiments.x6_verdict_timing import (
     p11_rule,
     study_spec,
 )
+
 from reward_lens.artifacts.claims import check_files, find_unbound_numbers
 from reward_lens.core.reading import Refusal
 from reward_lens.core.store import EvidenceStore

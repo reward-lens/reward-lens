@@ -23,48 +23,84 @@ their own frozen specs and their own recorded metrics, which is the second half 
 
 from __future__ import annotations
 
-from reward_lens.record.convert.campaign import (
-    SCHEMA_FINDINGS,
-    Bank,
-    CampaignStepStream,
-    ConversionReport,
-    campaign_arms,
-    convert_campaign,
-    count_run,
-)
-from reward_lens.record.convert.inspect_eval import (
-    InspectEvalLog,
-    InspectHeader,
-    InspectSample,
-    iter_scores,
-    read_eval,
-    read_header,
-    verify_reductions,
-)
-from reward_lens.record.convert.instruments import (
-    InstrumentOutcome,
-    RecordSignal,
-    SweepReport,
-    access_declaration_findings,
-    capabilities_in_record,
-    context_for,
-    is_record_only,
-    reader_access,
-    regime_over,
-    run_instrument,
-    shipped_instruments,
-    sweep,
-)
-from reward_lens.record.convert.readjudicate import (
-    CardReadjudication,
-    ReadjudicationReport,
-    frozen_study,
-    load_frozen_specs,
-    metric_arcs_from_reason,
-    readjudicate,
-    verify_spec_hash,
-)
-from reward_lens.record.convert.store import CampaignRow, CampaignStore
+import importlib
+from typing import Any
+
+# The converter modules are imported on first use, not when this package is imported. The eager
+# form made every consumer of one converter pay for all five: reading a TRL completions parquet
+# pulled in the campaign evidence store, which reaches `core.config` and so needs
+# `pydantic-settings`, an optional dependency no converter on that path touches. The public surface
+# is unchanged. Each name below resolves through `__getattr__` from the one module that defines it,
+# and the module objects stay reachable under the same names.
+_SOURCES: dict[str, tuple[str, ...]] = {
+    "campaign": (
+        "SCHEMA_FINDINGS",
+        "Bank",
+        "CampaignStepStream",
+        "ConversionReport",
+        "campaign_arms",
+        "convert_campaign",
+        "count_run",
+    ),
+    "inspect_eval": (
+        "InspectEvalLog",
+        "InspectHeader",
+        "InspectSample",
+        "iter_scores",
+        "read_eval",
+        "read_header",
+        "verify_reductions",
+    ),
+    "instruments": (
+        "InstrumentOutcome",
+        "RecordSignal",
+        "SweepReport",
+        "access_declaration_findings",
+        "capabilities_in_record",
+        "context_for",
+        "is_record_only",
+        "reader_access",
+        "regime_over",
+        "run_instrument",
+        "shipped_instruments",
+        "sweep",
+    ),
+    "readjudicate": (
+        "CardReadjudication",
+        "ReadjudicationReport",
+        "frozen_study",
+        "load_frozen_specs",
+        "metric_arcs_from_reason",
+        "readjudicate",
+        "verify_spec_hash",
+    ),
+    "store": ("CampaignRow", "CampaignStore"),
+    "trl_parquet": (),
+}
+
+_MODULE_OF: dict[str, str] = {name: module for module, names in _SOURCES.items() for name in names}
+
+
+def __getattr__(name: str) -> Any:
+    """Resolve one public name, or one converter module, on first use."""
+    module = _MODULE_OF.get(name)
+    if module is None:
+        if name in _SOURCES:
+            # A module reached as an attribute: `convert.store`, `convert.trl_parquet`. The
+            # `readjudicate` module is the exception noted under `__all__`: the function of that
+            # name shadows it, so it is reached by `importlib.import_module`.
+            value: Any = importlib.import_module(f"reward_lens.record.convert.{name}")
+        else:
+            raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    else:
+        value = getattr(importlib.import_module(f"reward_lens.record.convert.{module}"), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted({*globals(), *_MODULE_OF, *_SOURCES})
+
 
 __all__ = [
     "SCHEMA_FINDINGS",

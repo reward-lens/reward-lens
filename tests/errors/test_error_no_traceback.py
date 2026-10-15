@@ -60,7 +60,7 @@ OWED: dict[str, tuple[str, int]] = {
 @functools.cache
 def _run() -> tuple[subprocess.CompletedProcess[str], list[dict[str, object]]]:
     env = dict(os.environ)
-    env["PYTHONPATH"] = str(REPO / "src")
+    env.pop("PYTHONPATH", None)
     with tempfile.TemporaryDirectory() as work:
         report_path = Path(work) / "report.json"
         result = subprocess.run(

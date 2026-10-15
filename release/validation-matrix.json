@@ -1,0 +1,490 @@
+{
+  "schema": "reward-lens.release-validation/1",
+  "version": "3.1.0",
+  "profiles": {
+    "dev": {
+      "python": [
+        "3.11",
+        "3.12",
+        "3.13"
+      ],
+      "extras": [],
+      "scan": "all_python",
+      "suites": [
+        "tests/api",
+        "tests/bank",
+        "tests/ci",
+        "tests/cli",
+        "tests/commons",
+        "tests/compat",
+        "tests/conftest.py",
+        "tests/contracts",
+        "tests/errors",
+        "tests/examples",
+        "tests/execution",
+        "tests/forecast",
+        "tests/graders",
+        "tests/instruments",
+        "tests/integrations",
+        "tests/migration",
+        "tests/outcome",
+        "tests/packaging",
+        "tests/partitions",
+        "tests/port",
+        "tests/product/improve",
+        "tests/product/test_artifacts.py",
+        "tests/product/test_audit.py",
+        "tests/product/test_audit_capability_floor.py",
+        "tests/product/test_audit_policy.py",
+        "tests/product/test_audit_responses_signal.py",
+        "tests/product/test_audit_seeker.py",
+        "tests/product/test_doctor.py",
+        "tests/product/test_export.py",
+        "tests/product/test_fiveway.py",
+        "tests/product/test_forecast.py",
+        "tests/product/test_ingest.py",
+        "tests/product/test_join.py",
+        "tests/product/test_openenv.py",
+        "tests/product/test_serve.py",
+        "tests/product/test_trace.py",
+        "tests/product/test_trace_panels.py",
+        "tests/product/test_validity_checks.py",
+        "tests/record",
+        "tests/reference",
+        "tests/release_inputs",
+        "tests/render",
+        "tests/standard",
+        "tests/store",
+        "tests/w2_3_typing",
+        "tests/workbench"
+      ]
+    },
+    "all_extras": {
+      "python": [
+        "3.11",
+        "3.12",
+        "3.13"
+      ],
+      "extras": [
+        "all"
+      ],
+      "scan": "all_python",
+      "suites": [
+        "tests/acceptance/test_a1_effective_size.py",
+        "tests/acceptance/test_a6_split.py",
+        "tests/acceptance/test_capability_report_coverage.py",
+        "tests/acceptance/test_ci_policy.py",
+        "tests/acceptance/test_debt_b_fixes.py",
+        "tests/acceptance/test_debt_e_fixes.py",
+        "tests/acceptance/test_debt_k_fixes.py",
+        "tests/acceptance/test_debt_l_fixes.py",
+        "tests/acceptance/test_debt_m.py",
+        "tests/acceptance/test_debt_r_record.py",
+        "tests/acceptance/test_debt_three.py",
+        "tests/acceptance/test_diagnostic_import_identity.py",
+        "tests/acceptance/test_estimator_entrypoints.py",
+        "tests/acceptance/test_import_topology.py",
+        "tests/acceptance/test_incremental_retrofit.py",
+        "tests/acceptance/test_meta_analysis_plan.py",
+        "tests/acceptance/test_policy.py",
+        "tests/acceptance/test_policy_semantics.py",
+        "tests/acceptance/test_w0_1_schema_version.py",
+        "tests/acceptance/test_w0_2_store_hardening.py",
+        "tests/acceptance/test_w0_3_dependencies.py",
+        "tests/acceptance/test_w0_4_claims_ci.py",
+        "tests/acceptance/test_w0_5_migration.py",
+        "tests/acceptance/test_w0_6_void.py",
+        "tests/acceptance/test_w1_3_invariance.py",
+        "tests/acceptance/test_w1_4_budget_reference.py",
+        "tests/acceptance/test_w1_5_retrofit.py",
+        "tests/acceptance/test_w1_6_access.py",
+        "tests/acceptance/test_w1_kernel.py",
+        "tests/acceptance/test_w2_1_record.py",
+        "tests/acceptance/test_w2_2_scores.py",
+        "tests/acceptance/test_w2_3_blind.py",
+        "tests/acceptance/test_w2_4_arms.py",
+        "tests/acceptance/test_w2_5_closure.py",
+        "tests/acceptance/test_w2_6_converter.py",
+        "tests/acceptance/test_w2_7_regime.py",
+        "tests/acceptance/test_w3_1_tap.py",
+        "tests/acceptance/test_w3_2a_metrology.py",
+        "tests/acceptance/test_w3_2b_metrology.py",
+        "tests/acceptance/test_w3_3a_hodge.py",
+        "tests/acceptance/test_w3_3b_structure.py",
+        "tests/acceptance/test_w3_3c_composition.py",
+        "tests/acceptance/test_w3_4a_verifier.py",
+        "tests/acceptance/test_w3_4b_verifier.py",
+        "tests/acceptance/test_w3_4c_verifier.py",
+        "tests/acceptance/test_w3_5_estimator.py",
+        "tests/acceptance/test_w3_6_labels.py",
+        "tests/acceptance/test_w3_7a_controls.py",
+        "tests/acceptance/test_w3_8_frontier.py",
+        "tests/acceptance/test_w4_1_trl_tap.py",
+        "tests/acceptance/test_w4_2_verifiers.py",
+        "tests/acceptance/test_w4_3_ledger.py",
+        "tests/acceptance/test_w4_4_efficiency.py",
+        "tests/acceptance/test_w4_5_threshold.py",
+        "tests/acceptance/test_w4_6_forecast.py",
+        "tests/acceptance/test_w4_7_monitor.py",
+        "tests/acceptance/test_w4_8_rate.py",
+        "tests/acceptance/test_w4_d7_card.py",
+        "tests/acceptance/test_w4_decision.py",
+        "tests/acceptance/test_w4_meta.py",
+        "tests/acceptance/test_w5_1_policy.py",
+        "tests/acceptance/test_w5_2_covector.py",
+        "tests/acceptance/test_w5_3_selection.py",
+        "tests/acceptance/test_w5_4_credit.py",
+        "tests/acceptance/test_w5_5_selection.py",
+        "tests/acceptance/test_w5_6_reconcile.py",
+        "tests/acceptance/test_w5_docs_catalogue.py",
+        "tests/acceptance/test_w6_4_5_monitor.py",
+        "tests/acceptance/test_w7_catalogue_status.py",
+        "tests/acceptance/test_x8_meta.py",
+        "tests/api",
+        "tests/bank",
+        "tests/ci",
+        "tests/cli",
+        "tests/commons",
+        "tests/compat",
+        "tests/conftest.py",
+        "tests/contracts",
+        "tests/errors",
+        "tests/examples",
+        "tests/execution",
+        "tests/forecast",
+        "tests/graders",
+        "tests/instruments",
+        "tests/integrations",
+        "tests/migration",
+        "tests/outcome",
+        "tests/packaging",
+        "tests/partitions",
+        "tests/port",
+        "tests/product/improve",
+        "tests/product/test_artifacts.py",
+        "tests/product/test_audit.py",
+        "tests/product/test_audit_capability_floor.py",
+        "tests/product/test_audit_policy.py",
+        "tests/product/test_audit_responses_signal.py",
+        "tests/product/test_audit_seeker.py",
+        "tests/product/test_doctor.py",
+        "tests/product/test_export.py",
+        "tests/product/test_fiveway.py",
+        "tests/product/test_forecast.py",
+        "tests/product/test_ingest.py",
+        "tests/product/test_join.py",
+        "tests/product/test_openenv.py",
+        "tests/product/test_serve.py",
+        "tests/product/test_trace.py",
+        "tests/product/test_trace_panels.py",
+        "tests/product/test_validity_checks.py",
+        "tests/record",
+        "tests/reference",
+        "tests/release_inputs",
+        "tests/render",
+        "tests/standard",
+        "tests/store",
+        "tests/test_access.py",
+        "tests/test_artifacts_atlas.py",
+        "tests/test_artifacts_card.py",
+        "tests/test_artifacts_claims.py",
+        "tests/test_artifacts_site.py",
+        "tests/test_baselines.py",
+        "tests/test_battery.py",
+        "tests/test_blk009_group_provenance.py",
+        "tests/test_blk010_completion_tokens.py",
+        "tests/test_blk025_adapter_precision.py",
+        "tests/test_blk027_per_token_fields.py",
+        "tests/test_calibration_gate.py",
+        "tests/test_capture_mount_indices.py",
+        "tests/test_chain_c1_contract_emitter.py",
+        "tests/test_closure.py",
+        "tests/test_composition_instrument.py",
+        "tests/test_concepts_estimator_identity.py",
+        "tests/test_concepts_factory.py",
+        "tests/test_controls.py",
+        "tests/test_core.py",
+        "tests/test_core_evidence.py",
+        "tests/test_data_e07.py",
+        "tests/test_data_lineage.py",
+        "tests/test_data_registry.py",
+        "tests/test_data_spanmap.py",
+        "tests/test_diagnostic_data_v2.py",
+        "tests/test_dynamics.py",
+        "tests/test_forecast_units.py",
+        "tests/test_geometry_gauge.py",
+        "tests/test_geometry_hessian.py",
+        "tests/test_geometry_skew.py",
+        "tests/test_geometry_subspace.py",
+        "tests/test_import_topology.py",
+        "tests/test_indices.py",
+        "tests/test_inspect_eval.py",
+        "tests/test_interventions_erase.py",
+        "tests/test_interventions_rescue.py",
+        "tests/test_interventions_surgery.py",
+        "tests/test_loops.py",
+        "tests/test_measure_card.py",
+        "tests/test_measure_composition.py",
+        "tests/test_measure_covector.py",
+        "tests/test_measure_decision.py",
+        "tests/test_measure_efficiency.py",
+        "tests/test_measure_estimator.py",
+        "tests/test_measure_frontier.py",
+        "tests/test_measure_gates.py",
+        "tests/test_measure_heritability.py",
+        "tests/test_measure_imported.py",
+        "tests/test_measure_labels.py",
+        "tests/test_measure_ledger.py",
+        "tests/test_measure_meta.py",
+        "tests/test_measure_metrology_a.py",
+        "tests/test_measure_metrology_b.py",
+        "tests/test_measure_rate_h1.py",
+        "tests/test_measure_rate_h4.py",
+        "tests/test_measure_reconcile.py",
+        "tests/test_measure_reconstruct.py",
+        "tests/test_measure_regime.py",
+        "tests/test_measure_revealed.py",
+        "tests/test_measure_stochasticity.py",
+        "tests/test_measure_threshold.py",
+        "tests/test_measure_tournament.py",
+        "tests/test_model_perf.py",
+        "tests/test_model_shims.py",
+        "tests/test_monitor_arl.py",
+        "tests/test_monitor_cusum_sidedness.py",
+        "tests/test_monitor_instruments.py",
+        "tests/test_monitor_sequential.py",
+        "tests/test_operate_cli.py",
+        "tests/test_organisms_dose.py",
+        "tests/test_organisms_foundry.py",
+        "tests/test_organisms_micro.py",
+        "tests/test_organisms_scorecard.py",
+        "tests/test_policy_credit.py",
+        "tests/test_policy_unit.py",
+        "tests/test_power.py",
+        "tests/test_public_surface.py",
+        "tests/test_record.py",
+        "tests/test_record_arms.py",
+        "tests/test_record_convert.py",
+        "tests/test_record_exposure_tier.py",
+        "tests/test_record_group_std_convention.py",
+        "tests/test_record_hardware_identity.py",
+        "tests/test_record_labels.py",
+        "tests/test_record_labels_properties.py",
+        "tests/test_record_labels_typing.py",
+        "tests/test_record_scores.py",
+        "tests/test_repair_blk005_explicit_position.py",
+        "tests/test_repair_blk005_prompt_boundary_coordinate.py",
+        "tests/test_repair_blk005_runtime_capture_position.py",
+        "tests/test_repair_blk013_subspace_draw.py",
+        "tests/test_repair_blk014_labelled_contrast.py",
+        "tests/test_repair_blk014a_crossed_clusters.py",
+        "tests/test_repair_blk015_applied_provenance.py",
+        "tests/test_repair_blk015_applied_weight.py",
+        "tests/test_repair_blk019_drift.py",
+        "tests/test_repair_blk019a_drift_rank.py",
+        "tests/test_repair_blk022_lag_sweep.py",
+        "tests/test_repair_blk024_rank_pooling.py",
+        "tests/test_repair_blk030_richards.py",
+        "tests/test_repair_blk030a_bounded_ceiling.py",
+        "tests/test_repair_blk031_power_refuses_continuous.py",
+        "tests/test_runtime_fingerprint_identity.py",
+        "tests/test_runtime_hvp.py",
+        "tests/test_runtime_store_key_identity.py",
+        "tests/test_safety_case.py",
+        "tests/test_sealed_guard.py",
+        "tests/test_signals_adapters.py",
+        "tests/test_signals_conformance.py",
+        "tests/test_signals_score.py",
+        "tests/test_statistics.py",
+        "tests/test_stats_bca.py",
+        "tests/test_stats_changepoint.py",
+        "tests/test_stats_ess.py",
+        "tests/test_stats_gtheory.py",
+        "tests/test_stats_meta.py",
+        "tests/test_stats_nulls.py",
+        "tests/test_stats_roc.py",
+        "tests/test_store_merge.py",
+        "tests/test_studies_engine.py",
+        "tests/test_studies_meta_analysis.py",
+        "tests/test_tap.py",
+        "tests/test_tap_trl.py",
+        "tests/test_tap_trl_group_stats.py",
+        "tests/test_tap_verifiers.py",
+        "tests/test_verifier_attack.py",
+        "tests/test_verifier_coverage.py",
+        "tests/test_verifier_fuzz.py",
+        "tests/test_verifier_growth.py",
+        "tests/test_verifier_metamorphic.py",
+        "tests/test_verifier_mutate.py",
+        "tests/test_verifier_replay.py",
+        "tests/test_verifier_sensitivity.py",
+        "tests/test_verifier_static.py",
+        "tests/w2_3_typing",
+        "tests/workbench"
+      ]
+    },
+    "trl_110": {
+      "python": [
+        "3.11"
+      ],
+      "extras": [
+        "all"
+      ],
+      "scan": "all_python",
+      "suites": [
+        "tests/learning",
+        "tests/product/compare"
+      ]
+    },
+    "trl_113": {
+      "python": [
+        "3.11"
+      ],
+      "extras": [
+        "all"
+      ],
+      "scan": "all_python",
+      "suites": [
+        "tests/tap"
+      ]
+    }
+  },
+  "non_release_research_tests": [
+    {
+      "path": "tests/test_e1_preflight.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/test_e1_preflight_measurements.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/test_e_parity.py",
+      "reason": "requires optional historical external v1 cache via REWARD_LENS_V1_CACHE; not an ordinary product regression input"
+    },
+    {
+      "path": "tests/test_experiments.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/test_measure_hodge.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_runtime_cache_read.py",
+      "reason": "requires optional historical external v1 cache via REWARD_LENS_V1_CACHE; not an ordinary product regression input"
+    },
+    {
+      "path": "tests/test_science_atlas_meta.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s02.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s03.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s05.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s06.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s07.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s08.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s09.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s10.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s11.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s12.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s13.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s14.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s15.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/test_science_s16.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/acceptance/test_sciences_retype.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/acceptance/test_w6_3_distillation.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/acceptance/test_w6_rate.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/acceptance/test_w6_transfer.py",
+      "reason": "imports unshipped top-level studies research package"
+    },
+    {
+      "path": "tests/acceptance/test_x10_replication.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x1_card_release.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x2_beta_vs_s.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x3_transfer.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x4_exploit_growth.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x5_discontinuity.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x6_verdict_timing.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x7_intransitivity.py",
+      "reason": "imports unshipped top-level experiments research package"
+    },
+    {
+      "path": "tests/acceptance/test_x9_position.py",
+      "reason": "imports unshipped top-level experiments research package"
+    }
+  ]
+}

@@ -240,9 +240,7 @@ def context_texts(corpus: Any) -> tuple[Sample, ...]:
                     continue
                 content = message.get("content")
                 if isinstance(content, str) and content.strip():
-                    found.append(
-                        Sample(origin=f"task[{index}].messages[{position}]", text=content)
-                    )
+                    found.append(Sample(origin=f"task[{index}].messages[{position}]", text=content))
     return tuple(found)
 
 

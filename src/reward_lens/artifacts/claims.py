@@ -231,6 +231,7 @@ def check_files(paths: list[str | Path], store: EvidenceStore | None = None) -> 
         rep = check_text(text, store)
         combined.results.extend(rep.results)
         combined.unresolved_refs.extend(rep.unresolved_refs)
+        combined.mixed_provenance.extend(rep.mixed_provenance)
         combined.unbound.extend(replace(u, path=str(p)) for u in find_unbound_numbers(text))
     return combined
 
@@ -384,7 +385,7 @@ def find_unbound_numbers(text: str) -> list[UnboundNumber]:
             UnboundNumber(
                 value=m.group(0).strip(),
                 line=text.count("\n", 0, start) + 1,
-                context=" ".join(sentence.split())[:120],
+                context=" ".join(sentence.split())[:120].rstrip(),
             )
         )
     return out
@@ -412,7 +413,7 @@ def load_baseline(path: Path) -> set[str]:
     if not path.exists():
         return set()
     return {
-        line.rstrip("\n")
+        line.rstrip()
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.startswith("#")
     }
