@@ -95,6 +95,6 @@ pip install reward-lens
 ```
 
 !!! note "What it runs on"
-    Python 3.10 or newer. **The base install brings nothing compiled**: numpy, scipy, pandas, scikit-learn and a CLI, and `import reward_lens` never imports torch. That is deliberate, because a record is written by whoever ran the training and read by whoever is auditing it, and the auditor is exactly the person most likely to be on a base install. The whole grader card, the verifier series, the record reader and the entire trust story run there.
+    Python 3.11 or newer. The base package provides the CLI, schema and configuration handling, static analysis, coverage, and offline signatures. It does not install NumPy, torch, transformers, or Node. Numeric and model measurements use the declared optional extras; unavailable capabilities remain explicit refusals. See the [installation guide](getting-started/install.md) for the current dependency boundaries.
 
     Reading a model's activations or gradients needs the `white-box` extra, which is where torch and transformers live: `pip install 'reward-lens[white-box]'`. A real 8B trace wants a GPU with enough memory to hold the model. Everything conceptual runs on CPU first.

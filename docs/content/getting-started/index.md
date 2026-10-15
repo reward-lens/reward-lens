@@ -6,7 +6,7 @@ Three ways in. One is a browser tab and installs nothing. One runs on your lapto
 pip install reward-lens
 ```
 
-Python 3.10 or newer. The [install page](install.md) has the extras, the Hugging Face access notes for gated models, and the honest word on memory.
+Python 3.11 or newer. The [install page](install.md) has the extras, the Hugging Face access notes for gated models, and the honest word on memory.
 
 ## In a browser, nothing installed
 
