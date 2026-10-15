@@ -43,7 +43,11 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import os
 import pkgutil
+import subprocess
+import sys
+from pathlib import Path
 from types import ModuleType
 
 import pytest
@@ -188,6 +192,64 @@ def test_the_checker_reports_an_unnamed_module_as_private():
         public_route("reward_lens.record.convert.readjudicate", "readjudicate")
         == "reward_lens.record.convert"
     )
+
+
+@pytest.mark.parametrize("order", ("module_first", "other_export_first", "function_first"))
+def test_readjudicate_public_function_survives_submodule_import_order(
+    order: str, tmp_path: Path
+) -> None:
+    """A child import must never replace the package's same-named public function."""
+    script = """
+import importlib
+import importlib.util
+import sys
+from types import ModuleType
+
+order = sys.argv[1]
+if order == "module_first":
+    module = importlib.import_module("reward_lens.record.convert.readjudicate")
+    from reward_lens.record import convert
+elif order == "other_export_first":
+    from reward_lens.record import convert
+    parquet = importlib.import_module("reward_lens.record.convert.trl_parquet")
+    assert convert.trl_parquet is parquet
+    assert "pydantic_settings" not in sys.modules
+    module = importlib.import_module("reward_lens.record.convert.readjudicate")
+else:
+    assert order == "function_first"
+    from reward_lens.record import convert
+    from reward_lens.record.convert import readjudicate as first
+    module = importlib.import_module("reward_lens.record.convert.readjudicate")
+    assert first is module.readjudicate
+
+assert isinstance(module, ModuleType)
+assert convert.readjudicate is module.readjudicate
+from reward_lens.record.convert import readjudicate as exported
+assert exported is module.readjudicate
+
+spec = importlib.util.spec_from_file_location("public_surface_checks", sys.argv[2])
+assert spec is not None and spec.loader is not None
+checks = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(checks)
+assert checks.is_public_module("reward_lens.record.convert.readjudicate") is False
+assert (
+    checks.public_route("reward_lens.record.convert.readjudicate", "readjudicate")
+    == "reward_lens.record.convert"
+)
+"""
+    environment = os.environ.copy()
+    for name in ("PYTHONPATH", "PYTHONHOME", "PYTEST_ADDOPTS"):
+        environment.pop(name, None)
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", script, order, str(Path(__file__).resolve())],
+        cwd=tmp_path,
+        env=environment,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_the_checker_refuses_a_same_named_impostor():

@@ -24,6 +24,8 @@ their own frozen specs and their own recorded metrics, which is the second half 
 from __future__ import annotations
 
 import importlib
+import sys
+from types import ModuleType
 from typing import Any
 
 # The converter modules are imported on first use, not when this package is imported. The eager
@@ -144,10 +146,31 @@ __all__ = [
     # ``reward_lens.record.convert.inspect_eval`` is a public path rather than a reach into a
     # private one. ``readjudicate`` is the one module missing from this list: the package already
     # exports a function of that name, so the module name cannot be added without shadowing it.
-    # Reach it as ``from reward_lens.record.convert import readjudicate as readjudicate_module``
-    # or by ``importlib.import_module``.
+    # Reach the module itself with ``importlib.import_module``.
     "campaign",
     "inspect_eval",
     "instruments",
     "store",
 ]
+
+
+class _ConverterPackage(ModuleType):
+    """Keep the public function bound when importlib attaches its same-named submodule.
+
+    Importing ``convert.readjudicate`` normally assigns that module to the package's
+    ``readjudicate`` attribute after the child finishes loading. That overwrites the lazy public
+    function if the module was imported directly, and makes the public route depend on import
+    order. The module remains accessible through ``importlib.import_module`` and ``sys.modules``.
+    """
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if (
+            name == "readjudicate"
+            and isinstance(value, ModuleType)
+            and value.__name__ == f"{__name__}.readjudicate"
+        ):
+            value = value.readjudicate
+        super().__setattr__(name, value)
+
+
+sys.modules[__name__].__class__ = _ConverterPackage
