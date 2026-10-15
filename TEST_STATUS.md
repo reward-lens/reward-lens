@@ -40,8 +40,8 @@ The same isolated cache also receives the authentic migration subjects: the
 117 MB Skywork Llama reward-head shard, the complete 1.19 GB Skywork Qwen3
 checkpoint with its tokenizer and config, and the 1 KB Gemma-2 config. Their
 eleven files have separate pinned revisions, exact digests, and download bounds.
-CI requires the existing real-head, full-model forward, Gemma-2 policy, and
-family-inventory assertions to run. Missing files or a failed load fail CI;
+CI requires the existing real-head, full-model forward, Gemma-2 policy,
+family-inventory, and 141-site model-architecture assertions to run. Missing files or a failed load fail CI;
 the optional local skip guards do not qualify an absent subject as a release pass.
 These external assets stay outside source history, distribution archives, and
 release assets, separate from the ten-file public regression-input artifact.

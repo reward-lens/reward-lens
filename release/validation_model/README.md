@@ -62,7 +62,7 @@ distributed with reward-lens.
 
 CI verifies these three fixtures before running acceptance with
 `REWARD_LENS_REQUIRE_REAL_SUBJECTS=1` and offline model loading. The real Llama
-head, Qwen3 forward and adapter comparison, Gemma-2 config policy, and family
-inventory must then execute. A developer without those optional local cache
+head, Qwen3 forward and adapter comparison, 141-site architecture comparison,
+Gemma-2 config policy, and family inventory must then execute. A developer without those optional local cache
 files still sees the original explicit skip reason; absence cannot produce a
 passing release CI job.
