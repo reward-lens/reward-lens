@@ -229,6 +229,12 @@ dev = [
     # StepResult values.  Keeping the project extra here makes `uv sync --group dev` sufficient
     # for that release test while leaving a base install without the optional protocol package.
     "reward-lens[openenv]",
+    # The maintained integration suite imports the private MCP 2 server and its mcp_types API
+    # during collection. Include that published extra in dev rather than leaking its transport
+    # stack into base installs or using an ambient developer environment.
+    "reward-lens[mcp]",
+    # The same integration suite exercises both real tracker SDKs in their offline modes.
+    "reward-lens[trackers]",
 ]
 
 # D-04 and D-05: one distribution, one import name, two console names for one entry point. The

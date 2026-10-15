@@ -68,4 +68,4 @@ The repository contains reusable code, small fixtures, and documentation. It exc
 
 Contributors install the development group with `uv sync --group dev`. For the supported checks, read [CONTRIBUTING.md](CONTRIBUTING.md) and [TEST_STATUS.md](TEST_STATUS.md).
 
-[Development snapshots](development-snapshots/README.md) preserve selected unfinished alternatives as full files. They are outside installed packages and default tests. The [historical C1 dependency](reproducibility/c1-reward-lens-snapshot/README.md) is an isolated installable subproject, excluded from the current product distributions.
+Historical [development snapshots](https://github.com/reward-lens/reward-lens/blob/5ece0eb5d3e85fa275decaedc0841a8181708f3a/development-snapshots/README.md) preserve selected unfinished alternatives in public history. The [C1 dependency snapshot](https://github.com/reward-lens/reward-lens/blob/5ece0eb5d3e85fa275decaedc0841a8181708f3a/reproducibility/c1-reward-lens-snapshot/README.md) records the isolated library source used by that historical research.

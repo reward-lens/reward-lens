@@ -51,8 +51,16 @@ def sample(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path,
     return home, snapshot, files
 
 
-def _run(monkeypatch: pytest.MonkeyPatch, home: Path, *, offline: bool = False) -> None:
+def _run(
+    monkeypatch: pytest.MonkeyPatch,
+    home: Path,
+    *,
+    offline: bool = False,
+    fixture: str = "tiny-qwen",
+) -> None:
     args = ["provision_model.py", "--hf-home", str(home)]
+    if fixture != "tiny-qwen":
+        args.extend(["--fixture", fixture])
     if offline:
         args.append("--offline")
     monkeypatch.setattr(sys, "argv", args)
@@ -178,3 +186,79 @@ def test_transient_download_retries_from_clean_partial(sample, monkeypatch):
     _run(monkeypatch, home)
     assert attempts == 3  # one failure, then two pinned synthetic files
     assert {entry.name for entry in snapshot.iterdir()} == set(files)
+
+
+@pytest.fixture
+def tokenizer_sample(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    files = {"config.json": b"{}", "tokenizer.json": b'{"version":"1.0"}'}
+    manifest = {
+        "schema": "reward-lens-validation-tokenizer/1",
+        "model": provision.TOKENIZER_MODEL,
+        "upstream_model": provision.TOKENIZER_UPSTREAM_MODEL,
+        "revision": provision.TOKENIZER_REVISION,
+        "files": {name: _entry(data) for name, data in files.items()},
+    }
+    manifest_path = tmp_path / "gpt2-tokenizer-files.json"
+    manifest_path.write_text(json.dumps(manifest))
+    monkeypatch.setattr(provision, "TOKENIZER_MANIFEST", manifest_path)
+    monkeypatch.setattr(provision, "TOKENIZER_EXPECTED_FILES", set(files))
+    home = tmp_path / "hf-home"
+    snapshot = home / "hub/models--gpt2/snapshots" / provision.TOKENIZER_REVISION
+    return home, snapshot, files, manifest_path
+
+
+def test_pinned_gpt2_tokenizer_fetches_official_revision_then_verifies_offline(
+    tokenizer_sample, monkeypatch
+):
+    home, snapshot, files, _ = tokenizer_sample
+
+    class Response(io.BytesIO):
+        status = 200
+
+        def __init__(self, data):
+            super().__init__(data)
+            self.headers = {"Content-Length": str(len(data))}
+
+    def fetch(request, timeout):
+        assert timeout == 45
+        prefix = (
+            f"https://huggingface.co/{provision.TOKENIZER_UPSTREAM_MODEL}/resolve/"
+            f"{provision.TOKENIZER_REVISION}/"
+        )
+        assert request.full_url.startswith(prefix)
+        name = request.full_url.removeprefix(prefix).split("?", 1)[0]
+        return Response(files[name])
+
+    monkeypatch.setattr(provision, "urlopen", fetch)
+    _run(monkeypatch, home, fixture="gpt2-tokenizer")
+    assert {entry.name for entry in snapshot.iterdir()} == set(files)
+    _run(monkeypatch, home, fixture="gpt2-tokenizer", offline=True)
+    (snapshot / "adapter_config.json").write_text('{"base_model_name_or_path":"other-model"}')
+    with pytest.raises(ValueError, match="unexpected model snapshot entry"):
+        _run(monkeypatch, home, fixture="gpt2-tokenizer", offline=True)
+
+
+def test_gpt2_tokenizer_bad_manifest_and_missing_offline_cache_do_not_write(
+    tokenizer_sample, monkeypatch
+):
+    home, _, _, manifest_path = tokenizer_sample
+    with pytest.raises(FileNotFoundError):
+        _run(monkeypatch, home, fixture="gpt2-tokenizer", offline=True)
+    assert not home.exists()
+    manifest = json.loads(manifest_path.read_text())
+    manifest["upstream_model"] = "other-model"
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="manifest identity"):
+        _run(monkeypatch, home, fixture="gpt2-tokenizer")
+    assert not home.exists()
+
+
+def test_gpt2_tokenizer_manifest_has_bounded_public_source_identity():
+    manifest = json.loads(provision.TOKENIZER_MANIFEST.read_text())
+    assert manifest["model"] == "gpt2"
+    assert manifest["upstream_model"] == "openai-community/gpt2"
+    assert manifest["revision"] == provision.TOKENIZER_REVISION
+    assert manifest["license"] == "mit"
+    assert set(manifest["files"]) == provision.TOKENIZER_EXPECTED_FILES
+    assert sum(row["bytes"] for row in manifest["files"].values()) == 2_854_566
+    assert provision._files(provision._fixture("gpt2-tokenizer")) == manifest["files"]

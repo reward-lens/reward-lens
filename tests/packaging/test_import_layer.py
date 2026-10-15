@@ -319,6 +319,7 @@ def test_core_resolves_its_numpy_backed_names_lazily(clean_python: Path) -> None
 #: so a row added to the mapping and not added here fails every case instead of going unmeasured.
 PROBED_EXTRAS = [
     "trace",
+    "mcp",
     "judge",
     "train",
     "sigstore",

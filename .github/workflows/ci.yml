@@ -151,6 +151,14 @@ jobs:
           npm ci --prefix frontend
       - name: Verify public regression inputs and set portable roots
         run: .venv/bin/python scripts/verify_public_inputs.py --verify validated-inputs --github-env "$GITHUB_ENV"
+      - name: Check documentation claims against evidence ratchet
+        shell: bash
+        run: |
+          .venv/bin/reward-lens-commons claims \
+            --baseline docs/claims-baseline.txt \
+            --exclude cards-and-claims.md --exclude artifacts-operate.md \
+            --exclude cli.md --exclude measurements-you-can-trust.md \
+            --exclude evidence-store.md docs/content
       - name: Run every development suite in isolated pytest processes
         shell: bash
         run: |
@@ -194,6 +202,7 @@ jobs:
           set -euo pipefail
           model_home="$RUNNER_TEMP/reward-lens-validation-model"
           .venv/bin/python release/validation_model/provision_model.py --hf-home "$model_home"
+          .venv/bin/python release/validation_model/provision_model.py --hf-home "$model_home" --fixture gpt2-tokenizer
           echo "HF_HOME=$model_home" >> "$GITHUB_ENV"
       - name: Audit installed Python dependency set
         shell: bash

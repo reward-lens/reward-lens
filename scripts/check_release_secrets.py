@@ -8,11 +8,23 @@ import pathlib
 import subprocess
 
 BASELINE = pathlib.Path(".secrets.baseline")
+BASELINE_FILTER = "detect_secrets.filters.common.is_baseline_file"
+
+
+def validate_baseline_settings(data: dict) -> None:
+    """Require the scanner's self-exclusion to use the portable tracked filename."""
+    filters = data.get("filters_used")
+    if not isinstance(filters, list) or any(not isinstance(item, dict) for item in filters):
+        raise ValueError("invalid detect-secrets baseline filter settings")
+    baseline_filters = [item for item in filters if item.get("path") == BASELINE_FILTER]
+    if len(baseline_filters) != 1 or baseline_filters[0].get("filename") != ".secrets.baseline":
+        raise ValueError("detect-secrets baseline filter must name .secrets.baseline exactly once")
 
 
 def main() -> None:
     data = json.loads(BASELINE.read_text())
     assert data["version"] == "1.5.0", "review scanner-version changes"
+    validate_baseline_settings(data)
     reviewed = 0
     for path, findings in data["results"].items():
         assert pathlib.Path(path).is_file(), f"stale secret review: {path}"
@@ -27,7 +39,12 @@ def main() -> None:
     ]
     for offset in range(0, len(paths), 100):
         result = subprocess.run(
-            ["detect-secrets-hook", "--baseline", str(BASELINE), *paths[offset : offset + 100]],
+            [
+                "detect-secrets-hook",
+                "--baseline",
+                str(BASELINE),
+                *paths[offset : offset + 100],
+            ],
             text=True,
             capture_output=True,
         )

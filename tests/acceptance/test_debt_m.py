@@ -482,14 +482,16 @@ def test_the_general_identity_holds_under_both_binnings():
 # 4. The claims ratchet
 # ---------------------------------------------------------------------------
 
-#: Unique baseline keys before and after the release-reference guard. The contract is that this
-#: number may fall and may not rise.
+#: The release-reference guard removed 20 keys (189 to 169). The 3.1 docs then raised their
+#: Python floor from 3.10 to 3.11, retiring three more stale version-identifier keys. The ratchet
+#: may fall and may not rise; the exact current count is still checked below.
 _BASELINE_BEFORE = 189
-_BASELINE_AFTER = 169
+_BASELINE_AFTER_RELEASE_GUARD = 169
+_BASELINE_AFTER = 166
 
 
 def test_the_baseline_shrank_by_twenty_and_every_line_it_lost_was_a_release_name():
-    """The ratchet's contract, measured. 189 unique keys before, 169 after.
+    """The ratchet's contract, measured: 189 to 169 from the guard, then 166 after doc updates.
 
     `_VERSION_RE` masks `v2.0` and `3.0.0` and deliberately not a bare `1.0`, because `1.0` is a
     perfect AUC far more often than it is a release. What separates them is grammar: a release name
@@ -500,6 +502,8 @@ def test_the_baseline_shrank_by_twenty_and_every_line_it_lost_was_a_release_name
 
     baseline = load_baseline(_ROOT / "docs" / "claims-baseline.txt")
     assert len(baseline) == _BASELINE_AFTER
+    assert _BASELINE_AFTER_RELEASE_GUARD == _BASELINE_BEFORE - 20
+    assert _BASELINE_AFTER == _BASELINE_AFTER_RELEASE_GUARD - 3
     assert _BASELINE_AFTER < _BASELINE_BEFORE
 
     report = check_files(_docs_pages())

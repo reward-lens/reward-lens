@@ -1,0 +1,43 @@
+{
+  "files": {
+    "config.json": {
+      "bytes": 665,
+      "git_blob_sha1": "10c66461e4c109db5a2196bff4bb59be30396ed8",
+      "lfs_sha256": null,
+      "sha256": "0daed7749b4f02b8f76240d5444551d7b08712dab4d0adb8239c56ba823bb7b4"
+    },
+    "merges.txt": {
+      "bytes": 456318,
+      "git_blob_sha1": "226b0752cac7789c48f0cb3ec53eda48b7be36cc",
+      "lfs_sha256": null,
+      "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+    },
+    "tokenizer.json": {
+      "bytes": 1355256,
+      "git_blob_sha1": "4b988bccc9dc5adacd403c00b4704976196548f8",
+      "lfs_sha256": null,
+      "sha256": "8414cab924d8b9b33013f0d221c5862f365ee9be39c5c2bfae8a5a9e970478a6"
+    },
+    "tokenizer_config.json": {
+      "bytes": 26,
+      "git_blob_sha1": "be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd",
+      "lfs_sha256": null,
+      "sha256": "5e04eb606e3a1583530a42e36c2a6b6615c86f34fe77e44d9ddeb43ff940931f"
+    },
+    "vocab.json": {
+      "bytes": 1042301,
+      "git_blob_sha1": "1f1d9aaca301414e7f6c9396df506798ff4eb9a6",
+      "lfs_sha256": null,
+      "sha256": "196139668be63f3b5d6574427317ae82f612a97c5d1cdaf36ed2256dbf636783"
+    }
+  },
+  "license": "mit",
+  "license_status": "MIT declared in the pinned Hugging Face model card; validation-only external download, no tokenizer redistribution.",
+  "model": "gpt2",
+  "model_card": "https://huggingface.co/openai-community/gpt2/blob/607a30d783dfa663caf39e06633721c8d4cfcd7e/README.md",
+  "model_card_sha256": "0fcd631078093c2aa1d93438b898320b8a1167784e2a1ab37b8016e9de8b3c2e",
+  "revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+  "schema": "reward-lens-validation-tokenizer/1",
+  "tree_api": "https://huggingface.co/api/models/openai-community/gpt2/tree/607a30d783dfa663caf39e06633721c8d4cfcd7e?recursive=true&expand=true",
+  "upstream_model": "openai-community/gpt2"
+}

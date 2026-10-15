@@ -29,6 +29,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
+from reward_lens.core.extras import require_extra
+
+require_extra("mcp", subsystem="reward-lens MCP server")
+
 import anyio
 
 from reward_lens._vendor.mcp2.runtime import materialize_private_runtime, require_private_mcp

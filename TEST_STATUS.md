@@ -31,13 +31,14 @@ also recreates three campaign banks with their original byte/content hashes.
 CI supplies only these derived files to test jobs after checking their receipts,
 source identity, and hashes. Missing or inconsistent required inputs fail.
 Original checkouts, private caches, and paid providers are not inputs to this
-release gate. The all-extras profile also provisions one public tiny-Qwen CPU
-fixture at an immutable revision through `release/validation_model`. Its ten files
-are bounded to 25 MB and verified against pinned sizes, SHA-256 and Git/LFS
-identities before tests run with network loading disabled. These external test
-weights stay outside source history, distribution archives, and release assets;
-they are separate from the ten-file public regression-input artifact. Model
-loading failures in this required profile must fail rather than skip.
+release gate. The all-extras profile also provisions a public tiny-Qwen CPU
+model and a GPT-2 tokenizer at immutable revisions through
+`release/validation_model`. The model fixture has a 25 MB bound and the tokenizer
+fixture a 4 MB bound. Their fifteen files are verified against pinned sizes,
+SHA-256 and Git/LFS identities before tests run with network loading disabled.
+These external assets stay outside source history, distribution archives, and
+release assets, separate from the ten-file public regression-input artifact.
+Loading failures for these required fixtures fail rather than skip.
 
 The matrix names 34 retained historical tests outside these profiles. They
 import separate, unshipped top-level research projects or need a historical v1
@@ -47,6 +48,15 @@ their existing optional archive guards, using explicit
 `REWARD_LENS_CAMPAIGN_STORE`, `REWARD_LENS_CAMPAIGN_SPECS`, or
 `REWARD_LENS_VERL_SOURCE` inputs. Their skips do not establish scientific
 results. Always-on offline product controls remain required.
+
+The TRL 1.10 profile also retains twelve opt-in coding-preparation consumer and
+refusal cases, enabled by `REWARD_LENS_CODING_PREPARATION`. They require a separate
+byte-pinned Qwen2 checkpoint, prepared coding inputs, protected evaluator controls,
+and the declared historical runtime. The bounded CPU compare, state-restoration,
+persistence, subject-binding, and tamper controls run without that preparation.
+The optional coding cases remain skipped when it is absent. Neither those skips
+nor a green CPU matrix qualify the scientific coding CUDA profile, an actual
+training update, behavioral repair, or capability retention.
 
 Separate required jobs check source/metadata/lock consistency, the audited
 secret baseline, both frontend builds and TypeScript, strict documentation and

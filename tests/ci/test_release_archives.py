@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import io
 import sys
 import tarfile
@@ -11,7 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from scripts import verify_release_archives as verify
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts/verify_release_archives.py"
+SPEC = importlib.util.spec_from_file_location("verify_release_archives", SCRIPT)
+assert SPEC and SPEC.loader
+verify = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(verify)
 
 SDIST_ROOT = f"reward_lens-{verify.VERSION}"
 REQUIRED_SDIST = (

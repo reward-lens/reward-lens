@@ -30,6 +30,7 @@ number is the one to publish, because it is measured from outside and includes e
 from __future__ import annotations
 
 import hashlib
+import pathlib
 import statistics
 import time
 from dataclasses import dataclass
@@ -55,6 +56,22 @@ from reward_lens.tap.ring import TapRing  # noqa: E402
 #: model, so it is the one the framework is exercised against upstream too.
 MODEL = "trl-internal-testing/tiny-Qwen3ForCausalLM"
 MODEL_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
+
+
+def _pinned_model_snapshot() -> pathlib.Path:
+    """Use the provisioned revision directly; TRL probes config without model_init_kwargs."""
+    from huggingface_hub import constants
+
+    snapshot = (
+        pathlib.Path(constants.HF_HUB_CACHE)
+        / f"models--{MODEL.replace('/', '--')}"
+        / "snapshots"
+        / MODEL_REVISION
+    )
+    if not snapshot.is_dir():
+        raise FileNotFoundError(f"pinned validation model is absent: {snapshot}")
+    return snapshot
+
 
 SEED = 1234
 STEPS = 12
@@ -106,6 +123,12 @@ def digest(model: Any) -> str:
 
 
 def build_trainer(out_dir, reward_funcs, *, steps: int = STEPS, log_completions: bool = False):
+    from transformers import AutoTokenizer
+
+    snapshot = _pinned_model_snapshot()
+    tokenizer = AutoTokenizer.from_pretrained(
+        snapshot, local_files_only=True, truncation_side="left", padding_side="left"
+    )
     prompts = [f"question {i}: count upward from {i}" for i in range(BATCH * 4)]
     args = GRPOConfig(
         output_dir=str(out_dir),
@@ -123,10 +146,11 @@ def build_trainer(out_dir, reward_funcs, *, steps: int = STEPS, log_completions:
         log_completions=log_completions,
     )
     return GRPOTrainer(
-        model=MODEL,
+        model=str(snapshot),
         reward_funcs=reward_funcs,
         args=args,
         train_dataset=Dataset.from_dict({"prompt": prompts}),
+        processing_class=tokenizer,
     )
 
 
@@ -313,7 +337,9 @@ def test_the_run_is_real(arms):
     trainer = arms["working"].trainer
     assert trainer.state.global_step == STEPS
     pristine = digest(
-        AutoModelForCausalLM.from_pretrained(MODEL, revision=MODEL_REVISION, local_files_only=True)
+        AutoModelForCausalLM.from_pretrained(
+            _pinned_model_snapshot(), revision=MODEL_REVISION, local_files_only=True
+        )
     )
     assert arms["working"].digest != pristine, (
         "the trained weights match a freshly loaded checkpoint, so no optimizer step did anything"

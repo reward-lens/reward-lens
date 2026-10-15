@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provision the pinned public tiny-Qwen test model into an isolated HF cache."""
+"""Provision pinned public CPU validation fixtures into an isolated HF cache."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import os
 import re
 import time
 from pathlib import Path
+from typing import NamedTuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -31,20 +32,67 @@ EXPECTED_FILES = {
     "vocab.json",
 }
 MAX_TOTAL_BYTES = 25_000_000
+TOKENIZER_MANIFEST = HERE / "gpt2-tokenizer-files.json"
+TOKENIZER_MODEL = "gpt2"
+TOKENIZER_UPSTREAM_MODEL = "openai-community/gpt2"
+TOKENIZER_REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
+TOKENIZER_EXPECTED_FILES = {
+    "config.json",
+    "merges.txt",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+}
+TOKENIZER_MAX_TOTAL_BYTES = 4_000_000
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 
 
-def _files() -> dict[str, dict]:
-    manifest = json.loads(MANIFEST.read_text())
+class Fixture(NamedTuple):
+    schema: str
+    manifest: Path
+    model: str
+    upstream_model: str
+    revision: str
+    expected_files: set[str]
+    max_total_bytes: int
+
+
+def _fixture(name: str) -> Fixture:
+    if name == "tiny-qwen":
+        return Fixture(
+            "reward-lens-validation-model/1",
+            MANIFEST,
+            MODEL,
+            MODEL,
+            REVISION,
+            EXPECTED_FILES,
+            MAX_TOTAL_BYTES,
+        )
+    if name == "gpt2-tokenizer":
+        return Fixture(
+            "reward-lens-validation-tokenizer/1",
+            TOKENIZER_MANIFEST,
+            TOKENIZER_MODEL,
+            TOKENIZER_UPSTREAM_MODEL,
+            TOKENIZER_REVISION,
+            TOKENIZER_EXPECTED_FILES,
+            TOKENIZER_MAX_TOTAL_BYTES,
+        )
+    raise ValueError(f"unknown validation fixture: {name}")
+
+
+def _files(fixture: Fixture) -> dict[str, dict]:
+    manifest = json.loads(fixture.manifest.read_text())
     if (
-        manifest.get("schema") != "reward-lens-validation-model/1"
-        or manifest.get("model") != MODEL
-        or manifest.get("revision") != REVISION
+        manifest.get("schema") != fixture.schema
+        or manifest.get("model") != fixture.model
+        or manifest.get("upstream_model", fixture.model) != fixture.upstream_model
+        or manifest.get("revision") != fixture.revision
         or not isinstance(manifest.get("files"), dict)
-        or set(manifest["files"]) != EXPECTED_FILES
+        or set(manifest["files"]) != fixture.expected_files
     ):
-        raise ValueError("validation model manifest identity or file set mismatch")
+        raise ValueError("validation fixture manifest identity or file set mismatch")
     total = 0
     for name, spec in manifest["files"].items():
         if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or not isinstance(spec, dict):
@@ -63,12 +111,12 @@ def _files() -> dict[str, dict]:
         ):
             raise ValueError(f"{name}: invalid pinned manifest entry")
         total += size
-    if total > MAX_TOTAL_BYTES:
-        raise ValueError("validation model exceeds bounded size")
+    if total > fixture.max_total_bytes:
+        raise ValueError("validation fixture exceeds bounded size")
     return manifest["files"]
 
 
-def _snapshot(root: Path, offline: bool) -> Path:
+def _snapshot(root: Path, offline: bool, fixture: Fixture) -> Path:
     """Inspect lexical ancestors before creating any cache directory."""
     root = Path(os.path.abspath(root))
     for ancestor in reversed((root.parent, *root.parent.parents)):
@@ -78,9 +126,9 @@ def _snapshot(root: Path, offline: bool) -> Path:
     for component in (
         root.name,
         "hub",
-        "models--trl-internal-testing--tiny-Qwen3ForCausalLM",
+        "models--" + fixture.model.replace("/", "--"),
         "snapshots",
-        REVISION,
+        fixture.revision,
     ):
         path = path / component
         if path.is_symlink():
@@ -147,8 +195,11 @@ def _verify(path: Path, spec: dict) -> None:
         raise ValueError(f"{path.name}: Git blob SHA-1 mismatch")
 
 
-def _fetch(path: Path, name: str, spec: dict) -> None:
-    url = f"https://huggingface.co/{MODEL}/resolve/{REVISION}/{quote(name)}?download=true"
+def _fetch(path: Path, name: str, spec: dict, fixture: Fixture) -> None:
+    url = (
+        f"https://huggingface.co/{fixture.upstream_model}/resolve/"
+        f"{fixture.revision}/{quote(name)}?download=true"
+    )
     for attempt in range(3):
         partial = path.with_name(path.name + ".part")
         try:
@@ -183,10 +234,12 @@ def _fetch(path: Path, name: str, spec: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--hf-home", type=Path, required=True)
+    parser.add_argument("--fixture", choices=("tiny-qwen", "gpt2-tokenizer"), default="tiny-qwen")
     parser.add_argument("--offline", action="store_true", help="verify existing cache only")
     args = parser.parse_args()
-    files = _files()
-    snapshot = _snapshot(args.hf_home, args.offline)
+    fixture = _fixture(args.fixture)
+    files = _files(fixture)
+    snapshot = _snapshot(args.hf_home, args.offline, fixture)
     _scan_snapshot(snapshot, files, args.offline)
     for name, spec in sorted(files.items()):
         path = snapshot / name
@@ -195,9 +248,10 @@ def main() -> None:
         elif args.offline:
             raise FileNotFoundError(path)
         else:
-            _fetch(path, name, spec)
+            _fetch(path, name, spec, fixture)
         print(f"verified {name} {spec['bytes']} {spec['sha256']}", flush=True)
-    print(f"pinned model snapshot ready: {MODEL}@{REVISION} ({snapshot})")
+    label = "model" if args.fixture == "tiny-qwen" else "tokenizer"
+    print(f"pinned {label} snapshot ready: {fixture.model}@{fixture.revision} ({snapshot})")
 
 
 if __name__ == "__main__":

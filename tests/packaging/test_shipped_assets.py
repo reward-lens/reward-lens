@@ -68,7 +68,16 @@ CONTRACTED_VERBS: tuple[str, ...] = tuple(
 #: the negative build below succeeds and yields a wheel with no bundle, which is the artefact the
 #: test needs. With `frontend/` present the hook would either rebuild the bundle or refuse, and
 #: either way the test would stop measuring what it claims to measure.
-BUILDABLE = ("pyproject.toml", "hatch_build.py", "src", "schema", "skills", "README.md", "LICENSE")
+BUILDABLE = (
+    "pyproject.toml",
+    "hatch_build.py",
+    "src",
+    "schema",
+    "skills",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+)
 
 
 def _env(**extra: str) -> dict[str, str]:

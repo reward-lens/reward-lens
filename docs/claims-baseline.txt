@@ -63,8 +63,6 @@ docs/content/getting-started/index.md	0.93	A crystallization fraction of 0.93 is
 docs/content/getting-started/index.md	2.22	On Skywork the preferred answer scores about \(-2.22\) and the rejected one about \(-26.25\), a margin of \(+24.03\)
 docs/content/getting-started/index.md	24.03	On Skywork the preferred answer scores about \(-2.22\) and the rejected one about \(-26.25\), a margin of \(+24.03\)
 docs/content/getting-started/index.md	26.25	On Skywork the preferred answer scores about \(-2.22\) and the rejected one about \(-26.25\), a margin of \(+24.03\)
-docs/content/getting-started/index.md	3.10	Python 3.10 or newer
-docs/content/getting-started/install.md	3.10	Python 3.10 or newer
 docs/content/how-to/attribute-a-score.md	0.171	The Spearman rho between the two rankings is \(-0.171\) on average and reaches \(-0.441\) on the code-correctness axis
 docs/content/how-to/attribute-a-score.md	0.441	The Spearman rho between the two rankings is \(-0.171\) on average and reaches \(-0.441\) on the code-correctness axis
 docs/content/how-to/attribute-a-score.md	0.86	| `mlp_L29` | \(+0.86\) |
@@ -84,7 +82,6 @@ docs/content/how-to/effective-sample-size.md	0.8	Thirty rows, six unique, `dupli
 docs/content/how-to/freeze-and-run-a-study.md	0.17	On the shallow tiny model the margin crystallizes at \(0.17\) of depth, so "crystallizes before the last layer" confirms
 docs/content/how-to/patching-memory.md	8.47	The head-granularity result is recorded from committed artifacts: on Skywork-v0.2 the strongest causal head is `head_L12
 docs/content/index.md	0.171	Run the cheap tool that says which components *explain* the reward, then run the expensive one that says which component
-docs/content/index.md	3.10	Python 3.10 or newer
 docs/content/instruments/attribution.md	0.047	On ArmoRM the same comparison sits near zero and slightly positive, \( \rho = +0.047 \)
 docs/content/instruments/attribution.md	0.171	On `Skywork-Reward-Llama-3.1-8B-v0.2` the per-model mean Spearman correlation between attribution and patching is \( \rh
 docs/content/instruments/attribution.md	0.306	On `Skywork-Reward-Llama-3.1-8B-v0.2` the per-model mean Spearman correlation between attribution and patching is \( \rh
