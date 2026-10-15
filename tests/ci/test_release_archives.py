@@ -22,6 +22,7 @@ SDIST_ROOT = f"reward_lens-{verify.VERSION}"
 REQUIRED_SDIST = (
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
+    "VERIFYING.md",
     "hatch_build.py",
     "frontend/package.json",
     "tests/conftest.py",
@@ -33,7 +34,11 @@ REQUIRED_SDIST = (
 
 
 def make_archives(
-    root: Path, *, wheel_extra: tuple[str, ...] = (), sdist_extra: tuple[str, ...] = ()
+    root: Path,
+    *,
+    wheel_extra: tuple[str, ...] = (),
+    sdist_extra: tuple[str, ...] = (),
+    sdist_missing: tuple[str, ...] = (),
 ) -> None:
     root.mkdir()
     with zipfile.ZipFile(root / verify.WHEEL, "w") as archive:
@@ -49,6 +54,8 @@ def make_archives(
         directory.type = tarfile.DIRTYPE
         archive.addfile(directory)
         for relative in (*REQUIRED_SDIST, *sdist_extra):
+            if relative in sdist_missing:
+                continue
             name = f"{SDIST_ROOT}/{relative}"
             payload = b"public test"
             item = tarfile.TarInfo(name)
@@ -65,6 +72,15 @@ def test_canonical_archive_paths_pass(tmp_path: Path, monkeypatch: pytest.Monkey
     root = tmp_path / "dist"
     make_archives(root)
     run_verifier(root, monkeypatch)
+
+
+def test_sdist_missing_verification_guide_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "dist"
+    make_archives(root, sdist_missing=("VERIFYING.md",))
+    with pytest.raises(AssertionError, match="VERIFYING.md"):
+        run_verifier(root, monkeypatch)
 
 
 @pytest.mark.parametrize(

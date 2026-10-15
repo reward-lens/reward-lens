@@ -30,13 +30,14 @@ def test_nothing_numeric_or_rendering_is_in_the_closure(installed: dict[str, str
     assert intruders == [], f"forbidden distributions in the base closure: {intruders}"
 
 
-def test_the_eight_declared_packages_are_present(installed: dict[str, str]) -> None:
-    """D-58 plus A-001/A-002 and offline signatures: the eight declared names."""
+def test_the_nine_declared_packages_are_present(installed: dict[str, str]) -> None:
+    """D-58 plus A-001/A-002/A-003 and offline signatures: the nine declared names."""
     declared = [
         "click",
         "cryptography",
         "pyyaml",
         "pydantic",
+        "pydantic-settings",  # A-003: public evidence-store settings
         "jsonschema-rs",
         "rfc8785",
         "libcst",
@@ -53,7 +54,7 @@ def test_the_closure_has_the_platform_count(installed: dict[str, str]) -> None:
     libcst resolution adds ``pyyaml-ft`` only on Python 3.13. Asserted separately from the set
     so a count change is visible rather than buried in a set difference.
     """
-    expected = 16 if sys.version_info[:2] == (3, 13) else 15
+    expected = 18 if sys.version_info[:2] == (3, 13) else 17
     assert len(installed) == expected, (
         f"the base closure is {len(installed)}, not {expected}: {sorted(installed)}"
     )
@@ -92,6 +93,21 @@ def test_closure_document_is_written(installed: dict[str, str]) -> None:
         "The alternative A-002 rejected was a second tracer on `sys.settrace` (3.11) and\n"
         "`sys.monitoring` (3.12+), which would replace a tracer whose semantics the inherited tests\n"
         "pin, to save one pure-payload distribution. `requires-python >= 3.11` is unchanged.\n\n"
+        "## Addendum A-003: public evidence-store settings on the base wheel\n\n"
+        "`reward_lens.core.store.EvidenceStore` is a documented public path. Its constructor\n"
+        "uses `core.config.Settings` for the default store path; the claims command reaches the\n"
+        "same store for evidence references. `core.config` imports `pydantic_settings` at module\n"
+        "scope, so a base wheel without that declared dependency made both public paths fail at\n"
+        "import, even though the first-hour audit smoke still passed. A fresh wheel-only Python\n"
+        "3.11 environment reproduced `ModuleNotFoundError: pydantic_settings` from\n"
+        "`reward_lens.artifacts.claims` and `reward_lens.core.store`.\n\n"
+        "The base metadata now declares `pydantic-settings>=2.13`; its only newly resolved\n"
+        "transitive distribution in the measured Python 3.11 closure is `python-dotenv`. The\n"
+        "closure moves from 15 to 17 distributions, with no numeric, rendering, or network\n"
+        "client added. The clean-wheel verifier imports claims and opens both default and\n"
+        "explicit evidence stores. Keeping the existing Pydantic settings implementation\n"
+        "preserves environment overrides and store-path behavior. A lazy import alone would\n"
+        "only defer the same failure until store construction.\n\n"
         "## Cold `uvx reward-lens --help`\n\n"
         "The console script is present and checked against the installed wheel. A cold `uvx`\n"
         "measurement on a clean machine is pending final release qualification; no timing claim\n"

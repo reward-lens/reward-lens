@@ -62,6 +62,9 @@ dependencies = [
     "pyyaml>=6.0",
     # 2.13 is the floor because the record's models use the strict-mode behaviour it settled.
     "pydantic>=2.13",
+    # Public evidence-store and atlas imports reach core.config, which constructs BaseSettings.
+    # A base wheel must supply that import without the development group.
+    "pydantic-settings>=2.13",
     # Schema validation in Rust. The pure-Python `jsonschema` is a dev dependency used to
     # cross-check this one, not a runtime fallback: two validators that disagree is a bug we want
     # to see in CI rather than a difference users discover.
@@ -219,7 +222,6 @@ dev = [
     # Retained Forecast tests import these directly. They remain tooling-only dependencies rather
     # than silently widening the base install closure (D-58).
     "numpy",
-    "pydantic-settings",
     "scipy",
     # `tests/product/compare/test_rung5.py` imports torch unguarded, so the clean wave-exit
     # environment needs the same bounded training runtime as the white-box extra. This is a
@@ -298,6 +300,7 @@ include = [
     "/README.md",
     "/LICENSE",
     "/THIRD_PARTY_NOTICES.md",
+    "/VERIFYING.md",
     "/provenance/derived-public-fixtures.json",
 ]
 

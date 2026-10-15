@@ -44,6 +44,10 @@ TOKENIZER_EXPECTED_FILES = {
     "vocab.json",
 }
 TOKENIZER_MAX_TOTAL_BYTES = 4_000_000
+REAL_SUBJECT_SCHEMA = "reward-lens-real-subject/1"
+REAL_LLAMA_REVISION = "c2a90b9e673a425aba7089029be99f16bf5782ee"
+REAL_QWEN_REVISION = "8c14a4e9e6321deaf572544339b16b8d6bbe8886"
+REAL_GEMMA_REVISION = "6a6e503f3c03a88e92c34c4e6860045eb88ec6e9"
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 
@@ -78,6 +82,49 @@ def _fixture(name: str) -> Fixture:
             TOKENIZER_REVISION,
             TOKENIZER_EXPECTED_FILES,
             TOKENIZER_MAX_TOTAL_BYTES,
+        )
+    if name == "migration-llama-head":
+        model = "Skywork/Skywork-Reward-Llama-3.1-8B"
+        return Fixture(
+            REAL_SUBJECT_SCHEMA,
+            HERE / "llama-head-files.json",
+            model,
+            model,
+            REAL_LLAMA_REVISION,
+            {"model-00004-of-00004.safetensors"},
+            118_000_000,
+        )
+    if name == "migration-qwen3":
+        model = "Skywork/Skywork-Reward-V2-Qwen3-0.6B"
+        return Fixture(
+            REAL_SUBJECT_SCHEMA,
+            HERE / "qwen3-real-files.json",
+            model,
+            model,
+            REAL_QWEN_REVISION,
+            {
+                "config.json",
+                "model.safetensors",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "special_tokens_map.json",
+                "added_tokens.json",
+                "chat_template.jinja",
+                "merges.txt",
+                "vocab.json",
+            },
+            1_209_000_000,
+        )
+    if name == "migration-gemma2-config":
+        model = "Ray2333/GRM-Gemma2-2B-rewardmodel-ft"
+        return Fixture(
+            REAL_SUBJECT_SCHEMA,
+            HERE / "gemma2-config-files.json",
+            model,
+            model,
+            REAL_GEMMA_REVISION,
+            {"config.json"},
+            2_000,
         )
     raise ValueError(f"unknown validation fixture: {name}")
 
@@ -234,7 +281,17 @@ def _fetch(path: Path, name: str, spec: dict, fixture: Fixture) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--hf-home", type=Path, required=True)
-    parser.add_argument("--fixture", choices=("tiny-qwen", "gpt2-tokenizer"), default="tiny-qwen")
+    parser.add_argument(
+        "--fixture",
+        choices=(
+            "tiny-qwen",
+            "gpt2-tokenizer",
+            "migration-llama-head",
+            "migration-qwen3",
+            "migration-gemma2-config",
+        ),
+        default="tiny-qwen",
+    )
     parser.add_argument("--offline", action="store_true", help="verify existing cache only")
     args = parser.parse_args()
     fixture = _fixture(args.fixture)
@@ -250,8 +307,7 @@ def main() -> None:
         else:
             _fetch(path, name, spec, fixture)
         print(f"verified {name} {spec['bytes']} {spec['sha256']}", flush=True)
-    label = "model" if args.fixture == "tiny-qwen" else "tokenizer"
-    print(f"pinned {label} snapshot ready: {fixture.model}@{fixture.revision} ({snapshot})")
+    print(f"pinned validation fixture ready: {fixture.model}@{fixture.revision} ({snapshot})")
 
 
 if __name__ == "__main__":

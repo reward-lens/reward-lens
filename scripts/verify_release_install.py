@@ -36,6 +36,7 @@ def main() -> int:
     bindir = root / "venv" / ("Scripts" if os.name == "nt" else "bin")
     python = bindir / ("python.exe" if os.name == "nt" else "python")
     cli = bindir / ("reward-lens.exe" if os.name == "nt" else "reward-lens")
+    commons = bindir / ("reward-lens-commons.exe" if os.name == "nt" else "reward-lens-commons")
     env = {k: v for k, v in os.environ.items() if not k.startswith(("PIP_", "UV_", "REWARD_LENS_"))}
     for name in ("PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "VIRTUAL_ENV"):
         env.pop(name, None)
@@ -80,6 +81,7 @@ def main() -> int:
     run("pip-check", [python, "-m", "pip", "check"])
     code = """import importlib.metadata as m,importlib.resources as r,json,pathlib,sys
 import reward_lens
+import reward_lens.artifacts.claims
 p=pathlib.Path(reward_lens.__file__).resolve()
 assert p.is_relative_to(pathlib.Path(sys.prefix).resolve()) and 'site-packages' in str(p), str(p)
 assert 'torch' not in sys.modules
@@ -94,6 +96,43 @@ print(json.dumps({'version':m.version('reward-lens'),'runtime':reward_lens.__ver
 """
     info = run("installed-origin", [python, "-I", "-c", code], json_output=True)
     assert info["version"] == info["runtime"] == args.version
+    claims_doc = root / "claims-smoke.md"
+    claims_doc.write_text("This page contains no measurements.\n")
+    default_claims = run("claims-default-store", [commons, "claims", claims_doc])
+    assert "Claims checked: 0." in default_claims
+    assert (root / "state/reward-lens/store").is_dir()
+    store_code = """from pathlib import Path
+from reward_lens.core.config import get_settings
+from reward_lens.core.evidence import make_evidence
+from reward_lens.core.provenance import Provenance
+from reward_lens.core.store import EvidenceStore
+from reward_lens.core.types import ModelFP, SubjectRef
+root = Path.cwd() / 'state/reward-lens'
+assert get_settings().home == root
+subject = SubjectRef(signals=(ModelFP('mfp:base-install'),),
+                     dataset='ds:base-install', readout='reward')
+evidence = make_evidence(observable='base.install', observable_version='1',
+    subject=subject, value=1.0, provenance=Provenance(),
+    created_at='2026-10-15T00:00:00+00:00')
+store = EvidenceStore()
+assert store.path == root / 'store'
+assert store.append(evidence) == evidence.id
+assert EvidenceStore().get(evidence.id).value == 1.0
+print(evidence.id)
+"""
+    run("store-round-trip", [python, "-I", "-c", store_code])
+    explicit_store = root / "explicit-evidence-store"
+    explicit_claims = run(
+        "claims-explicit-store", [commons, "claims", "--store", explicit_store, claims_doc]
+    )
+    assert "Claims checked: 0." in explicit_claims and explicit_store.is_dir()
+    claims_doc.write_text("A result cites ev:deadbeef.\n")
+    unresolved = run(
+        "claims-unresolved-refusal",
+        [commons, "claims", "--store", explicit_store, claims_doc],
+        expected=(1,),
+    )
+    assert "referenced but not in the store" in unresolved
     version = run("cli-version", [cli, "--version"])
     assert re.search(r"(?<![0-9.])" + re.escape(args.version) + r"(?![0-9.])", version)
     doctor = run("doctor", [cli, "doctor", "--format", "json"], json_output=True)

@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from reward_lens import contracts
 from reward_lens.cli.verbs.open import launch_workbench
 from reward_lens.product.serve import WorkbenchServer
 
@@ -16,6 +17,15 @@ RECORD = (
     Path(__file__).parents[2] / "fleet/gates/fixtures/controls/g39/positive/sdk.assay.json"
 ).read_bytes()
 REPORT = b"<!doctype html><title>the CLI report</title>"
+REFERENCE = Path(__file__).parents[2] / "schema/assay/1.0/fixtures/reference.json"
+
+
+def _sealed_reference_bytes() -> bytes:
+    """Derive a valid saved assay from the shipped full schema reference."""
+    document = json.loads(REFERENCE.read_text(encoding="utf-8"))
+    assert document["assay_id"] == "sha256:" + "0" * 64
+    document["assay_id"] = contracts.digest(document)
+    return json.dumps(document, separators=(",", ":")).encode("utf-8")
 
 
 def _request(server: WorkbenchServer, path: str, *, headers: dict[str, str] | None = None):
@@ -104,13 +114,26 @@ def test_malformed_record_is_refused_before_any_request_handler_runs() -> None:
 def test_launch_helper_honours_no_browser_and_uses_existing_report(tmp_path: Path) -> None:
     record = tmp_path / "demo.assay.json"
     report = tmp_path / "demo.assay.html"
-    record.write_bytes(RECORD)
+    record.write_bytes(_sealed_reference_bytes())
     report.write_bytes(REPORT)
     server = launch_workbench(path=record, report=report)
     try:
         assert server.url.startswith("http://127.0.0.1:")
     finally:
         server.close()
+
+
+def test_launch_helper_refuses_the_original_unsealed_fixture(tmp_path: Path) -> None:
+    record = tmp_path / "unsealed.assay.json"
+    report = tmp_path / "unsealed.assay.html"
+    record.write_bytes(RECORD)
+    report.write_bytes(REPORT)
+    with pytest.raises(contracts.RecordInvalid) as refused:
+        launch_workbench(path=record, report=report)
+    assert refused.value.code == "RL0604"
+    assert refused.value.context["declared_assay_id"] == "sha256:" + "0" * 64
+    assert refused.value.context["original_bytes"] == RECORD
+    assert record.read_bytes() == RECORD
 
 
 def test_cli_prints_the_url_before_it_considers_opening_a_browser(

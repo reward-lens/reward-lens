@@ -35,7 +35,6 @@ FORBIDDEN = frozenset(
         "scipy",
         "pandas",
         "scikit-learn",
-        "pydantic-settings",
         "rich",
         "typer",
     }
@@ -52,6 +51,7 @@ EXPECTED_CLOSURE = frozenset(
         "cryptography",
         "pyyaml",
         "pydantic",
+        "pydantic-settings",
         "jsonschema-rs",
         "rfc8785",
         "libcst",
@@ -61,6 +61,8 @@ EXPECTED_CLOSURE = frozenset(
         "pydantic-core",
         "typing-extensions",
         "typing-inspection",
+        # A-003: BaseSettings and its dotenv reader serve the public evidence store.
+        "python-dotenv",
         # cryptography's resolved native-interface closure
         "cffi",
         "pycparser",

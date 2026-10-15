@@ -33,6 +33,7 @@ import ast
 import importlib
 import importlib.util
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -442,15 +443,27 @@ def _real_heads() -> dict:
     return json.loads((FIXTURES / "reward_heads.json").read_text(encoding="utf-8"))
 
 
-def _hub_snapshot(repo_id: str, filename: str) -> pathlib.Path | None:
+LLAMA_REVISION = "c2a90b9e673a425aba7089029be99f16bf5782ee"
+QWEN_REVISION = "8c14a4e9e6321deaf572544339b16b8d6bbe8886"
+GEMMA_REVISION = "6a6e503f3c03a88e92c34c4e6860045eb88ec6e9"
+
+
+def _hub_snapshot(
+    repo_id: str, filename: str, *, revision: str | None = None
+) -> pathlib.Path | None:
     """A file inside a locally cached snapshot, or None. Never downloads."""
     import glob
 
+    if "HF_HUB_CACHE" in os.environ:
+        root = pathlib.Path(os.environ["HF_HUB_CACHE"])
+    elif "HF_HOME" in os.environ:
+        root = pathlib.Path(os.environ["HF_HOME"]) / "hub"
+    else:
+        cache_home = pathlib.Path(os.environ.get("XDG_CACHE_HOME", pathlib.Path.home() / ".cache"))
+        root = cache_home / "huggingface" / "hub"
     stem = "models--" + repo_id.replace("/", "--")
-    hits = glob.glob(
-        str(pathlib.Path.home() / ".cache/huggingface/hub" / stem / "snapshots" / "*" / filename)
-    )
-    return pathlib.Path(hits[0]) if hits else None
+    hits = glob.glob(str(root / stem / "snapshots" / (revision or "*") / filename))
+    return next((pathlib.Path(hit) for hit in sorted(hits) if pathlib.Path(hit).is_file()), None)
 
 
 # -- Tier A: real weights ----------------------------------------------------
@@ -474,8 +487,14 @@ def test_reads_the_real_skywork_llama_8b_reward_head():
 
     from reward_lens.signals.adapters import reward_head_name, reward_head_params
 
-    shard = _hub_snapshot("Skywork/Skywork-Reward-Llama-3.1-8B", "model-00004-of-00004.safetensors")
+    shard = _hub_snapshot(
+        "Skywork/Skywork-Reward-Llama-3.1-8B",
+        "model-00004-of-00004.safetensors",
+        revision=LLAMA_REVISION,
+    )
     if shard is None:
+        if os.environ.get("REWARD_LENS_REQUIRE_REAL_SUBJECTS") == "1":
+            pytest.fail("required pinned Skywork Llama shard 4 is absent from the isolated cache")
         pytest.skip(
             "Skywork/Skywork-Reward-Llama-3.1-8B shard 4 is not in the local HF cache. It is not "
             "downloaded by this test; fetch it with hf_hub_download(repo_id, "
@@ -532,12 +551,22 @@ def test_reads_a_real_qwen3_reward_model_end_to_end():
     from reward_lens.signals.adapters import reward_head_name as head_name_of
 
     model_id = "Skywork/Skywork-Reward-V2-Qwen3-0.6B"
+    weights = _hub_snapshot(model_id, "model.safetensors", revision=QWEN_REVISION)
+    if weights is None:
+        if os.environ.get("REWARD_LENS_REQUIRE_REAL_SUBJECTS") == "1":
+            pytest.fail(
+                "required pinned Skywork Qwen3 checkpoint is absent from the isolated cache"
+            )
+        pytest.skip(f"{model_id} is not in the local cache")
+    snapshot = weights.parent
     try:
         model = AutoModelForSequenceClassification.from_pretrained(
-            model_id, dtype=torch.float32, local_files_only=True
+            snapshot, dtype=torch.float32, local_files_only=True
         ).eval()
-        tokenizer = AutoTokenizer.from_pretrained(model_id, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(snapshot, local_files_only=True)
     except Exception as exc:  # pragma: no cover - depends on the local cache
+        if os.environ.get("REWARD_LENS_REQUIRE_REAL_SUBJECTS") == "1":
+            raise
         pytest.skip(f"{model_id} is not in the local cache: {exc}")
 
     adapter = resolve_adapter(model, model_id)
@@ -616,8 +645,10 @@ def test_gemma2_soft_cap_is_read_and_disabled_on_a_real_reward_model_config():
     assert recorded["attn_logit_softcapping"] == 50.0
     assert recorded["final_logit_softcapping"] == 30.0
 
-    config_path = _hub_snapshot(recorded["repo_id"], "config.json")
+    config_path = _hub_snapshot(recorded["repo_id"], "config.json", revision=GEMMA_REVISION)
     if config_path is None:
+        if os.environ.get("REWARD_LENS_REQUIRE_REAL_SUBJECTS") == "1":
+            pytest.fail("required pinned Gemma-2 config is absent from the isolated cache")
         pytest.skip(
             f"{recorded['repo_id']} config.json is not in the local HF cache. It is 1 KB; fetch it "
             "with hf_hub_download(repo_id, 'config.json') to run this assertion."
@@ -789,9 +820,15 @@ def test_which_families_have_no_reachable_real_subject_and_what_would_be_needed(
     """
     reachable_with_weights = {
         "llama": _hub_snapshot(
-            "Skywork/Skywork-Reward-Llama-3.1-8B", "model-00004-of-00004.safetensors"
+            "Skywork/Skywork-Reward-Llama-3.1-8B",
+            "model-00004-of-00004.safetensors",
+            revision=LLAMA_REVISION,
         ),
-        "qwen3": _hub_snapshot("Skywork/Skywork-Reward-V2-Qwen3-0.6B", "model.safetensors"),
+        "qwen3": _hub_snapshot(
+            "Skywork/Skywork-Reward-V2-Qwen3-0.6B",
+            "model.safetensors",
+            revision=QWEN_REVISION,
+        ),
     }
     assert all(p is not None for p in reachable_with_weights.values()), reachable_with_weights
 

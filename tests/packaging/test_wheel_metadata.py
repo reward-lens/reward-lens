@@ -102,6 +102,7 @@ def test_base_dependencies_are_the_declared_closure(metadata) -> None:
         "jsonschema-rs",
         "libcst",  # A-001
         "pydantic",
+        "pydantic-settings",  # A-003 public evidence-store settings
         "pyyaml",
         "rfc8785",
     ], base

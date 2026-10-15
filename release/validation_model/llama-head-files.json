@@ -1,0 +1,15 @@
+{
+  "files": {
+    "model-00004-of-00004.safetensors": {
+      "bytes": 117473824,
+      "git_blob_sha1": "2d8b85d1d86b4a286472f993dd5d0e31c6b75e17",
+      "lfs_sha256": "d3cf76f3a0d588ae8325a667569da30275958a40d687956cfd79c9e015de6870",
+      "sha256": "d3cf76f3a0d588ae8325a667569da30275958a40d687956cfd79c9e015de6870"
+    }
+  },
+  "license_status": "Skywork Community License linked in model card; CI-only download, no redistribution",
+  "model": "Skywork/Skywork-Reward-Llama-3.1-8B",
+  "revision": "c2a90b9e673a425aba7089029be99f16bf5782ee",
+  "schema": "reward-lens-real-subject/1",
+  "tree_api": "https://huggingface.co/api/models/Skywork/Skywork-Reward-Llama-3.1-8B/revision/c2a90b9e673a425aba7089029be99f16bf5782ee?blobs=true"
+}

@@ -2,25 +2,69 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import inspect
 import json
+import sysconfig
 import zipfile
+from hashlib import sha256
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
 
-def test_acceptance_imports_product_modules_from_this_checkout() -> None:
-    """The receipt is about this worktree, never a similarly named installed checkout."""
+def _assert_installed_module_matches_source(
+    module: ModuleType, relative: str, installed_root: Path, source_root: Path
+) -> None:
+    imported = Path(inspect.getfile(module)).resolve()
+    expected = (installed_root / relative).resolve()
+    assert imported == expected, f"module escaped the installed distribution: {imported}"
+    source = source_root / relative
+    assert source.is_file(), source
+    assert sha256(imported.read_bytes()).digest() == sha256(source.read_bytes()).digest(), (
+        f"installed module differs from reviewed source: {relative}"
+    )
+
+
+def test_acceptance_imports_exact_product_modules_from_noneditable_install() -> None:
+    """The runtime comes from site-packages and matches the reviewed checkout byte-for-byte."""
     from reward_lens import api
     from reward_lens.cli.verbs import import_cmd
     from reward_lens.product import ingest
 
     root = Path(__file__).resolve().parents[2]
-    expected = root / "src"
-    for module in (api, import_cmd, ingest):
-        imported = Path(inspect.getfile(module)).resolve()
-        assert imported.is_relative_to(expected), imported
+    source_root = root / "src" / "reward_lens"
+    installed_root = Path(importlib.metadata.distribution("reward-lens").locate_file("reward_lens"))
+    installed_root = installed_root.resolve()
+    assert installed_root.parent == Path(sysconfig.get_path("purelib")).resolve()
+    assert installed_root != source_root.resolve()
+    for module, relative in (
+        (api, "api/__init__.py"),
+        (import_cmd, "cli/verbs/import_cmd.py"),
+        (ingest, "product/ingest/__init__.py"),
+    ):
+        _assert_installed_module_matches_source(module, relative, installed_root, source_root)
+
+
+def test_installed_origin_check_refuses_shadow_and_stale_bytes(tmp_path: Path) -> None:
+    relative = "api/__init__.py"
+    source_root = tmp_path / "reviewed"
+    source = source_root / relative
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"reviewed module\n")
+    installed_root = tmp_path / "site-packages" / "reward_lens"
+    installed = installed_root / relative
+    installed.parent.mkdir(parents=True)
+    installed.write_bytes(source.read_bytes())
+    module = ModuleType("shadow_api")
+    module.__file__ = str(source)
+    with pytest.raises(AssertionError, match="escaped the installed distribution"):
+        _assert_installed_module_matches_source(module, relative, installed_root, source_root)
+    module.__file__ = str(installed)
+    installed.write_bytes(b"stale module\n")
+    with pytest.raises(AssertionError, match="differs from reviewed source"):
+        _assert_installed_module_matches_source(module, relative, installed_root, source_root)
 
 
 def _record_bytes() -> bytes:

@@ -1,0 +1,15 @@
+{
+  "files": {
+    "config.json": {
+      "bytes": 1071,
+      "git_blob_sha1": "9a4b64c72de31d15c0b533b29489c5c0150e57a9",
+      "lfs_sha256": null,
+      "sha256": "c7ec6266a37a9d8c99cdb1af98356424efd4926b1dcc31363e2d85c6d51b3d37"
+    }
+  },
+  "license_status": "Apache-2.0 declared in public model card; CI-only download",
+  "model": "Ray2333/GRM-Gemma2-2B-rewardmodel-ft",
+  "revision": "6a6e503f3c03a88e92c34c4e6860045eb88ec6e9",
+  "schema": "reward-lens-real-subject/1",
+  "tree_api": "https://huggingface.co/api/models/Ray2333/GRM-Gemma2-2B-rewardmodel-ft/revision/6a6e503f3c03a88e92c34c4e6860045eb88ec6e9?blobs=true"
+}

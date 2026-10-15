@@ -3,8 +3,9 @@
 Every assertion here runs in the clean venv, in a fresh `-I` interpreter, with the working
 directory outside the checkout. The claim is not "these modules import" (they import fine in a
 developer environment that has numpy sitting there from something else); it is "these modules
-import when numpy, scipy, pandas, sklearn, pydantic-settings, rich, typer and torch are not
-installed at all, and none of them is in `sys.modules` when the import returns".
+import when numpy, scipy, pandas, sklearn, rich, typer and torch are not installed at all,
+and none of them, including the now-base `pydantic-settings`, is in `sys.modules` when these
+lightweight imports return".
 """
 
 from __future__ import annotations
@@ -292,7 +293,7 @@ def test_verifier_package_does_not_gate_its_whole_namespace(clean_python: Path) 
 
 def test_core_resolves_its_numpy_backed_names_lazily(clean_python: Path) -> None:
     """PEP 562. `import reward_lens.core` must not pull `core.evidence` (numpy) or `core.config`
-    (pydantic-settings), but `reward_lens.core.Evidence` must still resolve for anyone who has the
+    (base settings), but `reward_lens.core.Evidence` must still resolve for anyone who has the
     numeric stack, and `dir()` must still list the public surface so tab completion works."""
     result = import_probe(
         clean_python,

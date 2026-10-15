@@ -97,6 +97,7 @@ def main() -> None:
         for required in (
             "LICENSE",
             "THIRD_PARTY_NOTICES.md",
+            "VERIFYING.md",
             "hatch_build.py",
             "frontend/package.json",
             "tests/conftest.py",

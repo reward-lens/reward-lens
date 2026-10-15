@@ -3,7 +3,7 @@
 Written by `tests/packaging/test_closure.py`. This is what `uv pip list` prints in a venv
 holding only the built wheel, which is the count D-58 says binds.
 
-15 distributions.
+17 distributions.
 
 | distribution | version |
 |---|---|
@@ -17,6 +17,8 @@ holding only the built wheel, which is the count D-58 says binds.
 | pycparser | 3.11 |
 | pydantic | 2.14.1 |
 | pydantic-core | 2.50.1 |
+| pydantic-settings | 2.16.0 |
+| python-dotenv | 1.2.4 |
 | pyyaml | 6.0.3 |
 | reward-lens | 3.1.0 |
 | rfc8785 | 0.1.4 |
@@ -44,6 +46,24 @@ before A-002 was applied:
 The alternative A-002 rejected was a second tracer on `sys.settrace` (3.11) and
 `sys.monitoring` (3.12+), which would replace a tracer whose semantics the inherited tests
 pin, to save one pure-payload distribution. `requires-python >= 3.11` is unchanged.
+
+## Addendum A-003: public evidence-store settings on the base wheel
+
+`reward_lens.core.store.EvidenceStore` is a documented public path. Its constructor
+uses `core.config.Settings` for the default store path; the claims command reaches the
+same store for evidence references. `core.config` imports `pydantic_settings` at module
+scope, so a base wheel without that declared dependency made both public paths fail at
+import, even though the first-hour audit smoke still passed. A fresh wheel-only Python
+3.11 environment reproduced `ModuleNotFoundError: pydantic_settings` from
+`reward_lens.artifacts.claims` and `reward_lens.core.store`.
+
+The base metadata now declares `pydantic-settings>=2.13`; its only newly resolved
+transitive distribution in the measured Python 3.11 closure is `python-dotenv`. The
+closure moves from 15 to 17 distributions, with no numeric, rendering, or network
+client added. The clean-wheel verifier imports claims and opens both default and
+explicit evidence stores. Keeping the existing Pydantic settings implementation
+preserves environment overrides and store-path behavior. A lazy import alone would
+only defer the same failure until store construction.
 
 ## Cold `uvx reward-lens --help`
 

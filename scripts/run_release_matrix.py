@@ -56,7 +56,7 @@ def main() -> int:
     parser.add_argument("--list", action="store_true", help="validate and list commands only")
     args = parser.parse_args()
     commands = [
-        [sys.executable, "-m", "pytest", "-q", *suite]
+        [sys.executable, "-m", "pytest", "-q", "-ra", *suite]
         for suite in groups(args.matrix, args.profile)
     ]
     environment = os.environ.copy()
@@ -72,7 +72,7 @@ def main() -> int:
     environment["PYTHONNOUSERSITE"] = "1"
     environment["REWARD_LENS_EXIT_CHECK"] = "1"
     environment["REWARD_LENS_SLOW"] = "1"
-    with tempfile.TemporaryDirectory(prefix="rlm-", dir="/tmp") as scratch:
+    with tempfile.TemporaryDirectory(prefix="rlm-") as scratch:
         environment["TMPDIR"] = scratch
         for command in commands:
             print("RUN", " ".join(command), flush=True)

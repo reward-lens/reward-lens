@@ -262,3 +262,84 @@ def test_gpt2_tokenizer_manifest_has_bounded_public_source_identity():
     assert set(manifest["files"]) == provision.TOKENIZER_EXPECTED_FILES
     assert sum(row["bytes"] for row in manifest["files"].values()) == 2_854_566
     assert provision._files(provision._fixture("gpt2-tokenizer")) == manifest["files"]
+
+
+@pytest.mark.parametrize(
+    ("name", "count", "total"),
+    [
+        ("migration-llama-head", 1, 117_473_824),
+        ("migration-qwen3", 9, 1_208_020_198),
+        ("migration-gemma2-config", 1, 1_071),
+    ],
+)
+def test_real_subject_manifests_are_pinned_and_bounded(name, count, total):
+    fixture = provision._fixture(name)
+    manifest = json.loads(fixture.manifest.read_text())
+    files = provision._files(fixture)
+    assert manifest["schema"] == "reward-lens-real-subject/1"
+    assert manifest["revision"] == fixture.revision
+    assert manifest["model"] == fixture.model
+    assert len(files) == count
+    assert sum(spec["bytes"] for spec in files.values()) == total <= fixture.max_total_bytes
+    assert manifest["tree_api"].endswith(f"/revision/{fixture.revision}?blobs=true")
+
+
+def test_real_gemma_fixture_route_is_bounded_and_offline_read_only(tmp_path, monkeypatch):
+    fixture = provision._fixture("migration-gemma2-config")
+    home = tmp_path / "hf-home"
+    with pytest.raises(FileNotFoundError):
+        _run(monkeypatch, home, fixture="migration-gemma2-config", offline=True)
+    assert not home.exists()
+
+    # Use the real fixture identity with synthetic bytes to exercise only the fetch machinery.
+    payload = b'{"soft_cap": 30}'
+    manifest = {
+        "schema": fixture.schema,
+        "model": fixture.model,
+        "revision": fixture.revision,
+        "files": {"config.json": _entry(payload)},
+    }
+    manifest_path = tmp_path / "gemma2-config-files.json"
+    manifest_path.write_text(json.dumps(manifest))
+    monkeypatch.setattr(provision, "HERE", tmp_path)
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Length": str(len(payload))}
+
+    def fetch(request, timeout):
+        assert timeout == 45
+        assert request.get_header("Authorization") is None
+        assert request.full_url.startswith(
+            f"https://huggingface.co/{fixture.model}/resolve/{fixture.revision}/config.json"
+        )
+        return Response(payload)
+
+    monkeypatch.setattr(provision, "urlopen", fetch)
+    _run(monkeypatch, home, fixture="migration-gemma2-config")
+    _run(monkeypatch, home, fixture="migration-gemma2-config", offline=True)
+    snapshot = home / "hub" / ("models--" + fixture.model.replace("/", "--"))
+    snapshot = snapshot / "snapshots" / fixture.revision
+    assert (snapshot / "config.json").read_bytes() == payload
+
+    partial = snapshot / "config.json.part"
+    partial.write_bytes(b"x" * (len(payload) + 1))
+    with pytest.raises(ValueError, match="unsafe partial model file"):
+        _run(monkeypatch, home, fixture="migration-gemma2-config")
+    assert partial.exists()
+
+
+def test_real_subject_nested_cache_symlink_is_rejected_before_fetch(tmp_path, monkeypatch):
+    home = tmp_path / "hf-home"
+    home.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (home / "hub").symlink_to(outside, target_is_directory=True)
+
+    def no_fetch(*args, **kwargs):
+        pytest.fail("symlinked cache must be rejected before any download")
+
+    monkeypatch.setattr(provision, "urlopen", no_fetch)
+    with pytest.raises(ValueError, match="unsafe model cache directory"):
+        _run(monkeypatch, home, fixture="migration-llama-head")
+    assert list(outside.iterdir()) == []

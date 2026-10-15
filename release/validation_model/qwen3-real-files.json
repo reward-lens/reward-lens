@@ -1,0 +1,63 @@
+{
+  "files": {
+    "added_tokens.json": {
+      "bytes": 707,
+      "git_blob_sha1": "b54f9135e44c1e81047e8d05cb027af8bc039eed",
+      "lfs_sha256": null,
+      "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680"
+    },
+    "chat_template.jinja": {
+      "bytes": 4168,
+      "git_blob_sha1": "01be9b307daa2d425f7c168c9fb145a286e0afb4",
+      "lfs_sha256": null,
+      "sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
+    },
+    "config.json": {
+      "bytes": 846,
+      "git_blob_sha1": "3dd30faa79229d3a4ecc1e36e6adae292e4d727e",
+      "lfs_sha256": null,
+      "sha256": "7102434fa8ad9f5d2e6b89d92ae811c945f7a17a6a9361a4229ddc2e804a2e64"
+    },
+    "merges.txt": {
+      "bytes": 1671853,
+      "git_blob_sha1": "31349551d90c7606f325fe0f11bbb8bd5fa0d7c7",
+      "lfs_sha256": null,
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+    },
+    "model.safetensors": {
+      "bytes": 1192137232,
+      "git_blob_sha1": "b9dc4c707c97523f4fd80a0d417c3129417013bc",
+      "lfs_sha256": "3d69b6b2547da609fabfe9fe21bf7f860bf7ceb5e0bb0a06fcf45005b7076988",
+      "sha256": "3d69b6b2547da609fabfe9fe21bf7f860bf7ceb5e0bb0a06fcf45005b7076988"
+    },
+    "special_tokens_map.json": {
+      "bytes": 500,
+      "git_blob_sha1": "b0ba7ffb25cbf4a7d7368875ca3b9835d897c5b6",
+      "lfs_sha256": null,
+      "sha256": "45dfef44807b97f5a7f20148bc9d55e593fbf6890393b1f8b7367fb36a2b853d"
+    },
+    "tokenizer.json": {
+      "bytes": 11422654,
+      "git_blob_sha1": "cd71f61a15a522601badb3dc960d800d9cb3766c",
+      "lfs_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+    },
+    "tokenizer_config.json": {
+      "bytes": 5405,
+      "git_blob_sha1": "791d1c5206c1d1033aa451f6708058e12d2c0321",
+      "lfs_sha256": null,
+      "sha256": "d3e08cbc53421cc90a07d40da21fbac9a912f5ffa3f08263afd04f06105b0e6f"
+    },
+    "vocab.json": {
+      "bytes": 2776833,
+      "git_blob_sha1": "4783fe10ac3adce15ac8f358ef5462739852c569",
+      "lfs_sha256": null,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    }
+  },
+  "license_status": "Apache-2.0 declared in public model card; CI-only download",
+  "model": "Skywork/Skywork-Reward-V2-Qwen3-0.6B",
+  "revision": "8c14a4e9e6321deaf572544339b16b8d6bbe8886",
+  "schema": "reward-lens-real-subject/1",
+  "tree_api": "https://huggingface.co/api/models/Skywork/Skywork-Reward-V2-Qwen3-0.6B/revision/8c14a4e9e6321deaf572544339b16b8d6bbe8886?blobs=true"
+}

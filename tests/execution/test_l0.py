@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import os
 import sys
+import threading
 from pathlib import Path
 
 import pytest
 
+import reward_lens.execution.linux as linux
 from reward_lens.execution import Limits, probe, run_python
+from reward_lens.execution.errors import SandboxTierUnavailable
 from reward_lens.execution.limits import AS_MARGIN_MIN, address_space_ceiling
+from reward_lens.execution.linux import LinuxSandbox, user_process_baseline
 
 pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="the Linux ladder")
 
@@ -19,6 +24,64 @@ def _at_least_l0() -> bool:
 
 def test_l0_holds_on_this_machine() -> None:
     assert _at_least_l0(), probe().tiers["L0"].reason
+
+
+def test_nproc_baseline_counts_real_background_threads(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The real `/proc/self/status` thread count, not only its process leader, is charged."""
+    original_listdir = os.listdir
+    monkeypatch.setattr(
+        os,
+        "listdir",
+        lambda path: [str(os.getpid())] if path == "/proc" else original_listdir(path),
+    )
+    before = user_process_baseline()
+    ready = threading.Barrier(5)
+    release = threading.Event()
+
+    def wait() -> None:
+        ready.wait(timeout=5.0)
+        release.wait(timeout=5.0)
+
+    workers = [threading.Thread(target=wait) for _ in range(4)]
+    try:
+        for worker in workers:
+            worker.start()
+        ready.wait(timeout=5.0)
+        assert user_process_baseline() == before + len(workers)
+    finally:
+        release.set()
+        for worker in workers:
+            if worker.ident is not None:
+                worker.join(timeout=5.0)
+
+
+def test_nproc_baseline_refuses_unreadable_proc(monkeypatch: pytest.MonkeyPatch) -> None:
+    def unreadable(path: str) -> list[str]:
+        assert path == "/proc"
+        raise PermissionError("procfs access denied")
+
+    monkeypatch.setattr(os, "listdir", unreadable)
+    with pytest.raises(PermissionError, match="procfs access denied"):
+        user_process_baseline()
+
+
+def test_unreadable_proc_refuses_l0_but_does_not_block_t0(
+    monkeypatch: pytest.MonkeyPatch, work: Path
+) -> None:
+    def unavailable() -> int:
+        raise PermissionError("procfs access denied")
+
+    monkeypatch.setattr(linux, "user_process_baseline", unavailable)
+    limits = Limits(wall_s=5.0, cpu_s=5.0, network=True)
+    with pytest.raises(SandboxTierUnavailable) as raised:
+        LinuxSandbox(tier="L0").run_source("print('ok')", limits=limits, cwd=work, env={})
+    assert raised.value.code == "RL0401"
+    assert raised.value.context["tier"] == "L0"
+
+    result = LinuxSandbox(tier="T0").run_source("print('ok')", limits=limits, cwd=work, env={})
+    assert result.exit_code == 0, result.stderr
+    assert result.tier == "T0"
+    assert "rlimit_nproc" not in result.detail
 
 
 def test_rlimit_as_is_the_backstop_and_sits_above_the_budget(work: Path) -> None:
@@ -91,8 +154,8 @@ def test_rlimit_cpu_is_set_and_a_spin_is_stopped(work: Path) -> None:
 
 
 def test_rlimit_nproc_is_relative_to_the_users_load_and_forks_hit_eagain(work: Path) -> None:
-    """`RLIMIT_NPROC` is per uid, so the ceiling is the user's baseline plus the budget."""
-    limits = Limits(wall_s=25.0, cpu_s=25.0, processes=4, memory_bytes=512 * 2**20)
+    """At explicit L0, NPROC counts real-UID tasks and leaves a supervisor observation slot."""
+    limits = Limits(wall_s=25.0, cpu_s=25.0, processes=4, memory_bytes=512 * 2**20, network=True)
     src = (
         "import os, resource, sys\n"
         "soft, _ = resource.getrlimit(resource.RLIMIT_NPROC)\n"
@@ -110,24 +173,28 @@ def test_rlimit_nproc_is_relative_to_the_users_load_and_forks_hit_eagain(work: P
         "    print('NO LIMIT', made, flush=True)\n"
         "import time; time.sleep(60)\n"
     )
-    r = run_python(src, limits=limits, cwd=work, env={})
+    r = LinuxSandbox(tier="L0").run_source(src, limits=limits, cwd=work, env={})
     out = r.stdout.decode().splitlines()
+    assert r.tier == "L0"
     assert out[0].startswith("soft ")
     assert int(out[0].split()[1]) > 0
+    assert r.detail["rlimit_nproc"] == int(out[0].split()[1])
     assert r.breach == "processes"
     assert r.counters.processes > limits.processes
 
 
 def test_process_budget_names_the_processes_dimension(work: Path) -> None:
-    limits = Limits(wall_s=20.0, cpu_s=20.0, processes=3, memory_bytes=512 * 2**20)
+    limits = Limits(wall_s=20.0, cpu_s=20.0, processes=3, memory_bytes=512 * 2**20, network=True)
     src = (
         "import subprocess, sys, time\n"
         "kids = [subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
         "        for _ in range(10)]\n"
         "time.sleep(60)\n"
     )
-    r = run_python(src, limits=limits, cwd=work, env={})
+    r = LinuxSandbox(tier="L0").run_source(src, limits=limits, cwd=work, env={})
+    assert r.tier == "L0"
     assert r.breach == "processes"
+    assert r.counters.processes > limits.processes
 
 
 def test_no_new_privs_is_set(work: Path) -> None:

@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import base64
+import builtins
+import importlib.util
 import json
+import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -458,15 +462,45 @@ def test_cli_does_not_relabel_a_saved_record_with_a_requested_tier(
     assert json.loads(result.output)["artifacts"]["tier"] == "A"
 
 
-def test_sigstore_needs_the_declared_extra(record: dict) -> None:
+def test_sigstore_without_the_declared_extra_refuses_by_type(
+    record: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from reward_lens.product.export import ExportKind, ExtraRequiredError, Tier, export
 
+    real_import = builtins.__import__
+
+    def without_sigstore(name: str, *args: object, **kwargs: object) -> ModuleType:
+        if name == "sigstore" or name.startswith("sigstore."):
+            raise ModuleNotFoundError("No module named 'sigstore'", name="sigstore")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_sigstore)
     with pytest.raises(ExtraRequiredError) as refused:
         export(record, kind=ExportKind.BUNDLE, tier=Tier.A, backend="sigstore")
     assert refused.value.code == "RL0704"
+    assert "reward-lens[sigstore]" in str(refused.value)
+
+
+def test_sigstore_with_the_declared_extra_refuses_external_identity(
+    record: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from reward_lens.contracts import CapabilityUnavailable
+    from reward_lens.product.export import ExportKind, Tier, export
+
+    # The base closure supplies only the import marker; the all-extras run uses
+    # its real installed Sigstore package. Both must reach the identity refusal.
+    if importlib.util.find_spec("sigstore") is None:
+        monkeypatch.setitem(sys.modules, "sigstore", ModuleType("sigstore"))
+    with pytest.raises(CapabilityUnavailable) as refused:
+        export(record, kind=ExportKind.BUNDLE, tier=Tier.A, backend="sigstore")
+    assert refused.value.code == "RL0704"
+    assert refused.value.exit_code == 5
+    assert refused.value.context == {"extra": "sigstore", "capability": "Sigstore signing"}
 
 
 def test_verifying_commands_are_literal_and_executable() -> None:
     verifying = (ROOT / "VERIFYING.md").read_text(encoding="utf-8")
     assert "reward-lens import --verify" in verifying
     assert "sigstore verify identity" in verifying
+    assert "--cert-oidc-issuer ISSUER SIGNED_FILE" in verifying
+    assert "RL0704" in verifying
