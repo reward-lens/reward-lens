@@ -12,7 +12,10 @@ from reward_lens.execution.errors import ExecutionBreachReason, ExecutionLimitBr
 
 def test_memory_backstop_emits_the_typed_resource_budget_reason(tmp_path: Path) -> None:
     """RLIMIT_AS refusal, not a fixture label, supplies the named resource-budget result."""
-    limits = Limits(wall_s=3.0, cpu_s=3.0, memory_bytes=32 << 20, processes=1)
+    # This test isolates the 32 MiB memory backstop. L3's real bubblewrap launch tree contains
+    # trusted helper processes, so a one-process cap can name that independent boundary first.
+    # Process-budget breaches are exercised separately in test_l0.py.
+    limits = Limits(wall_s=3.0, cpu_s=3.0, memory_bytes=32 << 20, processes=8)
     result = run_python(
         "blob = bytearray(1024 * 1024 * 1024)\nprint(len(blob))",
         limits=limits,

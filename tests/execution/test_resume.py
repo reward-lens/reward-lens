@@ -277,13 +277,14 @@ def test_cli_sigint_keeps_a_sealed_partial_and_the_printed_resume_completes(
 
     pause.unlink()
     resume = _resume_line(run_dir).split()
+    # Watchdog for the full bwrap audit battery, not a product latency SLA.
     completed = subprocess.run(
         [str(SCRIPT), *resume[1:], "--format", "text"],
         cwd=project.root,
         env=env,
         text=True,
         capture_output=True,
-        timeout=45,
+        timeout=180,
     )
     assert completed.returncode in (0, 1, 2), completed.stderr
     manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
