@@ -30,8 +30,14 @@ and scorer agreement, and writes a new derived table with its own digest. It
 also recreates three campaign banks with their original byte/content hashes.
 CI supplies only these derived files to test jobs after checking their receipts,
 source identity, and hashes. Missing or inconsistent required inputs fail.
-Original checkouts, private caches, model downloads, and paid providers are not
-inputs to this release gate.
+Original checkouts, private caches, and paid providers are not inputs to this
+release gate. The all-extras profile also provisions one public tiny-Qwen CPU
+fixture at an immutable revision through `release/validation_model`. Its ten files
+are bounded to 25 MB and verified against pinned sizes, SHA-256 and Git/LFS
+identities before tests run with network loading disabled. These external test
+weights stay outside source history, distribution archives, and release assets;
+they are separate from the ten-file public regression-input artifact. Model
+loading failures in this required profile must fail rather than skip.
 
 The matrix names 34 retained historical tests outside these profiles. They
 import separate, unshipped top-level research projects or need a historical v1

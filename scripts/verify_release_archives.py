@@ -46,11 +46,17 @@ ALLOWED_FLEET = {
 }
 
 
-def check_name(name: str) -> None:
-    parts = pathlib.PurePosixPath(name).parts
-    assert parts and not name.startswith("/") and ".." not in parts, name
+def check_name(name: str) -> str:
+    """Return one unambiguous POSIX member name (without a directory suffix)."""
+    canonical = name[:-1] if name.endswith("/") else name
+    assert canonical and not name.startswith("/"), name
+    assert "\\" not in name and "\x00" not in name and ":" not in name, name
+    parts = canonical.split("/")
+    assert all(part not in {"", ".", ".."} for part in parts), name
+    assert pathlib.PurePosixPath(canonical).as_posix() == canonical, name
     assert "development-snapshots" not in parts and "reproducibility" not in parts, name
     assert "g07" not in parts and "planted_secret" not in name, name
+    return canonical
 
 
 def main() -> None:
@@ -59,23 +65,29 @@ def main() -> None:
     args = parser.parse_args()
     assert {p.name for p in args.dist.iterdir()} == {WHEEL, SDIST}, "unexpected dist file set"
     with zipfile.ZipFile(args.dist / WHEEL) as archive:
-        names = set(archive.namelist())
-        for name in names:
-            check_name(name)
+        names = set()
+        for info in archive.infolist():
+            name = check_name(info.filename)
+            assert name not in names, f"duplicate wheel member: {name}"
+            names.add(name)
             assert "/fleet/" not in "/" + name, name
-            info = archive.getinfo(name)
             assert (info.external_attr >> 16) & 0o170000 != 0o120000, name
             if name.endswith((".py", ".json", ".md", ".html", ".js", ".css", ".txt")):
-                assert b"/home/suhail-nadaf" not in archive.read(name), name
+                assert b"/home/suhail-nadaf" not in archive.read(info), name
         assert set(REQUIRED_WHEEL) <= names, sorted(set(REQUIRED_WHEEL) - names)
         assert any(name.endswith("THIRD_PARTY_NOTICES.md") for name in names)
     with tarfile.open(args.dist / SDIST) as archive:
         names = set()
+        members = set()
         fleet = set()
         for item in archive.getmembers():
-            check_name(item.name)
+            name = check_name(item.name)
+            assert name not in members, f"duplicate sdist member: {name}"
+            members.add(name)
             assert item.isfile() or item.isdir(), item.name
-            relative = "/".join(pathlib.PurePosixPath(item.name).parts[1:])
+            parts = name.split("/")
+            assert parts[0] == f"reward_lens-{VERSION}", name
+            relative = "/".join(parts[1:])
             if item.isfile():
                 names.add(relative)
                 if relative.startswith("fleet/"):

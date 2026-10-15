@@ -50,6 +50,7 @@ from reward_lens.policy.vllm import SERVING_CAPS, EngineBoundary, ServingPolicy 
 from reward_lens.signals.loaders import from_tiny  # noqa: E402
 
 TINY_POLICY = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 
 #: A preference-shaped view. Both subjects read it through `pair_sides`, which is the point: the
 #: data does not know which side of the loop it is being shown to either.
@@ -67,7 +68,7 @@ def grader():
 
 @pytest.fixture(scope="module")
 def policy():
-    return from_pretrained(TINY_POLICY, contrast=(" yes", " no"))
+    return from_pretrained(TINY_POLICY, revision=TINY_POLICY_REVISION, contrast=(" yes", " no"))
 
 
 # ---------------------------------------------------------------------------
@@ -621,8 +622,12 @@ def test_hf_policy_refuses_a_multi_token_contrast():
 
     from reward_lens.policy.hf import wrap_hf_policy
 
-    model = AutoModelForCausalLM.from_pretrained(TINY_POLICY)
-    tokenizer = AutoTokenizer.from_pretrained(TINY_POLICY)
+    model = AutoModelForCausalLM.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
     with pytest.raises(ValueError) as excinfo:
         wrap_hf_policy(model, tokenizer, contrast=("a phrase that is many tokens long", " no"))
     assert "tokenizes to" in str(excinfo.value)
@@ -636,8 +641,12 @@ def test_a_policy_without_a_contrast_has_no_direction_readout():
 
     from reward_lens.policy.hf import wrap_hf_policy
 
-    model = AutoModelForCausalLM.from_pretrained(TINY_POLICY)
-    tokenizer = AutoTokenizer.from_pretrained(TINY_POLICY)
+    model = AutoModelForCausalLM.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
     bare: HFPolicy = wrap_hf_policy(model, tokenizer)
     assert [r.name for r in bare.readouts()] == ["logprob"]
     with pytest.raises(KeyError) as excinfo:

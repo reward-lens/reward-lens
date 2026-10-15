@@ -298,8 +298,10 @@ include = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-# Unchanged third-party sources and deliberately malformed negative-control inputs.
-extend-exclude = ["src/reward_lens/_vendor", "src/reward_lens/examples/code_reward/outcome/known_wrong", "tests/acceptance/real_verifiers", "tests/fixtures/verifiers", "release/public_inputs/vendor"]
+# Third-party sources, deliberately malformed controls, and byte-exact generated banks.
+# Both outcome banks contain byte-exact generated inputs; formatting them without changing
+# _bank.py breaks the shipped-bank reproducibility check.
+extend-exclude = ["src/reward_lens/_vendor", "src/reward_lens/examples/code_reward/outcome/known_wrong", "src/reward_lens/examples/code_reward/outcome/known_good", "tests/acceptance/real_verifiers", "tests/fixtures/verifiers", "release/public_inputs/vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]

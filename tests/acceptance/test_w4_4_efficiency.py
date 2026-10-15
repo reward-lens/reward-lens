@@ -499,6 +499,7 @@ N_SAMPLES = 16
 TINY_POLICY = "trl-internal-testing/tiny-Qwen3ForCausalLM"
 TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 TINY_POLICY_CONFIG_SHA256 = "256eed4a1f7d3a4f63b917266030082ed5f46dce6f4cf753b4a5ac3ad2d3e6f0"
+TINY_POLICY_WEIGHTS_SHA256 = "cee9ccbb3fdddfbdda9dccbb865396dfc6bc099428441cbb4fea1e7cdb193cfe"
 TINY_POLICY_VOCAB_SIZE = 151_669
 TINY_POLICY_PARAMETER_COUNT = 2_453_368
 BEFORE_SAMPLE_SEED = 1234
@@ -541,7 +542,15 @@ def _two_checkpoint_experiment(eta: float):
         )
     )
     assert hashlib.sha256(config_path.read_bytes()).hexdigest() == TINY_POLICY_CONFIG_SHA256
-    assert model.config._commit_hash == TINY_POLICY_REVISION
+    weights_path = Path(
+        hf_hub_download(
+            TINY_POLICY,
+            "model.safetensors",
+            revision=TINY_POLICY_REVISION,
+            local_files_only=True,
+        )
+    )
+    assert hashlib.sha256(weights_path.read_bytes()).hexdigest() == TINY_POLICY_WEIGHTS_SHA256
     assert model.config.vocab_size == TINY_POLICY_VOCAB_SIZE
     assert model.num_parameters() == TINY_POLICY_PARAMETER_COUNT
     model.eval()

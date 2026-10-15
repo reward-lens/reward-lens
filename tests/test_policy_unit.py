@@ -34,6 +34,7 @@ from reward_lens.policy.recoverability import (  # noqa: E402
 )
 
 TINY_POLICY = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 
 ITEMS = [
     ("count upward from 15", " 16 17 18"),
@@ -43,7 +44,7 @@ ITEMS = [
 
 @pytest.fixture(scope="module")
 def policy():
-    return from_pretrained(TINY_POLICY, contrast=(" yes", " no"))
+    return from_pretrained(TINY_POLICY, revision=TINY_POLICY_REVISION, contrast=(" yes", " no"))
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +101,7 @@ def test_the_decision_scalar_is_the_logit_difference_computed_in_fp32(policy):
     ulp = scale * 2.0**-8  # bf16 carries 8 mantissa bits
     assert np.all(np.abs(got - native) <= 2 * ulp), (got, native, ulp)
 
-    fp32 = from_pretrained(TINY_POLICY, contrast=(" yes", " no"))
+    fp32 = from_pretrained(TINY_POLICY, revision=TINY_POLICY_REVISION, contrast=(" yes", " no"))
     fp32.runtime.model = fp32.runtime.model.to(torch.float32)
     fp32_got = fp32.score(ITEMS, "decision").value.values
     fp32_native, _scale, fp32_dtype = _native_logit_difference(fp32, ITEMS)

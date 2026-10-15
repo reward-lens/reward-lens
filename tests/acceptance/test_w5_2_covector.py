@@ -13,9 +13,10 @@ registered through `studies.freeze`, that the score-function rungs refuse below 
 with the floor in the remedy, and that rung 3 runs on the model that wrote the 200-step record and
 returns Evidence carrying the `IncrementalValidity` section 6.4 makes mandatory.
 
-The real-subject half needs `transformers` and a CPU forward on
-`trl-internal-testing/tiny-Qwen3ForCausalLM`, and skips without them. The recorded-decision half
-needs neither and always runs, because a spike result that could be skipped is not a record.
+The real-subject half needs `transformers` and a CPU forward on the pinned
+`trl-internal-testing/tiny-Qwen3ForCausalLM` validation model. The all-extras profile provisions
+that model; a failed load is a test failure. The recorded-decision half needs neither and always
+runs, because a spike result that could be skipped is not a record.
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ from reward_lens.measure.frontier.covector import (
 )
 
 MODEL_ID = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+MODEL_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 K_GRID = ("4", "8", "16", "64")
 
 
@@ -171,11 +173,12 @@ def policy():
     from reward_lens.policy.hf import wrap_hf_policy
 
     torch.set_num_threads(2)
-    try:
-        model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype=torch.float32)
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    except Exception as exc:  # no network and no cache
-        pytest.skip(f"{MODEL_ID} is not available: {exc}")
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID, revision=MODEL_REVISION, local_files_only=True, dtype=torch.float32
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_ID, revision=MODEL_REVISION, local_files_only=True
+    )
     return wrap_hf_policy(model, tokenizer, contrast=(" yes", " no"), device="cpu")
 
 

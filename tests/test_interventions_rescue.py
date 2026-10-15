@@ -4,9 +4,10 @@ The mechanics that make a rescue a rescue: the recorder captures what the ablati
 remove, the pair runs in one forward pass, re-injecting the exact coordinate restores the
 activation, and the norm-matched control is matched by construction rather than by arithmetic.
 
-`TestAgainstTheRealPolicy` runs the whole thing through `trl-internal-testing/tiny-Qwen3ForCausalLM`
-so the hook path, the site resolution and the composition order are exercised against a real decoder
-stack rather than against a tensor.
+`TestAgainstTheRealPolicy` runs the whole thing through the pinned
+`trl-internal-testing/tiny-Qwen3ForCausalLM` validation model, which the all-extras profile
+provisions. A model-load failure fails the test, so the hook path, site resolution and composition
+order must run against a real decoder stack.
 """
 
 from __future__ import annotations
@@ -26,6 +27,8 @@ from reward_lens.interventions.rescue import (  # noqa: E402
     knockout_and_rescue,
     norm_matched_random,
 )
+
+TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 
 SITE = Site(0, "resid_post")
 
@@ -189,12 +192,11 @@ class TestAgainstTheRealPolicy:
         pytest.importorskip("transformers")
         from reward_lens.policy.hf import from_pretrained
 
-        try:
-            return from_pretrained(
-                "trl-internal-testing/tiny-Qwen3ForCausalLM", contrast=("Yes", "No")
-            )
-        except Exception as exc:  # pragma: no cover - network/cache dependent
-            pytest.skip(f"tiny-Qwen3 unavailable: {exc}")
+        return from_pretrained(
+            "trl-internal-testing/tiny-Qwen3ForCausalLM",
+            revision=TINY_POLICY_REVISION,
+            contrast=("Yes", "No"),
+        )
 
     def test_the_rescue_restores_the_score_it_ablated(self, policy) -> None:
         from reward_lens.policy.selection import behaviour_under, capture_at
