@@ -5,8 +5,9 @@ the tier's mechanisms in the only order that works: rlimits, then `PR_SET_NO_NEW
 refuses to attach without it), then the filesystem and network ruleset, then the seccomp filter.
 `RLIMIT_NPROC` is the one that needs arithmetic: it is enforced per uid, not per process, so a flat
 64 on a machine where the owner already has three hundred processes would deny the grader its first
-fork. The ceiling is therefore the owner's measured baseline plus the budget, and the number that
-was set is recorded.
+fork. At L0 through L2, the ceiling is the owner's measured task baseline plus the budget and one
+observation slot. The supervisor still enforces the requested budget, and the applied ceiling is
+recorded. T0 and L3 do not claim this rlimit.
 """
 
 from __future__ import annotations
@@ -50,20 +51,36 @@ _NOFILE_CEILING = 1024
 
 
 def user_process_baseline() -> int:
-    """How many processes this uid already owns, which is what `RLIMIT_NPROC` counts against."""
+    """Count this real UID's tasks, the quantity Linux charges against `RLIMIT_NPROC`.
+
+    Despite its name, Linux counts threads as well as process leaders. Counting `/proc` directories
+    alone can set the child's limit below the user's existing load on a threaded CI runner.
+    """
     uid = os.getuid()
     count = 0
-    try:
-        entries = sorted(os.listdir("/proc"))
-    except OSError:  # pragma: no cover
-        return 0
+    # A missing/restricted procfs cannot justify a claimed process backstop. Let the caller
+    # refuse the launch rather than silently calculating a ceiling from zero.
+    entries = sorted(os.listdir("/proc"))
     for entry in entries:
         if not entry.isdigit():
             continue
         try:
-            if os.stat(f"/proc/{entry}").st_uid == uid:
-                count += 1
-        except OSError:
+            real_uid = None
+            threads = None
+            with open(f"/proc/{entry}/status", encoding="ascii") as status:
+                for line in status:
+                    if line.startswith("Uid:"):
+                        real_uid = int(line.split()[1])
+                    elif line.startswith("Threads:"):
+                        threads = int(line.split()[1])
+                    if real_uid is not None and threads is not None:
+                        break
+            if real_uid == uid and threads is not None:
+                count += threads
+            if real_uid is None or threads is None:
+                raise ValueError(f"incomplete task accounting in /proc/{entry}/status")
+        except (FileNotFoundError, ProcessLookupError):
+            # The process can disappear between listing /proc and opening its status.
             continue
     return count
 
@@ -94,7 +111,9 @@ class LinuxSandbox:
         The write roots are not in here and do not need to be: a write root is a read root too,
         at every tier (`write_roots_for`).
         """
-        return tuple(sorted(set(BASE_READ_ROOTS) | set(_landlock.interpreter_read_roots(executable))))
+        return tuple(
+            sorted(set(BASE_READ_ROOTS) | set(_landlock.interpreter_read_roots(executable)))
+        )
 
     # --- what the ruleset may write ------------------------------------------------------------
 
@@ -125,18 +144,20 @@ class LinuxSandbox:
         cwd: Path,
         read_roots: tuple[str, ...],
         write_roots: tuple[str, ...],
+        nproc_ceiling: int | None,
     ):
         tier = self.tier
         abi = self._abi
         nofile = min(_NOFILE_CEILING, resource.getrlimit(resource.RLIMIT_NOFILE)[1])
-        nproc_ceiling = user_process_baseline() + max(1, limits.processes)
         cpu_hard = int(math.ceil(limits.cpu_s)) + 1
         as_ceiling = address_space_ceiling(limits.memory_bytes)
         work = tuple(write_roots)
 
         def setup() -> None:  # pragma: no cover - runs in the forked child
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-            resource.setrlimit(resource.RLIMIT_FSIZE, (limits.artifact_bytes, limits.artifact_bytes))
+            resource.setrlimit(
+                resource.RLIMIT_FSIZE, (limits.artifact_bytes, limits.artifact_bytes)
+            )
             resource.setrlimit(resource.RLIMIT_NOFILE, (nofile, nofile))
             if tier != "T0":
                 # Above the budget on purpose: the supervisor's rule is what ends a run that grows,
@@ -147,6 +168,8 @@ class LinuxSandbox:
                     # RLIMIT_NPROC is what a new user namespace is charged against, so setting it
                     # here would make bubblewrap fail with EAGAIN before the grader starts. At L3
                     # the process ceiling is bubblewrap's PID namespace and the supervisor's count.
+                    if nproc_ceiling is None:
+                        raise RuntimeError("L0-L2 process ceiling was not measured")
                     resource.setrlimit(resource.RLIMIT_NPROC, (nproc_ceiling, nproc_ceiling))
                 _seccomp.set_no_new_privs()
             if tier in ("L1", "L2"):
@@ -200,8 +223,24 @@ class LinuxSandbox:
                 seccomp_fd=seccomp_file.fileno(),
                 env=child_env,
             )
+        nproc_ceiling = None
+        if self.tier in ("L0", "L1", "L2"):
+            # The child consumes one task; leave one further slot beyond the requested budget
+            # so the supervisor can observe a breach before RLIMIT_NPROC blocks fork.
+            try:
+                nproc_ceiling = user_process_baseline() + max(1, limits.processes) + 1
+            except (OSError, ValueError) as exc:
+                raise SandboxTierUnavailable(
+                    tier=self.tier,
+                    probe="cat /proc/self/status",
+                    reason=f"cannot measure real-UID task count for RLIMIT_NPROC: {exc}",
+                ) from exc
         setup = self._child_setup(
-            limits=limits, cwd=cwd, read_roots=read_roots, write_roots=write
+            limits=limits,
+            cwd=cwd,
+            read_roots=read_roots,
+            write_roots=write,
+            nproc_ceiling=nproc_ceiling,
         )
         try:
             result = supervise(
@@ -218,7 +257,8 @@ class LinuxSandbox:
         finally:
             if seccomp_file is not None:
                 seccomp_file.close()
-        result.detail.setdefault("rlimit_nproc", user_process_baseline() + max(1, limits.processes))
+        if nproc_ceiling is not None:
+            result.detail.setdefault("rlimit_nproc", nproc_ceiling)
         result.detail.setdefault("read_roots", read_roots)
         result.detail.setdefault("write_roots", write)
         result.detail.setdefault("rlimit_as", address_space_ceiling(limits.memory_bytes))

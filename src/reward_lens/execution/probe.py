@@ -129,7 +129,9 @@ def _linux_tiers() -> tuple[dict[str, TierResult], int | None]:
 
 def _macos_tiers() -> dict[str, TierResult]:
     tiers = {"T0": TierResult(True, _T0_REASON, 0.0)}
-    tiers["M0"] = TierResult(True, "RLIMIT_CPU, RLIMIT_FSIZE and RLIMIT_NOFILE are enforced by XNU", 0.0)
+    tiers["M0"] = TierResult(
+        True, "RLIMIT_CPU, RLIMIT_FSIZE and RLIMIT_NOFILE are enforced by XNU", 0.0
+    )
     tiers["M1"] = TierResult(*probe_sandbox_exec())
     return tiers
 

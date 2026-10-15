@@ -52,7 +52,7 @@ def test_explain_opens_no_socket(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_explain_works_when_sockets_are_blocked_before_the_import() -> None:
     env = {k: v for k, v in os.environ.items() if k not in PROXY_VARS}
-    env["PYTHONPATH"] = str(REPO / "src")
+    env.pop("PYTHONPATH", None)
     result = subprocess.run(
         [sys.executable, str(DRIVER)],
         capture_output=True,

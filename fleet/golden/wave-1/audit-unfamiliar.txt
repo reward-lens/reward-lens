@@ -1,0 +1,32 @@
+$ reward-lens audit ./my_grader.py
+
+  Subject   my_grader.py  ·  `score(task, response)`, plain shape  ·  no task set supplied
+  Plan      2 panels  ·  0 paid calls  ·  about 2 s
+
+  ✘ validity      4 of 5 checks passed; 4 are not in this build; the 3 task-set
+                  checks need a task set
+                  the grader returns None on malformed input, and no trainer is
+                  declared under `reward.trainer`, so what becomes of that value
+                  in training is not known here                     RL0210
+  ✔ replay        100 repeats, identical output, no hidden state
+  ○ soundness     not measured: no known-good or known-wrong solutions supplied
+  ○ reach         not measured: no task set, so nothing to reach into
+  ○ exploits      not measured: needs a task set, or a response bank
+  ○ signal        not measured: needs sampled responses grouped by prompt
+
+  What this run could establish   the grader is deterministic and replayable,
+                                  and it has one input-handling defect.
+  What it could not               everything that needs tasks or responses.
+
+  To measure the rest, bring one of these, in order of what it unlocks:
+    a task set             reach, exploits            reward-lens audit x --tasks t.jsonl
+    128 sampled responses  signal, cost, selection    --responses r.jsonl
+    a protected check      soundness, verdict         --outcome ./tests
+    a training run record  the join, reward stats     reward-lens trace <run>
+
+  Verdict   unresolved   ·   the outcome check is unqualified (OUTCOME_UNQUALIFIED)
+            No independent check was supplied, so no correctness claim was made.
+
+  Report    ./assays/my_grader-2026-09-11.assay.html   84 KB
+
+  19 s  ·  0 paid calls  ·  $0.00

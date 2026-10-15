@@ -1,0 +1,198 @@
+name: reward-lens CI
+description: Audit a declared reward policy, annotate blocking findings, and retain SARIF.
+
+inputs:
+  subject:
+    description: Repository-relative reward-lens project or grader path.
+    required: false
+    default: .
+  policy:
+    description: Repository-relative immutable acceptance policy JSON path.
+    required: true
+  audit-name:
+    description: Stable name for the saved Audit record.
+    required: false
+    default: reward-lens-ci
+  record-path:
+    description: Repository-relative path where Audit saves the named canonical Assay.
+    required: false
+    default: assays/reward-lens-ci.assay.json
+  sarif-path:
+    description: Repository-relative destination for the derived SARIF artifact.
+    required: false
+    default: artifacts/reward-lens-ci.sarif
+  command:
+    description: Tested executable override; production keeps the reward-lens default.
+    required: false
+    default: reward-lens
+  upload-sarif:
+    description: Upload SARIF when the caller's workflow permits it.
+    required: false
+    default: "true"
+
+outputs:
+  decision:
+    description: Persisted policy decision from the reopened Assay.
+    value: ${{ steps.audit.outputs.decision }}
+  blocked:
+    description: Whether the persisted policy decision was not qualified or the Audit execution was inconsistent.
+    value: ${{ steps.audit.outputs.blocked }}
+
+runs:
+  using: composite
+  steps:
+    - id: audit
+      name: Audit, export SARIF, annotate, and decide
+      shell: bash
+      env:
+        INPUT_SUBJECT: ${{ inputs.subject }}
+        INPUT_POLICY: ${{ inputs.policy }}
+        INPUT_AUDIT_NAME: ${{ inputs.audit-name }}
+        INPUT_RECORD_PATH: ${{ inputs.record-path }}
+        INPUT_SARIF_PATH: ${{ inputs.sarif-path }}
+        INPUT_COMMAND: ${{ inputs.command }}
+      run: |
+        set -euo pipefail
+        MAX_SUMMARY_BYTES=1048576
+        workspace="${GITHUB_WORKSPACE:?GitHub must set GITHUB_WORKSPACE}"
+        summary="${GITHUB_STEP_SUMMARY:?GitHub must set GITHUB_STEP_SUMMARY}"
+        outputs="${GITHUB_OUTPUT:?GitHub must set GITHUB_OUTPUT}"
+
+        if [[ "${GITHUB_EVENT_NAME:-}" == "pull_request_target" ]]; then
+          echo "::error title=unsafe workflow trigger::reward-lens refuses pull_request_target; run on pull_request instead"
+          exit 4
+        fi
+
+        relative_path() {
+          local value="$1"
+          if [[ -z "$value" || "$value" = /* || "$value" == *".."* ]]; then
+            echo "::error title=unsafe action input::repository-relative paths may not be empty, absolute, or traverse parents" >&2
+            exit 4
+          fi
+          printf '%s/%s' "$workspace" "$value"
+        }
+
+        if [[ ! "${INPUT_AUDIT_NAME}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+          echo "::error title=unsafe action input::audit-name must be a simple file name" >&2
+          exit 4
+        fi
+        if [[ "${INPUT_COMMAND}" == *[[:space:]]* || -z "${INPUT_COMMAND}" ]]; then
+          echo "::error title=unsafe action input::command must be one executable path, without shell arguments" >&2
+          exit 4
+        fi
+
+        subject="$(relative_path "${INPUT_SUBJECT}")"
+        policy="$(relative_path "${INPUT_POLICY}")"
+        record="$(relative_path "${INPUT_RECORD_PATH}")"
+        sarif="$(relative_path "${INPUT_SARIF_PATH}")"
+        if [[ "${INPUT_COMMAND}" == "reward-lens" ]]; then
+          tool=(uvx "reward-lens==3.1.0")
+        else
+          tool=("${INPUT_COMMAND}")
+        fi
+
+        mkdir -p "$(dirname "$record")" "$(dirname "$sarif")"
+        cd "$workspace"
+        set +e
+        "${tool[@]}" audit "$subject" --policy "$policy" --name "$INPUT_AUDIT_NAME" --format json --no-progress > .reward-lens-ci-audit.json
+        audit_exit=$?
+        set -e
+        if [[ ! -f "$record" ]]; then
+          echo "::error title=Audit did not save a record::cannot export or decide without the requested canonical Assay" >&2
+          exit "$audit_exit"
+        fi
+        set +e
+        "${tool[@]}" export --record "$record" --kind sarif --dest "$sarif" --format json --no-progress > .reward-lens-ci-export.json
+        export_exit=$?
+        set -e
+        if [[ ! -f "$sarif" ]]; then
+          echo "::error title=SARIF export failed::no SARIF artifact was written (exit $export_exit)" >&2
+          exit "$export_exit"
+        fi
+
+        python3 - "$record" "$sarif" "$summary" "$outputs" "$audit_exit" "$export_exit" "$MAX_SUMMARY_BYTES" <<'PY'
+        import json
+        import sys
+        from pathlib import Path
+
+        record_path = Path(sys.argv[1])
+        sarif_path = Path(sys.argv[2])
+        summary_path = Path(sys.argv[3])
+        outputs_path = Path(sys.argv[4])
+        audit_exit = int(sys.argv[5])
+        export_exit = int(sys.argv[6])
+        limit = int(sys.argv[7])
+
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        sarif = json.loads(sarif_path.read_text(encoding="utf-8"))
+        decision = (record.get("decision") or {}).get("state") or "unresolved"
+        results = [
+            row
+            for run in sarif.get("runs", [])
+            if isinstance(run, dict)
+            for row in run.get("results", [])
+            if isinstance(row, dict)
+        ]
+        errors = [row for row in results if row.get("level") == "error"]
+        warnings = [row for row in results if row.get("level") == "warning"]
+        for row in errors + warnings:
+            location = ((row.get("locations") or [{}])[0].get("physicalLocation") or {})
+            artifact = (location.get("artifactLocation") or {}).get("uri") or "reward-lens"
+            line = (location.get("region") or {}).get("startLine") or 1
+            title = str(row.get("ruleId") or "reward-lens.finding")
+            message = str((row.get("message") or {}).get("text") or title)
+            message = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            command = "error" if row in errors else "warning"
+            print(f"::{command} file={artifact},line={line},title={title}::{message}")
+
+        expected_exits = {"qualified": 0, "rejected": 1, "unresolved": 2}
+        expected_exit = expected_exits.get(decision)
+        if expected_exit is None:
+            exit_code = 2
+            reason = f"unsupported persisted policy decision {decision!r}"
+        elif audit_exit not in {0, 1, 2}:
+            exit_code = audit_exit if audit_exit else 2
+            reason = f"unexpected audit execution exit {audit_exit}"
+        else:
+            # The immutable declared policy owns this CI disposition.  Its decision is saved in
+            # the record and can be reopened by the caller; Audit and SARIF can legitimately
+            # report other unbound findings at a different ordinary exit level.
+            exit_code = expected_exit
+            reason = f"policy {decision}"
+        blocked = exit_code != 0
+        def cell(value: object) -> str:
+            return str(value).replace("|", "\\|").replace("\n", " ")
+        summary = "\n".join(
+            [
+                "## reward-lens CI",
+                "",
+                "| field | value |",
+                "| --- | --- |",
+                f"| policy decision | {cell(decision)} |",
+                f"| audit exit | {audit_exit} |",
+                f"| SARIF export exit | {export_exit} |",
+                f"| SARIF errors | {len(errors)} |",
+                f"| SARIF warnings | {len(warnings)} |",
+                f"| blocked | {str(blocked).lower()} |",
+                f"| reason | {cell(reason)} |",
+                f"| record | {cell(record_path)} |",
+                f"| SARIF | {cell(sarif_path)} |",
+                "",
+            ]
+        )
+        encoded = summary.encode("utf-8")
+        if len(encoded) >= limit:
+            summary = encoded[: limit - 1].decode("utf-8", errors="ignore")
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        with summary_path.open("w", encoding="utf-8") as handle:
+            handle.write(summary)
+        with outputs_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"decision={decision}\nblocked={str(blocked).lower()}\n")
+        raise SystemExit(exit_code)
+        PY
+    - name: Upload SARIF
+      if: ${{ inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v4
+      continue-on-error: true
+      with:
+        sarif_file: ${{ inputs.sarif-path }}

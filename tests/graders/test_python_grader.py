@@ -303,7 +303,9 @@ RUN_DEPENDENT = (
 
 
 def jsonl(path: Path) -> list[dict]:
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
 
 
 def load_module(path: Path, name: str):
@@ -390,7 +392,9 @@ def test_the_dynamic_probe_proves_execution_control_and_local_replay(sandbox, li
 def test_cost_metering_is_claimed_only_when_a_sandbox_metered_a_cost(limits) -> None:
     plain = grader("good_grader.py").probe(sandbox=LocalSandbox(), limits=limits)
     assert plain.describe().capabilities.probed["cost_metered"] is False
-    metering = grader("good_grader.py").probe(sandbox=MeteringSandbox(LocalSandbox()), limits=limits)
+    metering = grader("good_grader.py").probe(
+        sandbox=MeteringSandbox(LocalSandbox()), limits=limits
+    )
     assert metering.describe().capabilities.probed["cost_metered"] is True
 
 
@@ -577,9 +581,7 @@ def test_verdict_resource_exhausted(limits) -> None:
 
 
 def test_verdict_provider_unavailable(limits) -> None:
-    env = grader("good_grader.py").score(
-        TASK, RESPONSE, sandbox=RaisingSandbox(), limits=limits
-    )
+    env = grader("good_grader.py").score(TASK, RESPONSE, sandbox=RaisingSandbox(), limits=limits)
     assert env.verdict == "provider_unavailable"
     assert env.score is None
     assert any("RL0401" in e for e in env.errors)

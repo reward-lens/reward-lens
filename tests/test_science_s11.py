@@ -10,10 +10,11 @@ outcomes into the theorem scoreboard at T7.
 
 from __future__ import annotations
 
+from studies.s11_values.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s11_values.analysis import build_spec
 
 
 def test_s11_runs_and_registers(tmp_path):

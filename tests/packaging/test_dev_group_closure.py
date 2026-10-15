@@ -1,12 +1,15 @@
-"""The dev group has to be enough to run the suites a wave exit runs.
+"""The declared release environments must reach the imports of their test suites.
 
 `tests/packaging/test_closure.py` asserts the shipping half of the closure: nothing under `src/`
 imports a distribution the base dependencies do not carry. This file asserts the development half.
-A wave exit runs pytest over a fixed set of suites (section 11.11, `fleet/tools/wave_exit.py` lines
-76 to 89, plus the per-wave obligations in `fleet/waves/wave-N-exit.json`), and what a fresh machine
-runs before it is `uv sync --group dev`. If a suite in that set imports a distribution neither the
-base dependencies nor the dev group reach, and does not guard the import, collection dies on a clean
-checkout and the exit is red for a reason that has nothing to do with the code under test.
+`release/validation-matrix.json` is the source for CI's Python profiles and this static closure
+check. The dev profile is the shipped CPU/product surface run after a fresh CPU-only resolution
+of the declared dev group; the all-extras profile runs those suites plus explicitly inventoried
+root and acceptance regressions with all declared extras. TRL 1.10 and 1.13 conformance tests
+run in dedicated exact-TRL CPU environments. Research tests importing the separate, unshipped top-level
+`studies` or `experiments` packages, and two tests requiring an external v1 cache, remain in the
+repository but are explicitly classified outside the production release gate. The inventory
+assertion below refuses to let a newly added test disappear from both lists.
 
 The check is static and cheap on purpose. It never runs `uv`, never imports a suite, and never needs
 a populated environment: it parses `pyproject.toml` for what is declared, `uv.lock` for what those
@@ -52,30 +55,20 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 
-# The suites a wave exit runs. Sources, in order: the directories the wave test evidence names
-# (`grep -h '"command"' fleet/TEST_EVIDENCE/*.json | grep -o "tests/[a-z_/.-]*"`); `tests/render` and
-# `tests/packaging`, which the C-006 obligation and the render packet's evidence name;
-# `tests/instruments`, which the wave-2 A-007 obligation runs; and the two files every one of those
-# collects through, the rootdir conftest and the top-level fuzz module the evidence names. The
-# held-out suite of each wave is taken from that wave's exit file rather than written down here, so a
-# new wave needs no edit to this list.
-EXIT_SUITES: tuple[str, ...] = (
-    "tests/conftest.py",
-    "tests/api",
-    "tests/cli",
-    "tests/contracts",
-    "tests/errors",
-    "tests/examples",
-    "tests/execution",
-    "tests/graders",
-    "tests/instruments",
-    "tests/packaging",
-    "tests/port",
-    "tests/product",
-    "tests/render",
-    "tests/store",
-    "tests/test_verifier_fuzz.py",
-)
+MATRIX = REPO / "release" / "validation-matrix.json"
+
+
+def _matrix() -> dict:
+    data = json.loads(MATRIX.read_text(encoding="utf-8"))
+    assert data["schema"] == "reward-lens.release-validation/1"
+    assert data["version"] == "3.1.0"
+    assert set(data["profiles"]) == {"dev", "all_extras", "trl_110", "trl_113"}
+    return data
+
+
+def _profile(name: str) -> dict:
+    return _matrix()["profiles"][name]
+
 
 # Import name to the distribution that provides it, where the two differ. A name absent from this
 # table is assumed to normalise to its own distribution, which covers the common case. A wrong guess
@@ -117,7 +110,7 @@ def _requirement(spec: str) -> tuple[str, frozenset[str]]:
     return _norm(match.group(1)), frozenset(e for e in (x.strip() for x in extras.split(",")) if e)
 
 
-def _declared_roots() -> set[tuple[str, frozenset[str]]]:
+def _declared_roots(extras: tuple[str, ...] = ()) -> set[tuple[str, frozenset[str]]]:
     """Every distribution named by the base dependencies, the dev group, or an extra it includes.
 
     A dev-group entry naming this project with an extra (`reward-lens[trace]`) is expanded through
@@ -132,6 +125,7 @@ def _declared_roots() -> set[tuple[str, frozenset[str]]]:
 
     pending = list(table.get("dependencies", []))
     pending += list(project.get("dependency-groups", {}).get("dev", []))
+    pending += [f"{own}[{extra}]" for extra in extras]
     roots: set[tuple[str, frozenset[str]]] = set()
     expanded: set[str] = set()
     while pending:
@@ -168,13 +162,13 @@ def _lock_graph() -> tuple[dict[str, set[str]], dict[str, dict[str, set[str]]]]:
     return deps, optional
 
 
-def _reachable() -> set[str]:
+def _reachable(extras: tuple[str, ...] = ()) -> set[str]:
     """The transitive closure of the declared roots through the lock."""
     deps, optional = _lock_graph()
     frontier: list[str] = []
-    for name, extras in _declared_roots():
+    for name, root_extras in _declared_roots(extras):
         frontier.append(name)
-        for extra in extras:
+        for extra in root_extras:
             frontier.extend(optional.get(name, {}).get(extra, ()))
     closure: set[str] = set()
     while frontier:
@@ -200,14 +194,9 @@ def _first_party() -> set[str]:
     return names
 
 
-def _suite_paths() -> list[str]:
-    """`EXIT_SUITES` plus the held-out suite each wave exit file names."""
-    paths = list(EXIT_SUITES)
-    for spec in sorted((REPO / "fleet" / "waves").glob("wave-*-exit.json")):
-        heldout = json.loads(spec.read_text(encoding="utf-8")).get("heldout")
-        if heldout and heldout not in paths:
-            paths.append(heldout)
-    return paths
+def _suite_paths(profile: str = "dev") -> list[str]:
+    """The exact test and helper paths listed for this release profile."""
+    return list(_profile(profile)["suites"])
 
 
 def _imported_names(node: ast.AST) -> set[str]:
@@ -225,9 +214,7 @@ def _catches_import(handler: ast.ExceptHandler) -> bool:
     """Whether this `except` clause is one an absent module would land in."""
     if handler.type is None:
         return True
-    candidates = (
-        handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
-    )
+    candidates = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
     for node in candidates:
         name = node.attr if isinstance(node, ast.Attribute) else getattr(node, "id", "")
         if name in _IMPORT_ERRORS:
@@ -268,10 +255,20 @@ def _required_imports(path: Path) -> set[str]:
     return _imported_names(tree) - _guarded_names(tree)
 
 
-def _python_files(path: Path) -> list[Path]:
+def _python_files(path: Path, *, collectable_only: bool = False) -> list[Path]:
     if path.is_file():
         return [path]
-    return sorted(p for p in path.rglob("*.py") if "__pycache__" not in p.parts)
+    return sorted(
+        p
+        for p in path.rglob("*.py")
+        if "__pycache__" not in p.parts
+        and (
+            not collectable_only
+            or p.name.startswith("test_")
+            or p.name.endswith("_test.py")
+            or p.name == "conftest.py"
+        )
+    )
 
 
 def _provided_by_suite(name: str, directory: Path) -> bool:
@@ -287,17 +284,17 @@ def _provided_by_suite(name: str, directory: Path) -> bool:
     return (directory / f"{name}.py").exists() or (directory / name / "__init__.py").exists()
 
 
-def _third_party_imports_by_suite() -> dict[str, dict[str, list[str]]]:
+def _third_party_imports_by_suite(profile: str = "dev") -> dict[str, dict[str, list[str]]]:
     """Suite to import name to the files requiring it, third-party unguarded imports only."""
     stdlib = set(sys.stdlib_module_names)
     local = _first_party()
     by_suite: dict[str, dict[str, list[str]]] = {}
-    for suite in _suite_paths():
+    collectable_only = _profile(profile)["scan"] == "pytest_collectable"
+    for suite in _suite_paths(profile):
         root = REPO / suite
-        if not root.exists():
-            continue  # a wave whose held-out suite is not written yet
+        assert root.exists(), f"release matrix names a missing suite: {suite}"
         found: dict[str, list[str]] = {}
-        for file in _python_files(root):
+        for file in _python_files(root, collectable_only=collectable_only):
             for name in _required_imports(file):
                 if name in stdlib or name in local or name.startswith("_"):
                     continue
@@ -308,27 +305,59 @@ def _third_party_imports_by_suite() -> dict[str, dict[str, list[str]]]:
     return by_suite
 
 
-def test_the_exit_suites_exist() -> None:
-    """A path renamed or deleted must not silently stop being checked."""
-    missing = [suite for suite in EXIT_SUITES if not (REPO / suite).exists()]
-    assert not missing, f"EXIT_SUITES names paths that are gone: {missing}"
+def test_the_release_suites_exist_and_cover_all_tests() -> None:
+    """Every collected test is in the gate or explicitly classified as research."""
+    for name in _matrix()["profiles"]:
+        suites = _suite_paths(name)
+        assert suites and len(suites) == len(set(suites)), name
+        assert all((REPO / suite).exists() for suite in suites), name
+    assert set(_suite_paths("dev")) <= set(_suite_paths("all_extras"))
+    observed = {
+        path.relative_to(REPO).as_posix()
+        for path in (REPO / "tests").rglob("test_*.py")
+        if "__pycache__" not in path.parts
+    }
+    included: set[str] = set()
+    for profile in _matrix()["profiles"]:
+        for suite in _suite_paths(profile):
+            target = REPO / suite
+            if target.is_file():
+                if target.name.startswith("test_"):
+                    included.add(suite)
+            else:
+                included.update(
+                    path.relative_to(REPO).as_posix()
+                    for path in target.rglob("test_*.py")
+                    if "__pycache__" not in path.parts
+                )
+    historical = _matrix()["non_release_research_tests"]
+    excluded = {entry["path"] for entry in historical}
+    assert len(excluded) == len(historical), "duplicate research classification"
+    assert all(entry["reason"] for entry in historical), "unexplained research classification"
+    assert not included & excluded, "a test cannot be both gated and classified as research"
+    assert observed == included | excluded, (
+        f"release test inventory drift: ungated={sorted(observed - included - excluded)}, "
+        f"stale={sorted((included | excluded) - observed)}"
+    )
+    assert "tests/fixtures" not in _suite_paths("dev"), (
+        "fixtures/verifiers/rubric.py is pinned source data read by a test, not an imported suite"
+    )
+    assert set(_profile("dev")["python"]) == {"3.11", "3.12", "3.13"}
+    assert set(_profile("all_extras")["python"]) == {"3.11", "3.12", "3.13"}
+    assert _profile("trl_110")["python"] == ["3.11"]
+    assert _profile("trl_113")["python"] == ["3.11"]
+    assert _suite_paths("trl_110") == ["tests/learning", "tests/product/compare"]
+    assert _suite_paths("trl_113") == ["tests/tap"]
+    assert "tests/product/compare" not in _suite_paths("dev")
+    assert "tests/product/compare" not in _suite_paths("all_extras")
 
 
-def test_every_wave_heldout_suite_is_in_the_checked_set() -> None:
-    """Line 4 of every wave exit runs the held-out suite, so the declaration has to cover it."""
-    checked = set(_suite_paths())
-    specs = sorted((REPO / "fleet" / "waves").glob("wave-*-exit.json"))
-    assert specs, "no wave exit file found; the suite list would be missing the held-out suites"
-    for spec in specs:
-        heldout = json.loads(spec.read_text(encoding="utf-8")).get("heldout")
-        assert heldout in checked, f"{spec.name} names {heldout}, which is not checked"
-
-
-def test_the_dev_group_reaches_every_unguarded_import_of_every_exit_suite() -> None:
-    """`uv sync --group dev` has to be enough to run the suites a wave exit runs."""
-    closure = _reachable()
+@pytest.mark.parametrize("profile", ["dev", "all_extras", "trl_110", "trl_113"])
+def test_declared_group_reaches_every_unguarded_import(profile: str) -> None:
+    """The CI install for each profile must collect its exact suite list."""
+    closure = _reachable(tuple(_profile(profile)["extras"]))
     undeclared: list[str] = []
-    for suite, imports in sorted(_third_party_imports_by_suite().items()):
+    for suite, imports in sorted(_third_party_imports_by_suite(profile).items()):
         for name, files in sorted(imports.items()):
             dist = _norm(IMPORT_TO_DIST.get(name, name))
             if dist in closure:
@@ -338,9 +367,9 @@ def test_the_dev_group_reaches_every_unguarded_import_of_every_exit_suite() -> N
                 f"nor the dev group reach (first at {files[0]})"
             )
     assert not undeclared, (
-        "a suite a wave exit runs imports a distribution `uv sync --group dev` does not install, "
+        f"a release suite in {profile} imports a distribution its declared environment does not install, "
         "and does not guard the import, so a clean checkout is red. Add it to [dependency-groups] "
-        "dev in pyproject.toml with a comment naming the suite, then run `uv lock`. If the import "
+        "dev or the relevant extra in pyproject.toml with a comment naming the suite, then run `uv lock`. If the import "
         "is meant to be optional, guard it where it is written. If the import name and the "
         "distribution name simply differ, the fix is a row in IMPORT_TO_DIST:\n  "
         + "\n  ".join(undeclared)
@@ -358,7 +387,7 @@ def test_the_closure_is_computed_and_not_vacuous(name: str) -> None:
 def test_the_scan_visits_the_suites_and_sees_their_imports() -> None:
     """An empty walk would make the assertion above vacuous in the other direction."""
     by_suite = _third_party_imports_by_suite()
-    assert by_suite, "no exit suite was scanned"
+    assert by_suite, "no release suite was scanned"
     assert "pytest" in by_suite["tests/packaging"], (
         "tests/packaging imports pytest unguarded; a scan that misses it is broken"
     )
@@ -402,22 +431,19 @@ def test_the_three_guards_are_recognised(tmp_path: Path) -> None:
     assert "plainly_required" in required
 
 
-def test_numpy_stays_out_of_the_dev_group_on_purpose() -> None:
-    """P-PKG-2's finding, pinned: the one exit suite naming numpy is written to want it absent.
+def test_numpy_is_declared_for_the_forecast_exit_suites() -> None:
+    """Forecast tests now import numpy directly, while the audit fixture keeps its absence branch.
 
-    `tests/product/test_audit.py` asserts the COULD_NOT_CHECK hole inside `except ImportError`.
-    Installing numpy for the dev group would leave that assertion unreached on every machine, so
-    the `verifier` extra is where numpy belongs and the guard above is what keeps it there. If a
-    later packet needs numpy in the dev group, that test needs a fixture importing a name no
-    environment can satisfy first.
+    The development group is the environment that runs every wave-exit suite, so its numpy
+    declaration is required by the Forecast controls. ``test_audit.py`` still guards its synthetic
+    grader import and therefore continues to exercise its COULD_NOT_CHECK branch on base installs.
     """
     audit = REPO / "tests" / "product" / "test_audit.py"
-    if not audit.exists():  # pragma: no cover - the suite moved; the reasoning moves with it
-        pytest.skip("tests/product/test_audit.py is gone")
+    assert audit.exists(), "the audit control moved or disappeared; update the matrix and this test"
     assert "numpy" not in _required_imports(audit), (
-        "tests/product/test_audit.py now imports numpy unguarded; the reasoning above no longer "
-        "holds and the dev group has to carry numpy"
+        "tests/product/test_audit.py now imports numpy unguarded; revisit the audit fixture's "
+        "base-install COULD_NOT_CHECK control"
     )
     dev = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
     declared = {_requirement(spec)[0] for spec in dev.get("dependency-groups", {}).get("dev", [])}
-    assert "numpy" not in declared, "numpy is in the dev group; see this test's docstring"
+    assert "numpy" in declared, "Forecast exit suites import numpy unguarded; dev must declare it"

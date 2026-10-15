@@ -8,6 +8,7 @@ the sandbox at the tier that held. An unreachable surface is reported too, as a 
 
 from __future__ import annotations
 
+from . import probes  # noqa: F401  the audit's own tests reach for it by name
 from .probes import (
     FINDING_IDS,
     METHOD_VERSION,
@@ -29,8 +30,6 @@ from .witness import (
     ReachRun,
     SurfaceReport,
 )
-
-from . import probes  # noqa: F401  the audit's own tests reach for it by name
 
 __all__ = [
     "ATTEMPT_NAMES",

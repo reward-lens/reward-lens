@@ -22,11 +22,66 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Protocol, Sequence, runtime_checkable
+from types import MappingProxyType
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    Protocol,
+    Sequence,
+    runtime_checkable,
+)
 
 from reward_lens import contracts
 
-__all__ = ["Corpus", "Instrument", "Panel", "RunContext", "Subject", "utc_now"]
+if TYPE_CHECKING:  # pragma: no cover - no detection import belongs in the generic interface
+    from reward_lens.instruments.detection import DetectorSpec
+
+__all__ = [
+    "Corpus",
+    "DetectionReferenceBinding",
+    "TraceSourceBinding",
+    "Instrument",
+    "Panel",
+    "RunContext",
+    "Subject",
+    "utc_now",
+]
+
+
+@dataclass(frozen=True)
+class TraceSourceBinding:
+    """One reference trace's bytes and explicit reader declarations."""
+
+    partition: str
+    source: str
+    reader: str
+    run_id: str
+    digest: str
+    declarations: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        if not all((self.partition, self.source, self.reader, self.run_id, self.digest)):
+            raise ValueError(
+                "a reference trace binding needs partition, source, reader, run id, and digest"
+            )
+        object.__setattr__(self, "declarations", MappingProxyType(dict(self.declarations)))
+
+
+@dataclass(frozen=True)
+class DetectionReferenceBinding:
+    """Audit-opened registered detector material, separate from the target trace."""
+
+    spec: "DetectorSpec"
+    source: str
+    digest: str
+    trace_sources: tuple[TraceSourceBinding, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.source or not self.digest:
+            raise ValueError("a detector reference binding needs its source and source digest")
 
 
 def utc_now() -> str:
@@ -98,13 +153,20 @@ class Panel:
 
     section: contracts.Section
     instruments: tuple[Instrument, ...] = ()
+    seconds: int = 1
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "instruments", tuple(self.instruments))
 
     @classmethod
-    def of(cls, section: contracts.Section, instruments: Iterable[Instrument] = ()) -> "Panel":
-        return cls(section=section, instruments=tuple(instruments))
+    def of(
+        cls,
+        section: contracts.Section,
+        instruments: Iterable[Instrument] = (),
+        *,
+        seconds: int = 1,
+    ) -> "Panel":
+        return cls(section=section, instruments=tuple(instruments), seconds=seconds)
 
 
 @dataclass
@@ -117,6 +179,7 @@ class RunContext:
     offline: bool = True
     clock: Callable[[], float] = time.monotonic
     started: str = field(default_factory=utc_now)
+    detection_reference: DetectionReferenceBinding | None = None
 
     @property
     def budget_usd(self) -> str:
@@ -167,6 +230,7 @@ class RunContext:
         depends_on: Sequence[str] = (),
         limitations: Sequence[str] = (),
         duration_s: float = 0.0,
+        method: contracts.Method | None = None,
     ) -> contracts.Entry:
         """One honest absence, stamped with this run's provenance (D-18, A-004)."""
         entry = contracts.absence(
@@ -180,6 +244,7 @@ class RunContext:
             provenance=self.provenance(duration_s=duration_s),
             depends_on=tuple(depends_on),
             state=state,
+            method=method,
         )
         if limitations:
             entry.limitations = list(limitations)

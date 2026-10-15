@@ -67,9 +67,17 @@ class _BasicLimitInformation(ctypes.Structure):
 
 
 class _IoCounters(ctypes.Structure):
-    _fields_ = [(name, ctypes.c_uint64) for name in
-                ("ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
-                 "ReadTransferCount", "WriteTransferCount", "OtherTransferCount")]
+    _fields_ = [
+        (name, ctypes.c_uint64)
+        for name in (
+            "ReadOperationCount",
+            "WriteOperationCount",
+            "OtherOperationCount",
+            "ReadTransferCount",
+            "WriteTransferCount",
+            "OtherTransferCount",
+        )
+    ]
 
 
 class _ExtendedLimitInformation(ctypes.Structure):

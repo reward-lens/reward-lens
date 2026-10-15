@@ -31,7 +31,16 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Protocol, Union, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    Literal,
+    Mapping,
+    Protocol,
+    Union,
+    runtime_checkable,
+)
 
 from reward_lens.core.extras import lazy_module
 

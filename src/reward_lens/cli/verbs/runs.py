@@ -6,7 +6,7 @@ import shutil
 
 import click
 
-from .. import ids, output, registry
+from .. import ids, registry
 from . import _shared
 
 
@@ -29,13 +29,23 @@ def run(*, out, action: str, run_id: str | None = None, **opts) -> int:
 
     if action == "list":
         rows = [_row(found) for found in RunDir.list()]
-        document = {"schema_version": "run-list/1.0", "command": "runs", "runs": rows, "error": None}
+        document = {
+            "schema_version": "run-list/1.0",
+            "command": "runs",
+            "runs": rows,
+            "error": None,
+        }
         return out.deliver(document=document, text=_list_text(rows), exit_code=0)
 
     found = _find(run_id)
     if action == "show":
         row = _row(found)
-        document = {"schema_version": "run-list/1.0", "command": "runs", "runs": [row], "error": None}
+        document = {
+            "schema_version": "run-list/1.0",
+            "command": "runs",
+            "runs": [row],
+            "error": None,
+        }
         return out.deliver(document=document, text=_show_text(row), exit_code=0)
 
     _shared.refuse_without_yes(
@@ -45,8 +55,13 @@ def run(*, out, action: str, run_id: str | None = None, **opts) -> int:
         command="runs",
     )
     shutil.rmtree(found.path, ignore_errors=False)
-    document = {"schema_version": "run-list/1.0", "command": "runs", "runs": [], "removed": [found.run_id],
-                "error": None}
+    document = {
+        "schema_version": "run-list/1.0",
+        "command": "runs",
+        "runs": [],
+        "removed": [found.run_id],
+        "error": None,
+    }
     return out.deliver(document=document, text=f"  Removed {found.run_id}", exit_code=0)
 
 
@@ -77,10 +92,18 @@ def _list_text(rows) -> str:
 
 
 def _show_text(row) -> str:
-    lines = ["", f"  Run       {row['run_id']}", f"  Name      {row['name'] or '-'}",
-             f"  Command   {row['command'] or '-'}", f"  State     {row['state'] or '-'}",
-             f"  Path      {row['path']}", "", "  Continue it with:",
-             "    " + " ".join(row["resume_command"]), ""]
+    lines = [
+        "",
+        f"  Run       {row['run_id']}",
+        f"  Name      {row['name'] or '-'}",
+        f"  Command   {row['command'] or '-'}",
+        f"  State     {row['state'] or '-'}",
+        f"  Path      {row['path']}",
+        "",
+        "  Continue it with:",
+        "    " + " ".join(row["resume_command"]),
+        "",
+    ]
     return "\n".join(lines)
 
 

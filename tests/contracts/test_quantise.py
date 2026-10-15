@@ -5,24 +5,20 @@ from __future__ import annotations
 import copy
 import json
 
-from decimal import Decimal
-
 import pytest
 import rfc8785
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from conftest import load, FIXTURES
-
 from reward_lens.contracts import Assay, Cost, validate_record
 from reward_lens.contracts.errors import NumberNotQuantised
 from reward_lens.contracts.quantise import MAX_SIGNIFICANT_DIGITS, quantise
 
+from .conftest import FIXTURES, load
+
 
 @given(
-    x=st.floats(
-        allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6, width=64
-    ),
+    x=st.floats(allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6, width=64),
     scale=st.integers(min_value=0, max_value=6),
 )
 @settings(max_examples=400, deadline=None)

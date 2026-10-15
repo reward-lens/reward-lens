@@ -25,31 +25,6 @@ import math
 
 import numpy as np
 import pytest
-
-from reward_lens.core.invariance import (
-    InvariancePayload,
-    check_invariance,
-    parse_group_field,
-    resolve_relation,
-)
-from reward_lens.core.reading import Refusal, RefusalReason
-from reward_lens.core.reference import MatrixDescription, ReferenceMaterial
-from reward_lens.measure.base import lint_instrument
-from reward_lens.organisms.chain import LadderRung, build_ladder, compose
-from reward_lens.organisms.standard_addition import (
-    Addition,
-    linearity_check,
-    matrix_factor,
-    spike_recovery,
-    standard_addition,
-    standard_addition_uncertainty,
-)
-from reward_lens.organisms.transport import (
-    SelectionDiagram,
-    d_separated,
-    planted_to_real_diagram,
-    transportable,
-)
 from studies.w6_transfer import all_quotes, ranked
 from studies.w6_transfer.k2_standard_addition import STUDY as K2_STUDY
 from studies.w6_transfer.k2_standard_addition import (
@@ -89,6 +64,31 @@ from studies.w6_transfer.k4_sparsity import freeze_study as k4_freeze
 from studies.w6_transfer.k4_sparsity import quote_rung0 as k4_quote0
 from studies.w6_transfer.k4_sparsity import runbook as k4_runbook
 from studies.w6_transfer.pricing import RATES, check_dossier_arithmetic
+
+from reward_lens.core.invariance import (
+    InvariancePayload,
+    check_invariance,
+    parse_group_field,
+    resolve_relation,
+)
+from reward_lens.core.reading import Refusal, RefusalReason
+from reward_lens.core.reference import MatrixDescription, ReferenceMaterial
+from reward_lens.measure.base import lint_instrument
+from reward_lens.organisms.chain import LadderRung, build_ladder, compose
+from reward_lens.organisms.standard_addition import (
+    Addition,
+    linearity_check,
+    matrix_factor,
+    spike_recovery,
+    standard_addition,
+    standard_addition_uncertainty,
+)
+from reward_lens.organisms.transport import (
+    SelectionDiagram,
+    d_separated,
+    planted_to_real_diagram,
+    transportable,
+)
 
 #: Everything this package declares as an instrument. Rule 3 of the standing rules is that lint is
 #: the gate, and the list is written out here so adding an instrument without linting it is a

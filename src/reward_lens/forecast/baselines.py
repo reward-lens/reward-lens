@@ -25,7 +25,17 @@ import math
 from dataclasses import dataclass
 from typing import Any, Callable, Sequence
 
-import numpy as np
+try:
+    import numpy as np
+except ModuleNotFoundError:  # The D70 scalar baselines below do not need the legacy array runtime.
+
+    class _MissingNumpy:
+        def __getattr__(self, name: str) -> Any:
+            raise ModuleNotFoundError(
+                "legacy forecast baseline requested numpy, which is not installed in this runtime"
+            )
+
+    np = _MissingNumpy()  # type: ignore[assignment]
 
 from reward_lens.core.evidence import register_payload
 from reward_lens.forecast.schema import (
@@ -36,6 +46,186 @@ from reward_lens.forecast.schema import (
     IntervalForecast,
     ReferenceClass,
 )
+
+# ---------------------------------------------------------------------------
+# D70 pre-checkpoint baselines (forecast issue/resolve ledger)
+# ---------------------------------------------------------------------------
+
+
+def _bounded_probability(value: float) -> float:
+    """A fraction target is bounded even when a linear baseline extrapolates."""
+    return max(0.0, min(1.0, float(value)))
+
+
+def d70_persistence(history: Sequence[float], *, checkpoint: int) -> float:
+    """B1: carry forward the last observation available at ``checkpoint``."""
+    if checkpoint < 0 or checkpoint >= len(history):
+        raise ValueError(f"FORECAST_BASELINE_LEAKAGE checkpoint={checkpoint} source=persistence")
+    return _bounded_probability(history[checkpoint])
+
+
+def d70_climatology(reference_values: Sequence[float], *, reference_cutoff: int) -> float:
+    """B2: same-index reference-run climatology, fitted only before issue."""
+    if reference_cutoff < 0 or reference_cutoff > len(reference_values):
+        raise ValueError(
+            f"FORECAST_BASELINE_LEAKAGE checkpoint={reference_cutoff} source=climatology"
+        )
+    values = [float(x) for x in reference_values[:reference_cutoff]]
+    if not values:
+        raise ValueError("climatology needs a non-empty held-out reference distribution")
+    return _bounded_probability(sum(values) / len(values))
+
+
+def d70_drift(history: Sequence[float], *, checkpoint: int, horizon: int) -> float:
+    """B3: line through the first and last available observations, extrapolated h steps."""
+    if checkpoint < 1 or checkpoint >= len(history):
+        raise ValueError(f"FORECAST_BASELINE_LEAKAGE checkpoint={checkpoint} source=drift")
+    if horizon <= 0:
+        raise ValueError("drift horizon must be positive")
+    first = float(history[0])
+    last = float(history[checkpoint])
+    slope = (last - first) / checkpoint
+    return _bounded_probability(last + slope * horizon)
+
+
+def d70_quantile_distribution(
+    values: Sequence[float], *, quantiles: Sequence[float] = (0.1, 0.25, 0.5, 0.75, 0.9)
+) -> dict[str, tuple[float, ...]]:
+    """Empirical pre-issue distribution used by T2/T3 baseline forecasts.
+
+    Values must be a same-step held-out reference sample or past windows only.
+    The interpolation is explicit, deterministic, and allocation-light so no legacy
+    array runtime is needed to issue a fraction forecast.
+    """
+    ordered = sorted(_bounded_probability(float(value)) for value in values)
+    if not ordered:
+        raise ValueError("T2/T3 baseline distribution needs at least one pre-checkpoint value")
+    result: list[float] = []
+    for q in quantiles:
+        if not 0 <= q <= 1:
+            raise ValueError("quantiles must be in [0, 1]")
+        position = float(q) * (len(ordered) - 1)
+        lower = int(math.floor(position))
+        upper = int(math.ceil(position))
+        weight = position - lower
+        result.append(ordered[lower] * (1 - weight) + ordered[upper] * weight)
+    return {"values": tuple(result)}
+
+
+def d70_persistence_quantiles(
+    history: Sequence[float], *, checkpoint: int
+) -> dict[str, tuple[float, ...]]:
+    """B1 spread from historical windows through the checkpoint only."""
+    if checkpoint < 0 or checkpoint >= len(history):
+        raise ValueError(f"FORECAST_BASELINE_LEAKAGE checkpoint={checkpoint} source=persistence")
+    return d70_quantile_distribution(history[: checkpoint + 1])
+
+
+def d70_drift_quantiles(
+    history: Sequence[float], *, checkpoint: int, horizon: int
+) -> dict[str, tuple[float, ...]]:
+    """B3 empirical distribution of prefix-only drift extrapolations."""
+    if checkpoint < 2:
+        raise ValueError(f"FORECAST_BASELINE_LEAKAGE checkpoint={checkpoint} source=drift")
+    return d70_quantile_distribution(
+        [
+            d70_drift(history[: index + 1], checkpoint=index, horizon=horizon)
+            for index in range(1, checkpoint + 1)
+        ]
+    )
+
+
+def d70_covariance_quantiles(
+    features: Sequence[Sequence[float]], targets: Sequence[float], *, checkpoint: int
+) -> dict[str, tuple[float, ...]]:
+    """B4 prefix-only covariance predictions, retaining their pre-issue spread."""
+    if checkpoint < 2:
+        raise ValueError(f"FORECAST_BASELINE_LEAKAGE checkpoint={checkpoint} source=covariance")
+    return d70_quantile_distribution(
+        [
+            d70_covariance(features[: index + 1], targets[: index + 1], checkpoint=index)
+            for index in range(1, checkpoint + 1)
+        ]
+    )
+
+
+def d70_reference_step_quantiles(
+    reference_runs: Sequence[Sequence[float]], *, checkpoint: int, horizon: int
+) -> dict[str, tuple[float, ...]]:
+    """Same future-window step across held-out reference runs, never this run's future."""
+    if checkpoint < 0 or horizon <= 0:
+        raise ValueError("checkpoint must be non-negative and horizon positive")
+    step = checkpoint + horizon
+    values: list[float] = []
+    for run in reference_runs:
+        if step >= len(run):
+            raise ValueError("reference run lacks the registered resolution step")
+        values.append(float(run[step]))
+    return d70_quantile_distribution(values)
+
+
+def d70_covariance(
+    features: Sequence[Sequence[float]],
+    targets: Sequence[float],
+    *,
+    checkpoint: int,
+    ridge: float = 1e-6,
+) -> float:
+    """B4: a ridge-stabilised sample cross-covariance linear predictor.
+
+    Rows after ``checkpoint`` are deliberately never inspected.  The caller supplies
+    logged vectors ``x=(reward, contrast, variance, KL, length, hack-rate)`` and
+    the contemporaneous target; this is the finite-sample form of
+    ``mu_y + Sigma_yx Sigma_xx^-1 (x_t - mu_x)``.
+    """
+    if checkpoint < 1 or checkpoint >= len(features) or checkpoint >= len(targets):
+        raise ValueError(f"FORECAST_BASELINE_LEAKAGE checkpoint={checkpoint} source=covariance")
+    rows = [[float(value) for value in row] for row in features[: checkpoint + 1]]
+    ys = [float(value) for value in targets[: checkpoint + 1]]
+    width = len(rows[0])
+    if width == 0 or any(len(row) != width for row in rows):
+        raise ValueError("covariance baseline requires rectangular non-empty feature rows")
+    if len(rows) < 2:
+        raise ValueError("covariance baseline needs at least two pre-checkpoint rows")
+    means = [sum(row[j] for row in rows) / len(rows) for j in range(width)]
+    mean_y = sum(ys) / len(ys)
+    scale = max(1, len(rows) - 1)
+    cov_xx = [
+        [
+            sum((row[i] - means[i]) * (row[j] - means[j]) for row in rows) / scale
+            for j in range(width)
+        ]
+        for i in range(width)
+    ]
+    cov_yx = [
+        sum((y - mean_y) * (row[j] - means[j]) for row, y in zip(rows, ys)) / scale
+        for j in range(width)
+    ]
+    for j in range(width):
+        cov_xx[j][j] += ridge
+    # Gaussian elimination on a tiny (normally six-feature) system; no large allocation.
+    augmented = [cov_xx[i] + [cov_yx[i]] for i in range(width)]
+    for col in range(width):
+        pivot = max(range(col, width), key=lambda row: abs(augmented[row][col]))
+        if abs(augmented[pivot][col]) < 1e-15:
+            return _bounded_probability(mean_y)
+        augmented[col], augmented[pivot] = augmented[pivot], augmented[col]
+        divisor = augmented[col][col]
+        augmented[col] = [item / divisor for item in augmented[col]]
+        for row in range(width):
+            if row == col:
+                continue
+            factor = augmented[row][col]
+            augmented[row] = [
+                item - factor * pivot_value
+                for item, pivot_value in zip(augmented[row], augmented[col])
+            ]
+    coefficients = [augmented[i][-1] for i in range(width)]
+    x_now = rows[-1]
+    return _bounded_probability(
+        mean_y + sum(beta * (value - mean) for beta, value, mean in zip(coefficients, x_now, means))
+    )
+
 
 # ---------------------------------------------------------------------------
 # 1. Climatology

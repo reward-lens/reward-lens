@@ -8,6 +8,12 @@ Written by a real `GRPOTrainer` and read by every in-run instrument. Regenerate 
 | `short/` | 12 | 96 | 192 | `run:8a8c7e29274db0a681313b48dbd1eb63` |
 | `long/` | 200 | 1,600 | 3,200 | `run:f77bf75940ab982bbc35407af99cc094` |
 
+The public `run.json` headers are path-redacted derivatives of the captured records. Only
+`lineage.extra.config.output_dir` uses a logical `fixture://` location. The run IDs, measured
+steps, and manifest counts are unchanged; the original and derived header hashes are recorded in
+[`provenance/derived-public-fixtures.json`](../../../provenance/derived-public-fixtures.json).
+The logical location is not the trainer's historical output directory.
+
 Same configuration for both, and it is W4.1's, unchanged:
 `trl-internal-testing/tiny-Qwen3ForCausalLM`, seed 1234, batch
 8, `num_generations` 4, `max_completion_length` 12, CPU, with a length grader that returns `None`

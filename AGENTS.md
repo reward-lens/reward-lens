@@ -1,7 +1,24 @@
 # Repository guidance
 
-Use `reward-lens` in prose and commands, `reward_lens` for Python imports, and `REWARD_LENS_*` for environment variables. The current source target is 3.1.0 and remains unreleased. Do not change established public symbols, serialized keys, or configuration names without a compatibility review.
+Use `reward-lens` in prose and commands, `reward_lens` for Python imports, and
+`REWARD_LENS_*` for environment variables. The development target is 3.1.0 until
+the release record confirms publication. Preserve public symbols, serialized
+keys, `rewardlens.yaml`, and existing record identities.
 
-Keep reusable library code, schemas, small fixtures, tests, and user documentation in this repository. Keep private operations records, raw run output, provider credentials, account configuration, and large experimental artifacts outside it. Do not add a workflow that deploys a site, publishes a package, creates a release, provisions cloud resources, or runs paid or GPU work on a normal push.
+This standalone clone is the maintained product development repository. Base new
+branches on current `origin/main`, use focused pull requests, and keep source,
+tests, resources, and documentation together. Follow `CONTRIBUTING.md` and the
+machine-readable matrix in `release/validation-matrix.json`. Run builds and
+tests in independent disposable clones with isolated environments.
 
-Run supported checks in an isolated environment. `TEST_STATUS.md` separates the CPU CI contract from optional and incomplete suites. Update documentation and compatibility tests with a public behavior change.
+Keep private operational records, credentials, raw research data, environments,
+and release workspaces outside source history. Historical development snapshots
+and the pinned reproducibility subproject retain their own provenance and remain
+outside the product distribution. The narrow `fleet/golden` and
+`fleet/gates/fixtures` directories are portable test inputs, not a controller.
+
+Normal pushes and pull requests must only validate. Production publication uses
+the reviewed release workflow, exact main commit, existing immutable tag,
+successful main CI, and that run's validated wheel and sdist. Never use
+`skip-existing`, move a published tag, or replace an existing release asset.
+See `docs/releasing.md` for the release sequence.

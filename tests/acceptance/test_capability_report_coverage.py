@@ -19,6 +19,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import textwrap
+from types import SimpleNamespace
 
 import pytest
 
@@ -128,6 +129,57 @@ def test_the_front_door_survives_a_base_install() -> None:
         "a module failed to import for a reason that is not a missing optional extra. That is a "
         "defect in the tree, and it makes every quantity that module estimates look like an open "
         "research target rather than a broken import"
+    )
+
+
+def test_the_ladder_keeps_a_typed_extra_distinct_from_an_internal_missing_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only a typed optional-extra refusal may enter ``skipped``.
+
+    The fresh-process tests above cover the public tree.  This tight control holds the classifier's
+    line directly: an optional subsystem may be unavailable on a base install, but a missing
+    ``reward_lens`` module is a broken product path even when both errors appear while discovery
+    is walking its tree.  Do not repair a future import seam by weakening this distinction.
+    """
+    from reward_lens.access import estimators
+    from reward_lens.core.extras import ExtraRequiredError
+
+    original_import = estimators.importlib.import_module
+    modules = (
+        SimpleNamespace(name="reward_lens.synthetic_optional"),
+        SimpleNamespace(name="reward_lens.synthetic_internal"),
+    )
+
+    def fake_import(name: str):
+        if name == "reward_lens":
+            return original_import(name)
+        if name == "reward_lens.synthetic_optional":
+            raise ExtraRequiredError("synthetic optional extra is unavailable")
+        if name == "reward_lens.synthetic_internal":
+            raise ModuleNotFoundError(
+                "No module named 'reward_lens.synthetic_internal_leaf'",
+                name="reward_lens.synthetic_internal_leaf",
+            )
+        raise AssertionError(f"unexpected estimator-loader import: {name}")
+
+    monkeypatch.setattr(estimators, "_CACHE", None)
+    monkeypatch.setattr(estimators.pkgutil, "walk_packages", lambda *_args: iter(modules))
+    monkeypatch.setattr(estimators.importlib, "import_module", fake_import)
+
+    report = estimators.load_estimator_ladder(force=True)
+
+    assert report.skipped == (
+        (
+            "reward_lens.synthetic_optional",
+            "ExtraRequiredError: synthetic optional extra is unavailable",
+        ),
+    )
+    assert report.broken == (
+        (
+            "reward_lens.synthetic_internal: ModuleNotFoundError: "
+            "No module named 'reward_lens.synthetic_internal_leaf'"
+        ),
     )
 
 

@@ -56,7 +56,7 @@ def _run_tests(source: str, solution: dict[str, Any]) -> tuple[int, int]:
         exec(compile(source, str(PROTECTED_TESTS), "exec"), namespace)  # noqa: S102
     except Exception:
         return 0, 1
-    cases = [v for k, v in sorted(namespace.items(), key=lambda kv: kv[0]) if k.startswith("test_") and callable(v)]
+    cases = [v for k, v in sorted(namespace.items()) if k.startswith("test_") and callable(v)]
     if not cases:
         return 0, 1
     passed = 0

@@ -25,7 +25,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from experiments.x2_beta_vs_s import (
     CAMPAIGN_STORE,
     OPERATORS,
@@ -38,6 +37,7 @@ from experiments.x2_beta_vs_s import (
     spearman_grid_step,
 )
 from experiments.x3_transfer import Bound, require_bound
+
 from reward_lens.artifacts.claims import check_files
 from reward_lens.core.reading import Refusal, RefusalReason
 from reward_lens.core.store import EvidenceStore
@@ -239,6 +239,7 @@ def test_beta_comes_from_the_shipped_estimator() -> None:
     so this asserts the import rather than the arithmetic.
     """
     import experiments.x2_beta_vs_s as x2
+
     from reward_lens.measure.indices import chi
 
     assert x2.selection_gradient is chi.selection_gradient

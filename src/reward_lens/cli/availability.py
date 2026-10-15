@@ -10,8 +10,7 @@ the same loader the api uses and is the authority.
 Neither reader carries a list of absent verbs. The pointers are `reward_lens/api/_dispatch.py`'s
 `ENGINES`, the table `api.doctor()` reports from, and the verbs they are consulted for are the root
 help's `Measure` group. A verb outside that group reports its absence its own way and is not
-touched here: `export` has no engine in this build either, and says so through RL0701 on `--format`
-and through the honest record, which A-026 leaves standing.
+touched here. Export reaches its renderer and reports record or access refusals through that route.
 
 Every failure here answers "present", so a seam that moves degrades to the honest record this
 surface printed before A-026, never to a refusal of a verb that would have run.
@@ -69,14 +68,17 @@ def targets(verb: str, table: dict[str, str]) -> tuple[str, ...]:
     `forecast` is three engines (issue, resolve, ledger) and `audit` is one. A verb with no key at
     all is carried by the CLI itself and can never be absent.
     """
-    return tuple(target for key, target in sorted(table.items()) if key == verb or key.startswith(verb + "_"))
+    return tuple(
+        target for key, target in sorted(table.items()) if key == verb or key.startswith(verb + "_")
+    )
 
 
 def _defined(target: str) -> bool:
     """Whether `"module:attribute"` names something this build holds, without importing it.
 
     `_dispatch.load` answers the same question by importing and calling `getattr`; that costs the
-    contracts for a landed engine, so here the module's source is read instead and the attribute
+    contracts for a landed engine. Even `find_spec` imports parent packages, so this reader locates
+    Python source directly inside the package and reads the attribute
     looked for as a top-level definition. A module already in `sys.modules` is asked directly,
     which is both cheaper and exact.
     """
@@ -86,27 +88,30 @@ def _defined(target: str) -> bool:
     loaded = sys.modules.get(module_name)
     if loaded is not None:
         return callable(getattr(loaded, attribute, None))
-    try:
-        spec = importlib.util.find_spec(module_name)
-    except Exception:  # noqa: BLE001 - a package that cannot be searched holds nothing
-        return False
-    if spec is None:
-        return False
-    origin = spec.origin or ""
-    if not origin.endswith(".py"):
-        # A namespace package, an extension or a frozen module: nothing to read, so no opinion.
+    parts = module_name.split(".")
+    if parts[0] != "reward_lens":
+        # A pointer outside this source package is confirmed by the runtime loader instead.
         return True
+    module_path = pathlib.Path(__file__).resolve().parent.parent.joinpath(*parts[1:])
+    source_path = module_path.with_suffix(".py")
+    if not source_path.is_file():
+        source_path = module_path / "__init__.py"
+    if not source_path.is_file():
+        return module_path.is_dir()  # a namespace package gives this reader no opinion
     try:
-        source = pathlib.Path(origin).read_text(encoding="utf-8")
+        source = source_path.read_text(encoding="utf-8")
     except OSError:
         return True
     name = re.escape(attribute)
     # Defined here, bound here, or re-exported here: a package that carries its engine in a
     # submodule and names it in `__init__.py` holds it as surely as one that spells out `def run`.
-    return re.search(
-        rf"(?m)^(?:async\s+def|def|class)\s+{name}\b|^{name}\s*[:=]|^\s*from\s+\S+\s+import\b[^\n]*\b{name}\b",
-        source,
-    ) is not None
+    return (
+        re.search(
+            rf"(?m)^(?:async\s+def|def|class)\s+{name}\b|^{name}\s*[:=]|^\s*from\s+\S+\s+import\b[^\n]*\b{name}\b",
+            source,
+        )
+        is not None
+    )
 
 
 def marked_absent() -> frozenset[str]:

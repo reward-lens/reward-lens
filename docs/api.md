@@ -27,6 +27,8 @@ print(len(record.holes), "things this build could not measure")
 | `open_record(path)` | a path | `Assay` |
 | `export(request)` | `ExportRequest` | a written file |
 | `doctor(request=None, *, project=None)` | `DoctorRequest` | `Capabilities` |
+| `explain(code)` | an RL code | `ErrorExplanation` |
+| `describe()` | nothing | versioned command-tree mapping |
 | `dry_run(request)` | `AuditRequest` | `Plan` |
 | `last_reuse()` | nothing | `Reused` or `None` |
 
@@ -52,29 +54,19 @@ are fields rather than flags.
 Section 8.0 names `ImproveResult` as the result of `improve`. No such contract type exists, and a
 result type on one surface only is forbidden, so `improve` returns the record.
 
-## What this build does not hold
+## Engine availability
 
-Most engines land in later waves. A verb whose engine is absent returns a record whose ten
-sections are honest absences: one entry per section with `missing_access` set to
-`instrument not in this build`, a remedy that says what would fix it, and a `holes` index with one
-row per section. It does not raise, and it does not report a zero where it measured nothing.
+The current build connects audit, trace, compare, all three forecast operations, improve and
+export through the SDK dispatch table. A result still names each measurement it could not make
+from the supplied inputs. A missing engine, if a distribution omits one, produces an assay with
+absences and a holes index rather than invented measurements. `export` opens the requested record
+before rendering, so a missing record raises `RL0621`.
 
-Two fields the frozen schema requires non-null have no honest value in a build that reads no
-subject. `subject.version.digest` is the digest of a mapping naming the unread request, and
-`subject.digests.instrument_method` is the digest of the instrument set that ran, which is empty.
-Every entry carries a limitation that says so. Nothing is a zero digest and nothing is a plausible
-hash of something that was never read.
-
-`export` is the one verb that refuses instead. It reads the same seam as every other verb, and
-what it finds there while the renderer is absent is nothing, so it raises `CapabilityUnavailable`
-with code `RL0701` rather than writing an empty file that looks like a report. The refusal is the
-seam's emptiness and not a decision taken in the verb: when the renderer lands, `export` reaches it
-without a line here changing.
-
-`doctor` returns `Capabilities`: the list of `Capability` the interface freezes, plus the sandbox
-and the installation. It is the list, so a caller iterates it, measures it, indexes it and appends
-to it; `sandbox` is a `reward_lens.execution.Sandbox` or `None`, checked when one is supplied
-rather than imported when the module loads.
+`doctor` returns `Capabilities`: the list of `Capability` values, a captured local adapter
+`compatibility_matrix`, the sandbox probe result and installation details. Matrix rows report
+local fixture conformance and keep live-provider status explicit. The capability list still
+supports iteration and indexing. `sandbox` is a `reward_lens.execution.SandboxProbe` or `None`,
+checked when one is supplied rather than imported when the module loads.
 
 ## Errors
 
@@ -85,7 +77,6 @@ exit code of the D-22 table.
 |---|---|---|
 | `RL0003` | any request, on a field whose value it cannot use | 4 |
 | `RL0002` | any request, on an identifier it cannot use | 4 |
-| `RL0701` | `export`, while the renderer is not in the build | 5 |
 | `RL0621` | `open_record` on a path that holds no record | 4 |
 | `RL0604` | `open_record` on a record that does not validate | 4 |
 
@@ -145,3 +136,14 @@ Importing `reward_lens.api` loads the contracts and the standard library. It loa
 numeric, no HTTP client, and no engine: the seam between the verbs and the engines under them is a
 pointer table resolved on demand, so a build that holds an engine pays for it and a build that
 does not pays nothing. A test asserts this in a fresh interpreter.
+
+
+## Controlled-intervention runtime
+
+The executed CPU routes for compare rungs four and five require TRL 1.10.0.
+Their replay and restoration contracts bind that exact trainer implementation.
+Install `reward-lens[train]` and `trl==1.10.0` together in an isolated environment
+to run them. A different installed trainer is an `RL0702` capability refusal.
+The tap's separate CPU conformance fixture uses TRL 1.13.0. These small random
+weight tests establish adapter conformance; they do not establish a behavioural
+training result or qualification for every trainer version allowed by an extra.

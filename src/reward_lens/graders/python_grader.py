@@ -220,7 +220,9 @@ def _remove_tree(root: Path) -> None:
     shutil.rmtree(root, ignore_errors=True)
 
 
-def _finding(code: str, rule: str, trainer: str, behaviour: str, message: str, witness: dict) -> ValidityFinding:
+def _finding(
+    code: str, rule: str, trainer: str, behaviour: str, message: str, witness: dict
+) -> ValidityFinding:
     return ValidityFinding(
         code=code,
         rule=rule,
@@ -346,10 +348,14 @@ class PythonGrader:
 
     def validate_input(self, task: Any, response: Any) -> None | InvalidInput:
         if not isinstance(task, Mapping):
-            return InvalidInput(field="task", reason="a task is an object, not a " + type(task).__name__)
+            return InvalidInput(
+                field="task", reason="a task is an object, not a " + type(task).__name__
+            )
         for key in ("id", "prompt"):
             if key not in task:
-                return InvalidInput(field=key, reason=f"a task carries {key}, and this one does not")
+                return InvalidInput(
+                    field=key, reason=f"a task carries {key}, and this one does not"
+                )
             if not isinstance(task[key], str):
                 return InvalidInput(
                     field=key, reason=f"task.{key} is a string, not a {type(task[key]).__name__}"
@@ -377,7 +383,9 @@ class PythonGrader:
         started_at = _utc_now()
         clock = time.monotonic()
         request = {"task": task, "response": response, "entrypoint": self.entrypoint, "seed": seed}
-        request_digest = digest({"task": task, "response": response, "seed": seed, "entrypoint": self.entrypoint})
+        request_digest = digest(
+            {"task": task, "response": response, "seed": seed, "entrypoint": self.entrypoint}
+        )
 
         bad = self.validate_input(task, response)
         if bad is not None:
@@ -393,7 +401,10 @@ class PythonGrader:
                 tier="T0",
                 errors=(f"{bad.field}: {bad.reason}",),
                 limitations=("the grader did not run: the request was refused before the sandbox",),
-                observations={"grader": {"stdout": "", "returned_type": None}, "input": bad.to_dict()},
+                observations={
+                    "grader": {"stdout": "", "returned_type": None},
+                    "input": bad.to_dict(),
+                },
             )
 
         scratch = Path(tempfile.mkdtemp(prefix="rl-grader-"))
@@ -455,11 +466,19 @@ class PythonGrader:
         every call, carrying a manifest that says the adapter controls its execution.
         """
         first = self.score(
-            _PROBE_TASK, _PROBE_RESPONSE, sandbox=sandbox, limits=limits, seed=self.seed,
+            _PROBE_TASK,
+            _PROBE_RESPONSE,
+            sandbox=sandbox,
+            limits=limits,
+            seed=self.seed,
             project_dir=project_dir,
         )
         second = self.score(
-            _PROBE_TASK, _PROBE_RESPONSE, sandbox=sandbox, limits=limits, seed=self.seed,
+            _PROBE_TASK,
+            _PROBE_RESPONSE,
+            sandbox=sandbox,
+            limits=limits,
+            seed=self.seed,
             project_dir=project_dir,
         )
 
@@ -507,7 +526,13 @@ class PythonGrader:
             capabilities=CapabilityVector(
                 **{
                     name: getattr(self._manifest.capabilities, name)
-                    for name in ("component_dag", "token_quantities", "checkpoint_capture", "controlled_updates", "cost_metering")
+                    for name in (
+                        "component_dag",
+                        "token_quantities",
+                        "checkpoint_capture",
+                        "controlled_updates",
+                        "cost_metering",
+                    )
                 },
                 probed=probed,
             ),
@@ -868,5 +893,3 @@ class PythonGrader:
             limitations=tuple(limitations),
             findings=findings,
         )
-
-

@@ -12,8 +12,9 @@ activation and measures ``original_differential - patched_differential``. The pa
 :class:`~reward_lens.interventions.patch.ComponentPatch` / ``HeadPatch``, an Intervention whose
 fingerprint enters the Evidence subject, so a patched number cannot masquerade as a clean one. The
 head-granularity path is what E15 uses to find the strongest attention head; that headline is
-held in a private E-parity fixture and its recompute at 8B is GPU-gated (it needs the 8B
-model's ``w_r`` and forwards). This public source therefore does not claim a reproduced 8B result.
+recorded in ``fixtures/e_parity/golden.json`` and its recompute at 8B is GPU-gated (it needs the 8B
+model's ``w_r`` and forwards), so on this hardware the head grid runs on the tiny model as a
+correctness check, not as the 8B result.
 """
 
 from __future__ import annotations

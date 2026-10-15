@@ -9,6 +9,7 @@ hole in the record and never a zero.
 from __future__ import annotations
 
 import math
+import weakref
 from dataclasses import dataclass
 
 from reward_lens.contracts.canonical import digest as canonical_digest
@@ -38,6 +39,7 @@ _METHOD_VERSION = "1.0.0"
 #: Below this many sampling units the record states that there is no interval rather than
 #: inventing endpoints (D-75, rule 9).
 _MIN_CLUSTERS = 15
+_SUCCESSFUL_QUALIFICATIONS: dict[int, weakref.ReferenceType[Qualification]] = {}
 
 
 @dataclass(frozen=True)
@@ -73,6 +75,41 @@ class Qualification:
     finding_id: str | None = None
     label: str | None = None
     partition_digest: str | None = None
+    partition_id: str | None = None
+
+
+def _remember_success(qualification: Qualification) -> Qualification:
+    """Register one exact successful object without retaining it beyond its caller.
+
+    A field marker is copied by ``dataclasses.replace``. The registry instead accepts only the
+    identity returned by this module's successful ``qualify`` call. A weak reference avoids turning
+    the verification registry into a lifetime owner of assay records.
+    """
+    object_id = id(qualification)
+
+    def _remove(reference: weakref.ReferenceType[Qualification]) -> None:
+        if _SUCCESSFUL_QUALIFICATIONS.get(object_id) is reference:
+            _SUCCESSFUL_QUALIFICATIONS.pop(object_id, None)
+
+    _SUCCESSFUL_QUALIFICATIONS[object_id] = weakref.ref(qualification, _remove)
+    return qualification
+
+
+def _is_verified_success(qualification: object) -> bool:
+    """Whether this exact object came from a successful call to :func:`qualify`.
+
+    The bridge to an item-level resolved outcome consumes this identity. A public dataclass with
+    `qualified=True`, including a copy of a real result, is not evidence that the outcome protocol
+    actually passed its controls.
+    """
+    return (
+        type(qualification) is Qualification
+        and qualification.qualified is True
+        and (reference := _SUCCESSFUL_QUALIFICATIONS.get(id(qualification))) is not None
+        and reference() is qualification
+        and qualification.entry.kind == "estimate"
+        and qualification.entry.method.id == "outcome.protected_suite"
+    )
 
 
 def _wilson(passed: int, total: int) -> list[float]:
@@ -109,8 +146,36 @@ def _unqualified(
         state=_STATE_NAME,
         message=error.message,
         finding_id=FINDING_IDS[_STATE],
+        partition_id=None if suite is None else suite.id,
         partition_digest=None if suite is None else suite.digest,
     )
+
+
+def _suite_result_problem(result: SuiteResult) -> str | None:
+    """Name a malformed or vacuous evaluator-control result without throwing it away.
+
+    A zero/zero control result made the old equality checks pass and then divided by zero. It is
+    neither proof of a qualified evaluator nor a failed item result, so qualification returns its
+    normal absence state instead.
+    """
+    counts = {
+        "known_good_passed": result.known_good_passed,
+        "known_good_total": result.known_good_total,
+        "known_wrong_failed": result.known_wrong_failed,
+        "known_wrong_total": result.known_wrong_total,
+    }
+    for name, count in counts.items():
+        if type(count) is not int:
+            return f"the outcome check returned a non-integer {name}"
+        if count < 0:
+            return f"the outcome check returned a negative {name}"
+    if result.known_good_total == 0 or result.known_wrong_total == 0:
+        return "the outcome check supplied no non-vacuous known-good and known-wrong controls"
+    if result.known_good_passed > result.known_good_total:
+        return "the outcome check reported more known-good passes than known-good controls"
+    if result.known_wrong_failed > result.known_wrong_total:
+        return "the outcome check reported more known-wrong failures than known-wrong controls"
+    return None
 
 
 def qualify(
@@ -136,6 +201,13 @@ def qualify(
             provenance=provenance,
             suite=suite,
         )
+    if suite is not None and check.partition_id != suite.id:
+        return _unqualified(
+            f"the outcome check names partition {check.partition_id}, which does not name {suite.id}",
+            subject_ref=subject_ref,
+            provenance=provenance,
+            suite=suite,
+        )
     if check.source_digest == grader_source_digest:
         return _unqualified(
             "the outcome check is the audited grader under another name",
@@ -153,6 +225,14 @@ def qualify(
     if result is None:
         return _unqualified(
             "the outcome check was not run against the protected suite",
+            subject_ref=subject_ref,
+            provenance=provenance,
+            suite=suite,
+        )
+    problem = _suite_result_problem(result)
+    if problem is not None:
+        return _unqualified(
+            problem,
             subject_ref=subject_ref,
             provenance=provenance,
             suite=suite,
@@ -229,10 +309,13 @@ def qualify(
         },
         denominator="known-good programs in the protected partition",
     )
-    return Qualification(
-        qualified=True,
-        reason="the owner's outcome check qualified the correctness claim on this partition",
-        entry=entry,
-        label=f"outcome-qualified for protected partition {suite.id}",
-        partition_digest=suite.digest,
+    return _remember_success(
+        Qualification(
+            qualified=True,
+            reason="the owner's outcome check qualified the correctness claim on this partition",
+            entry=entry,
+            label=f"outcome-qualified for protected partition {suite.id}",
+            partition_id=suite.id,
+            partition_digest=suite.digest,
+        )
     )

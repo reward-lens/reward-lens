@@ -1,0 +1,35 @@
+# Rule table for section 7.7.  Costs are declared planning inputs, not spend.
+explanation_kinds:
+  score_treatment: a changed reward treats the same frozen response differently
+  selection_response: a changed reward changes selection under a declared budget
+  advantage_pressure: a changed reward changes reconstructed training pressure
+  update_mechanism: a changed reward changes one controlled optimizer update
+  horizon_behavior: a changed reward changes behaviour over a tested horizon
+  transfer_generalisation: a changed reward changes held-out transfer
+
+costs:
+  - {rung: 1, rank: 1, money_usd: "0", samples: 40, minutes: 5, access: [frozen_samples, two_versions, response_bank]}
+  - {rung: 2, rank: 2, money_usd: "0", samples: 400, minutes: 20, access: [response_bank, outcome_check]}
+  - {rung: 3, rank: 3, money_usd: "0", samples: 800, minutes: 30, access: [run_record]}
+  - {rung: 4, rank: 4, money_usd: "4", samples: 1, minutes: 60, access: [pinned_trainer, checkpoint, gpu]}
+  - {rung: 5, rank: 5, money_usd: "12", samples: 40, minutes: 240, access: [pinned_trainer, checkpoint, gpu, horizon_budget]}
+  - {rung: 6, rank: 6, money_usd: "0", samples: 200, minutes: 90, access: [held_out_partitions]}
+
+# Each list position is rungs one through six.  The loader materialises every
+# pair/rung cell and checks the full 15-pair by six-rung table.
+pairs:
+  - {pair: [score_treatment, selection_response], separates: [true, true, false, false, false, false]}
+  - {pair: [score_treatment, advantage_pressure], separates: [true, false, true, false, false, false]}
+  - {pair: [score_treatment, update_mechanism], separates: [true, false, false, true, false, false]}
+  - {pair: [score_treatment, horizon_behavior], separates: [true, false, false, false, true, false]}
+  - {pair: [score_treatment, transfer_generalisation], separates: [true, false, false, false, false, true]}
+  - {pair: [selection_response, advantage_pressure], separates: [false, true, true, false, false, false]}
+  - {pair: [selection_response, update_mechanism], separates: [false, true, false, true, false, false]}
+  - {pair: [selection_response, horizon_behavior], separates: [false, true, false, false, true, false]}
+  - {pair: [selection_response, transfer_generalisation], separates: [false, true, false, false, false, true]}
+  - {pair: [advantage_pressure, update_mechanism], separates: [false, false, true, true, false, false]}
+  - {pair: [advantage_pressure, horizon_behavior], separates: [false, false, true, false, true, false]}
+  - {pair: [advantage_pressure, transfer_generalisation], separates: [false, false, true, false, false, true]}
+  - {pair: [update_mechanism, horizon_behavior], separates: [false, false, false, true, true, false]}
+  - {pair: [update_mechanism, transfer_generalisation], separates: [false, false, false, true, false, true]}
+  - {pair: [horizon_behavior, transfer_generalisation], separates: [false, false, false, false, true, true]}

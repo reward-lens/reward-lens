@@ -1,11 +1,8 @@
 """The README's route from a stranger's terminal to a 3.1.0 report (A-026).
 
-The cold read of wave 1 opened `README.md` and found the 3.x library's front page: no `init`, no
-`audit`, no `doctor` anywhere in it. A reader who installs the distribution this package builds has
-no way to reach the product from the file that ships inside the wheel. This module pins the route
-back in: a short section at the top, the three commands in the order a stranger runs them, and the
-four verbs the help names that this build does not answer yet, so the README does not promise what
-`audit` cannot deliver.
+The route at the top of `README.md` gives a reader the first three commands in running order. It
+also has to track the verbs that the current build connects, so an earlier wave's absence claim
+cannot survive after those engines land.
 
 The section is delimited by HTML comments rather than by the next `## ` heading, because the 3.x
 prose that follows it opens with paragraphs and no heading of its own. The file already uses a
@@ -43,9 +40,8 @@ COMMANDS = (
     "reward-lens doctor",
 )
 
-#: The verbs the CLI's help lists that this build does not answer. Naming them in the README is the
-#: cheapest correction available for a help text that lists more than it does.
-ABSENT_VERBS = ("trace", "compare", "forecast", "improve")
+#: The four verbs once described as absent in the README's first route.
+CONNECTED_VERBS = ("trace", "compare", "forecast", "improve")
 
 #: The install line the packaging already documents, further down the same file.
 INSTALL = "pip install ."
@@ -122,19 +118,26 @@ def test_commands_are_in_running_order(section: list[str]) -> None:
     assert positions == sorted(positions), f"the three commands are out of order: {positions}"
 
 
-@pytest.mark.parametrize("verb", ABSENT_VERBS)
-def test_section_names_each_absent_verb(section: list[str], verb: str) -> None:
+@pytest.mark.parametrize("verb", CONNECTED_VERBS)
+def test_section_names_each_connected_verb(section: list[str], verb: str) -> None:
     text = "\n".join(section)
-    assert f"`{verb}`" in text, f"the 3.1.0 route does not name the absent verb {verb!r}"
+    assert f"`{verb}`" in text, f"the 3.1.0 route does not name connected verb {verb!r}"
 
 
-def test_absent_verbs_are_not_offered_as_commands(section: list[str]) -> None:
-    """Naming a verb as absent is the point; printing it in the shell block is the failure."""
+def test_connected_verbs_are_not_still_called_absent(section: list[str]) -> None:
     text = "\n".join(section)
-    for verb in ABSENT_VERBS:
-        assert f"reward-lens {verb}" not in text, (
-            f"the route runs `reward-lens {verb}`, which this build does not answer"
-        )
+    assert "not in this build" not in text
+    assert "not in this build yet" not in text
+    from reward_lens.cli.availability import marked_absent
+
+    assert not marked_absent().intersection(CONNECTED_VERBS)
+
+
+def test_install_instructions_match_current_metadata() -> None:
+    text = README.read_text(encoding="utf-8")
+    assert "Python `3.11` or newer" in text
+    assert "uv sync --group dev" in text
+    assert "reward-lens[dev]" not in text
 
 
 def test_section_points_json_at_the_envelope(section: list[str]) -> None:

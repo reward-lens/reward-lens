@@ -1,28 +1,87 @@
-# Test status
+# Release validation
 
-The public CPU workflow is deliberately a supported regression contract, not a claim that every retained development suite is green. It builds a wheel and sdist, checks that both omit unreleased reproducibility and development snapshot paths, then runs public contract, API, CLI, error, and v3 compatibility tests on Python 3.11 and 3.12. It does not deploy Pages, publish a package, create a release, provision cloud resources, or run GPU or provider-backed work.
+The release matrix is defined in `release/validation-matrix.json` and executed
+by `.github/workflows/ci.yml`. Publication requires a fully successful run for
+the exact main commit, including its immutable validated wheel and sdist. A
+passing subset or a result from another source tree does not meet that gate.
 
-The isolated 3.12 candidate validation on 2026-09-23 passed these selected checks:
+The four positive profiles cover distinct environments:
 
-- 170 API tests after excluding the one dry-plan absence mismatch and the four repeated-audit reuse cases.
-- 130 CLI tests after excluding four source-reproduced failures: the text report line, two repeated-audit reuse assertions, and the 100 ms help-time threshold.
-- 64 error tests after excluding `tests/errors/test_error_catalogue.py`, which reports source-raised codes missing from the catalogue.
-- Contract tests and v3 compatibility tests.
-- A wheel and sdist from the candidate, plus a wheel rebuilt from its sdist. Both include schemas and the offline report bundle, and both exclude `reproducibility/**` and `development-snapshots/**`.
+- `dev`: the declared development group on CPU, Python 3.11, 3.12, and 3.13.
+  It covers contracts, SDK and CLI, audit/reuse, trace, forecast/improve, stores,
+  export/import, report/workbench, packaging, and portable fixtures.
+- `all_extras`: the declared optional extras and development group on the same
+  Python versions, adding offline integration and library regression checks.
+- `trl_110`: controlled-intervention learning and compare tests on Python 3.11
+  with TRL 1.10.0, which their execution and restoration contracts require.
+- `trl_113`: the matched bare/tapped CPU trainer conformance test on Python 3.11
+  with TRL 1.13.0. It uses random weights and a local tokenizer.
 
-The broader suite remains public where it documents intended behavior, but it is visibly incomplete. A separately copied immutable source snapshot reproduced the API dry-plan and repeated-audit failures, all four CLI failures, and the missing error-catalogue codes. The public-surface suite also requires optional scientific and configuration dependencies that are outside the base CPU closure; after NumPy was added, it still required SciPy and `pydantic-settings`. Those results are retained in the publication-run validation logs rather than being represented as green.
+All four profiles are required. Tests are grouped into separate pytest
+processes to keep local `conftest` imports and duplicate historical module
+basenames from colliding. `REWARD_LENS_EXIT_CHECK=1` enables the unconditional
+shipped-asset assertions; `REWARD_LENS_SLOW=1` enables whole-record schema
+parity. The earlier API/CLI/error deselections are retired.
 
-The generated `code-reward` example is a fixture. `reward-lens audit` completes offline with zero spend but exits 2 because its known-wrong tasks produce blocking findings and the outcome remains unresolved. It is a working report-generation smoke check, not an all-clear audit result.
+The E1 and bank checks require inputs rebuilt by
+[`release/public_inputs`](release/public_inputs/README.md). The builder verifies
+the pinned public parquet and 401 Inspect archives, checks a one-to-one join
+and scorer agreement, and writes a new derived table with its own digest. It
+also recreates three campaign banks with their original byte/content hashes.
+CI supplies only these derived files to test jobs after checking their receipts,
+source identity, and hashes. Missing or inconsistent required inputs fail.
+Original checkouts, private caches, and paid providers are not inputs to this
+release gate. The all-extras profile also provisions a public tiny-Qwen CPU
+model and a GPT-2 tokenizer at immutable revisions through
+`release/validation_model`. The model fixture has a 25 MB bound and the tokenizer
+fixture a 4 MB bound. Their fifteen files are verified against pinned sizes,
+SHA-256 and Git/LFS identities before tests run with network loading disabled.
+The same isolated cache also receives the authentic migration subjects: the
+117 MB Skywork Llama reward-head shard, the complete 1.19 GB Skywork Qwen3
+checkpoint with its tokenizer and config, and the 1 KB Gemma-2 config. Their
+eleven files have separate pinned revisions, exact digests, and download bounds.
+CI requires the existing real-head, full-model forward, Gemma-2 policy,
+family-inventory, and 141-site model-architecture assertions to run. Missing files or a failed load fail CI;
+the optional local skip guards do not qualify an absent subject as a release pass.
+These external assets stay outside source history, distribution archives, and
+release assets, separate from the ten-file public regression-input artifact.
+Loading failures for these required fixtures fail rather than skip.
 
-Run the supported public contract after creating an isolated environment:
+The matrix names 34 retained historical tests outside these profiles. They
+import separate, unshipped top-level research projects or need a historical v1
+cache. The inventory test requires every test file to be covered by a positive
+profile or explicitly classified. Other historical scientific assertions keep
+their existing optional archive guards, using explicit
+`REWARD_LENS_CAMPAIGN_STORE`, `REWARD_LENS_CAMPAIGN_SPECS`, or
+`REWARD_LENS_VERL_SOURCE` inputs. Their skips do not establish scientific
+results. Always-on offline product controls remain required.
 
-```bash
-python -m pip install -e . pytest hypothesis hypothesis-jsonschema
-pytest -q tests/contracts
-pytest -q tests/api --deselect tests/api/test_absence_records.py::test_dry_run_promises_what_the_run_fills_and_nothing_it_cannot_measure --deselect tests/api/test_reuse_installed.py
-pytest -q tests/cli --deselect tests/cli/test_output_contract.py::test_the_envelope_names_the_project_and_the_text_names_the_working_directory --deselect tests/cli/test_reuse.py::test_a_second_audit_of_the_written_example_returns_the_stored_record --deselect tests/cli/test_reuse.py::test_the_second_audit_prints_the_stored_verdict_over_the_reused_line --deselect tests/cli/test_root_help.py::test_help_completes_under_100_ms_as_the_minimum_of_twenty_runs
-pytest -q tests/errors --ignore tests/errors/test_error_catalogue.py
-pytest -q tests/compat
-```
+The TRL 1.10 profile also retains twelve opt-in coding-preparation consumer and
+refusal cases, enabled by `REWARD_LENS_CODING_PREPARATION`. They require a separate
+byte-pinned Qwen2 checkpoint, prepared coding inputs, protected evaluator controls,
+and the declared historical runtime. The bounded CPU compare, state-restoration,
+persistence, subject-binding, and tamper controls run without that preparation.
+The optional coding cases remain skipped when it is absent. Neither those skips
+nor a green CPU matrix qualify the scientific coding CUDA profile, an actual
+training update, behavioral repair, or capability retention.
 
-Package closure checks create local build and virtual-environment output. Run them only in a disposable clone or staging checkout.
+Separate required jobs check source/metadata/lock consistency, the audited
+secret baseline, both frontend builds and TypeScript, strict documentation and
+local links, distribution contents, a wheel rebuilt from its sdist without
+Node, and a clean base installation outside source trees. Dependency checks
+run real npm and OSV scans. The frontend advisory gate records the exact
+reviewed build-only braces dependency path and configuration that makes its
+pattern matcher unreachable; a changed path/configuration or new advisory
+fails. The source-map-js advisory is patched in the lockfile.
+
+The generated code-reward example deliberately has defects. A complete offline
+audit writes a saved assay and embedded report, keeps honest absences, and exits
+2 with an unresolved decision. Reuse must preserve the saved bytes; signed
+export/import must verify them and reject tampering. This is product
+conformance, not an all-clear reward-system finding.
+
+Exact source, dependency versions, CI runs, artifact hashes, and public
+installation/deployment evidence are recorded with the release. Until those
+checks and production publication complete, 3.1.0 remains an unreleased source
+candidate. Offline checks do not qualify live providers, a GPU intervention,
+forecasting skill, or a new scientific training result.

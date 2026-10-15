@@ -1,0 +1,83 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>RM Card: skywork-v01</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.validated { }
+.unvalidated { background: #fff4f4; color: #7a2b2b; }
+.unvalidated td:first-child::before { content: "unvalidated "; font-weight: 700; text-transform: uppercase; font-size: 0.7em; letter-spacing: 0.05em; }
+.badge { font-size: 0.75em; padding: 1px 6px; border-radius: 3px; background: #eee; }
+.trust-EXPLORATORY { background: #f0e6e6; }
+.trust-CALIBRATED { background: #e6f0e6; }
+.trust-REGISTERED { background: #e6e9f0; }
+.trust-ADJUDICATED { background: #d6ecd6; }
+</style></head>
+<body>
+<h1>RM Card</h1>
+<p>Signal <code>skywork-v01</code>. Total metered GPU-seconds:
+453.80. 56 measurements,
+56 uncalibrated.</p>
+<p class="unvalidated" style="padding:8px">Explicit gaps (uncalibrated, not yet validated against an answer key): campaign.bias.battery, campaign.capture, campaign.capture.fp32, campaign.conformance, campaign.features.internal, campaign.heartbeat, campaign.index.table, campaign.lens.trajectory, campaign.rb2.category_accuracy, campaign.scores, campaign.subspace, campaign.w_r.</p>
+<table>
+<thead><tr><th>Observable</th><th>Value</th><th>CI</th><th>n_eff</th><th>Trust</th>
+<th>Gauge</th><th>Calibrated</th></tr></thead>
+<tbody>
+<tr class="unvalidated"><td>campaign.bias.battery</td><td>VectorPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.bias.battery</td><td>VectorPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.capture</td><td>CaptureManifest</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.capture.fp32</td><td>CaptureManifest</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.conformance</td><td>TablePayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.features.internal</td><td>FeatureMatrix</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.features.internal</td><td>FeatureMatrix</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.heartbeat</td><td>Heartbeat</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.index.table</td><td>TablePayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.index.table</td><td>TablePayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.index.table</td><td>TablePayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.lens.trajectory</td><td>VectorPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.rb2.category_accuracy</td><td>TablePayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.scores</td><td>ScoreBank</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.subspace</td><td>MatrixPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.subspace</td><td>MatrixPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.subspace</td><td>MatrixPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+<tr class="unvalidated"><td>campaign.w_r</td><td>VectorPayload</td><td></td><td></td><td><span class="badge trust-EXPLORATORY">EXPLORATORY</span></td><td>invariant</td><td>no</td></tr>
+</tbody></table>
+</body></html>

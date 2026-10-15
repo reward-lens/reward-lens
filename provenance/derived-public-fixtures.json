@@ -1,0 +1,113 @@
+{
+  "purpose": "Replace captured local machine paths in public test/golden metadata; source records remain privately preserved and no measurement identity was recomputed.",
+  "records": [
+    {
+      "changes": [
+        {
+          "logical_replacement": "\"cwd\": \"demo\"",
+          "pointer": "/environment_excluded_from_digest/cwd"
+        }
+      ],
+      "derived_sha256": "4f0383c84ccb699cc27ba5eb859602b81e2fa5c803f95e9a680dbaba9997ca52",
+      "original_sha256": "7c1ca4bd5c362638f8b38d9f73b8f9837af2f7124abd747397d9c4a42cd0a3a0",
+      "path": "fleet/gates/fixtures/controls/g39/positive/sdk.assay.json"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "\"recorded_path\": \"release/public_inputs/e1_analysis\"",
+          "pointer": "/recorded_path"
+        },
+        {
+          "logical_replacement": "\"assay_tree_root_original\": \"historical reward-lens-assay/e1_analysis checkout; local root redacted\"",
+          "pointer": "/notes/assay_tree_root_original"
+        },
+        {
+          "logical_replacement": "\"row_level_artifact\": \"historical ignored extraction (25664 rows, 38 cols); not shipped in reward-lens source\"",
+          "pointer": "/notes/row_level_artifact"
+        }
+      ],
+      "derived_sha256": "f3e854a66f75836603b78fbd1d6258d65351f03b666223ca51854999b8d88f55",
+      "original_sha256": "a2f0a75b405f768c997be5ff32e3cd4e3769795a5645f7341b3c4c29d49dbfd2",
+      "path": "fleet/golden/wave-3/e1/counts.json"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "\"output_dir\": \"fixture://grpo_run/short/output\"",
+          "pointer": "/lineage/extra/config/output_dir"
+        }
+      ],
+      "derived_sha256": "050104aa440de5f6eecb859673291abafbb4544fba7e73b7ae85a5964ed7d294",
+      "original_sha256": "4bd7e43d1710af9a604d95f04ce6fb2ee4c240483e63b0ef0a3dc236461c4fa6",
+      "path": "tests/fixtures/grpo_run/short/runs/run_8a8c7e29274db0a681313b48dbd1eb63/run.json"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "\"output_dir\": \"fixture://grpo_run/long/output\"",
+          "pointer": "/lineage/extra/config/output_dir"
+        }
+      ],
+      "derived_sha256": "2d94c314ac2d1de1caa9176b6e2570a1cf57c9fb902b404b7353f7a4c5cc3932",
+      "original_sha256": "2e0d71a85eb0f875548894fcde0cea89d103855f771c1d88d4fe6a8587c0aa19",
+      "path": "tests/fixtures/grpo_run/long/runs/run_f77bf75940ab982bbc35407af99cc094/run.json"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "<captured-install-location>",
+          "pointer": "/Install/location"
+        }
+      ],
+      "derived_sha256": "f8ad8afa59672dfd663c8c2989021ff21d39c6ed101afd967d94988d785a8980",
+      "original_sha256": "4a86545661e416faae432ecc12ff1d3ef5d85bdb462457d2d5d9a638efdc0692",
+      "path": "fleet/golden/candidates/current/doctor.txt"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "REWARD_LENS_V1_CACHE if supplied; otherwise tests/fixtures/e_parity/cache in this checkout",
+          "pointer": "module::_V1_CACHE_ROOT"
+        }
+      ],
+      "derived_sha256": "42c9cc0b68c09940b1f5c4698324c581a4481de70685d39e478293ab958ea237",
+      "original_sha256": "ba6058aa781a1b8579201a1ee9f4d1f5224c5d199daf8bbd1b5a36df37bb5b96",
+      "path": "tests/test_e_parity.py"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "REWARD_LENS_V1_CACHE if supplied; otherwise tests/fixtures/e_parity/cache in this checkout",
+          "pointer": "module::_V1_CACHE_ROOT"
+        }
+      ],
+      "derived_sha256": "1a3e80da2a3e307e5ee593042a2474d83808a12568c6a7f23bcf65a1fcf90460",
+      "original_sha256": "71fc8e37347f5f3a255bfa58934c73570b942a0c34ac45a752820336883ba90f",
+      "path": "tests/test_runtime_cache_read.py"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "<captured-install-location>",
+          "pointer": "/Install/location"
+        }
+      ],
+      "derived_sha256": "e4188374db99804df87641474e5c46e6bdd3d0b2e879fbeab14fe20fbcd0a40d",
+      "original_sha256": "89c42559109ee054d8a1bc52dd6f5b7f813bda535ca23f29a64a8b1db74846d8",
+      "path": "fleet/golden/wave-1/doctor.txt"
+    },
+    {
+      "changes": [
+        {
+          "logical_replacement": "<historical-verifiers-source>",
+          "pointer": "/writer/command"
+        }
+      ],
+      "derived_sha256": "7dd507358ef01a41c42437133de76da7c80eaf3f3e390dd1acdd956f028ee1bf",
+      "original_sha256": "64f14c6abbdd07b4b37a7b4aacd40ebadf6af21d313b181febd1514b9b185712",
+      "path": "tests/fixtures/readers/verifiers/PROVENANCE.json"
+    }
+  ],
+  "schema": "reward-lens-derived-public-fixtures/1"
+}

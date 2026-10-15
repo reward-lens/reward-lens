@@ -51,6 +51,9 @@ classifiers = [
 # talks to a network. What `uv pip list` prints in a clean venv is the count that binds, and
 # `tests/packaging/CLOSURE.md` is where that measurement is written down.
 dependencies = [
+    # Export signatures are an offline product capability, so its Ed25519 implementation belongs
+    # to the base closure instead of arriving as an accidental transitive MCP dependency.
+    "cryptography>=50.0.1",
     # D-30. The CLI is click, and rich is imported lazily inside the human formatter only, because
     # `rich.console` alone is 57 ms of the 79 ms typer spends before it knows whether it will
     # render anything.
@@ -59,6 +62,9 @@ dependencies = [
     "pyyaml>=6.0",
     # 2.13 is the floor because the record's models use the strict-mode behaviour it settled.
     "pydantic>=2.13",
+    # Public evidence-store and atlas imports reach core.config, which constructs BaseSettings.
+    # A base wheel must supply that import without the development group.
+    "pydantic-settings>=2.13",
     # Schema validation in Rust. The pure-Python `jsonschema` is a dev dependency used to
     # cross-check this one, not a runtime fallback: two validators that disagree is a bug we want
     # to see in CI rather than a difference users discover.
@@ -83,6 +89,25 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# The agent-server surface is deliberately opt-in: base installs never pull an ASGI stack.
+# Canonical MCP 2 itself is a private, unchanged wheel payload because OpenEnv's FastMCP 3 lane
+# pins the parent environment to MCP 1.  Every non-colliding MCP 2 dependency remains ordinary so
+# [all] includes every extra and still resolves with OpenEnv.  See fleet/HANDOFFS/P-MCP.md C-063.
+mcp = [
+    "anyio>=4.9",
+    "httpx2>=2.5.0",
+    "jsonschema>=4.20.0",
+    "mcp-types==2.2.0",
+    "opentelemetry-api>=1.28.0",
+    "pydantic>=2.12.0",
+    "pyjwt[crypto]>=2.10.1",
+    "python-multipart>=0.0.9",
+    "sse-starlette>=3.0.0",
+    "starlette>=0.27",
+    "typing-extensions>=4.13.0",
+    "typing-inspection>=0.4.1",
+    "uvicorn>=0.31.1",
+]
 # Reading a record written as columnar scalars. Used when present rather than required: the writer
 # defaults to JSON Lines and the manifest records which container was used, so the reader
 # dispatches on the file rather than on the environment. Any machine running TRL already has it.
@@ -105,6 +130,9 @@ train = [
 ]
 # Signing beyond the Ed25519 the base already does.
 sigstore = ["sigstore>=3.0"]
+# Tracker clients stay outside the base closure. Both backends use their SDK's local/offline APIs
+# and can therefore be exercised without an account or network endpoint.
+trackers = ["wandb>=0.23,<1", "mlflow>=3.11,<4"]
 
 # --- carried from v3, because the inherited instrument code still needs them -------------------
 # The verifier series needs no GPU and no model. Two pins are load-bearing: mutmut has no
@@ -144,19 +172,27 @@ record = [
     "safetensors>=0.4.0",
     "numpy>=1.24.0",
 ]
+# Stateful tool-environment adapter.  The project config freezes the accepted wheel digest as
+# well; this exact requirement keeps the optional runtime aligned with that public binding.
+# Nothing in the base import path imports OpenEnv, so a default install stays free of its client
+# and server stack.
+openenv = ["openenv==0.6.0"]
 # D-58's forbidden clause, and the defect it names: the v3 `all` omitted `record`, so an `[all]`
 # install could not read a parquet. Every extra above appears here, and a test reads the list back
 # out of the built wheel's metadata rather than out of this file.
 all = [
     "reward-lens[trace]",
+    "reward-lens[mcp]",
     "reward-lens[judge]",
     "reward-lens[train]",
     "reward-lens[sigstore]",
+    "reward-lens[trackers]",
     "reward-lens[verifier]",
     "reward-lens[white-box]",
     "reward-lens[organisms]",
     "reward-lens[viz]",
     "reward-lens[record]",
+    "reward-lens[openenv]",
 ]
 
 # PEP 735. Development tooling is a group rather than an extra because a group is never published:
@@ -180,15 +216,37 @@ dev = [
     # or not at all.
     "ruff==0.15.20",
     "mypy>=1.7.0",
+    # P-TRACE-2 reads an Inspect `.eval` only through this tested public API. A pinned dev-only
+    # dependency keeps the fixture writer and the reader on the same documented archive version.
+    "inspect-ai==0.3.269",
+    # Retained Forecast tests import these directly. They remain tooling-only dependencies rather
+    # than silently widening the base install closure (D-58).
+    "numpy",
+    "scipy",
+    # `tests/product/compare/test_rung5.py` imports torch unguarded, so the clean wave-exit
+    # environment needs the same bounded training runtime as the white-box extra. This is a
+    # development-only dependency and does not widen the published base closure.
+    "torch>=2.1.0,<3.0",
+    # C042's local fixture subclasses OpenEnv's real client and constructs its typed Action and
+    # StepResult values.  Keeping the project extra here makes `uv sync --group dev` sufficient
+    # for that release test while leaving a base install without the optional protocol package.
+    "reward-lens[openenv]",
+    # The maintained integration suite imports the private MCP 2 server and its mcp_types API
+    # during collection. Include that published extra in dev rather than leaking its transport
+    # stack into base installs or using an ambient developer environment.
+    "reward-lens[mcp]",
+    # The same integration suite exercises both real tracker SDKs in their offline modes.
+    "reward-lens[trackers]",
 ]
 
 # D-04 and D-05: one distribution, one import name, two console names for one entry point. The
-# maintainer surface is `reward-lens-commons` (D-19) and it is not declared here yet.
+# maintainer surface is `reward-lens-commons` (D-19), declared immediately below.
 # `reward-lens-claims` is gone: appendix C maps it to `reward-lens-commons claims`, one
 # implementation rather than two with one name.
 [project.scripts]
 reward-lens = "reward_lens.cli.main:main"
 rlens = "reward_lens.cli.main:main"
+reward-lens-commons = "reward_lens.commons.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/reward-lens/reward-lens"
@@ -198,14 +256,16 @@ Issues = "https://github.com/reward-lens/reward-lens/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/reward_lens"]
-exclude = ["/reproducibility/**", "/development-snapshots/**"]
 
 # The schema lives at the repository root because it is a published artifact that tools other than
 # this library read, and it ships inside the import package because an installed distribution has
 # no repository root to look in. Both statements are true at once, which is what a force-include
 # is for.
 [tool.hatch.build.targets.wheel.force-include]
+"THIRD_PARTY_NOTICES.md" = "reward_lens/THIRD_PARTY_NOTICES.md"
 "schema" = "reward_lens/schema"
+"skills/reward-lens" = "reward_lens/skills/reward-lens"
+"src/reward_lens/_vendor/mcp2/MCP2_PROVENANCE.json" = "reward_lens/_vendor/mcp2/MCP2_PROVENANCE.json"
 
 # The hook that builds the report bundle. See hatch_build.py for the three states and which one
 # fails.
@@ -214,19 +274,43 @@ path = "hatch_build.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
+    "/skills/reward-lens",
     "/src/reward_lens",
     "/schema",
     "/frontend",
     "/tests",
+    "/spec",
+    "/tools",
+    "/scripts",
+    "/release",
+    "/docs",
+    "/fleet/CLI_COMMANDS.json",
+    "/fleet/ALLOWED_INCOMPLETE.md",
+    "/fleet/port/SLICES.json",
+    "/fleet/golden",
+    "/fleet/gates/fixtures",
+    "/action.yml",
+    "/.gitattributes",
+    "/.pre-commit-hooks.yaml",
+    "/.github/actions/reward-lens-static-validity",
+    "/AGENTS.md",
+    "/CONTRIBUTING.md",
+    "/CHANGELOG.md",
     "/hatch_build.py",
     "/README.md",
     "/LICENSE",
+    "/THIRD_PARTY_NOTICES.md",
+    "/VERIFYING.md",
+    "/provenance/derived-public-fixtures.json",
 ]
-exclude = ["/reproducibility/**", "/development-snapshots/**"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Third-party sources, deliberately malformed controls, and byte-exact generated banks.
+# Both outcome banks contain byte-exact generated inputs; formatting them without changing
+# _bank.py breaks the shipped-bank reproducibility check.
+extend-exclude = ["src/reward_lens/_vendor", "src/reward_lens/examples/code_reward/outcome/known_wrong", "src/reward_lens/examples/code_reward/outcome/known_good", "tests/acceptance/real_verifiers", "tests/fixtures/verifiers", "release/public_inputs/vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]

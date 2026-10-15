@@ -214,7 +214,7 @@ def test_a_planted_shape_is_recovered_under_truncation_too(nu_true: float) -> No
     steps = np.arange(0.0, 241.0, 1.0)
     y = richards_curve(steps, 0.01, 0.9, 0.04, 300.0, nu_true)
     fit = fit_richards(y, steps, outcome_bounds=RATE_BOUNDS)
-    assert fit.nu == pytest.approx(nu_true, abs=0.05)
+    assert fit.nu == pytest.approx(nu_true, abs=0.05), fit.render()
     assert fit.asymptote == pytest.approx(0.9, abs=0.02)
 
 

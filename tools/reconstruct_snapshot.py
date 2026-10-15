@@ -1,8 +1,10 @@
 """Verify or recover selected development source without importing it."""
+
 import argparse
 import hashlib
 import json
 from pathlib import Path
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -36,7 +38,12 @@ def main():
             dest.parent.mkdir(parents=True, exist_ok=True)
             with dest.open("xb") as handle:
                 handle.write((root / item["path"]).read_bytes())
-    print(json.dumps({"verified_files": len(selected), "group": args.group, "recovered": bool(args.out)}))
+    print(
+        json.dumps(
+            {"verified_files": len(selected), "group": args.group, "recovered": bool(args.out)}
+        )
+    )
+
 
 if __name__ == "__main__":
     main()

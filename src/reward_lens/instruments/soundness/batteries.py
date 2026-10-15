@@ -22,14 +22,18 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass, field
+import sys
+from dataclasses import dataclass, field, replace
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Iterable, Sequence
 
 from reward_lens import contracts
 from reward_lens.errors import make
-from reward_lens.execution import DEFAULT_LIMITS, Limits, run_python
+from reward_lens.execution import DEFAULT_LIMITS, Limits, default_sandbox, run_python, stage_source
+from reward_lens.graders.python_grader import PythonGrader
 from reward_lens.instruments.base import RunContext
+from reward_lens.outcome import Outcome, OutcomeSummary
 
 from . import intervals
 
@@ -43,12 +47,15 @@ __all__ = [
     "GoldSanity",
     "battery_entry",
     "cases_from_partition",
+    "cases_from_code_controls",
     "differential",
     "differential_entry",
     "gold_sanity",
     "gold_sanity_entry",
     "outcome_suite_empty",
+    "outcome_resolution",
     "run_battery",
+    "runner_for",
     "sandbox_runner",
     "source_of",
 ]
@@ -122,6 +129,7 @@ class BatteryReport:
     kind: str
     threshold: float
     outcomes: tuple[CaseOutcome, ...] = ()
+    independent_outcomes: tuple[Outcome, ...] = ()
 
     @property
     def n(self) -> int:
@@ -257,6 +265,7 @@ def sandbox_runner(
     *,
     limits: Limits = DEFAULT_LIMITS,
     cwd: Path | None = None,
+    sandbox: Any = None,
 ) -> list[dict[str, Any]]:
     """Run one grader source over every case in one sandboxed process (D-37)."""
     if not cases:
@@ -269,7 +278,13 @@ def sandbox_runner(
         .replace("__CASES__", repr(json.dumps([case.to_dict() for case in cases])))
     )
     root = Path(cwd) if cwd is not None else Path(os.environ.get("TMPDIR", "/tmp"))
-    result = run_python(program, cwd=root, limits=limits)
+    if sandbox is None:
+        result = run_python(program, cwd=root, limits=limits)
+    else:
+        scratch, main = stage_source(program, cwd=root)
+        result = sandbox.run(
+            [sys.executable, "-B", "-s", str(main)], limits=limits, cwd=scratch, env={}
+        )
     rows = _decode(result.stdout, nonce) or _decode(result.stderr, nonce)
     if rows is None:
         detail = result.stderr.decode("utf-8", errors="replace")[-400:].strip()
@@ -284,6 +299,52 @@ def sandbox_runner(
             for case in cases
         ]
     return rows
+
+
+def runner_for(subject: Any, *, sandbox: Any = None) -> Runner:
+    """Use the same contained project staging as the product's local Python grader.
+
+    A grader can read files beside its source via ``__file__``.  The generic source runner has
+    only one staged file, so it cannot exercise that grader.  This runner stages the whole project
+    read-only for each case, including when a mutation supplies replacement grader source.
+    """
+    path = getattr(subject, "grader_path", None)
+    if path is None:
+        return sandbox_runner if sandbox is None else partial(sandbox_runner, sandbox=sandbox)
+    path = Path(path)
+    base = PythonGrader.from_path(path, str(getattr(subject, "entrypoint", "score") or "score"))
+    if "__file__" not in base.source():
+        return sandbox_runner if sandbox is None else partial(sandbox_runner, sandbox=sandbox)
+
+    def run(source: str, entrypoint: str, cases: Sequence[Case]) -> list[dict[str, Any]]:
+        manifest = replace(
+            base.describe(),
+            source_digest=contracts.digest({"source": source, "entrypoint": entrypoint}),
+        )
+        grader = PythonGrader(path=path, entrypoint=entrypoint, source=source, manifest=manifest)
+        held_sandbox = sandbox if sandbox is not None else default_sandbox()
+        rows: list[dict[str, Any]] = []
+        for case in cases:
+            envelope = grader.score(
+                case.task,
+                case.response,
+                sandbox=held_sandbox,
+                limits=DEFAULT_LIMITS,
+                project_dir=path.parent,
+            )
+            observations = envelope.observations.get("grader", {})
+            reason = observations.get("reason", "") if isinstance(observations, dict) else ""
+            rows.append(
+                {
+                    "case_id": case.id,
+                    "score": envelope.score,
+                    "reason": str(reason),
+                    "error": "; ".join(envelope.errors),
+                }
+            )
+        return rows
+
+    return run
 
 
 def source_of(subject: Any) -> str:
@@ -333,6 +394,7 @@ def run_battery(
     kind: str,
     runner: Runner | None = None,
     threshold: float = ACCEPT_THRESHOLD,
+    independent_outcomes: Sequence[Outcome] = (),
 ) -> BatteryReport:
     """Run one battery and judge every case on the verdict and on the reason."""
     execute = runner or sandbox_runner
@@ -340,10 +402,45 @@ def run_battery(
     entrypoint = str(getattr(subject, "entrypoint", "score") or "score")
     rows = {str(row.get("case_id")): row for row in execute(source, entrypoint, list(cases))}
     outcomes = tuple(
-        _judge(case, rows.get(case.id, {"score": None, "error": "no verdict was returned"}), threshold)
+        _judge(
+            case, rows.get(case.id, {"score": None, "error": "no verdict was returned"}), threshold
+        )
         for case in cases
     )
-    return BatteryReport(kind=kind, threshold=threshold, outcomes=outcomes)
+    return BatteryReport(
+        kind=kind,
+        threshold=threshold,
+        outcomes=outcomes,
+        independent_outcomes=tuple(independent_outcomes),
+    )
+
+
+def outcome_resolution(outcomes: Sequence[Outcome]) -> dict[str, Any]:
+    """Count Outcome3 states without turning an unknown evaluator result into a failure.
+
+    The consumer accepts the Outcome module's guarded values, so a PASS or FAIL could only have
+    been produced under a qualified protocol.  UNQUALIFIED values remain in the record and outside
+    the resolved denominator.  If every outcome is unknown, no rate is manufactured as zero.
+    """
+    summary = OutcomeSummary.from_outcomes(outcomes)
+    payload: dict[str, Any] = {
+        "total_count": summary.total_count,
+        "pass_count": summary.pass_count,
+        "fail_count": summary.fail_count,
+        "unqualified_count": summary.unqualified_count,
+        "unqualified_by_reason": {
+            reason.value: count for reason, count in summary.unqualified_by_reason.items()
+        },
+        "resolved_count": summary.resolved_count,
+        "measurement_state": summary.measurement_state,
+        "resolved_pass_rate": summary.resolved_rate,
+        "interval": None,
+    }
+    if summary.resolved_count:
+        payload["interval"] = intervals.interval_metadata(
+            intervals.uncertainty_for(summary.pass_count, summary.resolved_count)
+        )
+    return payload
 
 
 def gold_sanity(report: BatteryReport) -> GoldSanity:
@@ -398,7 +495,9 @@ def differential(
     """What the subject accepts and a stricter reference verifier rejects, case by case."""
     execute = runner or sandbox_runner
     entrypoint = str(getattr(subject, "entrypoint", "score") or "score")
-    mine = {str(row.get("case_id")): row for row in execute(source_of(subject), entrypoint, list(cases))}
+    mine = {
+        str(row.get("case_id")): row for row in execute(source_of(subject), entrypoint, list(cases))
+    }
     theirs = {
         str(row.get("case_id")): row
         for row in execute(
@@ -466,6 +565,56 @@ def cases_from_partition(partition: Any) -> tuple[Case, ...]:
     return tuple(found)
 
 
+def cases_from_code_controls(partition: Any, tasks: Sequence[dict[str, Any]]) -> tuple[Case, ...]:
+    """Join a protected suite of Python controls to its declared task set.
+
+    This layout is distinct from the JSON Case layout above. The wrong-control index validates
+    each protected control, but its reason is not an observable field of a numeric-only audited
+    grader. An unmatched control cannot be graded as if it belonged to an arbitrary task.
+    """
+    root = Path(getattr(partition, "root"))
+    by_id = {
+        str(task.get("task_id") or task.get("id")): task
+        for task in tasks
+        if task.get("task_id") or task.get("id")
+    }
+    wrong_index = root / "known_wrong" / "reasons.json"
+    reasons = json.loads(wrong_index.read_text(encoding="utf-8")) if wrong_index.is_file() else {}
+    if not isinstance(reasons, dict):
+        reasons = {}
+    found: list[Case] = []
+    for kind in ("known_good", "known_wrong"):
+        for path in sorted((root / kind).glob("*.py")):
+            task = by_id.get(path.stem)
+            if task is None:
+                continue
+            if kind == "known_wrong":
+                metadata = reasons.get(path.name)
+                if (
+                    not isinstance(metadata, dict)
+                    or metadata.get("task_id") != path.stem
+                    or not isinstance(metadata.get("reason"), str)
+                ):
+                    raise ValueError(f"known-wrong control {path.name} has no matching reason")
+            # The independent check pins that reason, but the audited plain-shape grader returns
+            # only a number. Requiring it here would invent a failure from an unobservable field.
+            source = path.read_text(encoding="utf-8")
+            normalized_task = dict(task)
+            normalized_task.setdefault("id", path.stem)
+            normalized_task.setdefault("prompt", str(task.get("prompt", "")))
+            found.append(
+                Case(
+                    id=f"{kind}:{path.stem}",
+                    task=normalized_task,
+                    response=f"```python\n{source.rstrip()}\n```\n",
+                    expect="accept" if kind == "known_good" else "reject",
+                    expected_reason="",
+                    kind=kind,
+                )
+            )
+    return tuple(found)
+
+
 # --- the entries ------------------------------------------------------------------------------------
 
 
@@ -483,7 +632,7 @@ _PROCEDURES = {
     "batteries": (
         "each case was graded by running the grader source in a sandboxed process on the case's "
         "own task and response; a case counts only when the verdict matched what a sound grader "
-        "must say and, for a rejection, when the stated reason carried the expected one"
+        "must say and, for a rejection with an expected reason, when the stated reason carried it"
     ),
     "gold_sanity": (
         "the known-good solutions were graded first, and the gate asks only whether every one of "
@@ -501,6 +650,7 @@ LIMITATIONS = (
     "the battery measures the grader on the cases it was given; a rate is over those cases and "
     "not over the task distribution",
     "acceptance is a score at or above the stated threshold and nothing else",
+    "a numeric-only grader exposes no rejection reason; those controls test the verdict only",
 )
 
 
@@ -515,6 +665,7 @@ def battery_entry(
 ) -> contracts.Entry:
     """One battery as an estimate: the rate, the interval, and what this n could not establish."""
     said = intervals.what_n_can_establish(report.k, report.n)
+    uncertainty = intervals.uncertainty_for(report.k, report.n, load_bearing=load_bearing)
     return contracts.estimate(
         "soundness",
         f"soundness.batteries.{report.kind}",
@@ -523,7 +674,7 @@ def battery_entry(
         "fraction",
         report.n,
         "graded case",
-        intervals.uncertainty_for(report.k, report.n, load_bearing=load_bearing),
+        uncertainty,
         subject_ref=subject_ref,
         provenance=ctx.provenance(duration_s=duration_s, arm="black_box"),
         method=_method("batteries", {"kind": report.kind, "threshold": report.threshold}),
@@ -538,7 +689,13 @@ def battery_entry(
             "n": report.n,
             "threshold": report.threshold,
             "what_n_can_establish": said,
+            "interval": intervals.interval_metadata(uncertainty),
             "outcomes": [one.to_dict() for one in report.outcomes],
+            "independent_outcome_resolution": (
+                None
+                if not report.independent_outcomes
+                else outcome_resolution(report.independent_outcomes)
+            ),
             "failures": [one.case_id for one in report.failures],
             "findings": [
                 {
@@ -637,6 +794,7 @@ def differential_entry(
     duration_s: float = 0.0,
 ) -> contracts.Entry:
     """The differential as a rate: how often the subject accepts what the stricter reference rejects."""
+    uncertainty = intervals.uncertainty_for(report.over_accepted, report.n)
     return contracts.estimate(
         "soundness",
         "soundness.batteries.differential",
@@ -648,7 +806,7 @@ def differential_entry(
         "fraction",
         report.n,
         "graded case",
-        intervals.uncertainty_for(report.over_accepted, report.n),
+        uncertainty,
         subject_ref=subject_ref,
         provenance=ctx.provenance(duration_s=duration_s, arm="black_box"),
         method=_method("differential", {"n": report.n}),
@@ -666,6 +824,7 @@ def differential_entry(
             "over_accepted": report.over_accepted,
             "reference_accepts_subject_rejects": report.not_stricter,
             "what_n_can_establish": intervals.what_n_can_establish(report.over_accepted, report.n),
+            "interval": intervals.interval_metadata(uncertainty),
             "disagreements": [
                 {
                     "case_id": row.case_id,

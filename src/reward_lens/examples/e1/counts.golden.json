@@ -1,0 +1,13 @@
+{
+  "schema": "reward-lens-e1-golden/1",
+  "source": "fleet/golden/wave-3/e1/counts.json",
+  "counts": {
+    "groups": 1604,
+    "groups_with_contrast": 517,
+    "accepted_hacks": 18590,
+    "solutions": 10,
+    "functions_summed": 9,
+    "advantage_components": 2,
+    "registered_analysis_support": 67
+  }
+}

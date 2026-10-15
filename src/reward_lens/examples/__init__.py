@@ -5,5 +5,5 @@ so that `reward-lens init --example <name>` resolves a name without importing ev
 """
 
 REGISTRY: dict[str, str] = {
-    "code-reward": "reward_lens.examples.code_reward:write",   # P-EXAMPLE, wave 1
+    "code-reward": "reward_lens.examples.code_reward:write",  # P-EXAMPLE, wave 1
 }

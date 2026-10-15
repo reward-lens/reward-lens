@@ -21,6 +21,31 @@ torch = pytest.importorskip(
 )
 
 
+def test_micro_trunk_pins_only_its_default_tokenizer(monkeypatch: pytest.MonkeyPatch):
+    from transformers import AutoTokenizer
+
+    from reward_lens.organisms._tiny import GPT2_TOKENIZER_REVISION, make_micro_trunk
+
+    calls = []
+
+    class StopLookup(Exception):
+        pass
+
+    def stop_lookup(name, **kwargs):
+        calls.append((name, kwargs))
+        raise StopLookup
+
+    monkeypatch.setattr(AutoTokenizer, "from_pretrained", stop_lookup)
+    with pytest.raises(StopLookup):
+        make_micro_trunk()
+    with pytest.raises(StopLookup):
+        make_micro_trunk(tokenizer_name="caller/model")
+    assert calls == [
+        ("gpt2", {"revision": GPT2_TOKENIZER_REVISION}),
+        ("caller/model", {}),
+    ]
+
+
 def test_micro_organism_calibration_recovers_planted_rule():
     """Train, verify OOD rule-governance, and recover the planted rule above threshold (M4 accept).
 

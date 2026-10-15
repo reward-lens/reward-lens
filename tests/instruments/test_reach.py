@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -241,13 +242,17 @@ def test_a_landed_entry_carries_the_identity_the_instrument_declared() -> None:
 
 
 @pytest.mark.parametrize("surface", list(Surface))
-def test_every_surface_is_probed_with_an_executed_witness(surface: Surface, fixture_root: Path) -> None:
+def test_every_surface_is_probed_with_an_executed_witness(
+    surface: Surface, fixture_root: Path
+) -> None:
     entry = entry_for(surface, grader_for(surface, fixture_root))
     assert entry.section == "reach"
     assert entry.kind == "estimate"
     assert entry.witness is not None, "a reach entry carries the witness that was executed"
     assert entry.witness.observed.strip(), "the witness says what was observed, not that it looked"
     assert entry.result["grader_executed_the_response"] is True
+    assert entry.result["execution_basis"] == "response"
+    assert entry.witness.inputs["source_captured_scope"] == "source_captured_response_execution"
     assert entry.result["attempts"], "an executed witness is at least one attempt"
     assert entry.provenance.sandbox_tier == context().tier()
 
@@ -264,7 +269,9 @@ def test_the_six_surfaces_are_exactly_the_six_the_interface_names() -> None:
 
 
 @pytest.mark.parametrize("surface", list(Surface))
-def test_one_run_of_the_panel_answers_for_every_surface(surface: Surface, fixture_root: Path) -> None:
+def test_one_run_of_the_panel_answers_for_every_surface(
+    surface: Surface, fixture_root: Path
+) -> None:
     produced = entries_for(grader_for(Surface.CLOCK, fixture_root))
     assert f"reach.surfaces.{surface.value}" in produced
 
@@ -287,6 +294,32 @@ def test_the_filesystem_witness_never_reports_the_directory_the_harness_bound(
     entry = entry_for(Surface.FILESYSTEM_OUTSIDE_SCRATCH, grader)
     assert "notes.txt" not in json.dumps(entry.to_dict())
     assert str(grader.parent) not in entry.witness.observed
+
+
+def test_filesystem_carried_witness_omits_the_auditors_root(tmp_path: Path) -> None:
+    """Equivalent temporary audit routes carry no temporary grader-root locator.
+
+    The probe did execute in each root. What reaches the record must be the stable fact it
+    established, plus a subject-relative reference, rather than either auditor's absolute grader
+    path. The record deliberately retains per-run response/program digests and refusal paths, so
+    equality of whole records is not the route-invariance contract; the audit's carrier removes
+    only provenance before checking that the route's temporary root did not leak.
+    """
+
+    def carried(root: Path) -> dict[str, Any]:
+        root.mkdir()
+        grader = write_grader(root, "grader.py", PLAIN)
+        entry = entry_for(Surface.FILESYSTEM_OUTSIDE_SCRATCH, grader)
+        serialized = entry.to_dict()
+        return {name: serialized[name] for name in ("subject_ref", "witness", "result")}
+
+    first = carried(tmp_path / "first-audit")
+    second = carried(tmp_path / "second-audit")
+    assert str(tmp_path) not in json.dumps(first)
+    assert str(tmp_path) not in json.dumps(second)
+    assert first["subject_ref"] == second["subject_ref"]
+    assert first["result"]["grader_executed_the_response"] is True
+    assert "directory the harness bound nothing for" in first["witness"]["observed"]
 
 
 def _read_attempt(entry: contracts.Entry) -> dict:
@@ -351,19 +384,25 @@ def test_the_grader_source_fixture_reads_the_grader_that_is_running_it(fixture_r
     assert "grader.py" in entry.witness.observed
 
 
-def test_the_clock_fixture_reads_a_wall_clock_that_matches_the_one_outside(fixture_root: Path) -> None:
+def test_the_clock_fixture_reads_a_wall_clock_that_matches_the_one_outside(
+    fixture_root: Path,
+) -> None:
     entry = entry_for(Surface.CLOCK, grader_for(Surface.CLOCK, fixture_root))
     assert entry.result["reached"] is True
 
 
-def test_the_network_verdict_is_what_the_listener_outside_the_sandbox_saw(fixture_root: Path) -> None:
+def test_the_network_verdict_is_what_the_listener_outside_the_sandbox_saw(
+    fixture_root: Path,
+) -> None:
     """No claim about this machine's tier: reached is exactly whether the connection arrived."""
     entry = entry_for(Surface.NETWORK, grader_for(Surface.NETWORK, fixture_root))
     assert entry.result["reached"] is entry.result["listener_accepted"]
 
 
 def test_the_outcome_fixture_reaches_the_partition_it_stands_for(fixture_root: Path) -> None:
-    entry = entry_for(Surface.OUTCOME_ARTIFACTS, grader_for(Surface.OUTCOME_ARTIFACTS, fixture_root))
+    entry = entry_for(
+        Surface.OUTCOME_ARTIFACTS, grader_for(Surface.OUTCOME_ARTIFACTS, fixture_root)
+    )
     assert entry.result["reached"] is True
     assert "answers.json" in entry.witness.observed
 
@@ -391,7 +430,9 @@ def test_an_unreachable_surface_is_reported_rather_than_omitted(fixture_root: Pa
     demo = Path(reach.__file__).resolve().parents[2] / "examples" / "code_reward" / "grader.py"
     entry = entries_for(demo)["reach.surfaces.environment"]
     assert entry.result["reached"] is False
-    assert entry.result["attempts"], "a refusal is an attempt that was made, not one that was skipped"
+    assert entry.result["attempts"], (
+        "a refusal is an attempt that was made, not one that was skipped"
+    )
 
 
 def test_a_surface_the_reward_refuses_is_a_finding_of_kind_pass(fixture_root: Path) -> None:
@@ -439,7 +480,9 @@ def test_the_planted_surface_is_named_by_a_path_the_witness_enumerated() -> None
 # --- a grader that never runs the response is an absence, not a pass -------------------------------
 
 
-def test_a_grader_that_never_runs_the_response_writes_absences_not_passes(fixture_root: Path) -> None:
+def test_a_grader_that_never_runs_the_response_writes_absences_not_passes(
+    fixture_root: Path,
+) -> None:
     grader = write_grader(fixture_root, "inert.py", NEVER_RUNS_THE_RESPONSE)
     produced = entries_for(grader)
     assert len(produced) == len(Surface)
@@ -447,6 +490,8 @@ def test_a_grader_that_never_runs_the_response_writes_absences_not_passes(fixtur
         assert entry.kind == "absence"
         assert entry.absence.state == "NOT_MEASURED"
         assert "did not run the response" in entry.absence.missing_access
+        assert entry.method.id == "reach.surfaces"
+        assert entry.method.version == ReachSurfaces().method.version
 
 
 # --- the refusals ---------------------------------------------------------------------------------
@@ -646,9 +691,12 @@ def test_a_reach_entry_carries_the_runners_own_subject_ref(tmp_path: Path) -> No
     from reward_lens.api import requests as api
     from reward_lens.product import audit
 
-    demo = Path(reach.__file__).resolve().parents[2] / "examples" / "code_reward" / "grader.py"
-    tasks = tmp_path / "tasks.jsonl"
-    tasks.write_text(json.dumps(TASK) + "\n", encoding="utf-8")
+    source_example = Path(reach.__file__).resolve().parents[2] / "examples" / "code_reward"
+    copied_example = tmp_path / "code_reward"
+    shutil.copytree(source_example, copied_example)
+    demo = copied_example / "grader.py"
+    tasks = copied_example / "tasks.jsonl"
+    assert (copied_example / "outcome" / "test_solution.py").is_file()
     record = audit.run(
         api.AuditRequest(path=demo, tasks=tasks), project=None, sandbox=default_sandbox()
     )

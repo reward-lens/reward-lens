@@ -28,10 +28,7 @@ def escape_json_text(text: str) -> str:
 def escape_attribute(value: str) -> str:
     """The ordinary HTML attribute escape, for the few values the shell writes itself."""
     return (
-        value.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
 
 

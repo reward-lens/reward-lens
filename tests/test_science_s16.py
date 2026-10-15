@@ -9,10 +9,11 @@ honestly gated (inconclusive) follow-ons.
 
 from __future__ import annotations
 
+from studies.s16_robustness.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import render_report, run_study
-from studies.s16_robustness.analysis import build_spec
 
 
 def test_s16_recovers_eval_awareness_and_inflation(tmp_path):

@@ -1,0 +1,24 @@
+{
+  "schema": "reward-lens-real-verifier-fixture-v1",
+  "scope": "real public source snapshots for offline acceptance; never mock substitutes",
+  "subjects": [
+    {
+      "commit": "985bdc1696e88e8643f081a0ff4719da39f2ae2a",
+      "license_path": "math-LICENSE",
+      "name": "hendrycks/math is_equiv",
+      "origin": "https://raw.githubusercontent.com/hendrycks/math/985bdc1696e88e8643f081a0ff4719da39f2ae2a/modeling/math_equivalence.py",
+      "path": "math_equivalence.py",
+      "repository": "https://github.com/hendrycks/math",
+      "sha256": "c4101b1f51a2bb65665194aecd9f761d668c0c248a0350f196c2950e87488527"
+    },
+    {
+      "commit": "02e7a74ffd0b707aab73d203fe87bdc7c76afc8e",
+      "license_path": "swebench-LICENSE",
+      "name": "SWE-bench get_logs_eval",
+      "origin": "https://raw.githubusercontent.com/SWE-bench/SWE-bench/02e7a74ffd0b707aab73d203fe87bdc7c76afc8e/swebench/harness/grading.py",
+      "path": "swebench_grading.py",
+      "repository": "https://github.com/SWE-bench/SWE-bench",
+      "sha256": "a095273010175001a6779e365b3b77abb8657c7ac2e4f80b4bc360faa6f09483"
+    }
+  ]
+}

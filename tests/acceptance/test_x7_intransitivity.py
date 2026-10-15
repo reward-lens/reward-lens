@@ -31,7 +31,6 @@ from typing import Any
 
 import numpy as np
 import pytest
-
 from experiments.x7_intransitivity import (
     CAMPAIGN_STORE,
     REPO,
@@ -41,6 +40,7 @@ from experiments.x7_intransitivity import (
     exact_bounds_on_complete_graphs,
     load_campaign,
 )
+
 from reward_lens.artifacts.claims import check_files, find_unbound_numbers
 from reward_lens.core.store import EvidenceStore
 from reward_lens.measure.composition.hodge import PairCount, edge_flow, split_flow

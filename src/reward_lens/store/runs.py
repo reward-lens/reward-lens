@@ -7,10 +7,10 @@ is a cache of the manifests and a test deletes it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import secrets
-import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,7 +18,7 @@ from typing import Any
 
 import rfc8785
 
-from .errors import RunNotFound
+from .errors import DependencyDigestMismatch, RunNotFound
 
 __all__ = ["RunDir", "runs_root", "state_root"]
 
@@ -104,6 +104,7 @@ class RunDir:
                 "seq": _next_seq(root),
                 "state": "running",
                 "forked_from": forked_from,
+                "partials": {},
             },
         )
         _write(path / "plan.json", plan if plan is not None else {"steps": []})
@@ -144,15 +145,68 @@ class RunDir:
             handle.write(line + "\n")
 
     def write_partial(self, instrument: str, result: Any) -> Path:
+        """Seal one instrument result exactly once.
+
+        A partial is the durable boundary of an audit.  It is deliberately not a
+        cache: a resumed audit may read it, but may not replace it with a second
+        execution of the same instrument.
+        """
         path = self.path / "partial" / f"{instrument}.json"
-        _write(path, result)
+        payload = rfc8785.dumps(result)
+        digest = "sha256:" + hashlib.sha256(payload).hexdigest()
+        if path.exists():
+            existing = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+            if existing != digest:
+                raise DependencyDigestMismatch(
+                    digest=f"partial:{instrument}", expected=existing, found=digest
+                )
+            return path
+        path.write_bytes(payload)
+        manifest = dict(self.manifest)
+        partials = dict(manifest.get("partials", {}))
+        partials[instrument] = digest
+        manifest["partials"] = partials
+        _write(self.path / "manifest.json", manifest)
+        _write_index(runs_root(), _scan(runs_root()))
         return path
 
     def partial(self) -> dict[str, Any]:
         return {p.stem: _read(p) for p in sorted((self.path / "partial").glob("*.json"))}
 
-    def finish(self) -> None:
+    def bind_subject(self, subject_ref: str) -> None:
+        """Bind a run to the source it is permitted to resume."""
         manifest = dict(self.manifest)
+        previous = manifest.get("subject_ref")
+        if previous is not None and previous != subject_ref:
+            raise DependencyDigestMismatch(
+                digest="subject_ref", expected=str(previous), found=subject_ref
+            )
+        manifest["subject_ref"] = subject_ref
+        _write(self.path / "manifest.json", manifest)
+        _write_index(runs_root(), _scan(runs_root()))
+
+    def bind_execution(self, identity: dict[str, Any]) -> None:
+        """Bind resume to the exact executable audit contract, not only its source.
+
+        A partial is valid for one source under one plan, method declaration, seeker/budget arm,
+        and requested instrument set.  A human-readable copy makes the refusal inspectable; the
+        digest is the comparison key and uses the same canonical serialisation as partials.
+        """
+        encoded = rfc8785.dumps(identity)
+        digest = "sha256:" + hashlib.sha256(encoded).hexdigest()
+        manifest = dict(self.manifest)
+        previous = manifest.get("execution_digest")
+        if previous is not None and previous != digest:
+            raise DependencyDigestMismatch(digest="execution", expected=str(previous), found=digest)
+        manifest["execution_digest"] = digest
+        manifest["execution_identity"] = identity
+        _write(self.path / "manifest.json", manifest)
+        _write_index(runs_root(), _scan(runs_root()))
+
+    def finish(self, *, record_path: Path | str | None = None) -> None:
+        manifest = dict(self.manifest)
+        if record_path is not None:
+            manifest["record_path"] = str(record_path)
         manifest["state"] = "finished"
         manifest["finished"] = _now()
         _write(self.path / "manifest.json", manifest)
@@ -181,7 +235,13 @@ class RunDir:
             forked_from=self.run_id,
         )
         for partial in sorted((self.path / "partial").glob("*.json")):
-            shutil.copy2(partial, fork.path / "partial" / partial.name)
+            fork.write_partial(partial.stem, _read(partial))
+        if manifest.get("subject_ref") is not None:
+            fork.bind_subject(str(manifest["subject_ref"]))
+        if manifest.get("record_path") is not None:
+            fork_manifest = dict(fork.manifest)
+            fork_manifest["record_path"] = manifest["record_path"]
+            _write(fork.path / "manifest.json", fork_manifest)
         fork.log(f"forked from {self.run_id}")
         return fork
 

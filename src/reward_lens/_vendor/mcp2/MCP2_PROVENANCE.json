@@ -1,0 +1,18 @@
+{
+  "schema": "reward-lens.mcp2-provenance/1",
+  "project": "mcp",
+  "version": "2.2.0",
+  "project_url": "https://pypi.org/project/mcp/2.2.0/",
+  "repository": "https://github.com/modelcontextprotocol/python-sdk",
+  "artifact": "mcp-2.2.0-py3-none-any.whl",
+  "artifact_sha256": "bde982589473a060ae145e3406e9a5333fe538c97229ba841f5a7f92be004f81",
+  "artifact_bytes": 365656,
+  "tag": "py3-none-any",
+  "root_is_purelib": true,
+  "metadata_sha256": "dffdec58283e1c0964a57f5fba19aa80272686ab5b03283d9398f7daac4fe45a",
+  "record_sha256": "48b9cf6e6ff980a82e45fcc6a29c99ce61b9e5c6b85201420b604892381a25c7",
+  "payload_tree_sha256": "aeddd685e90826ab03a3c7502b622186ac6c775c4fd83b9bf09e85d9c7a44351",
+  "license_path": "mcp-2.2.0.dist-info/licenses/LICENSE",
+  "license_sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+  "capture_manifest_sha256": "3a6a2a274098cc4f2586ef53c490e86f09f35e90328b6a69fedbef6675ed3761"
+}

@@ -59,7 +59,9 @@ def _models(host: str, port: int, timeout: float) -> tuple[str, ...] | None:
     if not isinstance(data, list):
         return None
     ids = tuple(
-        str(item["id"]) for item in data if isinstance(item, dict) and isinstance(item.get("id"), str)
+        str(item["id"])
+        for item in data
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
     )
     return ids
 

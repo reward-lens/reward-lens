@@ -12,10 +12,11 @@ inconclusive-because-gated on the reward-model population and GPU.
 
 from __future__ import annotations
 
+from studies.s09_verification.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s09_verification.analysis import build_spec
 
 
 def test_s09_runs_and_registers(tmp_path):

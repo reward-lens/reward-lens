@@ -5,6 +5,10 @@ you want is [`docs/content/migration.md`](content/migration.md), which lists wha
 retired v1 name. This one is about the smaller and sharper break: the 2.0 `Observable`, `Evidence`
 and dependency layout against the 3.0 `Instrument`, `Reading` and extras.
 
+For 3.1.0, `reward_lens.sae` uses the `[white-box]` extra. Install it with
+`pip install "reward-lens[white-box]"`. The 3.0.0 `[dict]` instructions below describe that
+release and do not apply to 3.1.0; 3.1.0 does not require `sae-lens` for `TopKSAE`.
+
 The honest summary is that the epistemics layer survived, the measurement interface did not, and two
 numbers you may have pinned have changed value for a reason. Nothing below is a rename you can do
 with `sed` without reading what it says.

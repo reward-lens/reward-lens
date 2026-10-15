@@ -142,15 +142,16 @@ def test_two_calls_of_the_same_request_agree_outside_the_volatile_fields(
     assert one == two
 
 
-def test_dry_run_promises_what_the_run_fills_and_nothing_it_cannot_measure(
+def test_dry_run_is_nonspending_and_bounds_every_measured_panel(
     requests_by_verb, monkeypatch
 ) -> None:
     """Both halves of the promise, against the build rather than against a constant.
 
-    With no engine the plan promises no panel at all. With the engine in the build it promises
-    exactly the panels the run then fills with a measurement: every promised panel comes back
-    carrying a real entry, and no section the plan passed over does. Either way the dry run
-    promises no spend, because a plan that costs money is not a plan.
+    With no engine the plan names no panel at all. With the engine in the build it names every
+    panel it will attempt without running it. A planned instrument may write an honest absence
+    when this project's inputs cannot support its measurement, but a measurement cannot appear
+    outside the plan. Either way the dry run promises no spend, because a plan that costs money
+    is not a plan.
     """
     request = requests_by_verb["audit"]
 
@@ -176,7 +177,24 @@ def test_dry_run_promises_what_the_run_fills_and_nothing_it_cannot_measure(
         for section, entries in measured.items()
         if any(entry["kind"] != "absence" for entry in entries)
     }
-    assert filled == set(plan.panels)
+    assert filled <= set(plan.panels)
+
+    planned = set(plan.panels)
+    represented = set()
+    for section in planned:
+        entries = measured[section]
+        actual = any(entry["kind"] != "absence" for entry in entries)
+        honest_absence = any(
+            entry["kind"] == "absence"
+            and entry["state"] == "absent"
+            and bool(entry["absence"]["missing_access"].strip())
+            and bool(entry["absence"]["affected_claims"])
+            and bool(entry["absence"]["remedy"].strip())
+            for entry in entries
+        )
+        if actual or honest_absence:
+            represented.add(section)
+    assert planned <= represented
 
 
 def test_doctor_reports_rather_than_raising(monkeypatch) -> None:

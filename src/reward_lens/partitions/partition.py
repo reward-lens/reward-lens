@@ -15,7 +15,7 @@ from reward_lens.contracts.canonical import digest as canonical_digest
 from reward_lens.contracts.errors import UsageError
 from reward_lens.errors import make
 
-from .access import AccessLog
+from .access import AccessEventCode, AccessLog
 from .kinds import ALLOWED_CAPABILITIES, SEEKER, PartitionKind
 
 __all__ = ["UNSTATED", "Partition", "file_digest"]
@@ -130,9 +130,7 @@ class Partition:
     def manifest(self) -> tuple[tuple[str, str], ...]:
         """The live items, sorted by path, each with its own digest. Retired items are not in it."""
         return tuple(
-            (name, item)
-            for name, item in sorted(self._items.items())
-            if name not in self._retired
+            (name, item) for name, item in sorted(self._items.items()) if name not in self._retired
         )
 
     @property
@@ -229,10 +227,17 @@ class Partition:
         return self.digest
 
     def record_attempt(
-        self, item_id: str, *, capability: str, purpose: str, granted: bool, reason: str
+        self,
+        item_id: str,
+        *,
+        capability: str,
+        purpose: str,
+        granted: bool,
+        reason: str,
+        code: AccessEventCode | None = None,
     ) -> None:
         """Log an access made outside `read`, such as the sandboxed separation attempt."""
-        self._log(item_id, capability, purpose, granted, reason)
+        self._log(item_id, capability, purpose, granted, reason, code=code)
 
     def _log(
         self,
@@ -242,6 +247,7 @@ class Partition:
         granted: bool,
         reason: str,
         action: str = "read",
+        code: AccessEventCode | None = None,
     ) -> None:
         self.access_log.record(
             item_id=item_id,
@@ -250,4 +256,5 @@ class Partition:
             granted=granted,
             reason=reason,
             action=action,
+            code=code,
         )

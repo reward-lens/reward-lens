@@ -59,6 +59,7 @@ class LadderLoad:
     registered: int
     skipped: tuple[tuple[str, str], ...] = ()
     broken: tuple[str, ...] = ()
+    entrypoints_skipped: tuple[str, ...] = ()
     walked: int = 0
     extras_wanted: frozenset[str] = field(default_factory=frozenset)
 
@@ -96,7 +97,7 @@ def _extra_named(exc: BaseException) -> str | None:
 
 
 def load_estimator_ladder(*, force: bool = False) -> LadderLoad:
-    """Import every `reward_lens` submodule so its estimator registrations run.
+    """Import every library `reward_lens` submodule so its estimator registrations run.
 
     Returns what the walk found rather than raising, because the capability report's whole job is
     to answer honestly under partial access and a base install is a legitimate place to run it. A
@@ -104,8 +105,9 @@ def load_estimator_ladder(*, force: bool = False) -> LadderLoad:
     documentation build does exactly that and fails on it, which is the right behaviour there and
     the wrong one here.
 
-    Idempotent and cached. `force=True` re-walks, which is only useful to a test that has
-    registered something itself.
+    ``__main__`` modules are command entry points rather than library modules and are retained in
+    ``LadderLoad.entrypoints_skipped`` instead of being imported. Idempotent and cached.
+    `force=True` re-walks, which is only useful to a test that has registered something itself.
     """
     global _CACHE
     if _CACHE is not None and not force:
@@ -116,6 +118,7 @@ def load_estimator_ladder(*, force: bool = False) -> LadderLoad:
 
     skipped: list[tuple[str, str]] = []
     broken: list[str] = []
+    entrypoints_skipped: list[str] = []
     extras: set[str] = set()
     walked = 0
 
@@ -136,6 +139,14 @@ def load_estimator_ladder(*, force: bool = False) -> LadderLoad:
 
     for mod in pkgutil.walk_packages(reward_lens.__path__, "reward_lens.", _on_walk_error):
         walked += 1
+        # A package's ``__main__`` is an executable command entry point, not a library module.
+        # Importing one during discovery can parse this process's arguments or call SystemExit;
+        # that is outside the Exception classification below and would prevent every later
+        # estimator registration.  The filter is structural, so future ``python -m`` entry points
+        # receive the same treatment without a hand-maintained module allowlist.
+        if mod.name.endswith(".__main__"):
+            entrypoints_skipped.append(mod.name)
+            continue
         try:
             importlib.import_module(mod.name)
         except Exception as exc:  # noqa: BLE001 - classified by _record, never swallowed
@@ -145,6 +156,7 @@ def load_estimator_ladder(*, force: bool = False) -> LadderLoad:
         registered=len(ESTIMATORS),
         skipped=tuple(sorted(set(skipped))),
         broken=tuple(sorted(set(broken))),
+        entrypoints_skipped=tuple(sorted(set(entrypoints_skipped))),
         walked=walked,
         extras_wanted=frozenset(extras),
     )

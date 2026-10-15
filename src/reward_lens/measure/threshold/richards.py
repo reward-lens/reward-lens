@@ -311,9 +311,26 @@ def fit_richards(
         (bound_hi, bound_hi, np.inf, np.inf, 1e4),
     )
     tolerances = {"xtol": 1e-15, "ftol": 1e-15, "gtol": 1e-15}
+    # The parameters have different physical units: baseline and ceiling are outcome fractions,
+    # rate is inverse steps, and midpoint is in steps. Scale bounded trust-region moves by the
+    # observation window. Unbounded curve_fit uses LM, which has no x_scale option. This changes
+    # neither bounds nor likelihood, and conditions the nested null identically.
+    window = max(float(np.ptp(t)), 1.0)
+    conditioning = (
+        {"x_scale": (1.0, 1.0, 1.0 / window, window, 1.0)}
+        if np.isfinite(bound_lo) or np.isfinite(bound_hi)
+        else {}
+    )
     try:
         popt, _ = curve_fit(
-            richards_curve, t, y, p0=p0, bounds=bounds, maxfev=200_000, **tolerances
+            richards_curve,
+            t,
+            y,
+            p0=p0,
+            bounds=bounds,
+            maxfev=200_000,
+            **tolerances,
+            **conditioning,
         )
     except (RuntimeError, ValueError):
         return _refused(
@@ -337,6 +354,7 @@ def fit_richards(
                 bounds=(bounds[0][:4], bounds[1][:4]),
                 maxfev=200_000,
                 **tolerances,
+                **({"x_scale": conditioning["x_scale"][:4]} if conditioning else {}),
             )
         except (RuntimeError, ValueError):
             continue

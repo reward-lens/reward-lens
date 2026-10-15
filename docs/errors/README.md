@@ -18,6 +18,10 @@ reward-lens explain RL0341
 | [RL0004](RL0004.md) | the output format asked for is not one this build writes | 4 |
 | [RL0120](RL0120.md) | the reach panel was given no task set | 4 |
 | [RL0130](RL0130.md) | the run was interrupted | 130 |
+| [RL0131](RL0131.md) | the comparison replay inputs are not usable | 4 |
+| [RL0132](RL0132.md) | the requested selection budget exceeds the finite response bank | 4 |
+| [RL0133](RL0133.md) | the susceptibility calibration conditions are missing or altered | 4 |
+| [RL0134](RL0134.md) | the comparison has no finite response bank | 4 |
 | [RL0201](RL0201.md) | the grader reads a file the graded code can write | 2 |
 | [RL0202](RL0202.md) | the answer is reachable from inside the graded process | 2 |
 | [RL0203](RL0203.md) | a branch of the grader never decides anything | 2 |
@@ -27,24 +31,54 @@ reward-lens explain RL0341
 | [RL0213](RL0213.md) | a reward function returned None and the trainer would make it NaN | 2 |
 | [RL0214](RL0214.md) | a reward function raised and the framework would score it 0.0 | 2 |
 | [RL0215](RL0215.md) | a reward function returned a boolean and float() accepted it | 2 |
+| [RL0221](RL0221.md) | a known-wrong solution was accepted, or rejected for a reason other than the expected one | 2 |
+| [RL0222](RL0222.md) | a known-good solution was rejected, which is a defect in the evaluator and not in the task | 2 |
+| [RL0223](RL0223.md) | the grader accepted work the owner's stricter reference verifier rejected | 2 |
+| [RL0224](RL0224.md) | a mutant of the grader survived the protected suite, naming something the suite does not test | 2 |
+| [RL0225](RL0225.md) | the score moved under a transformation of the response that cannot change correctness | 2 |
+| [RL0226](RL0226.md) | an injected real defect did not move the score, so the grader is not reading the response | 2 |
+| [RL0227](RL0227.md) | an exploiting response outscored the best honest response on the same task | 2 |
+| [RL0228](RL0228.md) | the grader source was not available, so mutation and the metamorphic relations did not run | 2 |
+| [RL0229](RL0229.md) | the panel's own self-check refused a number it was about to report | 4 |
 | [RL0231](RL0231.md) | the policy's context discloses the grader | 2 |
+| [RL0241](RL0241.md) | contrast present | 2 |
+| [RL0242](RL0242.md) | low effective sample size | 2 |
+| [RL0243](RL0243.md) | presentation carries reward | 2 |
+| [RL0244](RL0244.md) | components disagree | 2 |
+| [RL0245](RL0245.md) | TRL zero-std reconciliation differs | 2 |
+| [RL0251](RL0251.md) | declared reward semantics differ from observed trace | 2 |
+| [RL0261](RL0261.md) | the signed applied-weight sum differs from negative recorded loss | 2 |
 | [RL0301](RL0301.md) | the correctness claim is not qualified by an outcome check | 2 |
 | [RL0302](RL0302.md) | this candidate set has already had its one acceptance round | 4 |
+| [RL0310](RL0310.md) | the policy file cannot safely decide the record | 4 |
+| [RL0311](RL0311.md) | the policy digest does not match the record | 4 |
 | [RL0341](RL0341.md) | the outcome check collected no tests | 4 |
 | [RL0401](RL0401.md) | no sandbox tier is available on this machine | 5 |
 | [RL0402](RL0402.md) | the sandbox tier asked for is stronger than this machine holds | 5 |
 | [RL0410](RL0410.md) | an execution limit was breached | 7 |
 | [RL0501](RL0501.md) | the money cap was reached | 6 |
+| [RL0502](RL0502.md) | the seeker arm was asked for with no cap on what it may spend | 6 |
 | [RL0601](RL0601.md) | the record was written by a later version | 4 |
 | [RL0602](RL0602.md) | an entry does not carry the evidence its kind calls for | 4 |
 | [RL0603](RL0603.md) | a number carries more precision than it was measured at | 4 |
 | [RL0604](RL0604.md) | the record does not match the schema | 4 |
+| [RL0610](RL0610.md) | the record cannot supply a series the requested reading needs | 4 |
+| [RL0611](RL0611.md) | the trace record failed a named integrity rule on a named row | 4 |
 | [RL0620](RL0620.md) | something this record depends on has changed since it was written | 4 |
 | [RL0621](RL0621.md) | no run by that name or id | 4 |
+| [RL0630](RL0630.md) | the record schema major is incompatible with this build | 4 |
+| [RL0631](RL0631.md) | the received bundle is unsafe | 4 |
+| [RL0632](RL0632.md) | the bundle signature is invalid | 4 |
+| [RL0640](RL0640.md) | a projection needs a field the saved Assay does not carry | 4 |
+| [RL0641](RL0641.md) | the export payload contains a credential-shaped value | 4 |
+| [RL0642](RL0642.md) | the record cites a rendering derived from itself | 4 |
 | [RL0701](RL0701.md) | the feature asked for is not in this build | 5 |
 | [RL0702](RL0702.md) | the adapter cannot prove it holds a capability the run needs | 5 |
 | [RL0703](RL0703.md) | the verb is not in this build | 5 |
+| [RL0704](RL0704.md) | the requested capability needs an extra that is not installed | 5 |
 | [RL0710](RL0710.md) | the reward has a shape this build does not adapt | 5 |
+| [RL0711](RL0711.md) | the provider could not complete the requested operation | 5 |
+| [RL0720](RL0720.md) | the requested tracker is unavailable | 5 |
 | [RL0801](RL0801.md) | a decision only you can make is waiting, and there is no terminal to ask on | 3 |
 | [RL0900](RL0900.md) | reward-lens failed internally | 7 |
 

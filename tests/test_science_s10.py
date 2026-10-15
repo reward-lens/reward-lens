@@ -8,10 +8,11 @@ and a real reward population, so it is recorded as an honestly gated (inconclusi
 
 from __future__ import annotations
 
+from studies.s10_decompiling.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import render_report, run_study
-from studies.s10_decompiling.analysis import build_spec
 
 
 def test_s10_recovers_knee_and_tacit_residual(tmp_path):

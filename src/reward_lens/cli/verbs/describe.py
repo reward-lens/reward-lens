@@ -6,13 +6,14 @@ import json
 
 import click
 
-from .. import describe as tree_module
 from .. import registry
 from . import _shared
 
 
 def run(*, out, **opts) -> int:
-    tree = tree_module.tree()
+    from reward_lens import api
+
+    tree = api.describe()
     return out.deliver(document=tree, text=json.dumps(tree, indent=2), exit_code=0)
 
 

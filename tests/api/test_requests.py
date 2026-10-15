@@ -30,6 +30,7 @@ FROZEN_AUDIT_FIELDS = (
     "responses",
     "outcome",
     "seeker",
+    "seeker_config",
     "max_budget_usd",
     "offline",
     "sandbox",
@@ -37,8 +38,15 @@ FROZEN_AUDIT_FIELDS = (
     "dry_run",
     "seed",
     "run_dir",
+    "detection_reference",
+    "reward_functions",
+    "extra_columns",
+    "weights",
+    "group_column",
+    "group_size",
     "name",
     "resume",
+    "continue_run",
     "only",
     "policy",
     "non_interactive",
@@ -52,14 +60,22 @@ def test_audit_request_carries_exactly_the_frozen_fields() -> None:
 def test_audit_request_carries_the_frozen_defaults(tmp_path) -> None:
     request = api.AuditRequest(path=tmp_path)
     assert (request.tasks, request.responses, request.outcome) == (None, None, None)
-    assert request.seeker == "off"
+    assert (request.seeker, request.seeker_config) == ("off", None)
     assert request.max_budget_usd is None
     assert request.offline is True
     assert request.sandbox == "auto"
     assert request.require_tier is None
     assert request.dry_run is False
     assert request.seed == 20260911
-    assert (request.run_dir, request.name, request.resume, request.policy) == (None,) * 4
+    assert (
+        request.run_dir,
+        request.detection_reference,
+        request.name,
+        request.resume,
+        request.policy,
+    ) == (None,) * 5
+    assert (request.reward_functions, request.extra_columns, request.weights) == ((), (), ())
+    assert (request.group_column, request.group_size) == (None, None)
     assert request.only == ()
     assert request.non_interactive is False
 
@@ -89,9 +105,31 @@ def test_a_request_is_frozen(tmp_path) -> None:
 
 
 def test_a_path_field_accepts_the_string_a_terminal_hands_it(tmp_path) -> None:
-    request = api.AuditRequest(path=str(tmp_path), tasks=str(tmp_path / "t.jsonl"))
+    request = api.AuditRequest(
+        path=str(tmp_path), tasks=str(tmp_path / "t.jsonl"), seeker_config="seeker.json"
+    )
     assert request.path == Path(tmp_path)
     assert request.tasks == tmp_path / "t.jsonl"
+    assert request.seeker_config == Path("seeker.json")
+
+
+def test_compare_request_carries_typed_replay_declaration_paths(tmp_path) -> None:
+    request = api.CompareRequest(
+        baseline="before",
+        candidate="after",
+        run_dir=str(tmp_path / "run"),
+        baseline_config=str(tmp_path / "before.json"),
+        candidate_config=str(tmp_path / "after.json"),
+        selection_config=str(tmp_path / "selection.json"),
+        controlled_update_config=str(tmp_path / "update.json"),
+        short_fork_config=str(tmp_path / "fork.json"),
+    )
+    assert request.run_dir == tmp_path / "run"
+    assert request.baseline_config == tmp_path / "before.json"
+    assert request.candidate_config == tmp_path / "after.json"
+    assert request.selection_config == tmp_path / "selection.json"
+    assert request.controlled_update_config == tmp_path / "update.json"
+    assert request.short_fork_config == tmp_path / "fork.json"
 
 
 def test_money_is_a_string_because_a_float_is_not_money(tmp_path) -> None:
@@ -206,6 +244,20 @@ def test_capabilities_is_the_list_the_frozen_line_names_and_a_consumer_can_appen
     assert list(capabilities)[-1] is extra
     assert capabilities.capabilities[-1] is extra
     assert isinstance(extra.unlocks, list)
+
+
+def test_doctor_matrix_is_additive_to_the_capability_list() -> None:
+    install = api.InstallInfo(version="3.1.0", python="3.11", platform="linux")
+    capability = api.Capability(id="audit", status="available", reason="local", cost="0.00")
+    matrix = {"local_deterministic": {"conformance": "ran", "live": "unverified"}}
+    report = api.Capabilities(
+        capabilities=[capability], install=install, compatibility_matrix=matrix
+    )
+
+    assert list(report) == [capability]
+    assert len(report) == 1
+    assert report.model_dump()["compatibility_matrix"] == matrix
+    assert api.Capabilities(install=install).compatibility_matrix == {}
 
 
 def test_the_sandbox_field_holds_the_probe_result_and_the_dump_keeps_every_measurement() -> None:

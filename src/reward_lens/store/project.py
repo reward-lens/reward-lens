@@ -78,8 +78,9 @@ class Reuse:
     says: str
     version: RewardSystemVersion
 
-    def apply(self, previous: Assay, *, created: str | None = None, started: str | None = None
-              ) -> Assay:
+    def apply(
+        self, previous: Assay, *, created: str | None = None, started: str | None = None
+    ) -> Assay:
         """A new assay that references the eligible old entries and marks the rest stale."""
         data = previous.to_dict()
         keep = set(self.reused_entry_ids)
@@ -114,13 +115,14 @@ def _dump(model) -> dict:
 
 
 def _measured(data: dict) -> tuple[str, ...]:
-    """Every (entry id, method identity) pair a record holds, sorted: what it measured and how.
+    """Every entry's method and outcome kind, sorted: what the record could establish.
 
     The method identity is the method's rule id and its parameter digest, which is what tells one
-    measurement of a thing from another measurement of the same thing. Not `version`: that is the
-    method's release string, and a procedure whose wording was corrected has not measured anything
-    differently. Read off the dict rather than the model because this runs on files in the
-    directory that the store has not validated and will not.
+    measurement of a thing from another measurement of the same thing. An old build may reserve the
+    current method identity in an `instrument_not_in_this_build` absence. That absence did not run
+    the method, and a later check or a more specific missing-input absence is a different scope.
+    Not `version`: that is the method's release string, and a wording correction has not measured
+    anything differently. Read off the dict because neighbouring files are not validated here.
     """
     measurement = data.get("measurement") or {}
     out: list[str] = []
@@ -133,9 +135,27 @@ def _measured(data: dict) -> tuple[str, ...]:
             method = entry.get("method")
             if not isinstance(method, dict):
                 method = {}
+            kind = entry.get("kind", "")
+            missing_code = ""
+            reserved_slot = "0"
+            if kind == "absence":
+                extensions = entry.get("extensions")
+                transcript = (
+                    extensions.get("https://reward-lens.github.io/x/transcript")
+                    if isinstance(extensions, dict)
+                    else None
+                )
+                if isinstance(transcript, dict) and isinstance(transcript.get("missing_code"), str):
+                    missing_code = transcript["missing_code"]
+                absence = entry.get("absence")
+                missing_access = (
+                    absence.get("missing_access") if isinstance(absence, dict) else None
+                )
+                if missing_access in {"not in this build", "instrument not in this build"}:
+                    reserved_slot = "1"
             out.append(
                 f"{entry.get('entry_id', '')}@{method.get('id', '')}@"
-                f"{method.get('params_digest', '')}"
+                f"{method.get('params_digest', '')}@{kind}@{missing_code}@{reserved_slot}"
             )
     return tuple(sorted(out))
 
@@ -279,9 +299,7 @@ class Project:
                 continue  # the project does not constrain what an experiment bound
             found = declared.get(digest_name)
             if found != expected:
-                raise DependencyDigestMismatch(
-                    digest=digest_name, expected=expected, found=found
-                )
+                raise DependencyDigestMismatch(digest=digest_name, expected=expected, found=found)
         expected_version = version.digest()
         found_version = data["subject"]["version"]["digest"]
         if found_version != expected_version:
@@ -334,9 +352,7 @@ class Project:
                 other.get("subject", {}).get("version", {}).get("digest") == version
                 and _measured(other) == measured
             ):
-                raise SubjectVersionRewritten(
-                    version=version, existing=row["name"], name=name
-                )
+                raise SubjectVersionRewritten(version=version, existing=row["name"], name=name)
 
     def names(self) -> tuple[str, ...]:
         """Every recorded name, oldest first."""
@@ -361,7 +377,9 @@ class Project:
     def _scan(self) -> list[dict]:
         if not self.assays_dir.is_dir():
             return []
-        found = sorted(self.assays_dir.glob(f"*{RECORD_SUFFIX}"), key=lambda p: (p.stat().st_mtime, p.name))
+        found = sorted(
+            self.assays_dir.glob(f"*{RECORD_SUFFIX}"), key=lambda p: (p.stat().st_mtime, p.name)
+        )
         return [{"name": p.name[: -len(RECORD_SUFFIX)], "mtime": p.stat().st_mtime} for p in found]
 
     def _write_index(self, rows: list[dict]) -> None:
@@ -383,7 +401,9 @@ class Project:
 
     # --- the dependency graph -----------------------------------------------------------------
 
-    def stale(self, assay: Assay, changed: Iterable[str]) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    def stale(
+        self, assay: Assay, changed: Iterable[str]
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
         """`(stale, standing)` entry ids for this request, per the five rows of section 6.1."""
         return invalidation.partition(assay, changed)
 
@@ -419,9 +439,7 @@ class Project:
         )
         total = len(stale_ids) + len(standing_ids)
         if not changes:
-            says = (
-                f"reused all {total} entries of {previous.assay_id}: the dependency set is unchanged"
-            )
+            says = f"reused all {total} entries of {previous.assay_id}: the dependency set is unchanged"
         else:
             says = (
                 f"reused {len(standing_ids)} of {total} entries of {previous.assay_id}; "

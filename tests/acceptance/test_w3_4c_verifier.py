@@ -21,16 +21,14 @@ here in full and is the one the three catalogue records imply:
 **On pointing at something real.** A synthetic subject proves the code runs and a real one proves
 it measures, and this file runs both. The real subjects are `is_equiv` from `hendrycks/math`, the
 answer checker most open RLVR math pipelines call, and `swebench/harness/grading.py`, the shipped
-grading module of the benchmark that defines the agentic-SWE field. Both are fetched over the
-network and both skip with a message rather than passing quietly when there is none, because a
-skipped real-subject test leaves the claim unproven rather than proven.
+grading module of the benchmark that defines the agentic-SWE field. Both are byte-checked copies from pinned public upstream revisions. A missing or changed copy fails
+the real-subject test; the synthetic control alone does not establish a real measurement.
 """
 
 from __future__ import annotations
 
+import hashlib
 import textwrap
-import urllib.error
-import urllib.request
 from pathlib import Path
 from random import Random
 
@@ -68,14 +66,10 @@ from reward_lens.verifier.replay import ReplayFidelity, ReplayReport, replay_cor
 
 #: `is_equiv` from `hendrycks/math`. The same subject W3.4a and W3.4b used, reused deliberately so
 #: the D-series numbers on this grader accumulate against one program rather than four.
-MATH_URL = "https://raw.githubusercontent.com/hendrycks/math/main/modeling/math_equivalence.py"
 
 #: SWE-bench's shipped grading module. `get_logs_eval(test_spec, log_fp)` opens a log file written
 #: by running the agent's own tests inside the container and derives the resolution verdict from
 #: its text, which is the specification's example sentence in the most-used harness in the field.
-SWEBENCH_URL = (
-    "https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/swebench/harness/grading.py"
-)
 
 #: Answer pairs the MATH checker accepts or rejects, chosen to span its normalisation paths.
 MATH_PAIRS = [
@@ -112,30 +106,35 @@ MATH_PAIRS = [
 ]
 
 
-def _fetch(url: str, into: Path, name: str) -> Path:
-    try:
-        with urllib.request.urlopen(url, timeout=30) as response:
-            source = response.read().decode("utf-8")
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        pytest.skip(
-            f"no network for the real-subject run ({type(exc).__name__}). The fixture tests in "
-            f"this file prove the code runs; this one proves it measures, and skipping it leaves "
-            f"that unproven rather than proven."
-        )
+def _fetch(fixture: Path, into: Path, name: str, expected_sha256: str) -> Path:
+    source = fixture.read_bytes()
+    assert hashlib.sha256(source).hexdigest() == expected_sha256, "upstream verifier fixture drift"
     path = into / name
-    path.write_text(source, encoding="utf-8")
+    path.write_bytes(source)
     return path
 
 
 @pytest.fixture(scope="module")
 def math_verifier(tmp_path_factory: pytest.TempPathFactory) -> VerifierUnderTest:
-    path = _fetch(MATH_URL, tmp_path_factory.mktemp("math"), "math_equivalence.py")
+    fixture = Path(__file__).resolve().parent / "real_verifiers/math_equivalence.py"
+    path = _fetch(
+        fixture,
+        tmp_path_factory.mktemp("math"),
+        "math_equivalence.py",
+        "c4101b1f51a2bb65665194aecd9f761d668c0c248a0350f196c2950e87488527",
+    )
     return VerifierUnderTest(source_path=path, entrypoint="is_equiv")
 
 
 @pytest.fixture(scope="module")
 def swebench_harness(tmp_path_factory: pytest.TempPathFactory) -> VerifierUnderTest:
-    path = _fetch(SWEBENCH_URL, tmp_path_factory.mktemp("swebench"), "grading.py")
+    fixture = Path(__file__).resolve().parent / "real_verifiers/swebench_grading.py"
+    path = _fetch(
+        fixture,
+        tmp_path_factory.mktemp("swebench"),
+        "grading.py",
+        "a095273010175001a6779e365b3b77abb8657c7ac2e4f80b4bc360faa6f09483",
+    )
     return VerifierUnderTest(source_path=path, entrypoint="get_logs_eval")
 
 

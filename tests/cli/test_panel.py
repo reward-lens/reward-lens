@@ -1,11 +1,11 @@
-"""Panel ordering and glyph behavior for public CLI output."""
+"""The panel rule of interfaces section 9, tested against the structure of the wave-1 goldens."""
 
 from __future__ import annotations
 
 import pathlib
 
 import pytest
-
+from conftest import golden_body
 
 GLYPHS = "○✘!✔"
 DARK = "○"
@@ -62,11 +62,12 @@ def panel_lines(text: str) -> list[tuple[str, str]]:
     return out
 
 
-def test_project_panel_order_is_stable() -> None:
-    assert WORDS == (
+def test_the_project_golden_names_the_order_the_formatter_must_produce():
+    order = [name for _, name in panel_lines(golden_body("wave-1/first-hour.txt"))]
+    assert order == [
         "validity",
-        "soundness",
         "reach",
+        "soundness",
         "exploits",
         "framing",
         "signal",
@@ -74,7 +75,8 @@ def test_project_panel_order_is_stable() -> None:
         "trace",
         "forecast",
         "calibration",
-    )
+    ]
+
 
 def test_every_panel_glyph_is_read_off_the_record_it_renders(honest):
     """Ten panels, and each one dark exactly when its section holds nothing but absences.
@@ -294,19 +296,22 @@ def test_two_findings_of_one_section_print_one_glyph_line_and_two_continuations(
         assert [line for line in lines if line.rstrip().endswith(code)], f"{code} is not printed"
 
 
-def test_bare_grader_prints_one_validity_head_with_continuations(honest):
+def test_the_bare_grader_golden_prints_one_validity_head_over_five_lines():
+    """A-028 as `wave-1/audit-unfamiliar.txt` lines 6 to 10 carry it: one head, four continuations.
+
+    The renderer is held to these same bytes by
+    `test_golden_blocks.py::test_the_bare_grader_validity_block_is_one_head_and_its_continuations`.
+    """
     from reward_lens.cli.format import text as formatter
 
-    rendered = formatter.render(_long_finding_record(honest), command="audit", shape="grader")
-    block = rendered.splitlines()
+    block = golden_body("wave-1/audit-unfamiliar.txt").split("\n")[4:9]
 
-    heads = [line for line in block if line.strip().startswith(formatter.CROSS + " validity")]
-    assert len(heads) == 1, block
-    assert [line for line in block if line.rstrip().endswith("RL0201")], block
-    for line in block:
-        if "grader.py line 91" in line or line.rstrip().endswith("RL0201"):
-            assert line.startswith(" " * formatter._INDENT), repr(line)
-            assert line.strip()[:1] not in GLYPHS, repr(line)
+    assert block[0].strip().startswith(formatter.CROSS + " validity"), block
+    assert [line for line in block if line.rstrip().endswith("RL0210")] == [block[-1]], block
+    for line in block[1:]:
+        assert line.startswith(" " * formatter._INDENT), repr(line)
+        assert line.strip()[:1] not in GLYPHS, repr(line)
+
 
 def test_a_finding_wraps_under_the_detail_column_and_ends_with_its_code(honest):
     """The message is wrapped, every line of it sits in the detail column, and the code is last."""
@@ -320,8 +325,15 @@ def test_a_finding_wraps_under_the_detail_column_and_ends_with_its_code(honest):
     assert coded > first, "the code stands on the last line of the finding, not the first"
     for line in lines[first + 1 : coded + 1]:
         assert line.startswith(" " * formatter._INDENT), repr(line)
-        assert len(line) <= formatter._INDENT + formatter._PANEL_WRAP + len("RL0201") + formatter._CODE_GAP
+        assert (
+            len(line)
+            <= formatter._INDENT + formatter._PANEL_WRAP + len("RL0201") + formatter._CODE_GAP
+        )
     column = lines[coded].index("RL0201")
     text_end = len(lines[coded][:column].rstrip())
-    expected = formatter._CODE_COLUMN if text_end <= formatter._CODE_ELBOW else text_end + formatter._CODE_GAP
+    expected = (
+        formatter._CODE_COLUMN
+        if text_end <= formatter._CODE_ELBOW
+        else text_end + formatter._CODE_GAP
+    )
     assert column == expected, repr(lines[coded])

@@ -103,9 +103,7 @@ def test_a_minor_bump_inside_the_major_is_not_refused_by_the_major_check(referen
 
 def test_entry_kind_evidence_missing_names_the_kind_and_the_field(reference):
     record = copy.deepcopy(reference)
-    witness = next(
-        e for e in record["measurement"]["validity"] if e["kind"] == "witness"
-    )
+    witness = next(e for e in record["measurement"]["validity"] if e["kind"] == "witness")
     del witness["witness"]["observed"]
     with pytest.raises(EntryKindEvidenceMissing) as excinfo:
         validate_record(record)
@@ -118,9 +116,7 @@ def test_entry_kind_evidence_missing_names_the_kind_and_the_field(reference):
 
 def test_an_estimate_without_its_uncertainty_names_uncertainty(reference):
     record = copy.deepcopy(reference)
-    estimate = next(
-        e for e in record["measurement"]["soundness"] if e["kind"] == "estimate"
-    )
+    estimate = next(e for e in record["measurement"]["soundness"] if e["kind"] == "estimate")
     del estimate["uncertainty"]
     with pytest.raises(EntryKindEvidenceMissing) as excinfo:
         validate_record(record)

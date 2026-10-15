@@ -1,0 +1,8 @@
+{
+  "schema": "reward-lens-vendored-source/1",
+  "source_url": "https://github.com/willccbb/verifiers/blob/edafab857aabf830237068193150694cfae50c3b/verifiers/utils/save_utils.py",
+  "source_revision": "edafab857aabf830237068193150694cfae50c3b",
+  "source_sha256": "07cc179170e73d0b9587f58f7782d4865afdd235db89289ac21cdd5474d98820",
+  "license": "MIT",
+  "purpose": "Execute the pinned save_outputs writer in an isolated child process and bind its output to a local execution receipt"
+}

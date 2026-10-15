@@ -1,0 +1,128 @@
+{
+  "files": {
+    "campaign/__init__.py": {
+      "sha256": "5b060da100054b9579b21a4e81c3ad9e90ab4011e021e41d45cd251aad0d12b2",
+      "source_path": "campaign/__init__.py"
+    },
+    "campaign/config.py": {
+      "derivation": {
+        "kept_top_level_definitions": [
+          "CAMPAIGN_SEED",
+          "REPO_ROOT",
+          "SLICES",
+          "SLICES_LOCK_PATH",
+          "SliceDef",
+          "task_seed"
+        ],
+        "reason": "limit publication to data-converter dependency closure; omit research rosters, infrastructure paths and spend planning"
+      },
+      "original_sha256": "1f0a191d96828f0ca899ee08c693c434baccfe752cfc085e52e3eb47bfe6a0bf",
+      "sha256": "de8bb12decbb364338af8354ef4e4b44c108c3f4b123a36c85d46fff4d1d6df9",
+      "source_path": "campaign/config.py"
+    },
+    "campaign/data/__init__.py": {
+      "sha256": "bfcbaae7db8d84dc56cf3ded60427b67d0b266d687caf3300f948e35b41cdd4f",
+      "source_path": "campaign/data/__init__.py"
+    },
+    "campaign/data/loaders.py": {
+      "sha256": "4bf138d3eaf08233c278d362d1a32474a71b45dc5cd981fa64a5a7a38549cad0",
+      "source_path": "campaign/data/loaders.py"
+    },
+    "campaign/data/serde.py": {
+      "sha256": "434ed96218856844f60d2e78c151df4d5a50a5cc423e925923165be1fa313e7b",
+      "source_path": "campaign/data/serde.py"
+    },
+    "campaign/data/slices.lock.json": {
+      "sha256": "fd3304be612be4f134d6201f38e3870901c850d72acc8b2282cf4efd2141e024",
+      "source_path": "campaign/data/slices.lock.json"
+    },
+    "campaign/data/tournaments.py": {
+      "sha256": "5829f1c5ebd812e69a40debf62501d55f7852d68d995c89ae6ae0a6a50ad8492",
+      "source_path": "campaign/data/tournaments.py"
+    },
+    "reward_lens/__init__.py": {
+      "sha256": "3874bebd6884d74335ed3f8061bd062df82e72c322c093363005e683fab44849",
+      "source_path": "src/reward_lens/__init__.py"
+    },
+    "reward_lens/core/__init__.py": {
+      "sha256": "eb4895564e77e8bb9fd0e45531121f2e157526708a97bfed4358c58376a4da0b",
+      "source_path": "src/reward_lens/core/__init__.py"
+    },
+    "reward_lens/core/config.py": {
+      "sha256": "f70ececd11c5110b01dcaf2e898ed2de493bdcef9c2c1576118cf3a896dd839e",
+      "source_path": "src/reward_lens/core/config.py"
+    },
+    "reward_lens/core/errors.py": {
+      "sha256": "386831f05bb37f042f1577df3f61d36645ff59bf37f283d7701f9414e4272811",
+      "source_path": "src/reward_lens/core/errors.py"
+    },
+    "reward_lens/core/evidence.py": {
+      "sha256": "576698ba540bb51cbd40e74f1cecc1e35860139a47f0c18901ca188fedddbb44",
+      "source_path": "src/reward_lens/core/evidence.py"
+    },
+    "reward_lens/core/gates.py": {
+      "sha256": "207e21eebfbc08616ce46129654ed08163b7fd82cd1e6ef859079d9fd3893f4f",
+      "source_path": "src/reward_lens/core/gates.py"
+    },
+    "reward_lens/core/provenance.py": {
+      "sha256": "a672d022ce87d92a5156dd25e2ac6122db909d18ea15721170f784c375946c92",
+      "source_path": "src/reward_lens/core/provenance.py"
+    },
+    "reward_lens/core/registry.py": {
+      "sha256": "e9b3524e73f7bf698bdb5791b44cb7eb41dab359cd2977df18c62efb0bbdb71e",
+      "source_path": "src/reward_lens/core/registry.py"
+    },
+    "reward_lens/core/store.py": {
+      "sha256": "87ac5f1e11462e2b1538391b4828de403f73ad79dc8b10d0294b76603798b5ac",
+      "source_path": "src/reward_lens/core/store.py"
+    },
+    "reward_lens/core/types.py": {
+      "sha256": "463f7824ba523826fa43679c1732b0ca418224b4aa550d3d459d19fb3e3f0452",
+      "source_path": "src/reward_lens/core/types.py"
+    },
+    "reward_lens/data/__init__.py": {
+      "sha256": "d6b0319e8512d73efd8f4a525d76fc7f52cb0faf9589075c862b4f4d88cc2ef9",
+      "source_path": "src/reward_lens/data/__init__.py"
+    },
+    "reward_lens/data/align.py": {
+      "sha256": "49bd06350fc51373730dc9dcf37c01d82ef0094409d872774194bd2a556f6f8f",
+      "source_path": "src/reward_lens/data/align.py"
+    },
+    "reward_lens/data/builtin/__init__.py": {
+      "sha256": "f03ae1e69bdb77d65e30242c26e3614bad7035f97c799bf6fc2ee66ff9c9b214",
+      "source_path": "src/reward_lens/data/builtin/__init__.py"
+    },
+    "reward_lens/data/builtin/diagnostic_v3.py": {
+      "sha256": "126def986c2b5c2ccdb9f8c8e460c46684774aa0c230f4b154e86c44666af714",
+      "source_path": "src/reward_lens/data/builtin/diagnostic_v3.py"
+    },
+    "reward_lens/data/corruptions.py": {
+      "sha256": "5415ecfcc815e03d2fb83c2785d1b1fbc6959ef9bc93c8754df1b93951b486c6",
+      "source_path": "src/reward_lens/data/corruptions.py"
+    },
+    "reward_lens/data/lineage.py": {
+      "sha256": "311dc08256ec8563c124e6b2f992ac92e39be43c8cfac56528b0c312910c2e51",
+      "source_path": "src/reward_lens/data/lineage.py"
+    },
+    "reward_lens/data/registry.py": {
+      "sha256": "ed1972ea7a90b710a93025171a5ad2d646222e1ca45a32688491bf4172f67126",
+      "source_path": "src/reward_lens/data/registry.py"
+    },
+    "reward_lens/data/schema.py": {
+      "sha256": "805f3b585fdfde906a1829f5f8ac10526a4825118b5a0510bcc05551aee868d0",
+      "source_path": "src/reward_lens/data/schema.py"
+    },
+    "reward_lens/data/spans.py": {
+      "sha256": "62dfb3614867fe3da6ef076852fc3f63fd4f3af1cd7d15ad255bb2a9d0ad515d",
+      "source_path": "src/reward_lens/data/spans.py"
+    },
+    "reward_lens/diagnostic_data_v2.py": {
+      "sha256": "1cc40b7423dd08f26bee69c074c68d0b97e040b7d82976c84d19cc32c169dd05",
+      "source_path": "src/reward_lens/diagnostic_data_v2.py"
+    }
+  },
+  "local_git_commit": "f93f4b5578c221d3d2665f9b305f3e86759be862",
+  "note": "Only modules in the import closure of the three selected converters were copied; no cache JSONL or raw dataset is included.",
+  "schema": "reward-lens-campaign-generator-source/1",
+  "source_scope": "26 files copied verbatim; campaign/config.py is a declared subset derivation from the same source commit"
+}

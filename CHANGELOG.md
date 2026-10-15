@@ -2,19 +2,31 @@
 
 ## [3.1.0] - unreleased
 
-The active product release is **reward-lens 3.1.0**. This is the next minor
-release after the published 3.0.0 line; it remains unreleased while the
-product audit and report workflow is reconciled for release.
+This candidate brings the product implementation, CLI, SDK, report, and local
+workbench into one maintained source tree. The published package remains 3.0.0
+until the production release completes.
 
-- Normalized the maintained product name, package metadata, CLI/help text, and
-  current documentation to `reward-lens`; Python imports remain
-  `reward_lens`, and established compatibility identifiers and configuration
-  keys remain supported.
-- Aligned runtime, package, frontend, lockfile, audit-record, and verification
-  version declarations on 3.1.0. The former 4.0.0 development label is not a
-  product release identity.
-- Added the current audit/report route and release-identity checks. The
-  inherited 3.0.0 record below remains historical release documentation.
+- Added durable audit/reuse, trace readers, comparison scorecards and joined
+  evidence, forecast inputs, and resumable improvement sessions. Missing inputs
+  and unavailable measurements retain explicit refusals and holes.
+- Added signed portable export/import and a local authenticated workbench that
+  reads the same saved assay and report. Both frontend sources and their built
+  assets ship with the source distribution; installed users do not need Node.
+- Integrated grader adapters for composite, remote, reward-model, Verifiers, and
+  OpenEnv inputs, plus optional MCP and tracker integrations. Offline conformance
+  tests do not establish live-provider qualification.
+- Kept the supported v3 imports, commands, serialized keys, `rewardlens.yaml`
+  paths, and six published compatibility fixes. Standardized the product name
+  as `reward-lens` and raised the supported Python floor to 3.11.
+- Removed runtime dependencies on other development checkouts. Small required
+  fixtures and vendored upstream code carry source hashes and license records.
+  The public E1 registry example is a documented privacy-portable derivation
+  with a new digest; original research evidence remains preserved separately.
+- Fixed invalid explicit SDK project handling, typed forecast/improvement
+  refusals, and capture-index validation that could silently clamp an index and
+  mutate the caller's tensor.
+- Added a declared release validation matrix and a manual publication path that
+  checks the exact main commit and consumes its validated immutable artifacts.
 
 ## [3.0.0] - 2026-08-06
 

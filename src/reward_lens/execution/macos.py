@@ -70,9 +70,11 @@ def probe_sandbox_exec() -> tuple[bool, str, float]:
             SANDBOX_EXEC_PROBE_ARGV, capture_output=True, timeout=2.0, check=False
         )
     except (OSError, subprocess.TimeoutExpired) as exc:  # pragma: no cover - off-platform
-        return False, f"{' '.join(SANDBOX_EXEC_PROBE_ARGV)} failed: {exc}", (
-            time.monotonic() - start
-        ) * 1000
+        return (
+            False,
+            f"{' '.join(SANDBOX_EXEC_PROBE_ARGV)} failed: {exc}",
+            (time.monotonic() - start) * 1000,
+        )
     ms = (time.monotonic() - start) * 1000
     held = done.returncode == 0
     reason = (

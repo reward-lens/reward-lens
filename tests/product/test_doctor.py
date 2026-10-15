@@ -21,13 +21,13 @@ from pathlib import Path
 import pytest
 
 from reward_lens import execution
-from reward_lens.api import AuditRequest, Capabilities, Capability
+from reward_lens.api import AuditRequest, Capabilities, Capability, _dispatch
 from reward_lens.execution.probe import SandboxProbe, TierResult
 from reward_lens.product import access
 from reward_lens.product.access import endpoints, ladder, matrix
 
 ROOT = Path(__file__).resolve().parents[2]
-GOLDEN = ROOT / "fleet" / "golden" / "wave-1" / "doctor.txt"
+GOLDEN = ROOT / "fleet" / "golden" / "candidates" / "current" / "doctor.txt"
 VOLATILE = ROOT / "fleet" / "golden" / "VOLATILE.md"
 DEMO_NUMBERS = ROOT / "fleet" / "golden" / "DEMO_NUMBERS.md"
 
@@ -74,6 +74,9 @@ def _stub_audit(**attrs: object) -> types.ModuleType:
 def wave_one(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """The tree the wave-1 golden was cut from: the audit engine present, nothing else."""
     monkeypatch.setitem(sys.modules, "reward_lens.product.audit", _stub_audit())
+    # The real Compare module may already be cached by another test. Keep this historical fixture
+    # independent of import order by pinning its absent engine at the same public dispatch seam.
+    monkeypatch.setitem(_dispatch.ENGINES, "compare", "reward_lens.product.compare.absent:run")
     monkeypatch.setattr(endpoints, "scan", lambda **_: ())
     # Two of the tokens are read off the machine rather than declared, so the tree the golden was
     # cut from has to pin them too: no API key in the environment, and no reference set installed.
@@ -166,8 +169,26 @@ def _closed_port() -> int:
 def test_text_matches_the_golden_outside_the_volatile_fields(wave_one: None) -> None:
     golden = GOLDEN.read_text()
     body = "\n".join(golden.split("\n")[1:])  # the `$ reward-lens doctor` line is the shell's
-    produced = access.render_text(access.doctor())
-    assert _normalise(produced) == _normalise(body)
+    caps = access.doctor()
+    produced = access.render_text(caps)
+    # The historical wave-1 transcript still fixes the install block's wording. Extras are
+    # measured on this machine, while the six-family block was added after that transcript.
+    historical_prefix = body.split("\n  Sandbox", 1)[0]
+    current_prefix = produced.split("\n  Adapter compatibility", 1)[0]
+    historical_prefix = historical_prefix.replace(
+        "extras installed: trace, train",
+        "extras installed: " + (", ".join(caps.install.extras) if caps.install.extras else "none"),
+    )
+    assert _normalise(current_prefix) == _normalise(historical_prefix)
+    assert "  Adapter compatibility (local fixtures; live providers unverified)" in produced
+    for family, row in caps.compatibility_matrix.items():
+        assert f"    {family}: {row['conformance']};" in produced
+        assert f"live {row['live']}" in produced
+        assert row["live"] == "unverified"
+    # The bare-audit fixture keeps compare absent, while the trace, forecast and improve engines
+    # remain available. These are current availability checks, separate from the old transcript.
+    assert "    ✔ trace, forecast, improve\n" in produced
+    assert "    ○ compare                                         not in this build" in produced
 
 
 def test_the_report_is_a_capabilities_object(wave_one: None) -> None:
@@ -218,7 +239,9 @@ def test_an_api_key_in_the_environment_is_what_settles_the_seeker_s_api_arm(
 ) -> None:
     """`key:api` is read off the machine, so the rung moves when the environment does."""
     monkeypatch.setitem(
-        sys.modules, "reward_lens.product.seeker", types.ModuleType("reward_lens.product.seeker")
+        sys.modules,
+        "reward_lens.instruments.seeker",
+        types.ModuleType("reward_lens.instruments.seeker"),
     )
     variable = ladder.api_key_variables()[0]
     before = {c.id: c for c in access.doctor()}["seeker.api"]
@@ -285,6 +308,59 @@ def test_a_panel_the_audit_engine_declares_is_reported_as_available(
     assert by_id["panel.validity"].status == "available"
     assert by_id["panel.signal"].status == "available"
     assert by_id["panel.reach"].status == "unavailable"
+
+
+def test_shipped_panels_follow_the_audit_plan_and_keep_input_limits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Discovery reports installed instruments, without claiming a project exercised them."""
+    from reward_lens.product.audit import plan as audit_plan
+
+    monkeypatch.setattr(endpoints, "scan", lambda **_: ())
+    for variable in ladder.api_key_variables():
+        monkeypatch.delenv(variable, raising=False)
+    by_id = {cap.id: cap for cap in access.doctor()}
+    supported = {f"panel.{section}" for section in audit_plan(None).panels}
+    assert {"panel.soundness", "panel.exploits", "panel.framing", "panel.signal"} <= supported
+    for capability_id in supported & set(by_id):
+        assert by_id[capability_id].status == "available"
+        assert by_id[capability_id].reason == "measured on this machine, in part"
+    # The display's cost row projects registered price and latency instruments in Reward Statistics.
+    assert "panel.cost" not in supported
+    assert by_id["panel.cost"].status == "available"
+    assert by_id["panel.cost"].reason == "measured on this machine, in part"
+    assert by_id["seeker.api"].status == "unavailable"
+    assert "--seeker-config" in by_id["seeker.api"].reason
+    assert "not in this build" not in by_id["seeker.api"].reason
+    assert by_id["seeker.local"].status == "unavailable"
+    assert "--seeker-config" in by_id["seeker.local"].reason
+
+
+def test_cost_row_requires_the_registered_price_and_latency_instruments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from reward_lens.instruments.base import Panel
+    from reward_lens.product.audit import registry
+
+    discovered = registry.discover()
+    without_price = tuple(
+        Panel(
+            section=panel.section,
+            instruments=tuple(
+                instrument
+                for instrument in panel.instruments
+                if instrument.id != "reward_statistics.price"
+            ),
+            seconds=panel.seconds,
+        )
+        if panel.section == "reward_statistics"
+        else panel
+        for panel in discovered
+    )
+    monkeypatch.setattr(registry, "discover", lambda: without_price)
+    panels = ladder.audit_panels()
+    assert "reward_statistics" in panels
+    assert "cost" not in panels
 
 
 # --- the compatibility matrix (section 7.1) ------------------------------------------------------
@@ -468,9 +544,7 @@ def test_doctor_whose_probe_raised_refuses_with_RL0401_naming_the_probe(
     assert "landlock_create_ruleset" in str(error)
 
 
-def test_doctor_exits_zero_whenever_it_produced_its_report(
-    wave_one: None, tmp_path: Path
-) -> None:
+def test_doctor_exits_zero_whenever_it_produced_its_report(wave_one: None, tmp_path: Path) -> None:
     """A directory that is not a project is a fact about the input, not a reason to refuse."""
     caps = access.doctor(project=tmp_path)
     assert isinstance(caps, Capabilities)

@@ -100,7 +100,9 @@ def trl_declares_only_what_it_uses(completions, **kwargs) -> list[float]:
 
 def trl_in_any_order(completions, prompts, **kwargs) -> list[float]:
     """Order is not part of the convention, because nothing is passed positionally."""
-    return [float(len(prompt) > len(completion)) for prompt, completion in zip(prompts, completions)]
+    return [
+        float(len(prompt) > len(completion)) for prompt, completion in zip(prompts, completions)
+    ]
 
 
 def trl_keyword_only(*, prompts, completions, completion_ids, **kwargs) -> list[float]:

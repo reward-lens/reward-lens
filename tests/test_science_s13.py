@@ -9,10 +9,11 @@ inconclusive-because-gated on the GPU sibling base population.
 
 from __future__ import annotations
 
+from studies.s13_coupling.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s13_coupling.analysis import build_spec
 
 
 def test_s13_runs_and_registers(tmp_path):

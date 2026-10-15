@@ -59,9 +59,8 @@ def test_a_run_is_found_by_id_and_by_name(project_root, state_home):
 
 
 def test_a_run_that_is_not_there_is_refused(state_home):
-    from reward_lens.store.errors import RunNotFound
-
     from reward_lens.store import RunDir
+    from reward_lens.store.errors import RunNotFound
 
     with pytest.raises(RunNotFound) as excinfo:
         RunDir.find("run-000000000000")
@@ -129,6 +128,10 @@ def test_partial_results_are_written_per_instrument(project_root, state_home):
     run = RunDir.create(project=project_root, name="nightly")
     path = run.write_partial("validity", {"entries": ["validity.grader_source"]})
     assert path == run.path / "partial" / "validity.json"
+    assert run.partial() == {"validity": {"entries": ["validity.grader_source"]}}
+    with pytest.raises(Exception) as changed:
+        run.write_partial("validity", {"entries": ["different"]})
+    assert getattr(changed.value, "code", None) == "RL0620"
     assert run.partial() == {"validity": {"entries": ["validity.grader_source"]}}
 
 

@@ -21,8 +21,10 @@ value.
 
 from __future__ import annotations
 
+import json
 import os
 import re
+import tomllib
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -231,7 +233,12 @@ def check_files(paths: list[str | Path], store: EvidenceStore | None = None) -> 
         rep = check_text(text, store)
         combined.results.extend(rep.results)
         combined.unresolved_refs.extend(rep.unresolved_refs)
-        combined.unbound.extend(replace(u, path=str(p)) for u in find_unbound_numbers(text))
+        combined.mixed_provenance.extend(rep.mixed_provenance)
+        python_versions = _declared_python_versions(Path(p))
+        combined.unbound.extend(
+            replace(u, path=str(p))
+            for u in find_unbound_numbers(text, python_versions=python_versions)
+        )
     return combined
 
 
@@ -320,6 +327,64 @@ _XREF_RE = re.compile(r"(?:§|\bsections?\s+|\bpart\s+|\bappendix\s+)\s*\d+(\.\d
 #: Licence identifiers. "Apache-2.0" and "MPL-2.0" are names, not measurements.
 _LICENCE_RE = re.compile(r"\b[A-Z][A-Za-z]*(-[A-Za-z]+)*-\d+\.\d+\b")
 
+# An explicitly named Python interpreter version is a compatibility identifier, not an empirical
+# measurement. Only mask versions that the *current checkout* both declares and exercises in the
+# two broad release profiles. A stray "Python 3.14" must still make the docs gate red.
+_PYTHON_VERSION_TOKEN = r"\d{1,2}\.\d{1,2}(?!\.\d|\w)"
+_PYTHON_VERSION_LIST_RE = re.compile(
+    rf"\bPython[ \t]+(?P<versions>{_PYTHON_VERSION_TOKEN}"
+    rf"(?:\s*,\s*(?:and\s+)?{_PYTHON_VERSION_TOKEN})*"
+    rf"(?:\s+and\s+{_PYTHON_VERSION_TOKEN})?)",
+    re.I,
+)
+_PYTHON_CLASSIFIER_RE = re.compile(r"Programming Language :: Python :: (\d+\.\d+)\Z")
+
+
+def _declared_python_versions(path: Path) -> frozenset[str]:
+    """Read the nearest source checkout's supported and release-tested Python minors.
+
+    An installed checker used outside a source checkout remains conservative: with no matching
+    metadata, Python-looking decimals are unbound rather than silently exempted.
+    """
+    for root in path.resolve().parents:
+        pyproject = root / "pyproject.toml"
+        matrix = root / "release" / "validation-matrix.json"
+        if not pyproject.is_file() or not matrix.is_file():
+            continue
+        try:
+            project = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]
+            release = json.loads(matrix.read_text(encoding="utf-8"))["profiles"]
+            lower = re.fullmatch(r">=\s*(\d+)\.(\d+)", project["requires-python"])
+            if lower is None:
+                return frozenset()
+            minimum = (int(lower.group(1)), int(lower.group(2)))
+            classifiers = {
+                match.group(1)
+                for value in project["classifiers"]
+                if (match := _PYTHON_CLASSIFIER_RE.fullmatch(value)) is not None
+            }
+            tested = set(release["dev"]["python"]) & set(release["all_extras"]["python"])
+            return frozenset(
+                version
+                for version in classifiers & tested
+                if tuple(map(int, version.split("."))) >= minimum
+            )
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return frozenset()
+    return frozenset()
+
+
+def _blank_declared_python_versions(text: str, versions: frozenset[str]) -> str:
+    if not versions:
+        return text
+    chars = list(text)
+    for phrase in _PYTHON_VERSION_LIST_RE.finditer(text):
+        for token in _UNBOUND_NUM_RE.finditer(phrase.group("versions")):
+            if token.group(1) in versions:
+                start = phrase.start("versions") + token.start(1)
+                chars[start : start + len(token.group(1))] = " " * len(token.group(1))
+    return "".join(chars)
+
 
 @dataclass
 class UnboundNumber:
@@ -340,7 +405,9 @@ def _blank_spans(text: str, pattern: re.Pattern[str]) -> str:
     return pattern.sub(lambda m: " " * len(m.group(0)), text)
 
 
-def find_unbound_numbers(text: str) -> list[UnboundNumber]:
+def find_unbound_numbers(
+    text: str, *, python_versions: frozenset[str] = frozenset()
+) -> list[UnboundNumber]:
     """Find decimal numbers in prose that are neither claim-tagged nor labelled illustrative.
 
     Code, inline code, link targets and version strings are excluded, because a number inside them
@@ -355,6 +422,7 @@ def find_unbound_numbers(text: str) -> list[UnboundNumber]:
     masked = _blank_spans(masked, _RELEASE_RE)
     masked = _blank_spans(masked, _XREF_RE)
     masked = _blank_spans(masked, _LICENCE_RE)
+    masked = _blank_declared_python_versions(masked, python_versions)
 
     out: list[UnboundNumber] = []
     for m in _UNBOUND_NUM_RE.finditer(masked):
@@ -384,7 +452,7 @@ def find_unbound_numbers(text: str) -> list[UnboundNumber]:
             UnboundNumber(
                 value=m.group(0).strip(),
                 line=text.count("\n", 0, start) + 1,
-                context=" ".join(sentence.split())[:120],
+                context=" ".join(sentence.split())[:120].rstrip(),
             )
         )
     return out
@@ -412,7 +480,7 @@ def load_baseline(path: Path) -> set[str]:
     if not path.exists():
         return set()
     return {
-        line.rstrip("\n")
+        line.rstrip()
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.startswith("#")
     }

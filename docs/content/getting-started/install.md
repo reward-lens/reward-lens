@@ -1,29 +1,45 @@
 # Install
 
-**What has to be on the machine before any of this runs?** Less than you would guess. The measurement half of the library is pure numpy and opens on any laptop. The model half wants weights and, for the real 8B graders, a GPU. You can learn the whole thing on the CPU half first.
+Python 3.11 or newer is required. The release checks cover Python 3.11, 3.12,
+and 3.13 on Linux. Check [PyPI](https://pypi.org/project/reward-lens/) for release
+availability. After 3.1.0 is published, install that exact version with:
 
 ```bash
-pip install reward-lens
+python -m pip install reward-lens==3.1.0
 ```
 
-Python 3.10 or newer. That base install brings **nothing compiled**: numpy, scipy, pandas, scikit-learn and a CLI. No torch, no transformers.
+For a source checkout, run `python -m pip install .` instead. The base package
+provides the CLI, configuration and schema validation, record handling, static
+analysis, coverage, and offline Ed25519 signatures. It does not install NumPy,
+torch, transformers, or Node. Some base dependencies use compiled wheels; the
+package does not claim that the dependency closure is pure Python.
 
-The extras are where the weight is, and each one buys a named capability:
+Choose extras for the capabilities you need:
 
 | Extra | What it adds |
 |---|---|
-| `white-box` | torch and transformers. Everything that reads a model's activations or gradients |
-| `verifier` | the program-substrate toolchain: coverage, mutation, property search. No GPU, no model |
-| `record` | columnar scalars and tensor shards for a training record. The reader works without it |
-| `organisms` | training planted model organisms, which needs `peft` and `datasets` |
-| `sampling` | vLLM, for a policy you want to sample from at speed |
-| `dict` | sparse-autoencoder tooling for feature-reward alignment |
-| `trl` | the TRL tap, for recording a live training run |
-| `viz` | matplotlib and seaborn, for the figure helpers |
-| `dev` | the test suite and the lint toolchain, for a source checkout |
-| `all` | every one of the above |
+| `trace` | PyArrow for columnar trace inputs |
+| `record` | PyArrow, safetensors, and NumPy for numeric record storage |
+| `white-box` | torch, transformers, and numerical tools for model measurements |
+| `train` | TRL, torch, transformers, and training-loop support |
+| `verifier` | mutation, property search, and numerical verifier tools |
+| `organisms` | white-box dependencies, PEFT, and datasets |
+| `viz` | matplotlib, seaborn, and pandas |
+| `mcp` | the optional MCP server and its transport dependencies |
+| `trackers` | offline/local W&B and MLflow clients |
+| `sigstore` | Sigstore signing support |
+| `openenv` | the pinned OpenEnv adapter runtime |
+| `judge` | a compatibility extra with no additional dependencies |
+| `all` | every declared optional extra |
 
-Install them the usual way, quoted so the shell does not eat the brackets: `pip install "reward-lens[white-box]"`.
+For example, run `python -m pip install 'reward-lens[white-box]'` for model
+measurements. Controlled TRL intervention routes require a separate environment
+with `trl==1.10.0`; the TRL tap has a separate 1.13.0 conformance profile. The
+[API guide](https://github.com/reward-lens/reward-lens/blob/main/docs/api.md) documents the refusal boundary.
+
+Development tools are a source dependency group, rather than a published `dev`
+extra. Follow [CONTRIBUTING.md](https://github.com/reward-lens/reward-lens/blob/main/CONTRIBUTING.md)
+for the tested CPU development setup and release matrix.
 
 The split is deliberate rather than tidy. A record is written by whoever ran the training and read by whoever is auditing it, and the auditor is the person most likely to be on a base install, so the reader dispatches on the file rather than on the environment.
 
@@ -36,11 +52,11 @@ That is asserted in CI rather than described here, and you can confirm it in thr
 
 ```python
 import sys
-import reward_lens, reward_lens.core, reward_lens.stats
+import reward_lens
 
 print(reward_lens.__version__)
 "torch" in sys.modules      # False, nothing model-touching was pulled in
-"numpy" in sys.modules      # True
+"numpy" in sys.modules      # False
 ```
 
 Anything that reads a model imports from its own subsystem, `from reward_lens.signals import ...` or `from reward_lens.policy import ...`, and only then does torch load. A module that needs an extra you do not have raises `ExtraRequiredError` naming the extra and the pip command, rather than an `ImportError` that leaves you guessing.
@@ -51,10 +67,10 @@ So a continuous-integration box, a notebook on a plane, a reviewer checking your
 
 - **You need the weights.** `reward-lens` hooks a live model in memory and reads the reward head directly, keeping it in fp32 so the readout matches the head exactly. Anything you can only reach through an API, with no weights to hold, is out of scope. If `transformers` can load it, an adapter can open it up.
 - **The good graders are gated.** Skywork and ArmoRM sit behind a license click on the Hugging Face Hub. Accept the terms on the model page, then `huggingface-cli login` with a token, or the load returns a 401 and nothing else.
-- **An 8B trace wants a GPU.** An 8B reward model in fp32 does not fit an 8 GB card, and the campaign numbers on this site were measured on larger hardware and committed as artifacts. That is a hardware fact, not a soft limit: the 8B code path names the call it would make and refuses rather than pretend. Everything conceptual runs first on the CPU through `from reward_lens.signals import from_tiny`, which builds a real (small) reward model with no download.
+- **An 8B trace wants a GPU.** An 8B reward model in fp32 does not fit an 8 GB card, and the campaign numbers on this site were measured on larger hardware and committed as artifacts. That is a hardware fact, not a soft limit: the 8B code path names the call it would make and refuses rather than pretend. CPU examples can use `from reward_lens.signals import from_tiny`, which initializes a small reward model without downloading pretrained weights.
 
 !!! warning "Needs a GPU"
-    Loading a flagship grader from the Hub is gated on this machine. `load_signal("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")` raises `NotImplementedError` by default and names the exact dispatch; passing `allow_download=True` opts in, and then it needs the memory to hold the model. The ungated loaders, `wrap_hf_model` for a model you already have and `from_tiny` for a toy one, never touch the network.
+    Loading a flagship grader from the Hub is gated on this machine. `load_signal("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")` raises `NotImplementedError` by default and names the exact dispatch; passing `allow_download=True` opts in, and then it needs the memory to hold the model. `wrap_hf_model` uses the model and tokenizer you supply. `from_tiny` initializes random weights locally and may fetch its named tokenizer from Hugging Face. To force offline operation, set `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`; it then uses the cached tokenizer or warns and uses its minimal byte-level fallback.
 
 ## Where to start
 

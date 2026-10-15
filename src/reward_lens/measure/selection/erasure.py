@@ -41,6 +41,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from reward_lens.core.evidence import Uncertainty, register_payload
+from reward_lens.core.extras import ExtraRequiredError
 from reward_lens.core.invariance import INVARIANT
 from reward_lens.core.reading import Reading, Refusal, RefusalReason
 from reward_lens.core.types import Capability
@@ -109,17 +110,51 @@ class BenchmarkFloor:
         )
 
 
-def rewardbench2_floor(*, split: str = "test") -> BenchmarkFloor:
+REWARDBENCH2_REPOSITORY = "allenai/reward-bench-2"
+# A dataset label is mutable.  This is the commit whose row structure produced the published
+# floor, so a future revision cannot silently turn a recomputation into a different benchmark.
+REWARDBENCH2_REVISION = "7ff08853b0d5686e79b13fda8677024f566a104a"
+
+
+def rewardbench2_floor(
+    *,
+    split: str = "test",
+    revision: str = REWARDBENCH2_REVISION,
+    local_files_only: bool = False,
+) -> BenchmarkFloor:
     """The random-scoring accuracy of RewardBench-2, computed from the dataset rather than assumed.
 
-    Downloads the dataset through `datasets` if it is not cached. It is 1,865 rows of metadata and
+    Reads a pinned dataset revision through `datasets`.  This is an `organisms` dependency because
+    the base package deliberately does not carry dataset clients.  It is 1,865 rows of metadata and
     the two columns this needs are integers, so this is cheap; what it is not is guessable, which is
     why it is computed. The commonly quoted floor of 0.25 is the best-of-4 case and 102 of the rows
     are not best-of-4.
     """
-    from datasets import load_dataset
+    try:
+        from datasets import DownloadConfig, load_dataset
+        from datasets import config as datasets_config
+    except ModuleNotFoundError as exc:
+        if exc.name != "datasets":
+            raise
+        raise ExtraRequiredError(
+            "RewardBench-2 floor recomputation needs the optional 'organisms' extra because it "
+            "uses its `datasets` dependency. Install it with:  pip install 'reward-lens[organisms]'"
+        ) from exc
 
-    data = load_dataset("allenai/reward-bench-2", split=split)
+    # `DownloadConfig.local_files_only` prevents data downloads but datasets 5 still probes the
+    # Hub for a loading script.  Its offline flag closes that metadata side channel as well.
+    was_offline = datasets_config.HF_DATASETS_OFFLINE
+    try:
+        if local_files_only:
+            datasets_config.HF_DATASETS_OFFLINE = True
+        data = load_dataset(
+            REWARDBENCH2_REPOSITORY,
+            split=split,
+            revision=revision,
+            download_config=DownloadConfig(local_files_only=local_files_only),
+        )
+    finally:
+        datasets_config.HF_DATASETS_OFFLINE = was_offline
     total = np.asarray(data["total_completions"], dtype=np.float64)
     correct = np.asarray(data["num_correct"], dtype=np.float64)
     return BenchmarkFloor(

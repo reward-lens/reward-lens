@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "artifact": "e1.assay.json",
+  "sha256": "8bafc3d79bcfc5d15b0578e0e39f285b01079ef87aeacbe97e43cc43243c5288",
+  "bytes": 22301,
+  "origin_repository": "reward-lens-product",
+  "origin_path": "fleet/TEST_EVIDENCE/P-E1-canonical-assay/assay.json",
+  "origin_source_commit": "42d22f03ff4cb984b7651e32112bd883150b9e45",
+  "origin_git_blob": "afa1d5e08044a729ec3511563e620088295bad60",
+  "packaged_equivalent": "src/reward_lens/commons/registry/seeds/e1.assay.json",
+  "purpose": "Privacy-portable historical input for explicit checkout seed injection. The two path substitutions and new content identity are recorded here; measured values are unchanged.",
+  "origin_introduction_commit": "e31642c85d4f9ef6104f88bce5df92fb39e44345",
+  "assay_id": "sha256:5714c89d6641aea29c8fce8c1a62a180ae781f85129e379be1cd89d537bfadc4",
+  "derivation_kind": "privacy-portable historical copy",
+  "original_sha256": "8e4da3da70ad0e7d897aa7ae9cd731514edcc89c90fbae65f9ff3a4dd7609e9b",
+  "original_assay_id": "sha256:2e60b37afc9aa56447aefafe3efd08cf5d14c7e345cb70cd3cd670c9ce646bfd",
+  "changes": [
+    {
+      "pointer": "/measurement/reward_statistics/0/result/trace/source",
+      "replacement": "reward-lens-assay:.e1-cache/extract/kl0.0_rollouts.parquet"
+    },
+    {
+      "pointer": "/measurement/reward_statistics/0/witness/path",
+      "replacement": "reward-lens-assay"
+    }
+  ],
+  "historical_embedding": "embedding sizes describe the original report-generation event and are retained as historical observations; derived record bytes are recorded separately",
+  "derived_record_bytes": 22301,
+  "derived_file_sha256": "8bafc3d79bcfc5d15b0578e0e39f285b01079ef87aeacbe97e43cc43243c5288",
+  "description": "Derived privacy-portable copy of the historical E1 assay; all measurements and original producer metadata are preserved.",
+  "original_bytes": 22405
+}

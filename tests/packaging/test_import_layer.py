@@ -3,8 +3,9 @@
 Every assertion here runs in the clean venv, in a fresh `-I` interpreter, with the working
 directory outside the checkout. The claim is not "these modules import" (they import fine in a
 developer environment that has numpy sitting there from something else); it is "these modules
-import when numpy, scipy, pandas, sklearn, pydantic-settings, rich, typer and torch are not
-installed at all, and none of them is in `sys.modules` when the import returns".
+import when numpy, scipy, pandas, sklearn, rich, typer and torch are not installed at all,
+and none of them, including the now-base `pydantic-settings`, is in `sys.modules` when these
+lightweight imports return".
 """
 
 from __future__ import annotations
@@ -240,7 +241,7 @@ def test_sensitivity_imports_on_the_base_closure_and_names_the_verifier_extra(
             "    s.np.array([1.0])\n"
             "except ExtraRequiredError as exc:\n"
             "    assert 'verifier' in str(exc), str(exc)\n"
-            '    assert "pip install \'reward-lens[verifier]\'" in str(exc), str(exc)\n'
+            "    assert \"pip install 'reward-lens[verifier]'\" in str(exc), str(exc)\n"
             "    assert isinstance(exc, ImportError), type(exc)\n"
             "except ModuleNotFoundError as exc:\n"
             "    raise AssertionError('the first numpy use raised a bare ModuleNotFoundError for '\n"
@@ -272,7 +273,7 @@ def test_require_extra_refuses_the_verifier_extra_on_the_base_closure(clean_pyth
             "except ExtraRequiredError as exc:\n"
             "    assert str(exc).startswith('x needs'), str(exc)\n"
             "    assert \"'verifier' extra\" in str(exc), str(exc)\n"
-            '    assert "pip install \'reward-lens[verifier]\'" in str(exc), str(exc)\n'
+            "    assert \"pip install 'reward-lens[verifier]'\" in str(exc), str(exc)\n"
             "    assert isinstance(exc, ImportError), type(exc)\n"
             "else:\n"
             "    raise AssertionError('require_extra(verifier) returned on a base install')\n"
@@ -292,7 +293,7 @@ def test_verifier_package_does_not_gate_its_whole_namespace(clean_python: Path) 
 
 def test_core_resolves_its_numpy_backed_names_lazily(clean_python: Path) -> None:
     """PEP 562. `import reward_lens.core` must not pull `core.evidence` (numpy) or `core.config`
-    (pydantic-settings), but `reward_lens.core.Evidence` must still resolve for anyone who has the
+    (base settings), but `reward_lens.core.Evidence` must still resolve for anyone who has the
     numeric stack, and `dir()` must still list the public surface so tab completion works."""
     result = import_probe(
         clean_python,
@@ -319,6 +320,7 @@ def test_core_resolves_its_numpy_backed_names_lazily(clean_python: Path) -> None
 #: so a row added to the mapping and not added here fails every case instead of going unmeasured.
 PROBED_EXTRAS = [
     "trace",
+    "mcp",
     "judge",
     "train",
     "sigstore",

@@ -222,6 +222,7 @@ def apply_ruleset(
         raise OSError(ctypes.get_errno(), "landlock_create_ruleset failed")
 
     try:
+
         def add_path(path: str, access: int) -> None:
             if not os.path.exists(path):
                 return
@@ -251,7 +252,9 @@ def apply_ruleset(
             add_path(path, FS_READ_FILE | FS_WRITE_FILE | FS_IOCTL_DEV)
 
         ctypes.set_errno(0)
-        rc = libc.syscall(ctypes.c_long(NR_RESTRICT_SELF), ctypes.c_int(ruleset_fd), ctypes.c_uint32(0))
+        rc = libc.syscall(
+            ctypes.c_long(NR_RESTRICT_SELF), ctypes.c_int(ruleset_fd), ctypes.c_uint32(0)
+        )
         if rc < 0:
             raise OSError(ctypes.get_errno(), "landlock_restrict_self failed")
     finally:
@@ -275,9 +278,6 @@ def interpreter_read_roots(executable: str) -> tuple[str, ...]:
             roots.add(candidate)
     real = os.path.realpath(executable)
     roots.add(str(Path(real).parent))
-    for entry in sys.path:
-        if entry and os.path.isdir(entry):
-            roots.add(os.path.realpath(entry))
     try:
         for entry in site.getsitepackages():
             if os.path.isdir(entry):

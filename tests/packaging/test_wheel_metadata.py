@@ -16,16 +16,42 @@ EXPECTED_EXTRAS = {
     # 3.1, per D-58
     "trace",
     "judge",
+    "mcp",
     "train",
     "sigstore",
+    "trackers",
     # carried from v3 because inherited code still needs them
     "verifier",
     "white-box",
     "organisms",
     "viz",
     "record",
+    "openenv",
     # the aggregate
     "all",
+}
+
+# These are checked against a built wheel's METADATA. They deliberately name the
+# two non-base integration lanes that were absent from EXPECTED_EXTRAS, so changing
+# source declarations without rebuilding cannot satisfy the control.
+EXPECTED_INTEGRATION_EXTRA_REQUIREMENTS = {
+    "mcp": {
+        "anyio>=4.9",
+        "httpx2>=2.5.0",
+        "jsonschema>=4.20.0",
+        "mcp-types==2.2.0",
+        "opentelemetry-api>=1.28.0",
+        "pydantic>=2.12.0",
+        "pyjwt[crypto]>=2.10.1",
+        "python-multipart>=0.0.9",
+        "sse-starlette>=3.0.0",
+        "starlette>=0.27",
+        "typing-extensions>=4.13.0",
+        "typing-inspection>=0.4.1",
+        "uvicorn>=0.31.1",
+    },
+    # Hatchling normalises compatible-release specifier order in METADATA.
+    "trackers": {"mlflow<4,>=3.11", "wandb<1,>=0.23"},
 }
 
 
@@ -72,9 +98,11 @@ def test_base_dependencies_are_the_declared_closure(metadata) -> None:
     assert base == [
         "click",
         "coverage",  # A-002
+        "cryptography",  # D-10 offline export signatures
         "jsonschema-rs",
         "libcst",  # A-001
         "pydantic",
+        "pydantic-settings",  # A-003 public evidence-store settings
         "pyyaml",
         "rfc8785",
     ], base
@@ -86,6 +114,25 @@ def test_extras_are_the_declared_set(metadata) -> None:
         "unexpected": sorted(provided - EXPECTED_EXTRAS),
         "missing": sorted(EXPECTED_EXTRAS - provided),
     }
+
+
+def _requirements_for_extra(metadata, extra: str) -> set[str]:
+    marker = f"extra == '{extra}'"
+    return {
+        requirement.strip()
+        for line in metadata.get_all("Requires-Dist") or []
+        for requirement, _, declared_marker in [line.partition(";")]
+        if declared_marker.strip() == marker
+    }
+
+
+def test_mcp_and_trackers_extra_requirements_are_in_the_built_wheel(metadata) -> None:
+    """The optional integration lanes are publishable metadata, not source-only plans."""
+    actual = {
+        extra: _requirements_for_extra(metadata, extra)
+        for extra in EXPECTED_INTEGRATION_EXTRA_REQUIREMENTS
+    }
+    assert actual == EXPECTED_INTEGRATION_EXTRA_REQUIREMENTS
 
 
 def test_all_includes_every_extra(metadata) -> None:

@@ -163,6 +163,7 @@ def _spec(
     surface: str = "error",
     verdicts: tuple[str, ...] = (),
     verdict_rule: str = "",
+    context_keys: tuple[str, ...] = (),
 ) -> ErrorSpec:
     return ErrorSpec(
         code=code,
@@ -173,6 +174,7 @@ def _spec(
         surface=surface,
         verdicts=verdicts,
         verdict_rule=verdict_rule,
+        context_keys=context_keys,
     )
 
 
@@ -254,6 +256,62 @@ _SPECS: tuple[ErrorSpec, ...] = (
             "to see what was written before the interrupt: run: reward-lens runs",
         ],
         130,
+    ),
+    _spec(
+        "RL0131",
+        "the comparison replay inputs are not usable",
+        (
+            "the comparison needs a closed run record and complete replay declarations, but one "
+            "is missing, unreadable, incomplete, or incompatible with the requested comparison"
+        ),
+        [
+            "supply the closed run directory and the exact replay declarations for both versions, "
+            "then run: reward-lens compare <the earlier record> <the later record>",
+            "use the run record's declared groups, estimators, and recorded components; do not "
+            "reconstruct any of them from row order or a version label",
+        ],
+        4,
+    ),
+    _spec(
+        "RL0132",
+        "the requested selection budget exceeds the finite response bank",
+        "requested selection budget {requested_budget} exceeds the safe half-bank limit for N={N}",
+        [
+            "choose a selection budget no greater than half the smallest task bank, then run: "
+            "reward-lens compare <the earlier record> <the later record>",
+            "to inspect the finite bank and its task-level candidate counts before selecting: "
+            "run: reward-lens describe",
+        ],
+        4,
+        context_keys=("N", "requested_budget"),
+    ),
+    _spec(
+        "RL0133",
+        "the susceptibility calibration conditions are missing or altered",
+        (
+            "the susceptibility reading lacks its required calibration conditions, or those "
+            "conditions differ from the registered calibration"
+        ),
+        [
+            "retain the registered calibration block with the susceptibility reading, then run: "
+            "reward-lens compare <the earlier record> <the later record>",
+            "do not compare a reading after changing its calibration conditions; make and record "
+            "a new calibrated reading instead",
+        ],
+        4,
+    ),
+    _spec(
+        "RL0134",
+        "the comparison has no finite response bank",
+        "comparison requires a response bank, and none was supplied",
+        [
+            "supply the finite response bank for this comparison, then run: reward-lens compare "
+            "<the earlier record> <the later record>",
+            "to inspect the inputs a comparison uses before selecting responses: run: "
+            "reward-lens describe",
+        ],
+        4,
+        context_keys=("bank",),
     ),
     # --- RL02xx, validity findings ---------------------------------------------------------------
     _spec(
@@ -406,6 +464,117 @@ _SPECS: tuple[ErrorSpec, ...] = (
         2,
         surface="finding",
     ),
+    # --- RL0221--RL0228, soundness findings ------------------------------------------------------
+    _spec(
+        "RL0221",
+        "a known-wrong solution was accepted, or rejected for a reason other than the expected one",
+        "a known-wrong solution was accepted, or rejected for a reason other than the expected one",
+        [
+            "run the protected cases again and inspect the expected and observed reasons: run: "
+            "reward-lens audit .",
+            "repair the evaluator or the protected case before relying on this score",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0222",
+        "a known-good solution was rejected, which is a defect in the evaluator and not in the task",
+        "a known-good solution was rejected, which is a defect in the evaluator and not in the task",
+        [
+            "run the protected cases again and inspect the expected and observed reasons: run: "
+            "reward-lens audit .",
+            "repair the evaluator before treating this task as failed",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0223",
+        "the grader accepted work the owner's stricter reference verifier rejected",
+        "the grader accepted work the owner's stricter reference verifier rejected",
+        [
+            "compare the grader and reference-verifier decisions on the protected case: run: "
+            "reward-lens audit .",
+            "tighten the grader or record that this task cannot support the claim being made",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0224",
+        "a mutant of the grader survived the protected suite, naming something the suite does not test",
+        "a mutant of the grader survived the protected suite, naming something the suite does not test",
+        [
+            "add a protected case that distinguishes the surviving mutation, then run: "
+            "reward-lens audit .",
+            "keep the mutation result unresolved until a protected case kills it or proves it equivalent",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0225",
+        "the score moved under a transformation of the response that cannot change correctness",
+        "the score moved under a transformation of the response that cannot change correctness",
+        [
+            "reproduce the transformed pair and inspect their two scores: run: reward-lens audit .",
+            "repair the evaluator's sensitivity to the transformation before using the score",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0226",
+        "an injected real defect did not move the score, so the grader is not reading the response",
+        "an injected real defect did not move the score, so the grader is not reading the response",
+        [
+            "rerun the injected-defect case and inspect the response the grader received: run: "
+            "reward-lens audit .",
+            "repair the grader input path before interpreting the score",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0227",
+        "an exploiting response outscored the best honest response on the same task",
+        "an exploiting response outscored the best honest response on the same task",
+        [
+            "inspect the exploit and honest response on the same task: run: reward-lens audit .",
+            "repair the exploit path or limit the claim to behavior the evaluator actually distinguishes",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0228",
+        "the grader source was not available, so mutation and the metamorphic relations did not run",
+        "the grader source was not available, so mutation and the metamorphic relations did not run",
+        [
+            "supply readable grader source and run the soundness checks again: run: reward-lens audit .",
+            "keep the unavailable checks as an absence rather than treating them as passed",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0229",
+        "the panel's own self-check refused a number it was about to report",
+        "the soundness panel refused its own output: {detail}",
+        [
+            "report the rate with a bounded interval and mutation scores with both denominators, "
+            "or do not report the number at all: run: reward-lens audit .",
+        ],
+        4,
+        verdicts=("finding",),
+        verdict_rule=(
+            "RL0229 is an error, and exits 4, when the soundness panel is about to emit an "
+            "invalid number. When an already-recorded measurement carries this code, it is a "
+            "finding about that measurement and has no process exit."
+        ),
+        context_keys=("detail", "entry_id"),
+    ),
     _spec(
         "RL0231",
         "the policy's context discloses the grader",
@@ -420,6 +589,99 @@ _SPECS: tuple[ErrorSpec, ...] = (
         2,
         surface="finding",
     ),
+    # --- RL0241--RL0245, signal findings ---------------------------------------------------------
+    _spec(
+        "RL0241",
+        "contrast present",
+        "contrast present",
+        [
+            "inspect the recorded applied rewards within each declared task group: run: "
+            "reward-lens audit .",
+            "keep the declared task and group identities with the recorded rewards, so the "
+            "contrast can be checked rather than inferred from row order",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0242",
+        "low effective sample size",
+        "low effective sample size",
+        [
+            "record more independent declared task groups before relying on the estimate: run: "
+            "reward-lens audit .",
+            "read the clustered effective sample size beside the raw rollout count, because "
+            "repeated rows from one task do not add independent evidence",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0243",
+        "presentation carries reward",
+        "presentation carries reward",
+        [
+            "inspect the recorded component values and the presentation variation they score: "
+            "run: reward-lens audit .",
+            "change the reward or the presentation dependence before treating the score as a "
+            "measure of the intended behavior",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0244",
+        "components disagree",
+        "components disagree",
+        [
+            "inspect the signed recorded component values for the affected groups: run: "
+            "reward-lens audit .",
+            "state how the components trade off before treating their aggregate as one coherent "
+            "reward signal",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0245",
+        "TRL zero-std reconciliation differs",
+        "TRL zero-std reconciliation differs",
+        [
+            "compare the logged and computed zero-standard-deviation fractions: run: "
+            "reward-lens audit .",
+            "keep both values in the record and resolve the data-source discrepancy before using "
+            "either as the signal summary",
+        ],
+        2,
+        surface="finding",
+    ),
+    _spec(
+        "RL0251",
+        "declared reward semantics differ from observed trace",
+        "declared reward semantics differ from observed trace: declared={declared}; observed={observed}",
+        [
+            "inspect the declaration beside the recorded score trees: run: reward-lens audit .",
+            "repair the declaration or the reward implementation, but keep the observed trace "
+            "visible until they agree",
+        ],
+        2,
+        surface="finding",
+        context_keys=("declared", "observed"),
+    ),
+    _spec(
+        "RL0261",
+        "the signed applied-weight sum differs from negative recorded loss",
+        "the signed applied-weight sum {sum_applied_weight} differs from negative recorded loss {negative_loss}",
+        [
+            "inspect the signed applied weights and recorded scalar loss for the affected step: "
+            "run: reward-lens trace <the record path>",
+            "keep both scalar terms in the record and repair the trainer telemetry before making "
+            "a scalar-loss decomposition claim",
+        ],
+        2,
+        surface="finding",
+        context_keys=("sum_applied_weight", "negative_loss"),
+    ),
     # --- RL03xx, outcome -------------------------------------------------------------------------
     _spec(
         "RL0301",
@@ -429,8 +691,7 @@ _SPECS: tuple[ErrorSpec, ...] = (
             "correct work"
         ),
         [
-            "point the run at a protected test suite: run: reward-lens audit . --outcome "
-            "./outcome",
+            "point the run at a protected test suite: run: reward-lens audit . --outcome ./outcome",
             "to see whether a suite is usable before you rely on it: run: reward-lens doctor "
             "--outcome ./outcome",
             "if there is no suite and there will not be one, the record says so as an absence, "
@@ -457,12 +718,36 @@ _SPECS: tuple[ErrorSpec, ...] = (
         4,
     ),
     _spec(
+        "RL0310",
+        "the policy file cannot safely decide the record",
+        "the policy file is malformed, inconsistent, or names evidence this build cannot safely evaluate",
+        [
+            "correct the policy file and its declared evidence checks, then run: reward-lens audit . "
+            "--policy <the policy file>",
+            "keep the policy version immutable once it has decided a record; write a new version "
+            "for a different set of checks",
+        ],
+        4,
+    ),
+    _spec(
+        "RL0311",
+        "the policy digest does not match the record",
+        (
+            "the policy digest named by the record differs from the policy file used to decide it, "
+            "so the decision cannot be reproduced from those two artifacts"
+        ),
+        [
+            "reload the exact policy version that produced the record, or make a new decision: run: "
+            "reward-lens audit . --policy <the policy file>",
+            "do not replace a policy file in place after it has decided a record; retain the "
+            "recorded digest with the immutable policy bytes",
+        ],
+        4,
+    ),
+    _spec(
         "RL0341",
         "the outcome check collected no tests",
-        (
-            "the outcome check at {path} collected 0 tests, so it cannot qualify a correctness "
-            "claim"
-        ),
+        ("the outcome check at {path} collected 0 tests, so it cannot qualify a correctness claim"),
         [
             "check the path, or run: reward-lens doctor --outcome {path}",
             "if the suite collects from somewhere else, run it yourself first and pass the "
@@ -491,8 +776,7 @@ _SPECS: tuple[ErrorSpec, ...] = (
         "the sandbox tier asked for is stronger than this machine holds",
         "the run required tier {required} and this machine holds {held}",
         [
-            "to see what each tier needs and which one this machine holds: run: reward-lens "
-            "doctor",
+            "to see what each tier needs and which one this machine holds: run: reward-lens doctor",
             "if the weaker tier is acceptable for this measurement, drop the requirement and let "
             "the record carry the tier that was used: run: reward-lens audit .",
         ],
@@ -536,6 +820,19 @@ _SPECS: tuple[ErrorSpec, ...] = (
             "the run: run: reward-lens audit . --dry-run",
         ],
         6,
+    ),
+    _spec(
+        "RL0502",
+        "the seeker arm was asked for with no cap on what it may spend",
+        "the {actor} actor of the seeker spends money, and this run set no cap on what it may spend",
+        [
+            "name the cap the arm may spend and run it again: run: reward-lens audit . --seeker "
+            "{actor} --max-budget-usd 0.50",
+            "to run a local model at no cost instead: run: reward-lens audit . --seeker local",
+            "to run the audit with no paid arm at all, leave the seeker off, which is the default",
+        ],
+        6,
+        context_keys=("actor", "field"),
     ),
     # --- RL06xx, record integrity ----------------------------------------------------------------
     _spec(
@@ -590,6 +887,32 @@ _SPECS: tuple[ErrorSpec, ...] = (
         4,
     ),
     _spec(
+        "RL0610",
+        "the record cannot supply a series the requested reading needs",
+        "the trace record cannot supply the series {series}",
+        [
+            "record the missing series at the source, or declare it absent with its reason, then "
+            "read the artifact again: run: reward-lens trace <the record path>",
+            "if the artifact is still being written, wait for the missing series rather than "
+            "treating a partial trace as a complete one",
+        ],
+        4,
+        context_keys=("series", "source"),
+    ),
+    _spec(
+        "RL0611",
+        "the trace record failed a named integrity rule on a named row",
+        "the trace record failed integrity rule {rule} at row {row}",
+        [
+            "record the missing structure at the source, then read the artifact again: run: "
+            "reward-lens trace <the record path>",
+            "for an explicitly incomplete capture, read with a permissive policy and keep the "
+            "violation visible in the record",
+        ],
+        4,
+        context_keys=("rule", "row", "source"),
+    ),
+    _spec(
         "RL0620",
         "something this record depends on has changed since it was written",
         "the record depends on {name} at digest {expected}, and what is on disk now is {actual}",
@@ -610,6 +933,98 @@ _SPECS: tuple[ErrorSpec, ...] = (
             "is not visible from here",
         ],
         4,
+    ),
+    _spec(
+        "RL0630",
+        "the record schema major is incompatible with this build",
+        (
+            "the received record declares a schema major this build does not read, so its "
+            "original bytes were preserved without interpreting the record as a current Assay"
+        ),
+        [
+            "use a reward-lens build that reads the declared schema major, or migrate the "
+            "preserved source bytes: run: reward-lens import <the received record>",
+            "keep the received bytes unchanged until a compatible reader or an explicit migration "
+            "can account for every field",
+        ],
+        4,
+        context_keys=("major", "declared", "original_bytes"),
+    ),
+    _spec(
+        "RL0631",
+        "the received bundle is unsafe",
+        (
+            "a bundle member violates a safety rule, so the bundle was refused before reward-lens "
+            "read any member content"
+        ),
+        [
+            "remove or rebuild the named member to satisfy the reported rule, then run: "
+            "reward-lens import <the bundle>",
+            "use an export bundle with safe relative paths, no duplicate or symlink members, and "
+            "bounded member, total, and decompression sizes",
+        ],
+        4,
+        context_keys=("member", "rule"),
+    ),
+    _spec(
+        "RL0632",
+        "the bundle signature is invalid",
+        (
+            "the bundle signature does not verify for the stated signer and digest, so the "
+            "received bytes cannot be accepted as the signed export"
+        ),
+        [
+            "restore the exported bytes or obtain a newly signed bundle, then run: reward-lens "
+            "import <the bundle> --verify",
+            "keep the signer and the digest reported by verification with the failed receipt; a "
+            "signature identifies a signer but does not establish that an outcome claim is right",
+        ],
+        4,
+        context_keys=("signer", "digest", "verification"),
+    ),
+    _spec(
+        "RL0640",
+        "a projection needs a field the saved Assay does not carry",
+        "the {view} projection needs saved field {field}, but the Assay does not carry it",
+        [
+            "record the required projection evidence before requesting the {view} projection: "
+            "run: reward-lens audit .",
+            _RECORD,
+        ],
+        4,
+        context_keys=("view", "field"),
+    ),
+    _spec(
+        "RL0641",
+        "the export payload contains a credential-shaped value",
+        (
+            "the export scan found a credential-shaped value in the payload bytes, so no artifact "
+            "was written from those unredacted bytes"
+        ),
+        [
+            "redact the reported value and write a new linked artifact, then run: reward-lens "
+            "export <the record>",
+            "keep the redacted artifact linked to the original export attempt so a reader can see "
+            "what was removed without recovering the credential",
+        ],
+        4,
+        context_keys=("hits", "redacted_path"),
+    ),
+    _spec(
+        "RL0642",
+        "the record cites a rendering derived from itself",
+        (
+            "the record names a rendered artifact derived from that same record, creating a "
+            "self-reference that cannot serve as independent evidence"
+        ),
+        [
+            "remove the rendered-artifact reference and export the unchanged record again: run: "
+            "reward-lens export <the record>",
+            "keep the rendered artifact outside the record it renders, with a one-way link from "
+            "the artifact to the saved record",
+        ],
+        4,
+        context_keys=("value",),
     ),
     # --- RL07xx, capability or extra unavailable ---------------------------------------------------
     _spec(
@@ -655,6 +1070,17 @@ _SPECS: tuple[ErrorSpec, ...] = (
         5,
     ),
     _spec(
+        "RL0704",
+        "the requested capability needs an extra that is not installed",
+        "{capability} needs the reward-lens {extra} extra, which is not installed",
+        [
+            "install the extra that carries it: run: pip install 'reward-lens[{extra}]'",
+            "to check the installed capabilities before running again: run: reward-lens doctor",
+        ],
+        5,
+        context_keys=("extra", "capability"),
+    ),
+    _spec(
         "RL0710",
         "the reward has a shape this build does not adapt",
         "{entry} has the {shape} shape, which reward-lens 3.1.0 does not adapt: {detail}",
@@ -668,6 +1094,35 @@ _SPECS: tuple[ErrorSpec, ...] = (
             "row and say nothing about whether the score meant anything",
         ],
         5,
+    ),
+    _spec(
+        "RL0711",
+        "the provider could not complete the requested operation",
+        "{provider} could not complete {operation}: {detail}",
+        [
+            "check the provider credentials, network access and service status, then run: "
+            "reward-lens doctor",
+            "after the provider is available, run the same measurement again: run: "
+            "reward-lens audit .",
+        ],
+        5,
+        context_keys=("provider", "operation", "detail"),
+    ),
+    _spec(
+        "RL0720",
+        "the requested tracker is unavailable",
+        (
+            "the requested tracker cannot write this export because its required credential or "
+            "offline destination is unavailable"
+        ),
+        [
+            "supply the named tracker credential or configure its offline destination, then run: "
+            "reward-lens export <the record> --to <the tracker>",
+            "use the file tracker for an offline export when no account-backed tracker is "
+            "available",
+        ],
+        5,
+        context_keys=("tracker", "credential"),
     ),
     # --- RL08xx, pending decision ------------------------------------------------------------------
     _spec(
@@ -728,6 +1183,12 @@ _LONG_FORMS: dict[str, tuple[str, dict[int, str]]] = {
         "",
         {0: "pick it up where it stopped: run: reward-lens audit --resume <the run id>"},
     ),
+    "RL0132": (
+        "the requested selection budget is above half the smallest task-level candidate count in "
+        "the finite response bank, which would exceed the declared selection limit",
+        {},
+    ),
+    "RL0134": ("comparison requires a finite response bank, and none was supplied", {}),
     "RL0120": (
         "the reach panel runs the grader for the subject the message names against a task, and no "
         "task set was supplied",
@@ -777,9 +1238,24 @@ _LONG_FORMS: dict[str, tuple[str, dict[int, str]]] = {
         "recorded as though they were measured",
         {},
     ),
+    "RL0229": (
+        "the soundness panel refused an output that would have reported a rate without a bounded "
+        "interval or a mutation score without both denominators",
+        {},
+    ),
     "RL0231": (
         "the context the policy sees discloses the grader, and the finding quotes the disclosure "
         "and names the part of the context it was read from",
+        {},
+    ),
+    "RL0251": (
+        "the declared reward semantics differ from the observed trace, and the finding retains "
+        "both values for inspection",
+        {},
+    ),
+    "RL0261": (
+        "the signed applied-weight sum differs from the negative recorded scalar loss, so the "
+        "scalar-loss identity does not hold for that recorded step",
         {},
     ),
     "RL0302": (
@@ -813,6 +1289,14 @@ _LONG_FORMS: dict[str, tuple[str, dict[int, str]]] = {
         "was written",
         {},
     ),
+    "RL0502": (
+        "a paid seeker actor was requested without a money cap, so reward-lens refused before it "
+        "could assemble a paid request",
+        {
+            0: "name the cap the paid arm may spend and run it again: run: reward-lens audit . "
+            "--seeker api --max-budget-usd 0.50"
+        },
+    ),
     "RL0601": (
         "the record declares a schema major this build cannot read, and the file was left exactly "
         "as it was",
@@ -832,12 +1316,29 @@ _LONG_FORMS: dict[str, tuple[str, dict[int, str]]] = {
         "failed there",
         {},
     ),
+    "RL0610": (
+        "the trace record cannot supply a named series the requested reading needs, so that "
+        "reading cannot be built from this artifact",
+        {},
+    ),
+    "RL0611": (
+        "the trace record failed a named integrity rule on a named row, so the reader cannot "
+        "treat that structure as valid",
+        {},
+    ),
     "RL0620": (
         "the record depends on something at the digest it recorded, and what is on disk now "
         "hashes to a different one",
         {},
     ),
     "RL0621": ("there is no run by that name or id on this machine", {}),
+    "RL0640": (
+        "the projection needs a named saved Assay field, but the saved Assay does not carry it",
+        {
+            0: "run the measurement that retains the required projection evidence, then ask for "
+            "the projection again: run: reward-lens audit .",
+        },
+    ),
     "RL0701": (
         "the capability the message names is not installed in this environment, so the "
         "measurement that rests on it cannot be made",
@@ -852,9 +1353,18 @@ _LONG_FORMS: dict[str, tuple[str, dict[int, str]]] = {
         "the verb the message names is not in this build, so this invocation cannot be carried out",
         {},
     ),
+    "RL0704": (
+        "the capability the message names needs an extra that is not installed in this environment",
+        {0: "install the extra that carries it: run: pip install 'reward-lens[<the extra>]'"},
+    ),
     "RL0710": (
         "the reward entry the message names has a shape reward-lens 3.1.0 does not adapt, and the "
         "message says which shape was found and what about it could not be adapted",
+        {},
+    ),
+    "RL0711": (
+        "the provider the message names could not complete the requested operation, and the "
+        "message says what happened",
         {},
     ),
     "RL0801": (

@@ -1,0 +1,54 @@
+{
+  "defects": [
+    {
+      "n": 1,
+      "defect": "tests/conftest.py collection gating keyed by extra with a probe module per extra (the base-install job's check)",
+      "disposition": "present",
+      "evidence": "tests/conftest.py:54",
+      "note": "gating is present but keyed differently: 4.0 skips collection of any test file naming a white-box module when torch is absent, rather than one probe module per extra. See Premise checks."
+    },
+    {
+      "n": 2,
+      "defect": "the TRL tap attaching on a machine without transformers",
+      "disposition": "carried",
+      "test": "test_the_tap_registers_its_callback_without_transformers",
+      "evidence": "src/reward_lens/tap/adapters/trl.py:472",
+      "note": "carried as `_callback_base()`; the brief's description of the fix is the pre-fix state. See Premise checks."
+    },
+    {
+      "n": 3,
+      "defect": "capability_name() instead of str(int(caps)) on the Capability Flag",
+      "disposition": "present",
+      "evidence": "src/reward_lens/measure/base.py:685",
+      "note": "the site is in measure/, not access/. `Capability` is a Flag with no `__int__`, so `str(int(caps))` raises; from 3.11 a composite Flag always has a truthy `.name`, so the `or` never evaluates it. 4.0 requires >=3.11, which is why the branch is dead here and the CI failure was the 3.10 leg. The release helper is still worth taking and is proposed to P-PORT-2."
+    },
+    {
+      "n": 4,
+      "defect": "the reachability inventory test that asserted the developer's HF cache now pytest.skips",
+      "disposition": "present",
+      "evidence": "tests/test_public_surface.py:94",
+      "note": "`skip_without_extras` skips the reachability test when the extra is absent instead of asserting against a cached model."
+    },
+    {
+      "n": 5,
+      "defect": "test_debt_m.py's BLAS-dependent count (agreed == 56) made robust",
+      "disposition": "assigned:P-PORT-4",
+      "evidence": "tests/acceptance/test_debt_m.py:190",
+      "note": "the site is outside every slice of the release diff (it is a test file) and outside P-PORT's writable paths. The replacement assertion is written out in the handoff; the packet that owns tests/acceptance/ applies it. P-PORT carries nothing here: the row hands the work over and the wave-1 exit refuses it until that packet closes it.",
+      "hunks": [
+        "tests/acceptance/test_debt_m.py:190"
+      ]
+    },
+    {
+      "n": 6,
+      "defect": "EngineBoundary(RuntimeError, AttributeError) so hasattr answers protocol checks, plus the hasattr sites in policy/selection.py and geometry/hessian.py",
+      "disposition": "assigned:P-PORT-4",
+      "evidence": "src/reward_lens/policy/vllm.py:86",
+      "note": "the two hunks are the class line and the sixteen-line note that explains it; both sit in the studies-runtime slice, which P-PORT-4 owns and P-PORT cannot write. The exact line and the two hasattr sites it fixes are in the handoff. P-PORT carries nothing here: the row hands the work over and the wave-1 exit refuses it until it is applied.",
+      "hunks": [
+        "src/reward_lens/policy/vllm.py@86:85#78b4552c0f",
+        "src/reward_lens/policy/vllm.py@92:92#ac340d23a5"
+      ]
+    }
+  ]
+}

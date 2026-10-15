@@ -9,11 +9,12 @@ studies' real-population arms are recorded as honestly gated (inconclusive) foll
 
 from __future__ import annotations
 
+from studies.atlas_meta.performative import build_spec as build_performative_spec
+from studies.atlas_meta.universality import build_spec as build_universality_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.atlas_meta.performative import build_spec as build_performative_spec
-from studies.atlas_meta.universality import build_spec as build_universality_spec
 
 
 def test_universality_calibrates_vce_sign(tmp_path):

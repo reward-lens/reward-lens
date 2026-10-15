@@ -35,7 +35,9 @@ def owner_check(source: str = CHECK_SOURCE) -> OutcomeCheck:
     )
 
 
-def test_no_outcome_check_leaves_the_record_unqualified(protected: Partition, provenance: EntryProvenance) -> None:
+def test_no_outcome_check_leaves_the_record_unqualified(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     result = qualify(
         check=None,
         suite=protected,
@@ -50,7 +52,9 @@ def test_no_outcome_check_leaves_the_record_unqualified(protected: Partition, pr
     assert result.reason == "no outcome check was supplied"
 
 
-def test_the_message_and_finding_id_are_imported_not_rewritten(protected: Partition, provenance: EntryProvenance) -> None:
+def test_the_message_and_finding_id_are_imported_not_rewritten(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     result = qualify(
         check=None,
         suite=protected,
@@ -63,7 +67,9 @@ def test_the_message_and_finding_id_are_imported_not_rewritten(protected: Partit
     assert result.finding_id == FINDING_IDS["RL0301"]
 
 
-def test_the_unqualified_record_is_an_absence_entry_not_a_zero(protected: Partition, provenance: EntryProvenance) -> None:
+def test_the_unqualified_record_is_an_absence_entry_not_a_zero(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     entry = qualify(
         check=None,
         suite=protected,
@@ -82,7 +88,9 @@ def test_the_unqualified_record_is_an_absence_entry_not_a_zero(protected: Partit
     assert entry.provenance.sandbox_tier == "L3"
 
 
-def test_a_renamed_copy_of_the_audited_grader_is_never_independent(protected: Partition, provenance: EntryProvenance) -> None:
+def test_a_renamed_copy_of_the_audited_grader_is_never_independent(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     result = qualify(
         check=owner_check(GRADER),
         suite=protected,
@@ -90,14 +98,18 @@ def test_a_renamed_copy_of_the_audited_grader_is_never_independent(protected: Pa
         grader_source_digest=GRADER,
         subject_ref=SUBJECT,
         provenance=provenance,
-        result=SuiteResult(known_good_passed=3, known_good_total=3, known_wrong_failed=2, known_wrong_total=2),
+        result=SuiteResult(
+            known_good_passed=3, known_good_total=3, known_wrong_failed=2, known_wrong_total=2
+        ),
     )
     assert result.qualified is False
     assert result.code == "RL0301"
     assert result.reason == "the outcome check is the audited grader under another name"
 
 
-def test_an_empty_protected_suite_fails_qualification(protected: Partition, provenance: EntryProvenance) -> None:
+def test_an_empty_protected_suite_fails_qualification(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     for name in ("test_case_0.py", "test_case_1.py", "test_case_2.py"):
         protected.retire(name, disclosed_to="repair-agent", reason="shown in a diff")
     result = qualify(
@@ -107,13 +119,17 @@ def test_an_empty_protected_suite_fails_qualification(protected: Partition, prov
         grader_source_digest=GRADER,
         subject_ref=SUBJECT,
         provenance=provenance,
-        result=SuiteResult(known_good_passed=0, known_good_total=0, known_wrong_failed=0, known_wrong_total=0),
+        result=SuiteResult(
+            known_good_passed=0, known_good_total=0, known_wrong_failed=0, known_wrong_total=0
+        ),
     )
     assert result.qualified is False
     assert result.reason == "the protected suite holds no item"
 
 
-def test_a_known_wrong_variant_that_passes_fails_qualification(protected: Partition, provenance: EntryProvenance) -> None:
+def test_a_known_wrong_variant_that_passes_fails_qualification(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     result = qualify(
         check=owner_check(),
         suite=protected,
@@ -121,13 +137,17 @@ def test_a_known_wrong_variant_that_passes_fails_qualification(protected: Partit
         grader_source_digest=GRADER,
         subject_ref=SUBJECT,
         provenance=provenance,
-        result=SuiteResult(known_good_passed=3, known_good_total=3, known_wrong_failed=1, known_wrong_total=2),
+        result=SuiteResult(
+            known_good_passed=3, known_good_total=3, known_wrong_failed=1, known_wrong_total=2
+        ),
     )
     assert result.qualified is False
     assert result.reason == "a known-wrong variant passed the outcome check"
 
 
-def test_a_qualified_check_carries_an_estimate_entry(protected: Partition, provenance: EntryProvenance) -> None:
+def test_a_qualified_check_carries_an_estimate_entry(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     result = qualify(
         check=owner_check(),
         suite=protected,
@@ -135,7 +155,9 @@ def test_a_qualified_check_carries_an_estimate_entry(protected: Partition, prove
         grader_source_digest=GRADER,
         subject_ref=SUBJECT,
         provenance=provenance,
-        result=SuiteResult(known_good_passed=3, known_good_total=3, known_wrong_failed=2, known_wrong_total=2),
+        result=SuiteResult(
+            known_good_passed=3, known_good_total=3, known_wrong_failed=2, known_wrong_total=2
+        ),
     )
     assert result.qualified is True
     assert result.code is None
@@ -148,7 +170,9 @@ def test_a_qualified_check_carries_an_estimate_entry(protected: Partition, prove
     assert entry.method.id == "outcome.protected_suite"
 
 
-def test_the_label_is_scoped_to_the_partition_it_was_measured_on(protected: Partition, provenance: EntryProvenance) -> None:
+def test_the_label_is_scoped_to_the_partition_it_was_measured_on(
+    protected: Partition, provenance: EntryProvenance
+) -> None:
     result = qualify(
         check=owner_check(),
         suite=protected,
@@ -156,7 +180,9 @@ def test_the_label_is_scoped_to_the_partition_it_was_measured_on(protected: Part
         grader_source_digest=GRADER,
         subject_ref=SUBJECT,
         provenance=provenance,
-        result=SuiteResult(known_good_passed=3, known_good_total=3, known_wrong_failed=2, known_wrong_total=2),
+        result=SuiteResult(
+            known_good_passed=3, known_good_total=3, known_wrong_failed=2, known_wrong_total=2
+        ),
     )
     assert result.label == "outcome-qualified for protected partition acceptance-suite-1"
     assert result.partition_digest == protected.digest

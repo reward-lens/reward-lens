@@ -484,7 +484,36 @@ def _project_collapse(
     if not np.all(np.isfinite(y)):
         return None, None, "the all-fail fraction is degenerate at 0 or 1 across the window."
     x = steps.astype(float)
-    slope, intercept = np.polyfit(x, y, 1)
+    xbar = float(x.mean())
+    ybar = float(y.mean())
+    centered_x = x - xbar
+    centered_y = y - ybar
+    sxx = float(np.dot(centered_x, centered_x))
+    if sxx <= 0.0:
+        return (
+            None,
+            None,
+            "every step in this window carries the same index, so no line is identified.",
+        )
+
+    covariance = float(np.dot(centered_x, centered_y))
+    # A point projection divides by the fitted slope, so a sign that arithmetic cannot resolve is
+    # not a weak trend. This is the standard gamma_n forward-error bound for the dot product in the
+    # centered covariance, divided by the (positive) x sum of squares. It rejects the symmetric
+    # zero-trend AISI window before a roundoff sign can become an astronomical crossing date.
+    n = int(x.size)
+    eps = float(np.finfo(float).eps)
+    gamma_n = n * eps / (1.0 - n * eps)
+    slope_roundoff = gamma_n * float(np.abs(centered_x * centered_y).sum()) / sxx
+    slope = covariance / sxx
+    if abs(slope) <= slope_roundoff:
+        return (
+            None,
+            None,
+            "the all-fail fraction has no numerically resolved direction over this window, so no "
+            "dominance step is projected from it.",
+        )
+    intercept = ybar - slope * xbar
     if slope <= 0:
         return (
             None,
@@ -493,7 +522,7 @@ def _project_collapse(
             f"so no dominance step is projected from it.",
         )
     target = _logit(np.array([DOMINANCE_AT]))[0]
-    at = float((target - intercept) / slope)
+    at = float(xbar + (target - ybar) / slope)
     ci, note = _fieller_crossing(x, y, float(slope), float(intercept), float(target))
     return at, ci, note
 

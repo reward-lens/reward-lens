@@ -3,17 +3,22 @@
 Written by `tests/packaging/test_closure.py`. This is what `uv pip list` prints in a venv
 holding only the built wheel, which is the count D-58 says binds.
 
-12 distributions.
+17 distributions.
 
 | distribution | version |
 |---|---|
 | annotated-types | 0.8.0 |
+| cffi | 2.1.1 |
 | click | 8.5.0 |
-| coverage | 7.16.1 |
-| jsonschema-rs | 0.56.0 |
+| coverage | 7.16.2 |
+| cryptography | 50.0.2 |
+| jsonschema-rs | 0.58.6 |
 | libcst | 1.9.0 |
-| pydantic | 2.13.5 |
-| pydantic-core | 2.46.5 |
+| pycparser | 3.11 |
+| pydantic | 2.14.1 |
+| pydantic-core | 2.50.1 |
+| pydantic-settings | 2.16.0 |
+| python-dotenv | 1.2.4 |
 | pyyaml | 6.0.3 |
 | reward-lens | 3.1.0 |
 | rfc8785 | 0.1.4 |
@@ -42,9 +47,27 @@ The alternative A-002 rejected was a second tracer on `sys.settrace` (3.11) and
 `sys.monitoring` (3.12+), which would replace a tracer whose semantics the inherited tests
 pin, to save one pure-payload distribution. `requires-python >= 3.11` is unchanged.
 
+## Addendum A-003: public evidence-store settings on the base wheel
+
+`reward_lens.core.store.EvidenceStore` is a documented public path. Its constructor
+uses `core.config.Settings` for the default store path; the claims command reaches the
+same store for evidence references. `core.config` imports `pydantic_settings` at module
+scope, so a base wheel without that declared dependency made both public paths fail at
+import, even though the first-hour audit smoke still passed. A fresh wheel-only Python
+3.11 environment reproduced `ModuleNotFoundError: pydantic_settings` from
+`reward_lens.artifacts.claims` and `reward_lens.core.store`.
+
+The base metadata now declares `pydantic-settings>=2.13`; its only newly resolved
+transitive distribution in the measured Python 3.11 closure is `python-dotenv`. The
+closure moves from 15 to 17 distributions, with no numeric, rendering, or network
+client added. The clean-wheel verifier imports claims and opens both default and
+explicit evidence stores. Keeping the existing Pydantic settings implementation
+preserves environment overrides and store-path behavior. A lazy import alone would
+only defer the same failure until store construction.
+
 ## Cold `uvx reward-lens --help`
 
-pending P-CLI. The console script's entry point is in the wheel's metadata and is asserted
-by `test_wheel_metadata.py`, but `reward_lens.cli.main:main` does not exist yet, so there
-is nothing to time. D-30's ceiling is 100 ms and gate 5 checks the import set as well as
+The console script is present and checked against the installed wheel. A cold `uvx`
+measurement on a clean machine is pending final release qualification; no timing claim
+is made here. D-30's ceiling is 100 ms and gate 5 checks the import set as well as
 the clock.

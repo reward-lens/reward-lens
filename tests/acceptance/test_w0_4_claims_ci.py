@@ -14,16 +14,23 @@ Both halves are tested here, and so is the fact that the workflow calls it.
 
 from __future__ import annotations
 
+import json
 import pathlib
 import subprocess
 import sys
 
 import pytest
 
-from reward_lens.artifacts.claims import baseline_key, check_files, find_unbound_numbers, main
+from reward_lens.artifacts.claims import (
+    baseline_key,
+    check_files,
+    find_unbound_numbers,
+    load_baseline,
+    main,
+)
 
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
-_WORKFLOW = _ROOT / ".github" / "workflows" / "tests.yml"
+_WORKFLOW = _ROOT / ".github" / "workflows" / "ci.yml"
 
 
 def test_a_bare_measurement_in_prose_is_unbound():
@@ -108,11 +115,84 @@ def test_the_baseline_key_survives_an_edit_above_it(tmp_path):
     assert before == after
 
 
+def test_the_baseline_key_drops_whitespace_exposed_by_context_truncation(tmp_path):
+    """The 120-character key is canonical even when the cutoff lands after a word boundary."""
+    page = tmp_path / "page.md"
+    page.write_text("x" * 119 + " 0.41 is unbound.\n", encoding="utf-8")
+
+    [unbound] = check_files([page]).unbound
+    assert unbound.context == "x" * 119
+    assert not baseline_key(unbound).endswith(" ")
+
+    baseline = tmp_path / "baseline.txt"
+    baseline.write_text(baseline_key(unbound) + " \n", encoding="utf-8")
+    assert load_baseline(baseline) == {baseline_key(unbound)}
+
+
 def test_the_workflow_actually_calls_the_checker():
     """The defect was never that the checker was wrong. It was that nothing ran it."""
     text = _WORKFLOW.read_text(encoding="utf-8")
-    assert "reward-lens-claims" in text, "the claims checker is not wired into CI"
-    assert "claims" in text
+    step = text.split("- name: Check documentation claims against evidence ratchet", 1)[1]
+    step = step.split("\n      - name:", 1)[0]
+    assert ".venv/bin/reward-lens-commons claims" in step, "the claims checker is not wired into CI"
+    assert "--baseline docs/claims-baseline.txt" in step
+    assert "docs/content" in step
+    for name in (
+        "cards-and-claims.md",
+        "artifacts-operate.md",
+        "cli.md",
+        "measurements-you-can-trust.md",
+        "evidence-store.md",
+    ):
+        assert f"--exclude {name}" in step
+
+
+def test_declared_python_versions_do_not_hide_unsupported_or_empirical_numbers():
+    versions = frozenset({"3.11", "3.12", "3.13"})
+    prose = (
+        "The release checks cover Python 3.11, 3.12, and 3.13 on Linux.\n"
+        "Python 3.14 is not in the release matrix.\n"
+        "Python 3.11 reports an AUC of 0.71.\n"
+        "The score was 3.12 on the held-out run.\n"
+    )
+    assert [u.value for u in find_unbound_numbers(prose, python_versions=versions)] == [
+        "3.14",
+        "0.71",
+        "3.12",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("requires_python", "classifiers", "dev_versions", "all_versions", "expected"),
+    [
+        (">=3.11", ("3.11", "3.12"), ("3.11", "3.12"), ("3.11", "3.12"), []),
+        (">=3.12", ("3.11", "3.12"), ("3.11", "3.12"), ("3.11", "3.12"), ["3.11"]),
+        (">=3.11", ("3.11", "3.12"), ("3.11", "3.12"), ("3.11",), ["3.12"]),
+        (">=3.11", ("3.12",), ("3.11", "3.12"), ("3.11", "3.12"), ["3.11"]),
+    ],
+)
+def test_python_version_exemption_requires_all_three_release_declarations(
+    tmp_path,
+    requires_python,
+    classifiers,
+    dev_versions,
+    all_versions,
+    expected,
+):
+    project = "[project]\nrequires-python = " + json.dumps(requires_python) + "\n"
+    project += (
+        "classifiers = "
+        + json.dumps([f"Programming Language :: Python :: {version}" for version in classifiers])
+        + "\n"
+    )
+    (tmp_path / "pyproject.toml").write_text(project)
+    matrix = {"profiles": {"dev": {"python": dev_versions}, "all_extras": {"python": all_versions}}}
+    (tmp_path / "release").mkdir()
+    (tmp_path / "release" / "validation-matrix.json").write_text(json.dumps(matrix))
+    page = tmp_path / "docs" / "install.md"
+    page.parent.mkdir()
+    page.write_text("Python 3.11, 3.12 are supported.\n")
+    assert [u.value for u in check_files([page]).unbound] == expected
 
 
 def test_the_docs_gate_is_green_as_committed():

@@ -57,7 +57,12 @@ def test_the_reasons_keep_the_order_the_record_wrote_them_in():
         "required_missing:soundness",
         "required_missing:calibration",
     ]
-    record["decision"] = {"state": "unresolved", "action": "hold", "policy": None, "reasons": ordered}
+    record["decision"] = {
+        "state": "unresolved",
+        "action": "hold",
+        "policy": None,
+        "reasons": ordered,
+    }
 
     assert envelope(record)["decision"]["reasons"] == ordered
 

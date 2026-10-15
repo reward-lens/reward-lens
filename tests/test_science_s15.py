@@ -9,10 +9,11 @@ on a trained policy is recorded as inconclusive-because-gated on a GPU RL loop.
 
 from __future__ import annotations
 
+from studies.s15_forensics.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s15_forensics.analysis import build_spec
 
 
 def test_s15_runs_and_registers(tmp_path):

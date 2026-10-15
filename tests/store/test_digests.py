@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from .conftest import write_project
@@ -42,8 +43,15 @@ def test_a_full_project_leaves_only_the_checkpoint_absent(project):
     digests = project.version().digests.to_dict()
     assert digests["policy"] is None  # a project does not bind a checkpoint; an experiment does
     assert digests["training_semantics"] is None  # no trainer is declared
-    for name in ("source", "environment", "scorer_config", "task_distribution", "samples",
-                 "outcome_protocol", "instrument_method"):
+    for name in (
+        "source",
+        "environment",
+        "scorer_config",
+        "task_distribution",
+        "samples",
+        "outcome_protocol",
+        "instrument_method",
+    ):
         assert digests[name] is not None, name
 
 
@@ -84,9 +92,61 @@ def test_editing_the_responses_moves_the_samples_digest_alone(project, project_r
 
 def test_editing_the_protected_suite_moves_the_outcome_protocol_alone(project, project_root):
     before = project.version().digests.to_dict()
-    (project_root / "outcome" / "test_solution.py").write_text("def test_x():\n    pass\n",
-                                                               encoding="utf-8")
+    (project_root / "outcome" / "test_solution.py").write_text(
+        "def test_x():\n    pass\n", encoding="utf-8"
+    )
     assert _changed(before, project.version().digests.to_dict()) == {"outcome_protocol"}
+
+
+def test_capability_floor_and_execution_declaration_bind_outcome_protocol_without_subject_cycle(
+    tmp_path: Path,
+):
+    """Only execution.subject_ref is excluded from the declaration digest fixed point."""
+    from reward_lens.store import Project
+
+    from .conftest import PROJECT_YAML
+
+    declaration = (
+        "outcome:\n"
+        "  kind: protected_test_suite\n"
+        "  path: outcome\n"
+        "  held_out_capability:\n"
+        "    partition_id: heldout-v1\n"
+        "    path: heldout\n"
+        "    floor: 0.7\n"
+        "  execution: outcome/execution.json\n"
+    )
+    root = write_project(
+        tmp_path / "floor",
+        yaml_text=PROJECT_YAML.replace(
+            "outcome:\n  kind: protected_test_suite\n  path: outcome\n", declaration
+        ),
+    )
+    (root / "heldout").mkdir()
+    (root / "heldout" / "case.json").write_text('{"case":"A"}\n', encoding="utf-8")
+    execution = root / "outcome" / "execution.json"
+    payload = {
+        "subject_ref": "sha256:" + "a" * 64,
+        "target": {
+            "partition_id": "heldout-v1",
+            "tasks": [{"item_id": "case.json", "task": {"id": "a"}}],
+        },
+        "capability_floor": {
+            "candidates": [{"item_id": "case.json", "task": {"id": "a"}, "response": "first"}]
+        },
+    }
+    execution.write_text(json.dumps(payload), encoding="utf-8")
+    baseline = Project.open(root).version().digests.to_dict()
+
+    payload["subject_ref"] = "sha256:" + "b" * 64
+    execution.write_text(json.dumps(payload), encoding="utf-8")
+    assert Project.open(root).version().digests.to_dict() == baseline
+
+    payload["capability_floor"]["candidates"][0]["response"] = "second"
+    execution.write_text(json.dumps(payload), encoding="utf-8")
+    assert _changed(baseline, Project.open(root).version().digests.to_dict()) == {
+        "outcome_protocol"
+    }
 
 
 def test_editing_the_lockfile_moves_the_environment_alone(project, project_root):
@@ -96,8 +156,9 @@ def test_editing_the_lockfile_moves_the_environment_alone(project, project_root)
 
 
 def test_changing_the_scorer_configuration_moves_the_scorer_config(tmp_path: Path):
-    from .conftest import PROJECT_YAML
     from reward_lens.store import Project
+
+    from .conftest import PROJECT_YAML
 
     a = Project.open(write_project(tmp_path / "a")).version().digests.to_dict()
     b_root = write_project(
@@ -108,8 +169,9 @@ def test_changing_the_scorer_configuration_moves_the_scorer_config(tmp_path: Pat
 
 
 def test_a_declared_trainer_gives_the_training_semantics_a_digest(tmp_path: Path):
-    from .conftest import PROJECT_YAML
     from reward_lens.store import Project
+
+    from .conftest import PROJECT_YAML
 
     yaml_text = PROJECT_YAML.replace("  kind: composite\n", "  kind: composite\n  trainer: trl\n")
     digests = Project.open(write_project(tmp_path / "t", yaml_text=yaml_text)).version().digests
@@ -138,8 +200,9 @@ def test_the_version_digest_is_over_the_nine_and_the_identity(project, project_r
 
 
 def test_the_version_takes_its_id_and_parents_from_the_config(tmp_path: Path):
-    from .conftest import PROJECT_YAML
     from reward_lens.store import Project
+
+    from .conftest import PROJECT_YAML
 
     yaml_text = PROJECT_YAML + "version:\n  id: v7\n  parents:\n    - v6\n"
     version = Project.open(write_project(tmp_path / "v", yaml_text=yaml_text)).version()

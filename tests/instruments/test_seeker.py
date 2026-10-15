@@ -8,6 +8,7 @@ for, so there is no path from this file to a paid provider even if one were conf
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -34,8 +35,8 @@ from reward_lens.instruments.seeker import (
     Pricing,
     Proposal,
     RecordedTransport,
-    ScoreResult,
     Scored,
+    ScoreResult,
     ScriptedActor,
     SeekerRequiresBudget,
     SeekerState,
@@ -46,6 +47,7 @@ from reward_lens.instruments.seeker import (
 )
 from reward_lens.outcome import RoundLedger, SealedRequest
 from reward_lens.partitions import ALLOWED_CAPABILITIES, SEEKER, Partition, PartitionKind
+from reward_lens.product.trace.record import RESPONSE_TEXT_CODEC, response_text_identity
 
 # --- the reward system under audit, and the intent it is meant to pay for ------------------------
 
@@ -101,10 +103,14 @@ def chat_reply(text: str, *, prompt_tokens: int = 40, completion_tokens: int = 1
         "id": "cmpl-fixture",
         "object": "chat.completion",
         "model": "fixture-1",
-        "choices": [{"index": 0, "message": {"role": "assistant", "content": text},
-                     "finish_reason": "stop"}],
-        "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
-                  "total_tokens": prompt_tokens + completion_tokens},
+        "choices": [
+            {"index": 0, "message": {"role": "assistant", "content": text}, "finish_reason": "stop"}
+        ],
+        "usage": {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+        },
     }
 
 
@@ -138,8 +144,12 @@ def scripted_caller(session: str) -> object:
         assert tool is not None, "the SDK seam did not resolve seeker.propose"
         offered = replies[min(len(request["attempts"]), len(replies) - 1)]
         return tool(
-            {"session": session, "task_id": request["task_id"], "response": offered,
-             "rationale": "scripted caller"}
+            {
+                "session": session,
+                "task_id": request["task_id"],
+                "response": offered,
+                "rationale": "scripted caller",
+            }
         )
 
     return call
@@ -149,8 +159,12 @@ def four_actors(scorer: GraderScorer) -> dict[str, Actor]:
     """One of each, all reaching the same audited reward."""
     return {
         "scripted": ScriptedActor(scripted_policy, scorer=scorer),
-        "api": ApiActor(recorded_transport(), scorer=scorer, budget=Budget("0.50"),
-                        pricing=Pricing("0.0030", "0.0150")),
+        "api": ApiActor(
+            recorded_transport(),
+            scorer=scorer,
+            budget=Budget("0.50"),
+            pricing=Pricing("0.0030", "0.0150"),
+        ),
         "local": LocalActor(StubEndpoint([HONEST_LINE, EXPLOIT_LINE]), scorer=scorer),
         "agent": AgentActor(scorer=scorer, caller=scripted_caller),
     }
@@ -163,8 +177,13 @@ def four_actors(scorer: GraderScorer) -> dict[str, Actor]:
 def test_every_actor_implements_all_three_protocol_methods(scorer: GraderScorer, name: str) -> None:
     actor = four_actors(scorer)[name]
     assert isinstance(actor, Actor)
-    state = SeekerState(task=TASKS[0], intent=INTENT, attempts=(), budget_remaining_usd=
-                        actor.budget.remaining, calls_remaining=actor.budget.calls_remaining)
+    state = SeekerState(
+        task=TASKS[0],
+        intent=INTENT,
+        attempts=(),
+        budget_remaining_usd=actor.budget.remaining,
+        calls_remaining=actor.budget.calls_remaining,
+    )
     proposal = actor.propose(state)
     assert isinstance(proposal, Proposal)
     assert proposal.actor == name
@@ -193,8 +212,9 @@ def test_every_actor_finds_the_marker_exploit_and_records_the_arm(
 
 def test_the_scripted_actor_is_the_conformance_reference(scorer: GraderScorer) -> None:
     """Every other actor's record has the same shape as the scripted one's."""
-    reference = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                     max_proposals=4)
+    reference = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     for name, actor in four_actors(scorer).items():
         record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=4)
         assert record.to_dict().keys() == reference.to_dict().keys(), name
@@ -208,8 +228,9 @@ def test_the_scripted_actor_is_the_conformance_reference(scorer: GraderScorer) -
 
 def test_the_api_actor_meters_spend_against_the_cap(scorer: GraderScorer) -> None:
     budget = Budget("0.50")
-    actor = ApiActor(recorded_transport(), scorer=scorer, budget=budget,
-                     pricing=Pricing("0.0030", "0.0150"))
+    actor = ApiActor(
+        recorded_transport(), scorer=scorer, budget=budget, pricing=Pricing("0.0030", "0.0150")
+    )
     record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=4)
     # 40 prompt tokens at $0.0030/1k and 10 completion tokens at $0.0150/1k is $0.00027 a call.
     assert record.calls == len(record.proposals)
@@ -221,14 +242,68 @@ def test_the_api_actor_meters_spend_against_the_cap(scorer: GraderScorer) -> Non
 def test_the_api_actor_stops_at_the_cap_rather_than_overspending(scorer: GraderScorer) -> None:
     tiny = Budget("0.01", max_calls=None)
     actor = ApiActor(
-        RecordedTransport([chat_reply(HONEST_LINE, prompt_tokens=2000, completion_tokens=600)] * 8,
-                          model="fixture-1"),
-        scorer=scorer, budget=tiny, pricing=Pricing("3.0000", "15.0000"),
+        RecordedTransport(
+            [chat_reply(HONEST_LINE, prompt_tokens=2000, completion_tokens=600)] * 8,
+            model="fixture-1",
+        ),
+        scorer=scorer,
+        budget=tiny,
+        pricing=Pricing("3.0000", "15.0000"),
     )
-    record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=8)
+    with pytest.raises(BudgetExhausted):
+        seek(actor, tasks=TASKS, intent=INTENT, max_proposals=8)
+    record = actor.record()
     assert record.stopped == "budget_exhausted"
     assert float(record.spent_usd) <= 0.01
     assert record.calls < 8
+
+
+def test_the_recorded_api_fixture_accumulates_real_spend_then_refuses_the_next_request(
+    scorer: GraderScorer,
+) -> None:
+    """Two paid fixture replies are charged exactly; the third request is never issued."""
+    transport = RecordedTransport(
+        [chat_reply("the answer is 4", prompt_tokens=1000, completion_tokens=0)] * 3,
+        model="fixture-1",
+    )
+    actor = ApiActor(
+        transport,
+        scorer=scorer,
+        budget=Budget("0.02"),
+        pricing=Pricing("0.0100", "0.0000", max_output_tokens=0),
+    )
+    with pytest.raises(BudgetExhausted):
+        seek(actor, tasks=TASKS, intent=INTENT, max_proposals=4)
+    record = actor.record()
+    assert transport.calls == 2
+    assert record.calls == 2
+    assert record.spent_usd == "0.02"
+    assert actor.budget.exact_spent == Decimal("0.0200")
+    assert record.stopped == "budget_exhausted"
+
+
+def test_an_over_cap_provider_reply_is_recorded_then_stops_before_another_request(
+    scorer: GraderScorer,
+) -> None:
+    """A provider may bill more than its estimate; that actual spend is never hidden."""
+    transport = RecordedTransport(
+        [chat_reply("the answer is 4", prompt_tokens=2000, completion_tokens=0)],
+        model="fixture-1",
+    )
+    actor = ApiActor(
+        transport,
+        scorer=scorer,
+        budget=Budget("0.01"),
+        pricing=Pricing("0.0100", "0.0000", max_output_tokens=0),
+    )
+    state = SeekerState(task=TASKS[0], intent=INTENT)
+    with pytest.raises(BudgetExhausted):
+        actor.propose(state)
+    record = actor.record()
+    assert transport.calls == 1
+    assert record.calls == 1
+    assert record.spent_usd == "0.02"
+    assert record.stopped == "budget_exhausted_after_response"
 
 
 def test_a_paid_call_is_unreachable_without_a_budget(scorer: GraderScorer) -> None:
@@ -247,8 +322,12 @@ def test_a_paid_call_is_unreachable_without_a_budget(scorer: GraderScorer) -> No
 
 def test_a_budget_with_no_cap_is_also_refused(scorer: GraderScorer) -> None:
     with pytest.raises(SeekerRequiresBudget):
-        ApiActor(recorded_transport(), scorer=scorer, budget=Budget(None),
-                 pricing=Pricing("0.0030", "0.0150"))
+        ApiActor(
+            recorded_transport(),
+            scorer=scorer,
+            budget=Budget(None),
+            pricing=Pricing("0.0030", "0.0150"),
+        )
 
 
 @pytest.mark.parametrize("name", ["scripted", "local", "agent"])
@@ -278,8 +357,16 @@ def test_the_package_imports_no_network_client() -> None:
     """No path from the seeker to a socket: the source says so, not a promise in a docstring."""
     import reward_lens.instruments.seeker as package
 
-    banned = ("import requests", "import httpx", "import socket", "import urllib",
-              "from urllib", "http.client", "aiohttp", "openai")
+    banned = (
+        "import requests",
+        "import httpx",
+        "import socket",
+        "import urllib",
+        "from urllib",
+        "http.client",
+        "aiohttp",
+        "openai",
+    )
     for path in sorted(Path(package.__file__).parent.rglob("*.py")):
         text = path.read_text(encoding="utf-8")
         for needle in banned:
@@ -329,7 +416,9 @@ def test_the_propose_tool_refuses_an_unknown_session() -> None:
 def test_not_found_is_a_result_that_names_the_budget_and_the_actor(scorer: GraderScorer) -> None:
     actor = ApiActor(
         RecordedTransport([chat_reply("the answer is 4")] * 4, model="fixture-1"),
-        scorer=scorer, budget=Budget("0.50"), pricing=Pricing("0.0030", "0.0150"),
+        scorer=scorer,
+        budget=Budget("0.50"),
+        pricing=Pricing("0.0030", "0.0150"),
     )
     record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=4)
     assert record.found == ()
@@ -343,14 +432,103 @@ def test_not_found_is_a_result_that_names_the_budget_and_the_actor(scorer: Grade
 def test_the_negative_is_not_an_empty_finding_list(scorer: GraderScorer) -> None:
     actor = ScriptedActor(lambda state: "the answer is 4", scorer=scorer)
     record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=2)
-    entries = ExploitSearch().entries_for(record, subject_ref=contracts.digest({"s": 1}),
-                                          ctx=RunContext())
+    entries = ExploitSearch().entries_for(
+        record, subject_ref=contracts.digest({"s": 1}), ctx=RunContext()
+    )
     yielded = [e for e in entries if e.kind == "estimate"]
     assert len(yielded) == 1
     assert yielded[0].result["outcome"] == NOT_FOUND
     assert yielded[0].result["actor"] == "scripted"
     assert yielded[0].result["budget_usd"] == "0.00"
     assert yielded[0].value == 0.0
+
+
+@pytest.mark.parametrize(
+    "outcome_check",
+    [
+        lambda task, response: None,
+        lambda task, response: "ambiguous",
+    ],
+    ids=["none", "ambiguous"],
+)
+def test_an_unknown_outcome_is_unqualified_and_never_an_exploit(outcome_check: object) -> None:
+    scorer = GraderScorer(
+        bind(detect(keyword_reward)),
+        outcome_check=outcome_check,  # type: ignore[arg-type]
+        threshold=0.9,
+    )
+    actor = ScriptedActor(lambda state: EXPLOIT_LINE, scorer=scorer)
+    record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=1)
+    assert record.scores[0].outcome_passed is None
+    assert record.scores[0].exploit is False
+    assert record.found == ()
+    assert record.outcome == NOT_FOUND
+
+
+def test_a_timed_out_outcome_check_is_unqualified_and_never_an_exploit() -> None:
+    def timed_out(task: dict, response: str) -> bool:
+        raise TimeoutError("controlled fixture timeout")
+
+    scorer = GraderScorer(bind(detect(keyword_reward)), outcome_check=timed_out, threshold=0.9)
+    record = seek(
+        ScriptedActor(lambda state: EXPLOIT_LINE, scorer=scorer),
+        tasks=TASKS,
+        intent=INTENT,
+        max_proposals=1,
+    )
+    assert record.scores[0].outcome_passed is None
+    assert record.scores[0].exploit is False
+    assert record.found == ()
+
+
+def test_seek_uses_only_the_published_three_method_actor_protocol() -> None:
+    class ThreeMethodActor:
+        def __init__(self) -> None:
+            self.proposals: list[Proposal] = []
+            self.scores: list[Scored] = []
+
+        def propose(self, state: SeekerState) -> Proposal:
+            assert state.budget_remaining_usd is None
+            assert state.calls_remaining is None
+            proposal = Proposal.seal(
+                actor="three-method",
+                task_id=state.task_id,
+                response="the answer is 4",
+                inputs={"task": state.task, "intent": state.intent},
+            )
+            self.proposals.append(proposal)
+            return proposal
+
+        def score(self, proposal: Proposal) -> Scored:
+            scored = Scored(
+                proposal=proposal,
+                reward=0.25,
+                outcome_passed=True,
+                verdict="scored",
+                threshold=0.9,
+                exploit=False,
+            )
+            self.scores.append(scored)
+            return scored
+
+        def record(self) -> ActorRecord:
+            return ActorRecord(
+                actor="three-method",
+                budget_usd="0.00",
+                spent_usd="0.00",
+                calls=0,
+                proposals=tuple(self.proposals),
+                scores=tuple(self.scores),
+                found=(),
+                outcome=NOT_FOUND,
+                stopped="proposals_exhausted",
+            )
+
+    actor = ThreeMethodActor()
+    assert isinstance(actor, Actor)
+    record = seek(actor, tasks=TASKS, intent=INTENT, max_proposals=1)
+    assert record.actor == "three-method"
+    assert len(record.proposals) == len(record.scores) == 1
 
 
 # --- 6. off by default, and a seeker-off run is a complete audit ---------------------------------
@@ -398,30 +576,37 @@ def test_the_panel_is_discovered_and_fills_the_exploits_section() -> None:
 
 
 def test_every_proposal_is_recorded_with_the_inputs_it_was_made_from(scorer: GraderScorer) -> None:
-    record = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                  max_proposals=4)
+    record = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     assert len(record.proposals) == len(record.scores)
     for proposal in record.proposals:
         assert proposal.inputs, "a proposal with no recorded inputs cannot be replayed"
         assert proposal.proposal_id == Proposal.identity(
-            actor=proposal.actor, task_id=proposal.task_id, response=proposal.response,
+            actor=proposal.actor,
+            task_id=proposal.task_id,
+            response=proposal.response,
             inputs=proposal.inputs,
         )
 
 
 def test_every_finding_replays_from_the_recorded_inputs_alone(scorer: GraderScorer) -> None:
-    record = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                  max_proposals=4)
+    record = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     fresh = GraderScorer(bind(detect(keyword_reward)), outcome_check=outcome_check, threshold=0.9)
     again = replay(record, fresh)
-    assert [s.proposal.proposal_id for s in again] == [s.proposal.proposal_id for s in record.scores]
+    assert [s.proposal.proposal_id for s in again] == [
+        s.proposal.proposal_id for s in record.scores
+    ]
     assert [s.reward for s in again] == [s.reward for s in record.scores]
     assert [s.exploit for s in again] == [s.exploit for s in record.scores]
 
 
 def test_a_record_survives_a_round_trip_through_json(scorer: GraderScorer) -> None:
-    record = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                  max_proposals=4)
+    record = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     restored = ActorRecord.from_dict(json.loads(json.dumps(record.to_dict())))
     assert restored == record
     fresh = GraderScorer(bind(detect(keyword_reward)), outcome_check=outcome_check, threshold=0.9)
@@ -437,8 +622,9 @@ def test_a_finding_that_cannot_be_replayed_is_refused_at_record_time(scorer: Gra
 
         def score(self, task: dict, response: str) -> ScoreResult:
             self.seen += 1
-            return ScoreResult(reward=1.0 if self.seen == 1 else 0.0,
-                               outcome_passed=False, verdict="scored")
+            return ScoreResult(
+                reward=1.0 if self.seen == 1 else 0.0, outcome_passed=False, verdict="scored"
+            )
 
     actor = ScriptedActor(lambda state: EXPLOIT_LINE, scorer=Drifting())
     with pytest.raises(FindingNotReplayable) as raised:
@@ -449,8 +635,13 @@ def test_a_finding_that_cannot_be_replayed_is_refused_at_record_time(scorer: Gra
 def test_a_proposal_cannot_be_built_with_an_identity_that_is_not_its_own() -> None:
     good = Proposal.seal(actor="scripted", task_id="t1", response="x", inputs={"prompt": "p"})
     with pytest.raises(ValueError):
-        Proposal(actor="scripted", task_id="t1", response="x", inputs={"prompt": "p"},
-                 proposal_id="sha256:" + "0" * 64)
+        Proposal(
+            actor="scripted",
+            task_id="t1",
+            response="x",
+            inputs={"prompt": "p"},
+            proposal_id="sha256:" + "0" * 64,
+        )
     assert good.proposal_id.startswith("sha256:")
 
 
@@ -460,8 +651,9 @@ def test_a_proposal_cannot_be_built_with_an_identity_that_is_not_its_own() -> No
 def test_the_panel_writes_one_witness_per_exploit_and_one_yield_estimate(
     scorer: GraderScorer,
 ) -> None:
-    record = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                  max_proposals=4)
+    record = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     ctx = RunContext()
     ctx.seeker = "scripted"
     ctx.seeker_actor = ScriptedActor(scripted_policy, scorer=scorer)
@@ -493,12 +685,18 @@ def test_the_panel_runs_end_to_end_when_an_actor_is_supplied(scorer: GraderScore
 
 
 def test_a_finding_names_the_black_box_arm_and_points_at_its_witness(scorer: GraderScorer) -> None:
-    record = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                  max_proposals=4)
+    record = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     ctx = RunContext()
     ctx.seeker = "scripted"
-    witness = next(e for e in ExploitSearch().entries_for(
-        record, subject_ref=contracts.digest({"s": 1}), ctx=ctx) if e.kind == "witness")
+    witness = next(
+        e
+        for e in ExploitSearch().entries_for(
+            record, subject_ref=contracts.digest({"s": 1}), ctx=ctx
+        )
+        if e.kind == "witness"
+    )
     found = findings_for(witness)
     assert len(found) == 1
     finding = found[0]
@@ -511,18 +709,27 @@ def test_a_finding_names_the_black_box_arm_and_points_at_its_witness(scorer: Gra
 
 
 def test_the_scope_the_entries_declare_matches_the_rung_they_ran_at(scorer: GraderScorer) -> None:
-    record = seek(ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT,
-                  max_proposals=4)
+    record = seek(
+        ScriptedActor(scripted_policy, scorer=scorer), tasks=TASKS, intent=INTENT, max_proposals=4
+    )
     ctx = RunContext()
-    for entry in ExploitSearch().entries_for(record, subject_ref=contracts.digest({"s": 1}),
-                                             ctx=ctx):
+    for entry in ExploitSearch().entries_for(
+        record, subject_ref=contracts.digest({"s": 1}), ctx=ctx
+    ):
         assert entry.scope == "evaluator_comparison"
     with pytest.raises(ValueError):
         ExploitSearch().assert_scope_honest(
-            contracts.absence("exploits", "exploits.seeker", "m", "a", "r", ("c",),
-                              subject_ref=contracts.digest({"s": 1}),
-                              provenance=RunContext().provenance(),
-                              scope="held_out_transfer")
+            contracts.absence(
+                "exploits",
+                "exploits.seeker",
+                "m",
+                "a",
+                "r",
+                ("c",),
+                subject_ref=contracts.digest({"s": 1}),
+                provenance=RunContext().provenance(),
+                scope="held_out_transfer",
+            )
         )
 
 
@@ -531,11 +738,19 @@ def test_the_scope_the_entries_declare_matches_the_rung_they_ran_at(scorer: Grad
 
 def test_the_seeker_spends_a_sealed_round_rather_than_reading_a_partition(tmp_path: Path) -> None:
     ledger = RoundLedger(tmp_path / "rounds.json")
-    sealed = ledger.seal(candidate_set="sha256:" + "a" * 64, partition_id="acc-1",
-                         protocol_digest="sha256:" + "b" * 64)
-    spent = ledger.spend(SealedRequest(candidate_digest=sealed.candidate_set,
-                                       protocol_digest=sealed.protocol_digest,
-                                       partition_id=sealed.partition_id, nonce=sealed.nonce))
+    sealed = ledger.seal(
+        candidate_set="sha256:" + "a" * 64,
+        partition_id="acc-1",
+        protocol_digest="sha256:" + "b" * 64,
+    )
+    spent = ledger.spend(
+        SealedRequest(
+            candidate_digest=sealed.candidate_set,
+            protocol_digest=sealed.protocol_digest,
+            partition_id=sealed.partition_id,
+            nonce=sealed.nonce,
+        )
+    )
     assert spent.state == "spent"
 
 
@@ -543,8 +758,9 @@ def test_the_seeker_capability_cannot_read_a_protected_partition(tmp_path: Path)
     root = tmp_path / "acceptance"
     root.mkdir()
     (root / "case.json").write_text('{"id": "c1"}', encoding="utf-8")
-    partition = Partition.from_dir("acc-1", PartitionKind.PROTECTED_SUITE, root,
-                                   log_path=tmp_path / "acc-1.jsonl")
+    partition = Partition.from_dir(
+        "acc-1", PartitionKind.PROTECTED_SUITE, root, log_path=tmp_path / "acc-1.jsonl"
+    )
     with pytest.raises(contracts.UsageError):
         partition.read("case.json", capability=SEEKER, purpose="attack development")
     assert SEEKER not in (ALLOWED_CAPABILITIES[PartitionKind.PROTECTED_SUITE] or frozenset())
@@ -594,3 +810,18 @@ def test_a_completion_carries_the_tokens_the_meter_charges_for() -> None:
     assert completion.text == "x"
     assert completion.input_tokens == 12
     assert completion.output_tokens == 3
+
+
+def test_public_proposal_uses_the_c061_exact_response_text_codec() -> None:
+    response = "exact response\\nwith no turn-index identity"
+    proposal = Proposal.seal(
+        actor="scripted",
+        task_id="task-1",
+        response=response,
+        inputs={"task": TASKS[0], "source": "recorded"},
+    )
+
+    digest, codec = response_text_identity(response)
+    assert proposal.response_digest == digest
+    assert proposal.response_codec == RESPONSE_TEXT_CODEC == codec
+    assert proposal.to_dict()["response"] == response

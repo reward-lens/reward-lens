@@ -2,21 +2,37 @@
 
 `reward-lens` turns a reward system into an auditable assay record and an offline report. It is for work where the reward written in code may differ from the objective a policy learned to optimize.
 
+<!-- 3.1.0-route -->
+## 3.1.0: audit a reward system
+
+reward-lens 3.1.0 audits a reward system and writes an assay record and an offline report. This is the active 3.1.0 product route. For an unreleased source checkout, run `pip install .`. The installation section distinguishes source builds from published packages.
+
+```bash
+reward-lens init --example code-reward ./demo
+reward-lens audit ./demo
+reward-lens doctor
+```
+
+The example has deliberate defects: its audit exits 2 with an unresolved decision. Add `--format json` to receive the command envelope. `trace`, `compare`, `forecast`, and `improve` require their declared inputs; missing access produces a refusal. Compatibility with the inherited 3.0 library surface is documented below.
+<!-- /3.1.0-route -->
+
 ## Versions and installation
 
-The stable package on PyPI is **3.0.0**:
+Release availability is recorded on [PyPI](https://pypi.org/project/reward-lens/) and
+[GitHub Releases](https://github.com/reward-lens/reward-lens/releases). Once the
+3.1.0 release is published, install its exact version with:
 
 ```bash
-python -m pip install reward-lens==3.0.0
+python -m pip install reward-lens==3.1.0
 ```
 
-This repository's `main` branch is the unreleased **3.1.0** development target. Install that source revision only when you need work that has not been released to PyPI:
+To build this source revision before or after publication, use a checked-out commit:
 
 ```bash
-python -m pip install "reward-lens @ git+https://github.com/reward-lens/reward-lens.git@main"
+python -m pip install .
 ```
 
-Python 3.11 or newer is required. The base package does not require a model runtime. Optional extras in `pyproject.toml` cover integrations that need them.
+Python `3.11` or newer is required. The base package does not require Node or a model runtime. Optional extras in `pyproject.toml` cover integrations that need them.
 
 ## First audit
 
@@ -26,13 +42,15 @@ reward-lens audit ./demo
 reward-lens doctor
 ```
 
-`init` writes the example project. `audit` writes a record and report in that project. `doctor` reports the measurements available from the supplied inputs and what further access would be required. The bundled example includes deliberately wrong tasks. Its audit produces a report with blocking findings and exits 2; this smoke check is not an all-clear result. Command help is available for the full command tree. A development command whose implementation is not present returns a typed refusal instead of simulating a result.
+`init` writes the example project. `audit` writes a record and report in that project. `doctor` reports the measurements available from the supplied inputs and what further access would be required. The bundled example includes deliberately wrong tasks. Its audit produces a report with blocking findings and exits 2; this smoke check is not an all-clear result. `trace`, `compare`, `join`, `forecast`, and `improve` consume their own declared inputs. Use `reward-lens <command> --help` to see them. Missing inputs and unavailable optional capabilities remain explicit refusals.
+
+Open the saved report locally with `reward-lens open <record.assay.json> --workbench`; the command prints an authentication URL. Export a signed portable bundle with `reward-lens export --record <record.assay.json> --kind bundle --dest ./bundle`, then verify it with `reward-lens import ./bundle --verify --save-to ./imported`. Verification preserves an unresolved decision; it does not turn it into a pass.
 
 ## What is here
 
 - `src/reward_lens/`: the installable library, CLI, schemas, report renderer, adapters, and optional integrations.
 - `schema/` and `spec/`: public schema and catalogue sources used by the package.
-- `frontend/`: source for the offline report bundle. The built JavaScript and stylesheet are committed under the Python package so normal package builds do not require Node.
+- `frontend/`: source for the offline report and local authenticated workbench. The built JavaScript and stylesheet are committed under the Python package so normal package builds do not require Node.
 - `tests/`: reusable contract, API, CLI, packaging, and compatibility tests. [`TEST_STATUS.md`](TEST_STATUS.md) states which broader suites remain incomplete or need optional dependencies.
 - `docs/`: API, schema, command, and method documentation.
 
@@ -48,6 +66,6 @@ This repository was assembled from reviewed source snapshots. [`docs/publication
 
 The repository contains reusable code, small fixtures, and documentation. It excludes private fleet records, raw run outputs, local provider configuration, credentials, and large captured research material. A clean fixture or package check does not establish that an unfinished empirical study ran or that a reward mechanism was validated on a new model.
 
-For contributor setup and the supported checks, read [CONTRIBUTING.md](CONTRIBUTING.md) and [TEST_STATUS.md](TEST_STATUS.md).
+Contributors install the development group with `uv sync --group dev`. For the supported checks, read [CONTRIBUTING.md](CONTRIBUTING.md) and [TEST_STATUS.md](TEST_STATUS.md).
 
-[Development snapshots](development-snapshots/README.md) preserve selected unfinished alternatives as full files. They are outside installed packages and default tests. The [historical C1 dependency](reproducibility/c1-reward-lens-snapshot/README.md) is an isolated installable subproject, excluded from the current product distributions.
+Historical [development snapshots](https://github.com/reward-lens/reward-lens/blob/5ece0eb5d3e85fa275decaedc0841a8181708f3a/development-snapshots/README.md) preserve selected unfinished alternatives in public history. The [C1 dependency snapshot](https://github.com/reward-lens/reward-lens/blob/5ece0eb5d3e85fa275decaedc0841a8181708f3a/reproducibility/c1-reward-lens-snapshot/README.md) records the isolated library source used by that historical research.

@@ -31,7 +31,9 @@ def test_there_are_exactly_five_kinds() -> None:
 
 
 @pytest.mark.parametrize("kind", list(PartitionKind))
-def test_every_kind_carries_an_id_a_digest_and_an_access_log(kind: PartitionKind, tmp_path: Path) -> None:
+def test_every_kind_carries_an_id_a_digest_and_an_access_log(
+    kind: PartitionKind, tmp_path: Path
+) -> None:
     root = tmp_path / kind.value
     root.mkdir()
     (root / "item.txt").write_bytes(b"one item\n")
@@ -56,12 +58,18 @@ def test_the_digest_is_over_sorted_paths_and_bytes_not_traversal_order(tmp_path:
         root.mkdir()
         for name in order:
             (root / name).write_bytes(b"same bytes\n")
-    one = Partition.from_dir("p", PartitionKind.HELD_OUT_TASKS, first, log_path=tmp_path / "1.jsonl")
-    two = Partition.from_dir("p", PartitionKind.HELD_OUT_TASKS, second, log_path=tmp_path / "2.jsonl")
+    one = Partition.from_dir(
+        "p", PartitionKind.HELD_OUT_TASKS, first, log_path=tmp_path / "1.jsonl"
+    )
+    two = Partition.from_dir(
+        "p", PartitionKind.HELD_OUT_TASKS, second, log_path=tmp_path / "2.jsonl"
+    )
     assert one.digest == two.digest
 
     (second / "a.py").write_bytes(b"one byte more\n")
-    three = Partition.from_dir("p", PartitionKind.HELD_OUT_TASKS, second, log_path=tmp_path / "3.jsonl")
+    three = Partition.from_dir(
+        "p", PartitionKind.HELD_OUT_TASKS, second, log_path=tmp_path / "3.jsonl"
+    )
     assert three.digest != one.digest
 
 
@@ -103,9 +111,9 @@ def test_the_seeker_may_not_read_any_partition_kind_because_it_spends_a_sealed_r
     """
     from reward_lens.contracts.errors import UsageError
 
-    assert all(
-        row is None or SEEKER not in row for row in ALLOWED_CAPABILITIES.values()
-    ), "no ALLOWED_CAPABILITIES row names SEEKER"
+    assert all(row is None or SEEKER not in row for row in ALLOWED_CAPABILITIES.values()), (
+        "no ALLOWED_CAPABILITIES row names SEEKER"
+    )
     assert SEEKER not in set().union(
         *(row for row in ALLOWED_CAPABILITIES.values() if row is not None)
     )

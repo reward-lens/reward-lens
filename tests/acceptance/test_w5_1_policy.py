@@ -17,6 +17,8 @@ white-box reading carrying a real `IncrementalValidity` (§6.4), the reach-throu
 
 from __future__ import annotations
 
+import os
+import pathlib
 import sys
 
 import numpy as np
@@ -50,6 +52,9 @@ from reward_lens.policy.vllm import SERVING_CAPS, EngineBoundary, ServingPolicy 
 from reward_lens.signals.loaders import from_tiny  # noqa: E402
 
 TINY_POLICY = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
+REAL_REWARD_MODEL = "Skywork/Skywork-Reward-V2-Qwen3-0.6B"
+REAL_REWARD_REVISION = "8c14a4e9e6321deaf572544339b16b8d6bbe8886"
 
 #: A preference-shaped view. Both subjects read it through `pair_sides`, which is the point: the
 #: data does not know which side of the loop it is being shown to either.
@@ -67,7 +72,7 @@ def grader():
 
 @pytest.fixture(scope="module")
 def policy():
-    return from_pretrained(TINY_POLICY, contrast=(" yes", " no"))
+    return from_pretrained(TINY_POLICY, revision=TINY_POLICY_REVISION, contrast=(" yes", " no"))
 
 
 # ---------------------------------------------------------------------------
@@ -451,6 +456,72 @@ def test_architecture_view_reproduces_the_v1_site_map(grader):
     assert v2.module_paths == v1.module_paths
 
 
+def _pinned_real_reward_snapshot() -> pathlib.Path | None:
+    """Resolve the same immutable cache snapshot as W0.5 without downloading."""
+    if "HF_HUB_CACHE" in os.environ:
+        root = pathlib.Path(os.environ["HF_HUB_CACHE"])
+    elif "HF_HOME" in os.environ:
+        root = pathlib.Path(os.environ["HF_HOME"]) / "hub"
+    else:
+        cache_home = pathlib.Path(os.environ.get("XDG_CACHE_HOME", pathlib.Path.home() / ".cache"))
+        root = cache_home / "huggingface" / "hub"
+    snapshot = (
+        root
+        / ("models--" + REAL_REWARD_MODEL.replace("/", "--"))
+        / "snapshots"
+        / REAL_REWARD_REVISION
+    )
+    return snapshot if (snapshot / "model.safetensors").is_file() else None
+
+
+def _load_pinned_real_reward_model():
+    """Load the local checkpoint, requiring it in release CI and retaining optional local use."""
+    from transformers import AutoModelForSequenceClassification
+
+    snapshot = _pinned_real_reward_snapshot()
+    if snapshot is None:
+        if os.environ.get("REWARD_LENS_REQUIRE_REAL_SUBJECTS") == "1":
+            pytest.fail(
+                "required pinned Skywork Qwen3 checkpoint is absent from the isolated cache"
+            )
+        pytest.skip(f"{REAL_REWARD_MODEL} is not in the local cache")
+    try:
+        return AutoModelForSequenceClassification.from_pretrained(
+            snapshot, dtype=torch.bfloat16, local_files_only=True
+        ).eval()
+    except Exception as exc:  # pragma: no cover - depends on the local cache
+        if os.environ.get("REWARD_LENS_REQUIRE_REAL_SUBJECTS") == "1":
+            raise
+        pytest.skip(f"{REAL_REWARD_MODEL} is not in the local cache: {exc}")
+
+
+def test_required_real_reward_checkpoint_is_not_silently_skipped(monkeypatch, tmp_path):
+    """A release must fail if the pinned cache entry is absent or cannot be loaded."""
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "hf"))
+    monkeypatch.delenv("HF_HUB_CACHE", raising=False)
+    monkeypatch.setenv("REWARD_LENS_REQUIRE_REAL_SUBJECTS", "1")
+    with pytest.raises(pytest.fail.Exception, match="required pinned Skywork Qwen3"):
+        _load_pinned_real_reward_model()
+    monkeypatch.delenv("REWARD_LENS_REQUIRE_REAL_SUBJECTS")
+    with pytest.raises(pytest.skip.Exception):
+        _load_pinned_real_reward_model()
+    monkeypatch.setenv("REWARD_LENS_REQUIRE_REAL_SUBJECTS", "1")
+
+    snapshot = (
+        tmp_path
+        / "hf"
+        / "hub"
+        / ("models--" + REAL_REWARD_MODEL.replace("/", "--"))
+        / "snapshots"
+        / REAL_REWARD_REVISION
+    )
+    snapshot.mkdir(parents=True)
+    (snapshot / "model.safetensors").write_bytes(b"invalid")
+    (snapshot / "config.json").write_text("{}", encoding="utf-8")
+    with pytest.raises((OSError, ValueError)):
+        _load_pinned_real_reward_model()
+
+
 def test_architecture_view_matches_v1_on_a_real_reward_model():
     """The migration evidence, on a production checkpoint rather than a test vehicle.
 
@@ -466,20 +537,14 @@ def test_architecture_view_matches_v1_on_a_real_reward_model():
     `signals.adapters.build_site_map`, which builds on `describe` and would make the comparison a
     tautology. Both sides stay real, which is the only way this is evidence.
 
-    Skipped when the checkpoint is not in the local cache. It is not downloaded by this test.
+    The test reads only the exact pinned snapshot already required by W0.5. Locally it skips if
+    the checkpoint is absent; release CI requires the real subject and fails if absent or unloadable.
+    It never downloads.
     """
-    from transformers import AutoModelForSequenceClassification
-
     from reward_lens.model_adapters import get_adapter as v1_get_adapter
 
-    model_id = "Skywork/Skywork-Reward-V2-Qwen3-0.6B"
-    try:
-        model = AutoModelForSequenceClassification.from_pretrained(
-            model_id, dtype=torch.bfloat16, local_files_only=True
-        ).eval()
-    except Exception as exc:  # pragma: no cover - depends on the local cache
-        pytest.skip(f"{model_id} is not in the local cache: {exc}")
-
+    model_id = REAL_REWARD_MODEL
+    model = _load_pinned_real_reward_model()
     v1_adapter = v1_get_adapter(model, model_id)
     view = describe(model)
     v2 = view.site_map()
@@ -621,8 +686,12 @@ def test_hf_policy_refuses_a_multi_token_contrast():
 
     from reward_lens.policy.hf import wrap_hf_policy
 
-    model = AutoModelForCausalLM.from_pretrained(TINY_POLICY)
-    tokenizer = AutoTokenizer.from_pretrained(TINY_POLICY)
+    model = AutoModelForCausalLM.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
     with pytest.raises(ValueError) as excinfo:
         wrap_hf_policy(model, tokenizer, contrast=("a phrase that is many tokens long", " no"))
     assert "tokenizes to" in str(excinfo.value)
@@ -636,8 +705,12 @@ def test_a_policy_without_a_contrast_has_no_direction_readout():
 
     from reward_lens.policy.hf import wrap_hf_policy
 
-    model = AutoModelForCausalLM.from_pretrained(TINY_POLICY)
-    tokenizer = AutoTokenizer.from_pretrained(TINY_POLICY)
+    model = AutoModelForCausalLM.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        TINY_POLICY, revision=TINY_POLICY_REVISION, local_files_only=True
+    )
     bare: HFPolicy = wrap_hf_policy(model, tokenizer)
     assert [r.name for r in bare.readouts()] == ["logprob"]
     with pytest.raises(KeyError) as excinfo:

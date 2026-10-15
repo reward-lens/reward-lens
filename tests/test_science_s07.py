@@ -9,10 +9,11 @@ follow-on rather than fabricated.
 
 from __future__ import annotations
 
+from studies.s07_embryology.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import render_report, run_study
-from studies.s07_embryology.analysis import build_spec
 
 
 def test_s07_recovers_planted_entry_order(tmp_path):

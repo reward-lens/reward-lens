@@ -25,6 +25,7 @@ from pathlib import Path
 from reward_lens.execution import run_python
 from reward_lens.execution.errors import SandboxTierBelowRequired, SandboxTierUnavailable
 from reward_lens.partitions import CANDIDATE_PROCESS, Partition
+from reward_lens.partitions.access import AccessEventCode
 
 from .errors import usage_refusal
 
@@ -186,13 +187,6 @@ def attempt_protected_read(
     canary.write_text(CANARY_BODY, encoding="utf-8")
 
     path = partition.root / item_id
-    partition.record_attempt(
-        item_id,
-        capability=CANDIDATE_PROCESS,
-        purpose="separation proof",
-        granted=False,
-        reason="a candidate-side process attempted this path inside the sandbox",
-    )
     work = Path(cwd)
     work.mkdir(parents=True, exist_ok=True)
     result = run_python(
@@ -233,13 +227,31 @@ def attempt_protected_read(
         failure_detail=failure_detail,
         argv=tuple(result.argv),
     )
-    if proof.read_succeeded:
+    if proof.contained:
+        partition.record_attempt(
+            item_id,
+            capability=CANDIDATE_PROCESS,
+            purpose="separation proof",
+            granted=False,
+            reason="the candidate-side process was denied this protected path inside the sandbox",
+            code=AccessEventCode.ACCEPTANCE_ACCESS_DENIED,
+        )
+    elif proof.read_succeeded:
         partition.record_attempt(
             item_id,
             capability=CANDIDATE_PROCESS,
             purpose="separation proof",
             granted=True,
             reason=f"the candidate-side process read this path at tier {proof.tier}",
+            code=AccessEventCode.ACCEPTANCE_ACCESS_ALLOWED,
+        )
+    else:
+        partition.record_attempt(
+            item_id,
+            capability=CANDIDATE_PROCESS,
+            purpose="separation proof",
+            granted=False,
+            reason="the candidate-side process did not establish an allowed or denied protected read",
         )
     return proof
 
@@ -332,4 +344,4 @@ def certify_separation(proof: SeparationProof) -> dict[str, object]:
                 f"{proof.attempted_path}, so it is not evidence about that path"
             ),
         )
-    return proof.to_record()
+    return proof.to_record() | {"access_code": AccessEventCode.ACCEPTANCE_ACCESS_DENIED.value}

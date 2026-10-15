@@ -30,6 +30,9 @@ from reward_lens.core.errors import RewardLensError
 #: and should not try to.
 EXTRA_PROBE: dict[str, str] = {
     "trace": "pyarrow",
+    # OpenEnv installs MCP 1 without the private MCP 2 runtime's separately published type API.
+    # Probe that unique dependency so a partial [openenv] install gets a named refusal here.
+    "mcp": "mcp_types",
     # No runtime dependency yet: no module under src/ imports an HTTP client, and declaring one on
     # the strength of a plan is what this file's own history warns against. The name is declared in
     # pyproject.toml so the instruction the error gives can be followed.
@@ -48,6 +51,7 @@ EXTRA_PROBE: dict[str, str] = {
 #: What each extra is for, in the words a user needs to decide whether they want it.
 EXTRA_PURPOSE: dict[str, str] = {
     "trace": "reading a run's rollouts out of a Parquet trace",
+    "mcp": "running the MCP 2 agent server",
     "judge": "calling a model judge through a provider",
     "train": "reward models, and attaching the tap to a live TRL training run",
     "sigstore": "signing a record with Sigstore rather than the built-in Ed25519",
@@ -120,7 +124,9 @@ class _LazyModule:
     this tree does that, and it would be an honest failure rather than a silent one.
     """
 
-    def __init__(self, name: str, *, extra: str | None = None, subsystem: str | None = None) -> None:
+    def __init__(
+        self, name: str, *, extra: str | None = None, subsystem: str | None = None
+    ) -> None:
         self.__dict__["_name"] = name
         self.__dict__["_extra"] = extra
         self.__dict__["_subsystem"] = subsystem or name
@@ -164,4 +170,3 @@ __all__ = [
     "lazy_module",
     "require_extra",
 ]
-

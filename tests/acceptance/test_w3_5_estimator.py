@@ -94,10 +94,28 @@ load_quantities()
 register_all()
 
 MODEL = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+# The historical W3.5 measurement uses this immutable model and tokenizer revision.
+MODEL_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 SEED = 1234
 STEPS = 24
 BATCH = 8
 K = 4
+
+
+def _pinned_model_snapshot() -> pathlib.Path:
+    """Use the provisioned revision directly; TRL probes config without model_init_kwargs."""
+    from huggingface_hub import constants
+
+    snapshot = (
+        pathlib.Path(constants.HF_HUB_CACHE)
+        / f"models--{MODEL.replace('/', '--')}"
+        / "snapshots"
+        / MODEL_REVISION
+    )
+    if not snapshot.is_dir():
+        raise FileNotFoundError(f"pinned validation model is absent: {snapshot}")
+    return snapshot
+
 
 #: The task component, and the score that counts as a failure on it. Zero, because the component is
 #: a binary verifier. The composite total will not do: a rollout that fails the task and collects a
@@ -247,6 +265,7 @@ def _train() -> object:
     import tempfile
 
     from datasets import Dataset
+    from transformers import AutoTokenizer
     from trl import GRPOConfig, GRPOTrainer
 
     from reward_lens.tap.adapters.trl import TRLTap
@@ -259,9 +278,14 @@ def _train() -> object:
     )
     tap = TRLTap(run_id="w3-5-estimator", budget=budget, emit_extra=True)
     prompts = [f"question {i}: count upward from {i}" for i in range(BATCH * 4)]
+    snapshot = _pinned_model_snapshot()
+    tokenizer = AutoTokenizer.from_pretrained(
+        snapshot, local_files_only=True, truncation_side="left", padding_side="left"
+    )
     with tempfile.TemporaryDirectory() as out:
         args = GRPOConfig(
             output_dir=out,
+            model_init_kwargs={"revision": MODEL_REVISION, "local_files_only": True},
             per_device_train_batch_size=BATCH,
             num_generations=K,
             max_completion_length=12,
@@ -276,10 +300,11 @@ def _train() -> object:
             reward_weights=[1.0, 0.3, 0.1],
         )
         trainer = GRPOTrainer(
-            model=MODEL,
+            model=str(snapshot),
             reward_funcs=tap.wrap([task_reward, format_reward, length_reward]),
             args=args,
             train_dataset=Dataset.from_dict({"prompt": prompts}),
+            processing_class=tokenizer,
         )
         tap.attach(trainer)
         trainer.train()

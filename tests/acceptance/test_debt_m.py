@@ -173,7 +173,7 @@ def test_the_none_case_is_fiellers_unbounded_case_and_now_says_so():
     code could not do because `collapse_note` was rendered only when there was no projected step.
     """
     steps, frac = _aisi_series()
-    examined = agreed = unbounded = 0
+    examined = numeric_zero = non_rising = meaningful = unbounded = 0
     for lo in range(0, 388, 4):
         mask = (steps >= lo) & (steps < lo + 12)
         if mask.sum() < 4:
@@ -181,26 +181,47 @@ def test_the_none_case_is_fiellers_unbounded_case_and_now_says_so():
         examined += 1
         at, ci, note = _project_collapse(steps[mask], frac[mask])
         if at is None:
+            assert ci is None
+            if "numerically resolved direction" in note:
+                numeric_zero += 1
+            else:
+                non_rising += 1
+                assert "not rising" in note
             continue
         old = _old_interval(steps[mask], frac[mask])
         assert (ci is None) == (old is None), f"the None boundary moved at step {lo}"
-        agreed += 1
+        meaningful += 1
         if ci is None:
             unbounded += 1
             assert "unbounded" in note and "standard errors from zero" in note
-    # These two were pinned at 56 and 51. Both counts are BLAS-dependent: `_project_collapse`
-    # returns `at is None` for a window whose fitted slope sits within rounding of zero, and which
-    # windows those are moves with the LAPACK the wheel happens to be linked against, so an
-    # equality here passes or fails on the runner's linear-algebra backend rather than on the
-    # behaviour. The boundary this test exists for is asserted window by window inside the loop.
-    # What is left to assert in aggregate is a floor and a ratio, with the observed counts in the
-    # message rather than in the comparison.
-    assert agreed >= 0.8 * examined, (
-        f"{agreed} of {examined} twelve-step windows project a crossing at all"
-    )
-    assert unbounded >= 0.8 * agreed, (
-        f"{unbounded} of {agreed} projecting windows have an interval Fieller leaves unbounded"
-    )
+    # The first two classes are refusals, not missing observations. The fixture has two windows
+    # whose centred covariance is no larger than floating-point roundoff and forty resolved
+    # non-rising windows. The remaining fifty-five have a real positive direction; fifty of those
+    # are still weakly identified, so Fieller correctly leaves their interval unbounded.
+    assert (examined, numeric_zero, non_rising, meaningful, unbounded) == (97, 2, 40, 55, 50)
+
+
+def test_a_symmetric_window_refuses_a_roundoff_direction_before_projecting():
+    """Two symmetric dips have mathematical slope zero, not a date quadrillions of steps away."""
+    steps = np.arange(264.0, 276.0)
+    fractions = np.array([1.0, 0.75, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.75, 1.0])
+
+    at, ci, note = _project_collapse(steps, fractions)
+
+    assert at is None and ci is None
+    assert "numerically resolved direction" in note
+
+
+def test_a_resolved_but_weak_positive_direction_keeps_its_unbounded_fieller_point():
+    """Numerical zero is distinct from a positive slope whose interval cannot yet close."""
+    steps, frac = _aisi_series()
+    mask = (steps >= 12) & (steps < 24)
+
+    at, ci, note = _project_collapse(steps[mask], frac[mask])
+
+    assert at == pytest.approx(31.5531352646, abs=1e-9)
+    assert ci is None
+    assert "unbounded" in note and "standard errors from zero" in note
 
 
 def test_the_note_reaches_the_reader_when_the_interval_is_unbounded():
@@ -461,14 +482,16 @@ def test_the_general_identity_holds_under_both_binnings():
 # 4. The claims ratchet
 # ---------------------------------------------------------------------------
 
-#: Unique baseline keys before and after the release-reference guard. The contract is that this
-#: number may fall and may not rise.
+#: The release-reference guard removed 20 keys (189 to 169). The 3.1 docs then raised their
+#: Python floor from 3.10 to 3.11, retiring three more stale version-identifier keys. The ratchet
+#: may fall and may not rise; the exact current count is still checked below.
 _BASELINE_BEFORE = 189
-_BASELINE_AFTER = 169
+_BASELINE_AFTER_RELEASE_GUARD = 169
+_BASELINE_AFTER = 166
 
 
 def test_the_baseline_shrank_by_twenty_and_every_line_it_lost_was_a_release_name():
-    """The ratchet's contract, measured. 189 unique keys before, 169 after.
+    """The ratchet's contract, measured: 189 to 169 from the guard, then 166 after doc updates.
 
     `_VERSION_RE` masks `v2.0` and `3.0.0` and deliberately not a bare `1.0`, because `1.0` is a
     perfect AUC far more often than it is a release. What separates them is grammar: a release name
@@ -479,6 +502,8 @@ def test_the_baseline_shrank_by_twenty_and_every_line_it_lost_was_a_release_name
 
     baseline = load_baseline(_ROOT / "docs" / "claims-baseline.txt")
     assert len(baseline) == _BASELINE_AFTER
+    assert _BASELINE_AFTER_RELEASE_GUARD == _BASELINE_BEFORE - 20
+    assert _BASELINE_AFTER == _BASELINE_AFTER_RELEASE_GUARD - 3
     assert _BASELINE_AFTER < _BASELINE_BEFORE
 
     report = check_files(_docs_pages())

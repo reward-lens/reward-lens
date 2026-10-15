@@ -143,9 +143,7 @@ def test_every_field_the_kind_requires_is_a_parameter_with_no_default():
     for keyword_only in ("subject_ref", "provenance", "method", "result"):
         assert parameters[keyword_only].kind is inspect.Parameter.KEYWORD_ONLY, keyword_only
     positional = [
-        name
-        for name, p in parameters.items()
-        if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        name for name, p in parameters.items() if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
     ]
     assert positional == [
         "section",

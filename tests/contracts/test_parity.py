@@ -22,8 +22,11 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis_jsonschema import from_schema
 
-from conftest import INDEX, VALID_NAMES, invalid_instance, valid_instance
-from structure import (
+from reward_lens.contracts import NO_INTERVAL, Assay, model_for_def
+from reward_lens.contracts.quantise import scale_violations
+
+from .conftest import INDEX, VALID_NAMES, invalid_instance, valid_instance
+from .structure import (
     PATTERN_SAMPLES,
     bound_quantised_numbers,
     diff,
@@ -33,9 +36,6 @@ from structure import (
     relax_conditionals,
     strip_annotations,
 )
-
-from reward_lens.contracts import NO_INTERVAL, Assay, model_for_def
-from reward_lens.contracts.quantise import scale_violations
 
 CORPUS = ["reference"] + ["valid/" + n for n in VALID_NAMES] + sorted(INDEX)
 
@@ -84,9 +84,7 @@ def judgement_schema(hand_schema):
 def generation_schema(hand_schema):
     """The hand schema as the generator sees it: quantised numbers bounded, annotations dropped,
     patterns pinned, conditionals relaxed. Each edit is defended where it is defined."""
-    return relax_conditionals(
-        pin_patterns(strip_annotations(bound_quantised_numbers(hand_schema)))
-    )
+    return relax_conditionals(pin_patterns(strip_annotations(bound_quantised_numbers(hand_schema))))
 
 
 @pytest.fixture(scope="session")

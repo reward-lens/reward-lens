@@ -1,12 +1,32 @@
-"""Optional exit checks for shipped report assets and console scripts.
+"""The wave-1 exit checks: what the wheel must carry and what must run, with no conditionals.
 
-Set ``REWARD_LENS_EXIT_CHECK=1`` to run these checks in an isolated staging checkout. The
-report bundle and both command entry points are present in this curated source tree. The command
-list is read from the public CLI registry, so this test does not depend on a private fleet ledger.
+Every other module in this suite asserts something that is true today. This one asserts what has
+to be true at the wave-1 exit and is not true yet, which is why it is skipped at module level
+unless `REWARD_LENS_EXIT_CHECK=1` is set. Two ways of writing this were available and one of them
+is a trap: a test that says `if the file exists, check it ships` passes on an empty tree forever
+and the gate it was written for never fires. So the assertions below are unconditional, the module
+is switched on by an environment variable rather than by the state of the tree, and the gate is a
+command someone runs rather than a condition the suite evaluates for itself.
+
+Run it with:
+
+    REWARD_LENS_EXIT_CHECK=1 .venv/bin/python -m pytest -q tests/packaging/test_shipped_assets.py
+
+Today that command fails, and it fails for three named reasons: `src/reward_lens/examples/` holds
+only `__init__.py`, `src/reward_lens/render/report/assets/` does not exist (P-RENDER has not
+landed), and `src/reward_lens/cli/` holds only `__init__.py`, so the `reward-lens` and `rlens`
+console scripts point at a `reward_lens.cli.main` that is not there. The failures are the packet
+list for the rest of wave 1, not a defect in this module.
+
+The conditional half of the bundle question stays where it was:
+`test_wheel_metadata.py::test_report_assets_ship_when_they_exist_the_conditional_half` says that
+whatever is on disk is also in the wheel, which is a build-configuration claim and is checkable
+now. This module says the stronger thing, that the bundle exists at all.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -35,18 +55,29 @@ BUNDLE_MEMBERS = (
 #: the published interface, so it is checked with the same weight as the long name.
 ENTRY_POINTS = ("reward-lens", "rlens")
 
-#: The fourteen verbs of the public command tree. The public registry is the one source of truth,
-#: so a command removed from the CLI makes this wheel check fail without a private ledger.
-from reward_lens.cli.registry import ORDER
-
-CONTRACTED_VERBS: tuple[str, ...] = ORDER
+#: The fourteen verbs of the published command tree, read from the file the CLI packet freezes
+#: them in rather than copied into a literal here. A second copy would be free to drift from the
+#: contract, and then this check would fail when someone forgot to edit a test rather than when a
+#: verb went missing from the wheel.
+CONTRACTED_VERBS: tuple[str, ...] = tuple(
+    json.loads((ROOT / "fleet" / "CLI_COMMANDS.json").read_text(encoding="utf-8"))["commands"]
+)
 
 #: What the copied tree needs for `uv build` to produce the same wheel. `frontend/` is deliberately
 #: absent: without `frontend/package.json` the build hook takes its "nothing to build" branch, so
 #: the negative build below succeeds and yields a wheel with no bundle, which is the artefact the
 #: test needs. With `frontend/` present the hook would either rebuild the bundle or refuse, and
 #: either way the test would stop measuring what it claims to measure.
-BUILDABLE = ("pyproject.toml", "hatch_build.py", "src", "schema", "README.md", "LICENSE")
+BUILDABLE = (
+    "pyproject.toml",
+    "hatch_build.py",
+    "src",
+    "schema",
+    "skills",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+)
 
 
 def _env(**extra: str) -> dict[str, str]:

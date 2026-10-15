@@ -65,7 +65,7 @@ class _RandomDictionary:
     This is what ``FeatureRewardAlignment`` used to build for itself when no dictionary was
     supplied, and the numbers it produces are identical in kind: alignments of random directions
     with the reward, which the observable reports with ``trained_sae=False``. It moved into the test
-    when W0.5 put ``reward_lens.sae`` behind the ``[dict]`` extra, because an instrument that
+    when W0.5 put ``reward_lens.sae`` behind the ``[white-box]`` extra, because an instrument that
     conjures a sparse dictionary out of a module it happens to be able to import is claiming a
     dependency it never declared. The documented contract is one method, so this is the whole of it.
     """
@@ -182,6 +182,23 @@ def test_gauges_are_declared_honestly():
     assert MultiObjectiveGeometry.gauge_status is GaugeStatus.RAW_ONLY
     assert ConflictMatrix.gauge_status is GaugeStatus.RAW_ONLY
     assert FeatureRewardAlignment.gauge_status is GaugeStatus.RAW_ONLY
+
+
+def test_feature_alignment_marks_a_supplied_random_dictionary_as_untrained(signal, one_axis_view):
+    """A caller-controlled random dictionary remains a mechanics check, not a feature ranking."""
+    evidence = mb.run(
+        FeatureRewardAlignment(),
+        mb.Context(
+            signal=signal,
+            view=one_axis_view,
+            regime={
+                "sae": _RandomDictionary(int(signal.meta.d_model), 64),
+                "sae_trained": False,
+            },
+        ),
+    )
+    assert evidence.value["supplied_sae"] is True
+    assert evidence.value["trained_sae"] is False
 
 
 # ---------------------------------------------------------------------------

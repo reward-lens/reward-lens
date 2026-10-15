@@ -17,6 +17,7 @@ from typing import Any, Sequence
 from reward_lens import contracts
 from reward_lens.instruments.base import Instrument, Panel, RunContext
 
+from .budget import BudgetExhausted
 from .protocol import NOT_FOUND, ActorRecord
 from .search import seek
 
@@ -169,12 +170,18 @@ class ExploitSearch:
         if not tasks:
             return [self._no_tasks(ctx, subject_ref, mode)]
         intent = str(getattr(ctx, "seeker_intent", "") or MEASURAND)
-        record = seek(
-            actor,
-            tasks=tasks,
-            intent=intent,
-            max_proposals=int(getattr(ctx, "seeker_max_proposals", 8)),
-        )
+        try:
+            record = seek(
+                actor,
+                tasks=tasks,
+                intent=intent,
+                max_proposals=int(getattr(ctx, "seeker_max_proposals", 8)),
+            )
+        except BudgetExhausted as stopped:
+            # The runner seals these exact entries before carrying the interruption to the CLI.
+            # Keeping them on the exception avoids a second actor read or an invented absence.
+            stopped.entries = self.entries_for(actor.record(), subject_ref=subject_ref, ctx=ctx)
+            raise
         return self.entries_for(record, subject_ref=subject_ref, ctx=ctx)
 
     # --- the entries --------------------------------------------------------------------------
@@ -215,7 +222,9 @@ class ExploitSearch:
                             "reward": scored.reward,
                             "threshold": scored.threshold,
                             "outcome_passed": scored.outcome_passed,
+                            "outcome_evidence": dict(scored.outcome_evidence),
                             "arm": record.arm,
+                            "actor_record": record.to_dict(),
                         },
                         witness=contracts.Witness(
                             inputs=dict(scored.proposal.inputs),
@@ -263,6 +272,7 @@ class ExploitSearch:
                         "stopped": record.stopped,
                         "threshold": record.threshold,
                         "arm": record.arm,
+                        "actor_record": record.to_dict(),
                         "not_found_sentence": (
                             record.not_found_sentence() if not record.found else ""
                         ),

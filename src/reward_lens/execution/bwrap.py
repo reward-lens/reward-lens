@@ -36,9 +36,11 @@ def probe_bwrap() -> tuple[bool, str, float]:
             check=False,
         )
     except subprocess.TimeoutExpired:
-        return False, f"{' '.join(BWRAP_PROBE_ARGV)} did not finish in {_PROBE_TIMEOUT_S}s", (
-            time.monotonic() - start
-        ) * 1000
+        return (
+            False,
+            f"{' '.join(BWRAP_PROBE_ARGV)} did not finish in {_PROBE_TIMEOUT_S}s",
+            (time.monotonic() - start) * 1000,
+        )
     ms = (time.monotonic() - start) * 1000
     if done.returncode == 0:
         return True, f"{' '.join(BWRAP_PROBE_ARGV)} exited 0", ms

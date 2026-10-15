@@ -35,6 +35,10 @@ def _record(grader: pathlib.Path, state: str):
         action="merge_this_grader" if settled else None,
         policy=_POLICY if settled else None,
     )
+    # The changed decision is a newly authored fixture, so seal its new identity.
+    from reward_lens.contracts import digest
+
+    doc["assay_id"] = digest(doc)
     return Assay.model_validate(doc)
 
 
@@ -111,7 +115,9 @@ def test_exit_7_on_an_internal_failure_and_no_traceback(invoke, monkeypatch, gra
     assert "Traceback (most recent call last)" not in run.stderr
 
 
-def test_an_internal_failure_names_the_action_and_carries_the_exception(invoke, monkeypatch, grader):
+def test_an_internal_failure_names_the_action_and_carries_the_exception(
+    invoke, monkeypatch, grader
+):
     """RL0900 is the one error whose cause is a defect in reward-lens, so it has to say enough
     to go and find that defect: which verb was running, and what was raised inside it.
 
@@ -181,7 +187,11 @@ def test_an_interrupt_a_serializer_wrapped_is_still_an_interrupt(invoke, monkeyp
 
 def test_no_expected_failure_prints_a_traceback(cli, grader, tmp_path):
     missing = tmp_path / "no-such.assay.json"
-    for argv in (("audit", str(grader), "--format", "xml"), ("explain", "RL9999"), ("open", str(missing))):
+    for argv in (
+        ("audit", str(grader), "--format", "xml"),
+        ("explain", "RL9999"),
+        ("open", str(missing)),
+    ):
         run = cli(*argv)
         assert "Traceback (most recent call last)" not in run.stderr, argv
         assert run.stderr.startswith("error: "), (argv, run.stderr[:200])
@@ -213,8 +223,15 @@ def test_exit_3_when_a_paid_step_is_pending_and_the_budget_is_not_what_stopped_i
     exits 3. A cap that could not cover it is exit 6, and that is the test above.
     """
     run = cli(
-        "audit", str(grader), "--seeker", "api", "--max-budget-usd", "5.00",
-        "--non-interactive", "--format", "json",
+        "audit",
+        str(grader),
+        "--seeker",
+        "api",
+        "--max-budget-usd",
+        "5.00",
+        "--non-interactive",
+        "--format",
+        "json",
     )
 
     assert run.exit_code == 3, (run.stdout, run.stderr)
@@ -229,8 +246,14 @@ def test_exit_3_when_a_paid_step_is_pending_and_the_budget_is_not_what_stopped_i
 def test_exit_7_through_the_documented_self_test_hook(cli, grader):
     """The gate has to demonstrate exit 7 from a command line, and a defect has no invocation."""
     run = cli(
-        "audit", str(grader), "--format", "json",
-        env={"REWARD_LENS_SELFTEST": "1", "REWARD_LENS_SELFTEST_RAISE": "a defect nobody planned for"},
+        "audit",
+        str(grader),
+        "--format",
+        "json",
+        env={
+            "REWARD_LENS_SELFTEST": "1",
+            "REWARD_LENS_SELFTEST_RAISE": "a defect nobody planned for",
+        },
     )
 
     assert run.exit_code == 7, (run.stdout, run.stderr)
@@ -243,7 +266,10 @@ def test_exit_7_through_the_documented_self_test_hook(cli, grader):
 def test_the_self_test_hook_does_nothing_without_the_flag_that_arms_it(cli, grader):
     """A stray variable never turns a working install into one that reports a defect in itself."""
     run = cli(
-        "audit", str(grader), "--format", "json",
+        "audit",
+        str(grader),
+        "--format",
+        "json",
         env={"REWARD_LENS_SELFTEST_RAISE": "a defect nobody planned for"},
     )
 

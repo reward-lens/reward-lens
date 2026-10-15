@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from reward_lens.model import RewardModel
 
+GPT2_TOKENIZER_REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
+
 
 def make_micro_trunk(
     *,
@@ -36,7 +38,8 @@ def make_micro_trunk(
     The defaults (32-dim, 2-layer, 4-head, GPT-2 tokenizer) are the smallest trunk that still exposes
     the full module tree the interpretability battery reads, and it trains a planted preference rule to
     high accuracy in seconds on CPU. The tokenizer is GPT-2 (offline-cached, no chat template), so a
-    response's planted markers are scored as raw text.
+    response's planted markers are scored as raw text. The default uses a pinned public tokenizer
+    revision; a caller-supplied tokenizer name keeps its ordinary Hugging Face resolution.
 
     Args:
         d_model: Hidden size; a small multiple of ``n_heads``.
@@ -61,7 +64,8 @@ def make_micro_trunk(
     torch_device = torch.device(device)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        tokenizer_kwargs = {"revision": GPT2_TOKENIZER_REVISION} if tokenizer_name == "gpt2" else {}
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, **tokenizer_kwargs)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 

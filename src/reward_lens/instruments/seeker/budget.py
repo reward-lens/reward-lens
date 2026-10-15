@@ -108,6 +108,11 @@ class Budget:
     def calls_remaining(self) -> int | None:
         return None if self._max_calls is None else max(0, self._max_calls - self._calls)
 
+    @property
+    def exceeds_cap(self) -> bool:
+        """Whether a response has already incurred more spend than the declared cap."""
+        return self._cap is not None and self._spent > self._cap
+
     def would_exceed(self, usd: Any) -> bool:
         """Whether spending `usd` next would cross the cap, or the call count would."""
         if self._max_calls is not None and self._calls + 1 > self._max_calls:
@@ -121,9 +126,7 @@ class Budget:
     def charge(self, usd: Any, *, calls: int = 1) -> None:
         """Spend `usd`, or raise `BudgetExhausted` and spend nothing."""
         if self.would_exceed(usd):
-            raise BudgetExhausted(
-                cap=self.cap or "unbounded", spent=self.spent, asked=money(usd)
-            )
+            raise BudgetExhausted(cap=self.cap or "unbounded", spent=self.spent, asked=money(usd))
         self.settle(usd, calls=calls)
 
     def settle(self, usd: Any, *, calls: int = 1) -> None:

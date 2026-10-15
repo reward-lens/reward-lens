@@ -1,0 +1,4 @@
+{"id":"r-1","step":0,"group_id":"g-a","components":{"grader_a":1.0},"reward_recorded":1.0,"reward_applied":0.5,"advantage":0.25,"selection":1.0}
+{"id":"r-2","step":0,"group_id":"g-a","components":{"grader_a":0.0},"reward_recorded":0.0,"reward_applied":0.0,"advantage":-0.25,"selection":1.0}
+{"id":"r-3","step":1,"group_id":"g-b","components":{"grader_a":0.5},"reward_recorded":0.5,"reward_applied":0.25,"advantage":0.1,"selection":1.0}
+{"id":"r-4","step":1,"group_id":"g-b","components":{"grader_a":-0.5},"reward_recorded":-0.5,"reward_applied":-0.25,"advantage":-0.1,"selection":1.0}

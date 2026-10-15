@@ -144,6 +144,8 @@ def render(
     lines.extend(_verdict_block(doc, shape=shape))
     lines.append("")
     lines.extend(_report_block(artifacts, shape=shape, cwd=cwd, project=project))
+    if command == "trace":
+        lines.extend(_trace_evidence_block(doc, artifacts=artifacts, cwd=cwd, project=project))
     lines.extend(_footer(doc))
     lines.append("")
     return "\n".join(_paint(lines, out))
@@ -205,7 +207,11 @@ def glyph_for(doc, section) -> str:
         return CROSS
     if any(entry.get("state") == "partial" for entry in entries):
         return PARTIAL
-    if any(str(note).startswith("static") for entry in entries for note in entry.get("limitations") or ()):
+    if any(
+        str(note).startswith("static")
+        for entry in entries
+        for note in entry.get("limitations") or ()
+    ):
         return PARTIAL
     if any((entry.get("check") or {}).get("passed") is False for entry in entries):
         return CROSS
@@ -261,7 +267,9 @@ def _subject_block(doc, *, shape: str) -> list:
             # `plain shape` says the noun itself, and a formatter that appended one said it twice.
             shaped = f", {named['shape']}" if named.get("shape") else ""
             parts.append(f"`{named['signature']}`{shaped}")
-        parts.append(str(context.get("task_set")) if context.get("task_set") else "no task set supplied")
+        parts.append(
+            str(context.get("task_set")) if context.get("task_set") else "no task set supplied"
+        )
     return [_field("Subject", "  ·  ".join(part for part in parts if part))]
 
 
@@ -287,8 +295,10 @@ def _reused_block(reused) -> list:
 
 def _panel_block(doc, *, shape: str) -> list:
     labels = dict(CANONICAL)
-    wanted = CANONICAL if shape == "project" else tuple(
-        (section, labels.get(section, section)) for section in GRADER_SHAPE
+    wanted = (
+        CANONICAL
+        if shape == "project"
+        else tuple((section, labels.get(section, section)) for section in GRADER_SHAPE)
     )
     rows = [(section, label, glyph_for(doc, section)) for section, label in wanted]
     lit = [row for row in rows if row[2] != DARK]
@@ -317,7 +327,9 @@ def _panel(doc, section, label, glyph) -> list:
     for finding in _findings(doc, section):
         if finding.get("level") not in ("error", "warning"):
             continue
-        message = str(finding.get("message") or finding.get("severity_rationale") or finding.get("rule") or "")
+        message = str(
+            finding.get("message") or finding.get("severity_rationale") or finding.get("rule") or ""
+        )
         if not message:
             continue
         block = _wrapped(message, _INDENT, _PANEL_WRAP, head=None)
@@ -329,7 +341,10 @@ def _panel(doc, section, label, glyph) -> list:
 def _wrapped(text: str, indent: int, width: int, head: str | None = None) -> list:
     pad = " " * indent
     pieces = textwrap.wrap(str(text), width=width) if str(text).strip() else [""]
-    return [(head if index == 0 and head is not None else pad) + piece for index, piece in enumerate(pieces)]
+    return [
+        (head if index == 0 and head is not None else pad) + piece
+        for index, piece in enumerate(pieces)
+    ]
 
 
 def _place_code(lines: list, code: str) -> None:
@@ -357,12 +372,18 @@ def _detail(doc, section):
         missing = holes[0].get("missing_access") if holes else None
         if not missing:
             absences = [(entry.get("absence") or {}) for entry in entries]
-            missing = next((a.get("missing_access") for a in absences if a.get("missing_access")), None)
+            missing = next(
+                (a.get("missing_access") for a in absences if a.get("missing_access")), None
+            )
         return f"not measured: {missing or 'no evidence was supplied'}", "", ""
     if section == "validity":
         return _validity_counts(doc), "", ""
     result = _measured(entries)
-    return str(result.get("summary") or _fallback_detail(entries)), str(result.get("exposure_id") or ""), str(result.get("note") or "")
+    return (
+        str(result.get("summary") or _fallback_detail(entries)),
+        str(result.get("exposure_id") or ""),
+        str(result.get("note") or ""),
+    )
 
 
 def _absence_detail(entry, holes) -> str:
@@ -390,7 +411,10 @@ def _replay_fallback(entry) -> str:
     scope = (entry.get("check") or {}).get("scope_tested")
     if scope:
         clauses.append(str(scope))
-    for field, word in (("n_nondeterministic", "disagreed"), ("n_unreplayable", "could not be replayed")):
+    for field, word in (
+        ("n_nondeterministic", "disagreed"),
+        ("n_unreplayable", "could not be replayed"),
+    ):
         if result.get(field) is not None:
             clauses.append(f"{result[field]} {word}")
     if clauses:
@@ -418,7 +442,8 @@ def _validity_counts(doc) -> str:
     passed = sum(
         1
         for entry in checks
-        if (entry.get("check") or {}).get("passed") is not False and entry.get("entry_id") not in failed
+        if (entry.get("check") or {}).get("passed") is not False
+        and entry.get("entry_id") not in failed
     )
     clauses = []
     if checks:
@@ -442,7 +467,9 @@ def _validity_counts(doc) -> str:
         if "build" in missing:
             not_built.append(missing)
     if not_built:
-        clauses.append(_absence_clause(len(not_built), not_built[0], needs=False, sole=not task_set))
+        clauses.append(
+            _absence_clause(len(not_built), not_built[0], needs=False, sole=not task_set)
+        )
     if task_set:
         clauses.append(_absence_clause(len(task_set), task_set[0], needs=True, sole=False))
     return "; ".join(clauses) or "no validity entry in this record"
@@ -499,7 +526,10 @@ def _establish_block(doc) -> list:
     """A-016: the two sentences the record composes, at the record's top level."""
     extension = _extension(doc)
     lines = []
-    for label, key in (("What this run could establish", "could_establish"), ("What it could not", "could_not")):
+    for label, key in (
+        ("What this run could establish", "could_establish"),
+        ("What it could not", "could_not"),
+    ):
         sentence = extension.get(key)
         if not sentence:
             continue
@@ -513,7 +543,9 @@ def _needs(doc) -> list:
     out = []
     for entries in (doc.get("measurement") or {}).values():
         for entry in entries or ():
-            needs = _extension(entry).get("needs") or _extension(entry.get("absence") or {}).get("needs")
+            needs = _extension(entry).get("needs") or _extension(entry.get("absence") or {}).get(
+                "needs"
+            )
             if needs:
                 out.append(str(needs).lower())
     return out
@@ -568,7 +600,9 @@ def _counts_sentence(doc, reasons) -> str:
                 break
         else:
             blocking.add(named)
-    missing = {reason.split(":", 1)[1] for reason in reasons if reason.startswith("required_missing:")}
+    missing = {
+        reason.split(":", 1)[1] for reason in reasons if reason.startswith("required_missing:")
+    }
     if not blocking and not missing:
         return ""
     findings = f"{len(blocking)} blocking finding" + ("" if len(blocking) == 1 else "s")
@@ -593,6 +627,36 @@ def _report_block(artifacts, *, shape: str, cwd: str | None, project: str | None
         lines.append(" " * (2 + _FIELD_WIDTH) + _REPORT_NOTE)
         lines.append("")
         lines.append(_field("Next", _NEXT))
+    lines.append("")
+    return lines
+
+
+def _trace_evidence_block(doc: dict, *, artifacts, cwd: str | None, project: str | None) -> list:
+    """Show the reader and saved assay that support a trace, without deriving a new claim."""
+    reconstruction = next(
+        (
+            entry
+            for entry in _entries(doc, "trace")
+            if entry.get("entry_id") == "trace.reconstruction"
+        ),
+        None,
+    )
+    result = (reconstruction or {}).get("result") or {}
+    reader = result.get("reader")
+    if not reader:
+        return []
+    rows = result.get("rows")
+    source = ((reconstruction or {}).get("witness") or {}).get("inputs", {}).get("source")
+    parts = [str(reader)]
+    if rows is not None:
+        parts.append(f"{rows} rows")
+    if source:
+        parts.append(f"source {source}")
+    lines = ["  Trace evidence  " + " · ".join(parts)]
+    assay = (artifacts or {}).get("assay")
+    if assay:
+        full = os.path.join(project, assay) if project and not os.path.isabs(assay) else assay
+        lines.append("                 Assay: " + _relative(full, cwd))
     lines.append("")
     return lines
 

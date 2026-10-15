@@ -38,6 +38,7 @@ from reward_lens.runtime.backend import CaptureSpec  # noqa: E402
 from reward_lens.signals.base import PositionSpec  # noqa: E402
 
 TINY_POLICY = "trl-internal-testing/tiny-Qwen3ForCausalLM"
+TINY_POLICY_REVISION = "52b2e48b0004586eff92c403efa5ce5547c43a45"
 
 ITEMS = [
     ("count upward from 15", " 16 17 18 19 20 21"),
@@ -50,7 +51,7 @@ SITE = Site(layer=1, point="resid_post", head=None)
 
 @pytest.fixture(scope="module")
 def policy():
-    return from_pretrained(TINY_POLICY, device="cpu")
+    return from_pretrained(TINY_POLICY, revision=TINY_POLICY_REVISION, device="cpu")
 
 
 @pytest.fixture(scope="module")

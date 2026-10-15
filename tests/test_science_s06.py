@@ -12,10 +12,6 @@ T12 on the scoreboard.
 from __future__ import annotations
 
 import numpy as np
-
-from reward_lens.core.store import EvidenceStore
-from reward_lens.core.types import TrustLevel
-from reward_lens.studies import Scoreboard, render_report, run_study
 from studies.s06_topology.analysis import (
     _planted_harmonic_corpus,
     _synthetic_judge_corpus,
@@ -30,6 +26,10 @@ from studies.s06_topology.hodge import (
     incidence_b1,
     triangle_b2,
 )
+
+from reward_lens.core.store import EvidenceStore
+from reward_lens.core.types import TrustLevel
+from reward_lens.studies import Scoreboard, render_report, run_study
 
 
 def _complete_edges(n: int) -> list[tuple[int, int]]:

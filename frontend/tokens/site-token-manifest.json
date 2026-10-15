@@ -1,0 +1,12 @@
+{
+  "schema": "rewardlens-site-token-manifest/1",
+  "source": {
+    "path": "src/styles/tokens.css",
+    "sha256": "sha256:5ff0073f991be7a6437de6740784f8539a5a1a4e9a1b007c6e326c703546a4a7"
+  },
+  "export": {
+    "path": "frontend/tokens/site-tokens.css",
+    "sha256": "sha256:5ff0073f991be7a6437de6740784f8539a5a1a4e9a1b007c6e326c703546a4a7"
+  },
+  "canonical_sha256": "sha256:af06dc07c3a5d68648730d194dd6723f1b8441dc7b551cebd238272f7f31761b"
+}

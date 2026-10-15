@@ -25,6 +25,10 @@ RESERVED_BY_THE_INTERFACES = (
     "RL0004",
     "RL0120",
     "RL0130",
+    "RL0131",
+    "RL0132",
+    "RL0133",
+    "RL0134",
     "RL0201",
     "RL0202",
     "RL0203",
@@ -34,24 +38,54 @@ RESERVED_BY_THE_INTERFACES = (
     "RL0213",
     "RL0214",
     "RL0215",
+    "RL0221",
+    "RL0222",
+    "RL0223",
+    "RL0224",
+    "RL0225",
+    "RL0226",
+    "RL0227",
+    "RL0228",
+    "RL0229",
     "RL0231",
+    "RL0241",
+    "RL0242",
+    "RL0243",
+    "RL0244",
+    "RL0245",
+    "RL0251",
+    "RL0261",
     "RL0301",
     "RL0302",
+    "RL0310",
+    "RL0311",
     "RL0341",
     "RL0401",
     "RL0402",
     "RL0410",
     "RL0501",
+    "RL0502",
     "RL0601",
     "RL0602",
     "RL0603",
     "RL0604",
+    "RL0610",
+    "RL0611",
     "RL0620",
     "RL0621",
+    "RL0630",
+    "RL0631",
+    "RL0632",
+    "RL0640",
+    "RL0641",
+    "RL0642",
     "RL0701",
     "RL0702",
     "RL0703",
+    "RL0704",
     "RL0710",
+    "RL0711",
+    "RL0720",
     "RL0801",
     "RL0900",
 )
@@ -67,6 +101,23 @@ SRC = Path(__file__).resolve().parents[2] / "src"
 
 def test_the_catalogue_is_exactly_the_reserved_allocation() -> None:
     assert sorted(CATALOGUE) == sorted(RESERVED_BY_THE_INTERFACES)
+
+
+def test_wave_two_capability_rows_hold_their_allocated_context() -> None:
+    assert CATALOGUE["RL0704"].context_keys == ("extra", "capability")
+    assert CATALOGUE["RL0711"].context_keys == ("provider", "operation", "detail")
+
+
+def test_wave_three_import_and_tracker_rows_hold_their_allocated_context() -> None:
+    assert CATALOGUE["RL0630"].context_keys == ("major", "declared", "original_bytes")
+    assert CATALOGUE["RL0631"].context_keys == ("member", "rule")
+    assert CATALOGUE["RL0632"].context_keys == ("signer", "digest", "verification")
+    assert CATALOGUE["RL0720"].context_keys == ("tracker", "credential")
+
+
+def test_wave_three_export_rows_hold_their_reallocated_context() -> None:
+    assert CATALOGUE["RL0641"].context_keys == ("hits", "redacted_path")
+    assert CATALOGUE["RL0642"].context_keys == ("value",)
 
 
 def test_every_key_matches_the_code_it_holds() -> None:

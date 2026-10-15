@@ -3,9 +3,9 @@
 The trust anchor for v3 is that it reproduces v1's verified-clean headline numbers from the cached
 activations before it is trusted to produce new ones. The v1 campaign left its final-token activations
 on disk (``read_v1_cache`` loads one shard into a :class:`~reward_lens.runtime.store.V1Cache`), and the
-historical targets were held in a private campaign fixture that is not distributed here. This module
-keeps the public wiring from a cache and reward direction to a recompute, without claiming access to
-that private target set.
+targets are recorded in ``fixtures/e_parity/golden.json``. This module is the wiring that turns a cache
+plus a reward direction into the recompute, so the path ``cache + w_r + Observable = golden number`` is
+a single importable function rather than a description.
 
 The unavoidable gate is stated plainly here and enforced by the caller. The reward direction ``w_r`` is
 the 8B model's score-head weight. It is a model weight, not a cached activation, and it is not uniquely

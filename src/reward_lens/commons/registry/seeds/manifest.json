@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "e1": {
+    "source": "fleet/TEST_EVIDENCE/P-E1-canonical-assay/assay.json",
+    "sha256": "8bafc3d79bcfc5d15b0578e0e39f285b01079ef87aeacbe97e43cc43243c5288",
+    "derivation": "privacy-portable copy; see checkout-fixtures/PROVENANCE.json"
+  },
+  "public_records": {
+    "source": "field-scan-2026/13-EVAL-SCIENCE.md",
+    "sha256": "8608825e3e541eb4769309ee735bf5a7650b4f6efa4e80550d3aeb8c3061aea5",
+    "authoritative_x8": {
+      "dossier_sha256": "0dcbcf05d420d2099170ee7338dfa7e2ff305f88d0fe286aec495a9112d99c42",
+      "dossier_section": "c.7.3, lines 1047-1072"
+    }
+  },
+  "campaign_cards": {
+    "armorm.html": "1260e43296450179f6451cc11494b77876a1b5c323af7c7c78fe05652c784e37",
+    "grm-gemma2-2b.html": "646fd6fc1311c1945ce4f39fee61f6220ebeed1667a2358427d5f1d5de112112",
+    "skywork-v01.html": "d4f7f5e09afc4793a11432f59ec6ed66aebdeca05e5615619448bae4c109726a",
+    "skywork-v02.html": "f6bfca776b0bdc49fb7a3934acbc14815d27570b77c1ef6758029b725e2f480a",
+    "skywork-v2-llama31-8b.html": "9ab5684ac5184133c890a73db1992cbe57a0ff26d781706961389b95ba4614e9",
+    "skywork-v2-qwen3-0.6b.html": "8017cf772df22053bfd784b2c574573cedd47e752431d8b999207246a553583d",
+    "skywork-v2-qwen3-1.7b.html": "f95a9dfe49bff02148021c91ccb801702545427a8aaa87e73b8ffc4022a7462e",
+    "skywork-v2-qwen3-4b.html": "8b16ee1e282d92f3520747fe0523281e321b95bfdc5bff5a42690a9ef7be77ff",
+    "skywork-v2-qwen3-8b.html": "baf3e0e9a593c11df44446c55ba7527d787cd220d90d3e757fb2ca692916c915",
+    "tulu-rm.html": "adeea773966b31c9ee852269ca2d6843b1bf9e2eed946f5993f67f46872f47e4"
+  }
+}

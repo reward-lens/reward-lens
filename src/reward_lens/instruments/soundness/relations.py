@@ -99,9 +99,7 @@ class _AugAssign(ast.NodeTransformer):
             and isinstance(node.value.left, ast.Name)
             and node.value.left.id == node.targets[0].id
         ):
-            return ast.AugAssign(
-                target=node.targets[0], op=node.value.op, value=node.value.right
-            )
+            return ast.AugAssign(target=node.targets[0], op=node.value.op, value=node.value.right)
         return node
 
 

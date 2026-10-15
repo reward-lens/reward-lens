@@ -1,8 +1,5 @@
 """Tests for the reward-lens core model wrapper."""
 
-import importlib.util
-
-import pytest
 import torch
 import torch.nn as nn
 
@@ -135,15 +132,6 @@ class TestAdapterAutoDetection:
         assert isinstance(adapter, LlamaAdapter)
 
 
-@pytest.mark.skipif(
-    importlib.util.find_spec("sae_lens") is None,
-    reason=(
-        "reward_lens.sae moved behind the [dict] extra in W0.5's second half, because a sparse\n"
-        "dictionary is a candidate generator and never a claim substrate. Install it with\n"
-        "pip install 'reward-lens[dict]' to run these. The gate itself is asserted in\n"
-        "tests/acceptance/test_w0_5_migration.py, which runs on an install without the extra."
-    ),
-)
 class TestTopKSAE:
     """Tests for the TopK SAE."""
 

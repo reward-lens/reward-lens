@@ -795,9 +795,10 @@ def test_a_compute_gated_study_voids_every_prediction_by_name_and_passes_nothing
     Every prediction and every kill criterion comes back VOID with its arc named, `killed` is False
     because nothing was evaluated, and the recorded Evidence says what is missing and what it costs.
     """
+    from studies.w6_rate import METRIC_ARCS, freeze_all
+
     from reward_lens.core.store import EvidenceStore
     from reward_lens.studies.runner import run_study
-    from studies.w6_rate import METRIC_ARCS, freeze_all
 
     for key, frozen in freeze_all().items():
         store = EvidenceStore()
@@ -818,9 +819,10 @@ def test_a_compute_gated_study_voids_every_prediction_by_name_and_passes_nothing
 
 def test_the_analysis_frozen_before_the_arms_exist_scores_them_when_they_do():
     """The point of writing the analysis now: the day the arms exist, this is what scores them."""
+    from studies.w6_rate import METRIC_ARCS, freeze_all
+
     from reward_lens.core.store import EvidenceStore
     from reward_lens.studies.runner import run_study
-    from studies.w6_rate import METRIC_ARCS, freeze_all
 
     frozen = freeze_all()["w6-1-two-run-rate-test"]
     subjects = {

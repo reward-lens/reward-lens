@@ -44,7 +44,7 @@ def tree() -> dict:
 def _command(name, command, ctx) -> dict:
     import click
 
-    from . import config, registry
+    from . import registry
 
     row = {
         "name": name,
@@ -58,7 +58,9 @@ def _command(name, command, ctx) -> dict:
         row["subcommands"] = [
             {
                 "name": sub,
-                "parameters": [_parameter(parameter) for parameter in command.get_command(ctx, sub).params],
+                "parameters": [
+                    _parameter(parameter) for parameter in command.get_command(ctx, sub).params
+                ],
             }
             for sub in sorted(command.list_commands(ctx))
         ]

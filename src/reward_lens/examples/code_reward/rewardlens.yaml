@@ -17,6 +17,7 @@ responses:
 outcome:
   kind: protected_test_suite
   path: outcome
+  execution: outcome/execution.json
 success: a response is successful when the protected suite in outcome/ accepts it
 constraints:
   - the grader runs on CPU, offline, with no model

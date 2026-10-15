@@ -1,0 +1,12 @@
+{
+  "artifact": {
+    "path": "results.jsonl",
+    "sha256": "f99d689b67824587e5543ac38ad5828a3b5c79b10b6f5ee7f64698d3cf6e7a0b"
+  },
+  "writer": {
+    "command": "PYTHONPATH=<historical-verifiers-source> .venv/bin/python -c 'from verifiers.utils.save_utils import save_outputs; save_outputs(outputs, Path(\"tests/fixtures/readers/verifiers\"), mode=\"w\")'",
+    "source": "verifiers/utils/save_utils.py:761",
+    "source_revision": "edafab8"
+  },
+  "generation": "offline scripted rollout; results.jsonl was written by vendored save_outputs, metadata.json supplies the declared example ids"
+}

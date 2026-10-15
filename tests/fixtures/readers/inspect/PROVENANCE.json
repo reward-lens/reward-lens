@@ -1,0 +1,13 @@
+{
+  "artifact": {
+    "path": "offline.eval",
+    "sha256": "564b58fd48dcf9277b122cf3ad1ec36c1e984bbb980d8e37c683d31c345d15ca"
+  },
+  "writer": {
+    "command": ".venv/bin/python -c 'from inspect_ai import Task, eval; from inspect_ai.dataset import Sample; from inspect_ai.solver import generate; from inspect_ai.scorer import match; eval(Task(dataset=[Sample(input=\"Return exactly 2\", target=\"Default output from mockllm/model\", id=\"offline-1\")], solver=generate(), scorer=match(), name=\"offline_mockllm_trace\"), model=\"mockllm/model\", log_dir=\"tests/fixtures/readers/inspect\", log_format=\"eval\", display=\"none\")'",
+    "package": "inspect-ai",
+    "package_version": "0.3.269",
+    "model": "mockllm/model"
+  },
+  "generation": "offline Inspect task run; artifact read only through inspect_ai.log.read_eval_log"
+}

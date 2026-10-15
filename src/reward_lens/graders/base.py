@@ -75,9 +75,7 @@ except ImportError:  # pragma: no cover - the shim, interfaces section 3
         stdout: bytes
         stderr: bytes
         counters: Counters
-        breach: Literal[
-            "wall", "cpu", "memory", "processes", "stdout", "artifact"
-        ] | None
+        breach: Literal["wall", "cpu", "memory", "processes", "stdout", "artifact"] | None
         tier: str
 
     class Sandbox(Protocol):  # type: ignore[no-redef]

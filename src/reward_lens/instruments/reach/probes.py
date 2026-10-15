@@ -33,7 +33,7 @@ __all__ = [
 #: Bumped when the instrument changes what it computes from a witness, not when its prose moves.
 #: 2.0.0 is the probe moving onto the run's own sandbox and the filesystem attempt moving off the
 #: directory this instrument had to bind.
-METHOD_VERSION = "2.0.0"
+METHOD_VERSION = "2.1.0"
 
 INSTRUMENT_ID = "reach.surfaces"
 
@@ -142,14 +142,12 @@ class ReachSurfaces:
             ),
             procedure=(
                 "one response is handed to the grader through its own entrypoint and run in the "
-                "sandbox at the tier that held; the response attempts each surface from inside "
-                "the graded process and reports every attempt it made and what came of it"
+                "sandbox at the tier that held; a declared OpenEnv adapter that scores runs the "
+                "same attempts in its contained adapter process and records that distinct basis"
             ),
         )
 
-    def run(
-        self, subject: Any, corpus: Any, ctx: RunContext
-    ) -> list[contracts.Entry]:
+    def run(self, subject: Any, corpus: Any, ctx: RunContext) -> list[contracts.Entry]:
         """One entry per surface. Exceptions are not caught here; the audit catches them."""
         tasks = tuple(getattr(corpus, "tasks", ()) or ())
         if not tasks:
@@ -213,6 +211,7 @@ class ReachSurfaces:
                 (f"no reach claim about {surface.value}",),
                 subject_ref=subject_ref,
                 duration_s=duration_s,
+                method=self.method,
             )
         low, high = _wilson(report.k, report.n)
         result: dict[str, Any] = {
@@ -223,7 +222,9 @@ class ReachSurfaces:
             "attempted": report.n,
             "reached_attempts": report.k,
             "sandbox_tier": outcome.tier,
-            "grader_executed_the_response": report.executed,
+            "grader_executed_the_response": outcome.execution_basis == "response",
+            "execution_basis": outcome.execution_basis,
+            "source_captured_scope": outcome.source_captured_scope,
             "exit_code": outcome.exit_code,
         }
         if surface is Surface.NETWORK:
@@ -250,13 +251,17 @@ class ReachSurfaces:
         entry.provenance.sandbox_tier = outcome.tier
         entry.witness = contracts.Witness(
             inputs={
-                "grader": str(getattr(subject, "grader_path", "")),
+                # The entry's subject_ref is the durable link to the audited grader. Its local
+                # filename is an auditor-side locator, so carrying it would make equivalent
+                # audit routes disclose and disagree on an irrelevant absolute path.
                 "entrypoint": str(getattr(subject, "entrypoint", "score")),
                 "task_id": str(task.get("id", "")),
                 "response_digest": outcome.response_digest,
                 "program_digest": outcome.program_digest,
                 "attempts": list(ATTEMPT_NAMES[surface]),
                 "sandbox_tier": outcome.tier,
+                "execution_basis": outcome.execution_basis,
+                "source_captured_scope": outcome.source_captured_scope,
             },
             procedure="; ".join(attempt.procedure for attempt in report.attempts),
             observed=report.observed,

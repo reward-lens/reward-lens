@@ -1,0 +1,52 @@
+{
+  "schema": "reward-lens-public-regression-inputs/1",
+  "derivation": "new public-input derivation; never identified as the historical ignored extraction",
+  "e1": {
+    "dataset": "ai-safety-institute/reward-hacking-olmo3.1-32b-kl0.0-seed2-rollouts",
+    "revision": "adf70b44d4243bcc37e3a90cef88977103db3000",
+    "parquet": {
+      "path": "data/train-00000-of-00001.parquet",
+      "bytes": 188978039,
+      "sha256": "00bd6ba463f8d53ef5ce8bcecf32803e09f201b8778443ae5e8f63324f45fade"
+    },
+    "expected_eval_files": 401,
+    "expected_eval_bytes_upper_bound": 2000000000,
+    "expected_rows": 25664,
+    "counts": {
+      "groups": 1604,
+      "groups_with_contrast": 517,
+      "accepted_hacks": 18590,
+      "solutions": 10,
+      "functions_summed": 9,
+      "advantage_components": 2,
+      "registered_analysis_support": 67,
+      "native_grid_support": 141
+    },
+    "analysis": {
+      "COMPOSITION.md": "ef9c3ff4c2327867b420bc2f3c5916e5b9b5f063c6bef6895f5c0ec7a0629a6f",
+      "REGISTERED.md": "9a4b3403c62307e8713cd009dab56d4e77667cd5c2b7be777e3e5bcde2091ea9",
+      "RECORD_CONTENTS.md": "b222236c0897938a3fe658a01decd343dc115697b0ecd4f1b7f6e286e5e8a040",
+      "GATE2.md": "76a6b27f7d186dddc97dec01e26d8928e98e3034f6674fe1080c28d8d1993c8f"
+    }
+  },
+  "campaign": {
+    "generator_local_git_commit": "f93f4b5578c221d3d2665f9b305f3e86759be862",
+    "rewardbench2": {
+      "dataset": "allenai/reward-bench-2",
+      "revision": "7ff08853b0d5686e79b13fda8677024f566a104a",
+      "path": "data/test-00000-of-00001.parquet",
+      "bytes": 6973189,
+      "sha256": "c8ec60efbd75d2f9dcba4121e6101f7a6015abc38a34e034ae2c7ae886265958"
+    },
+    "bank_sha256": {
+      "diagnostic-v3": "d786b812f38235f53ff9ed0ea27c09ebde0f00eda3ca3fdb49d6beba1b24b3c2",
+      "hack-probes": "5807ea71ea925ac7fd44dc3b4c14b40e46797e570d9faa1d1ad543b4a2787031",
+      "rb2-patch-40": "5f925c36dd98d48e16c4f499d6b15decba2bb66a9ede82e830a1fc4a8a98f087"
+    },
+    "content_hash": {
+      "diagnostic-v3": "ds:0554ebf282abe40a94b742e754838ab6",
+      "hack-probes": "ds:ca165410bd0e2764592669180b29d698",
+      "rb2-patch-40": "ds:a5f037d275d9ab400dc6325a63b7e4cb"
+    }
+  }
+}

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 
 def test_twelve_known_good_solutions_pass(demo) -> None:
     good = sorted((demo.root / "outcome" / "known_good").glob("*.py"))
@@ -18,7 +16,9 @@ def test_twelve_known_good_solutions_pass(demo) -> None:
 
 
 def test_twelve_known_wrong_solutions_fail_for_their_stated_reason(demo) -> None:
-    stated = json.loads((demo.root / "outcome" / "known_wrong" / "reasons.json").read_text(encoding="utf-8"))
+    stated = json.loads(
+        (demo.root / "outcome" / "known_wrong" / "reasons.json").read_text(encoding="utf-8")
+    )
     wrong = sorted((demo.root / "outcome" / "known_wrong").glob("*.py"))
     assert len(wrong) == 12
     assert set(stated) == {p.name for p in wrong}
@@ -33,7 +33,9 @@ def test_twelve_known_wrong_solutions_fail_for_their_stated_reason(demo) -> None
 def test_an_empty_suite_fails_qualification(demo) -> None:
     task = dict(demo.task(sorted((demo.root / "outcome" / "known_good").glob("*.py"))[0].stem))
     task["tests"] = []
-    good = (demo.root / "outcome" / "known_good" / f"{task['task_id']}.py").read_text(encoding="utf-8")
+    good = (demo.root / "outcome" / "known_good" / f"{task['task_id']}.py").read_text(
+        encoding="utf-8"
+    )
     result = demo.check.run_outcome(task, good)
     assert result["passed"] is False
     assert result["reason"] == "empty_suite"
@@ -45,6 +47,37 @@ def test_qualification_reports_every_reference_solution(demo) -> None:
     assert report["known_good"] == 12
     assert report["known_wrong"] == 12
     assert report["reason_classes"] == sorted(set(report["reason_classes"]))
+
+
+def test_qualification_refuses_a_missing_required_control_then_recovers_exactly(demo) -> None:
+    target = demo.root / "outcome" / "known_good" / "task-01.py"
+    original = target.read_bytes()
+    target.unlink()
+    try:
+        report = demo.check.qualify()
+        assert report["qualified"] is False
+        assert report["failures"] == ["missing required known_good control: task-01.py"]
+        assert report["remedy"] == (
+            "restore the exact shipped known-good and known-wrong controls before qualification"
+        )
+    finally:
+        target.write_bytes(original)
+    assert target.read_bytes() == original
+    assert demo.check.qualify()["qualified"] is True
+
+
+def test_qualification_refuses_a_substituted_required_control(demo) -> None:
+    target = demo.root / "outcome" / "known_good" / "task-01.py"
+    original = target.read_bytes()
+    target.write_bytes((demo.root / "outcome" / "known_good" / "task-02.py").read_bytes())
+    try:
+        report = demo.check.qualify()
+        assert report["qualified"] is False
+        assert report["failures"] == ["modified required known_good control: task-01.py"]
+    finally:
+        target.write_bytes(original)
+    assert target.read_bytes() == original
+    assert demo.check.qualify()["qualified"] is True
 
 
 def test_the_check_is_not_a_duplicate_of_the_grader(demo) -> None:

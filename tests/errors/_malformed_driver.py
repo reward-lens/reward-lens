@@ -52,11 +52,17 @@ CASES: list[tuple[str, Callable[[], Any]]] = [
     ("raise an interruption", lambda: _raise(make("RL0130"))),
     ("validate an empty record", lambda: contracts.validate_record({})),
     ("validate something that is not a record", lambda: contracts.validate_record("not a record")),
-    ("validate a record from a later major", lambda: contracts.validate_record({"$schema": _LATER_MAJOR})),
+    (
+        "validate a record from a later major",
+        lambda: contracts.validate_record({"$schema": _LATER_MAJOR}),
+    ),
     ("build a record from nothing", lambda: contracts.Assay.model_validate({})),
     ("build a record from a list", lambda: contracts.Assay.model_validate([])),
     ("canonicalise a value with no JSON form", lambda: contracts.canonical_bytes(object())),
-    ("read a project file with a bad reward kind", lambda: contracts.ProjectConfig.model_validate({"reward": {"kind": "nope"}})),
+    (
+        "read a project file with a bad reward kind",
+        lambda: contracts.ProjectConfig.model_validate({"reward": {"kind": "nope"}}),
+    ),
 ]
 
 

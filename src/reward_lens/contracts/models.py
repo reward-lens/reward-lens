@@ -148,6 +148,8 @@ def bounded_int(**bounds: int) -> Any:
     `minimum` and `maximum`, which is what the frozen schema writes (D-66).
     """
     return Annotated[int, Field(**bounds), *JsonInt.__metadata__]
+
+
 Text = Annotated[str, Field(min_length=1)]
 NonNegativeInt = bounded_int(ge=0)
 Extensions = Annotated[
@@ -538,7 +540,10 @@ _ENTRY_CONDITIONALS = [
             "properties": {
                 "kind": {"const": "detection"},
                 "detection": {
-                    "not": {"properties": {"unqualified": {"const": True}}, "required": ["unqualified"]}
+                    "not": {
+                        "properties": {"unqualified": {"const": True}},
+                        "required": ["unqualified"],
+                    }
                 },
             }
         },
@@ -669,13 +674,93 @@ class Finding(Base):
     location: FindingLocation = None  # type: ignore[assignment]
 
 
+class JoinCellAbsence(Base):
+    """The named absence that belongs to one serialized D-47 cell."""
+
+    reason: Text
+    remedy: Text
+
+
+class JoinCellAbsences(Base):
+    """A closed map of the D-47 cells that are absent in one serialized row."""
+
+    selected: JoinCellAbsence = None  # type: ignore[assignment]
+    applied_update_weight: JoinCellAbsence = None  # type: ignore[assignment]
+    fix_changes_pressure: JoinCellAbsence = None  # type: ignore[assignment]
+    fix_cost: JoinCellAbsence = None  # type: ignore[assignment]
+
+    @model_validator(mode="after")
+    def _names_at_least_one_absent_cell(self) -> JoinCellAbsences:
+        if not any(
+            getattr(self, name) is not None
+            for name in ("selected", "applied_update_weight", "fix_changes_pressure", "fix_cost")
+        ):
+            raise ValueError("a named join absence map identifies at least one absent D-47 cell")
+        return self
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema, handler):  # type: ignore[no-untyped-def]
+        schema = handler(core_schema)
+        schema = handler.resolve_ref_schema(schema)
+        schema["minProperties"] = 1
+        return schema
+
+
 class JoinRow(Base):
     family: Text
     selected: Literal["yes", "no", "not_measured"]
     applied_update_weight: quantised(4, ge=0, le=1) | None
     fix_changes_pressure: quantised(4) | None
     fix_cost: Annotated[str, Field(max_length=200)] | None
-    missing: str = None  # type: ignore[assignment]
+    # Existing 1.0 records retain the former summary string. New records preserve the absence
+    # separately for every null D-47 cell, so a reader never has to guess which remedy belongs
+    # to which column.
+    missing: str | JoinCellAbsences = None  # type: ignore[assignment]
+
+    @model_validator(mode="after")
+    def _named_absences_only_describe_unavailable_cells(self) -> JoinRow:
+        if not isinstance(self.missing, JoinCellAbsences):
+            return self
+        allowed = {
+            "selected": self.selected == "not_measured",
+            "applied_update_weight": self.applied_update_weight is None,
+            "fix_changes_pressure": self.fix_changes_pressure is None,
+            "fix_cost": self.fix_cost is None,
+        }
+        invalid = [
+            name
+            for name, is_allowed in allowed.items()
+            if getattr(self.missing, name) is not None and not is_allowed
+        ]
+        if invalid:
+            raise ValueError(
+                "a named join absence belongs only to its unavailable serialized cell; "
+                f"invalid {', '.join(invalid)}"
+            )
+        return self
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema, handler):  # type: ignore[no-untyped-def]
+        schema = handler(core_schema)
+        schema = handler.resolve_ref_schema(schema)
+        conditions = []
+        for name, expected in (
+            ("selected", {"const": "not_measured"}),
+            ("applied_update_weight", {"type": "null"}),
+            ("fix_changes_pressure", {"type": "null"}),
+            ("fix_cost", {"type": "null"}),
+        ):
+            conditions.append(
+                {
+                    "if": {
+                        "required": ["missing"],
+                        "properties": {"missing": {"type": "object", "required": [name]}},
+                    },
+                    "then": {"properties": {name: expected}},
+                }
+            )
+        schema["allOf"] = conditions
+        return schema
 
 
 # --- the decision --------------------------------------------------------------------------------
@@ -756,9 +841,7 @@ class Decision(Base):
     def _a_verdict_names_its_action(self) -> Decision:
         if self.state in ("qualified", "rejected"):
             if self.policy is None or self.action is None:
-                raise ValueError(
-                    f"a {self.state} decision names a policy and an action (D-13)"
-                )
+                raise ValueError(f"a {self.state} decision names a policy and an action (D-13)")
         if self.state == "rejected" and not self.reasons:
             raise ValueError("a rejected decision names at least one typed reason (D-13)")
         if self.tradeoff is not None and self.state != "unresolved":

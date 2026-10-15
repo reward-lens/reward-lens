@@ -15,14 +15,15 @@ import pytest
 import rfc8785
 from pydantic import BaseModel
 
-from conftest import CONTRACTS_SRC, ROOT, VECTOR, VECTOR_DIGEST, load
-
 from reward_lens.contracts import Assay, absence, canonical_bytes, digest
 from reward_lens.contracts.canonical import EXCLUDED_FROM_DIGEST, strip_for_digest
+from reward_lens.contracts.envelope import ResultEnvelope
 from reward_lens.contracts.models import (
     MODEL_FOR_DEF,
+    ContextRef,
     Cost,
     Decision,
+    Digests,
     Embedding,
     EntryProvenance,
     Intent,
@@ -30,11 +31,12 @@ from reward_lens.contracts.models import (
     Producer,
     Provenance,
     Subject,
+    VersionRef,
     omitted_when_none,
 )
-from reward_lens.contracts.envelope import ResultEnvelope
-from reward_lens.contracts.models import ContextRef, Digests, VersionRef
 from reward_lens.contracts.validate import assay_schema
+
+from .conftest import CONTRACTS_SRC, ROOT, VECTOR, VECTOR_DIGEST, load
 
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -118,7 +120,8 @@ def test_the_vector_is_itself_a_valid_record():
 
 @pytest.mark.parametrize("seed", ["0", "1", "524287"])
 def test_digest_is_stable_across_pythonhashseed_in_a_fresh_interpreter(seed):
-    env = dict(os.environ, PYTHONHASHSEED=seed, PYTHONPATH=str(ROOT / "src"))
+    env = dict(os.environ, PYTHONHASHSEED=seed)
+    env.pop("PYTHONPATH", None)
     out = subprocess.run(
         [
             sys.executable,
@@ -213,9 +216,7 @@ def test_the_built_record_round_trips_through_model_validate(reference):
 
 
 @pytest.mark.parametrize("ref", sorted(MODEL_FOR_DEF))
-def test_the_serialiser_omits_exactly_what_the_schema_leaves_optional_in_each_def(
-    hand_schema, ref
-):
+def test_the_serialiser_omits_exactly_what_the_schema_leaves_optional_in_each_def(hand_schema, ref):
     """The rule is the frozen schema's `required` list, read back the other way.
 
     The serialiser decides what to omit from the model's own field defaults, so this test is what
@@ -358,12 +359,18 @@ def _build(model, data, *, state_defaults):
             value = _build(inner, value, state_defaults=state_defaults)
         elif kind == "list" and isinstance(value, list):
             value = [
-                _build(inner, item, state_defaults=state_defaults) if isinstance(item, dict) else item
+                _build(inner, item, state_defaults=state_defaults)
+                if isinstance(item, dict)
+                else item
                 for item in value
             ]
         elif kind == "dict" and isinstance(value, dict):
             value = {
-                key: (_build(inner, item, state_defaults=state_defaults) if isinstance(item, dict) else item)
+                key: (
+                    _build(inner, item, state_defaults=state_defaults)
+                    if isinstance(item, dict)
+                    else item
+                )
                 for key, item in value.items()
             }
         kwargs[name] = value
@@ -452,7 +459,9 @@ def test_the_serialiser_follows_a_nested_required_list_changed_in_memory(label):
     assert moved not in omitted_when_none(model)
     try:
         node["required"] = [name for name in kept if name != moved]
-        assert moved in omitted_when_none(model), f"{label}: the serialiser kept the old required list"
+        assert moved in omitted_when_none(model), (
+            f"{label}: the serialiser kept the old required list"
+        )
     finally:
         node["required"] = kept
     assert moved not in omitted_when_none(model)

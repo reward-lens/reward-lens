@@ -28,7 +28,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from experiments.x3_transfer import (
     DOSES,
     PLANTING_MODES,
@@ -46,6 +45,7 @@ from experiments.x3_transfer import (
     short,
     transfer_interval,
 )
+
 from reward_lens.artifacts.claims import check_files
 from reward_lens.core.reference import Transfer
 from reward_lens.core.store import EvidenceStore
@@ -186,6 +186,7 @@ def test_every_frozen_prediction_and_kill_criterion_is_adjudicated(manifest: dic
 def test_a_missing_metric_voids_rather_than_refutes() -> None:
     """A metric the analysis did not produce is `void`, which is not the same as `refuted`."""
     from experiments.x3_transfer import STUDY
+
     from reward_lens.studies.freeze import freeze
 
     frozen = freeze(STUDY, repo_dir=str(REPO))

@@ -9,10 +9,11 @@ into the theorem scoreboard.
 
 from __future__ import annotations
 
+from studies.s02_gauge.analysis import build_spec
+
 from reward_lens.core.store import EvidenceStore
 from reward_lens.core.types import TrustLevel
 from reward_lens.studies import Scoreboard, render_report, run_study
-from studies.s02_gauge.analysis import build_spec
 
 
 def test_s02_runs_and_registers(tmp_path):

@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import json
-import pathlib
 
 import pytest
+from conftest import REPO
 
-from reward_lens.cli.registry import ORDER
-
-CONTRACTED = list(ORDER)
+CONTRACTED = json.loads((REPO / "fleet" / "CLI_COMMANDS.json").read_text(encoding="utf-8"))[
+    "commands"
+]
+CURRENT_COMMANDS = CONTRACTED[:3] + ["join"] + CONTRACTED[3:] + ["version", "completion"]
 
 
 # --- runs -------------------------------------------------------------------------------------
+
 
 def test_runs_list_shows_a_run_this_machine_holds(cli, state_home):
     from reward_lens.store import RunDir
@@ -37,7 +39,11 @@ def test_runs_show_prints_a_resume_command_that_runs(cli, tmp_path, state_home):
     run_id = RunDir.create(project=str(project), name="nightly").run_id
     shown = cli("runs", "show", run_id, "--format", "text")
     assert shown.exit_code == 0
-    resume = [line.strip() for line in shown.stdout.splitlines() if line.strip().startswith("reward-lens ")]
+    resume = [
+        line.strip()
+        for line in shown.stdout.splitlines()
+        if line.strip().startswith("reward-lens ")
+    ]
     assert resume, shown.stdout
     again = cli(*resume[0].split()[1:], "--dry-run", "--format", "json")
     assert again.exit_code in (0, 2), again.stderr
@@ -59,12 +65,13 @@ def test_runs_show_on_an_unknown_id_is_a_usage_error(cli, state_home):
 
 # --- describe ---------------------------------------------------------------------------------
 
+
 def test_describe_emits_the_versioned_command_tree(cli):
     run = cli("describe")
     assert run.exit_code == 0
     tree = json.loads(run.stdout)
     assert tree["schema_version"] == "command-tree/1.0"
-    assert [command["name"] for command in tree["commands"]] == CONTRACTED
+    assert [command["name"] for command in tree["commands"]] == CURRENT_COMMANDS
     for command in tree["commands"]:
         assert command["summary"]
         assert isinstance(command["parameters"], list)
@@ -132,6 +139,7 @@ def test_a_good_identifier_passes(state_home):
 
 # --- init -------------------------------------------------------------------------------------
 
+
 def test_init_example_writes_the_example(cli, tmp_path):
     dest = tmp_path / "demo"
     run = cli("init", "--example", "code-reward", str(dest), "--format", "json")
@@ -156,7 +164,22 @@ def test_init_detect_connects_the_reward_system_already_here(cli, tmp_path):
     assert run.stdout.splitlines()[0] == "  Found      rewards.py  ·  3 callables recognised"
 
 
+def test_doctor_json_carries_the_sdk_compatibility_matrix() -> None:
+    from reward_lens import api
+    from reward_lens.cli.verbs.doctor import _document
+
+    matrix = {"remote_black_box": {"conformance": "ran", "live": "unverified"}}
+    report = api.Capabilities(
+        install=api.InstallInfo(version="3.1.0", python="3.11", platform="linux"),
+        compatibility_matrix=matrix,
+    )
+    document = _document(report)
+    assert document["compatibility_matrix"] == matrix
+    assert document["capabilities"] == []
+
+
 # --- export's two vocabularies (C-014) --------------------------------------------------------
+
 
 def test_export_names_its_artefact_with_kind_and_leaves_format_alone(cli):
     """`--kind` is the artefact; `--format` is the envelope, on this verb as on every other."""
@@ -184,15 +207,33 @@ def test_export_format_is_an_alias_for_kind_only_where_the_two_cannot_collide(ki
         assert opts == {"format_": shared, "kind": "bundle"}, shared
 
 
-def test_export_format_json_is_the_envelope_and_not_the_bundle(cli):
-    run = cli("export", "--format", "json")
-    assert run.exit_code in (0, 5)
+def test_export_format_json_is_the_envelope_and_not_the_bundle(cli, tmp_path):
+    from reward_lens.contracts import digest
+
+    reference = REPO / "schema" / "assay" / "1.0" / "fixtures" / "reference.json"
+    document = json.loads(reference.read_text(encoding="utf-8"))
+    document["assay_id"] = digest(document)
+    record = tmp_path / "reference.assay.json"
+    record.write_text(json.dumps(document), encoding="utf-8")
+    destination = tmp_path / "bundle"
+    run = cli("export", "--record", str(record), "--dest", str(destination), "--format", "json")
+    assert run.exit_code == 0, run.stderr
     assert json.loads(run.stdout)["schema_version"] == "assay-result/1.0"
+    assert (destination / "record.json").is_file()
+    assert (destination / "manifest.json").is_file()
     assert "used more than once" not in run.stderr
 
 
-def test_export_still_refuses_a_word_that_is_neither_a_format_nor_a_kind(cli):
-    run = cli("export", "--format", "nonsense")
+def test_export_still_refuses_a_word_that_is_neither_a_format_nor_a_kind(cli, tmp_path):
+    run = cli(
+        "export",
+        "--record",
+        str(tmp_path / "record.json"),
+        "--dest",
+        str(tmp_path / "bundle"),
+        "--format",
+        "nonsense",
+    )
     assert run.exit_code == 4
     assert "nonsense is not an output format" in run.stderr
 
@@ -206,8 +247,11 @@ SEAM = {
     "forecast": ("forecast_issue", ["forecast", "issue", "the claim"]),
     "improve": ("improve", ["improve", "."]),
     "open": ("open_record", ["open", "a.assay.json"]),
-    "export": ("export", ["export", "--kind", "bundle"]),
-    "import": ("open_record", ["import", "a.assay.json"]),
+    "export": (
+        "export",
+        ["export", "--kind", "bundle", "--record", "a.assay.json", "--dest", "bundle"],
+    ),
+    "import": ("import_record", ["import", "a.assay.json"]),
     "doctor": ("doctor", ["doctor"]),
 }
 

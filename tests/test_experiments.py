@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from experiments.c1_kill_test import (
     RankComparison,
     basis_r_squared,

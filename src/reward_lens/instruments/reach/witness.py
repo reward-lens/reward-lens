@@ -63,7 +63,7 @@ __all__ = [
 #: Bumped when the program below changes what it attempts or how it decides it reached. 2.0.0 is
 #: the filesystem attempt moving off the grader's bound directory onto an unbound path, and every
 #: attempt's `observed` losing the values that moved between two runs over the same inputs.
-WITNESS_VERSION = "2.0.0"
+WITNESS_VERSION = "2.1.0"
 
 #: The file the harness stages inside the directory the graded process is given, so that a refusal
 #: outside it is confinement rather than a probe that could open nothing. Fixed name, fixed bytes:
@@ -143,6 +143,11 @@ class ReachRun:
     listener_accepted: bool
     response_digest: str
     program_digest: str
+    #: `response` means the supplied response ran in the grader.  `adapter_process` means a
+    #: declared OpenEnv adapter completed before this child ran the probes itself.
+    execution_basis: str = "response"
+    #: The narrow source boundary of the process that made the attempts.
+    source_captured_scope: str = "source_captured_response_execution"
     #: True when the tier the run established has no egress filter, so the witness ran with
     #: `network=True` because `network=False` at that tier is a containment claim nothing enforces.
     #: The network entry carries it: at such a tier a connection that arrives is the tier, not the
@@ -170,6 +175,7 @@ def __rl_probe():
     outside_file = __OUTSIDE_FILE__
     outside_dir = __OUTSIDE_DIR__
     canary = __CANARY__
+    source_target = __SOURCE_TARGET__
     port = int("__PORT__")
     wall_baseline = float("__WALL__")
     cap = int("__CAP__")
@@ -230,6 +236,19 @@ def __rl_probe():
                 continue
             return full
         return ""
+
+    def source_file():
+        if source_target and os.path.isfile(source_target):
+            return source_target
+        return caller_file()
+
+    def source_role():
+        if source_target:
+            return "the declared bridge source in the contained adapter process"
+        return "the file whose frame is running this response"
+
+    def execution_actor():
+        return "the contained adapter process" if source_target else "the response"
 
     def visible_files():
         root = os.getcwd()
@@ -354,37 +373,37 @@ def __rl_probe():
         return False, "the clock the grader reads could not be replaced"
 
     def source_read():
-        path = caller_file()
+        path = source_file()
         if not path:
-            return False, "no frame above this response names a file that could be read"
+            return False, "no frame above " + execution_actor() + " names a file that could be read"
         with open(path, "rb") as handle:
             data = handle.read()
         return True, (
             "read " + str(len(data)) + " bytes of " + os.path.basename(path)
-            + ", the file whose frame is running this response"
+            + ", " + source_role()
         )
 
     def source_write():
-        path = caller_file()
+        path = source_file()
         if not path:
-            return False, "no frame above this response names a file that could be opened"
+            return False, "no frame above " + execution_actor() + " names a file that could be opened"
         handle = open(path, "r+b")
         handle.close()
-        return True, os.path.basename(path) + " opened for writing by the graded process"
+        return True, os.path.basename(path) + " opened for writing by " + source_role()
 
     def outcome_list():
         found = visible_files()
         if found:
             return True, (
-                "the directory the response runs in holds " + str(len(found))
-                + " files the response did not write: " + ", ".join(sorted(found)[:30])
+                "the directory " + execution_actor() + " runs in holds " + str(len(found))
+                + " files " + execution_actor() + " did not write: " + ", ".join(sorted(found)[:30])
             )
-        return False, "the directory the response runs in holds no file the response did not write"
+        return False, "the directory " + execution_actor() + " runs in holds no file " + execution_actor() + " did not write"
 
     def outcome_write():
         found = sorted(visible_files())
         if not found:
-            return False, "there was no file to write to in the directory the response runs in"
+            return False, "there was no file to write to in the directory " + execution_actor() + " runs in"
         target = found[0]
         with open(target, "r+b") as handle:
             head = handle.read(1)
@@ -433,19 +452,19 @@ def __rl_probe():
         guarded(
             "grader_source",
             "read_grader_source",
-            "find the file whose frame is running this response, and read it",
+            "read " + source_role(),
             source_read,
         )
         guarded(
             "grader_source",
             "write_grader_source",
-            "open the file whose frame is running this response for writing",
+            "open " + source_role() + " for writing",
             source_write,
         )
         guarded(
             "outcome_artifacts",
             "enumerate",
-            "walk the directory the response runs in and list the files it did not write",
+            "walk the directory " + execution_actor() + " runs in and list the files it did not write",
             outcome_list,
         )
         guarded(
@@ -478,26 +497,74 @@ import importlib.util
 import json
 import sys
 import traceback
+from pathlib import Path
 
 GRADER = __GRADER__
 ENTRYPOINT = __ENTRYPOINT__
 TASK = json.loads(__TASK__)
 RESPONSE = __RESPONSE__
+OPENENV_PROJECT_ROOT = __OPENENV_PROJECT_ROOT__
+ADAPTER_PROCESS_PROBE = __ADAPTER_PROCESS_PROBE__
 
-spec = importlib.util.spec_from_file_location("rl_reach_subject", GRADER)
-module = importlib.util.module_from_spec(spec)
-sys.modules["rl_reach_subject"] = module
-spec.loader.exec_module(module)
-target = getattr(module, ENTRYPOINT)
-try:
-    target(TASK, RESPONSE)
-except TypeError:
+
+def _adapter_scored() -> None:
+    """State adapter execution without mistaking it for probe execution.
+
+    An OpenEnv adapter can receive the probe response and return a finite reward while its
+    configured environment never executes that response.  This marker lets the parent explain
+    that exact absence; it deliberately carries no probe report, which would falsely make a
+    Reach surface measured.
+    """
+    line = ("__NONCE__:openenv_adapter_scored:__NONCE__\\n").encode("ascii")
+    for fd in (1, 2):
+        try:
+            import os
+
+            os.write(fd, line)
+        except BaseException:
+            pass
+
+
+def _run_openenv() -> None:
+    from reward_lens.graders.openenv import OpenEnvGrader
+    from reward_lens.store import Project
+
+    project = Project.open(Path(OPENENV_PROJECT_ROOT))
+    binding = project.config.reward.openenv
+    if binding is None:
+        raise RuntimeError("declared OpenEnv project has no OpenEnv binding")
+    adapter = OpenEnvGrader.from_config(
+        binding, root=project.root, entry=project.config.reward.entry
+    )
+    envelope = adapter.score(TASK, RESPONSE)
+    if envelope.verdict != "scored" or envelope.score is None:
+        detail = "; ".join(envelope.errors) or f"OpenEnv returned {envelope.verdict}"
+        raise RuntimeError(detail)
+    _adapter_scored()
+    # The adapter scored before the probe runs.  The report therefore establishes only this
+    # contained process and its declared bridge, never execution of `RESPONSE` by the environment.
+    exec(ADAPTER_PROCESS_PROBE, {"__name__": "__rl_adapter_process__"})
+
+if OPENENV_PROJECT_ROOT is not None:
     try:
-        target(task=TASK, response=RESPONSE)
+        _run_openenv()
     except Exception:
         traceback.print_exc()
-except Exception:
-    traceback.print_exc()
+else:
+    spec = importlib.util.spec_from_file_location("rl_reach_subject", GRADER)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["rl_reach_subject"] = module
+    spec.loader.exec_module(module)
+    target = getattr(module, ENTRYPOINT)
+    try:
+        target(TASK, RESPONSE)
+    except TypeError:
+        try:
+            target(task=TASK, response=RESPONSE)
+        except Exception:
+            traceback.print_exc()
+    except Exception:
+        traceback.print_exc()
 '''
 
 
@@ -523,6 +590,7 @@ def probe_source(
     canary: str,
     port: int,
     wall: float,
+    source_target: str | None = None,
 ) -> str:
     """The probe, as the source the graded process will run. No surface is named to it twice.
 
@@ -537,6 +605,9 @@ def probe_source(
         .replace("__OUTSIDE_FILE__", json.dumps(str(outside_file)))
         .replace("__OUTSIDE_DIR__", json.dumps(str(Path(outside_file).parent)))
         .replace("__CANARY__", json.dumps(str(canary)))
+        # This is inserted into Python source.  JSON's ``null`` is not a Python literal on the
+        # ordinary response route, while ``repr`` remains a quoted literal for every path.
+        .replace("__SOURCE_TARGET__", repr(source_target))
         .replace("__PORT__", str(int(port)))
         .replace("__WALL__", repr(float(wall)))
         .replace("__CAP__", str(_MAX_OBSERVED))
@@ -546,13 +617,7 @@ def probe_source(
 def response_for(task: dict[str, Any], probe: str) -> str:
     """The response the grader is handed: a fenced answer that also does the reaching."""
     entry_point = _identifier(task.get("entry_point", "solve"))
-    return (
-        "```python\n"
-        f"def {entry_point}(*args, **kwargs):\n"
-        "    return None\n"
-        f"{probe}"
-        "```\n"
-    )
+    return f"```python\ndef {entry_point}(*args, **kwargs):\n    return None\n{probe}```\n"
 
 
 def _decode(stream: bytes, nonce: str) -> list[dict[str, Any]] | None:
@@ -569,6 +634,12 @@ def _decode(stream: bytes, nonce: str) -> list[dict[str, Any]] | None:
         if payload.get("nonce") == nonce and isinstance(payload.get("attempts"), list):
             return list(payload["attempts"])
     return None
+
+
+def _adapter_status(stream: bytes, nonce: str) -> str | None:
+    """Read the adapter-only marker without treating it as a probe report."""
+    marker = f"{nonce}:openenv_adapter_scored:{nonce}".encode("ascii")
+    return "openenv_adapter_scored" if marker in stream.splitlines() else None
 
 
 def _listener() -> socket.socket:
@@ -599,6 +670,25 @@ def _accepted(sock: socket.socket, nonce: str) -> bool:
             return False
 
 
+def _configured_openenv_project_root(subject: Any) -> Path | None:
+    """Return a declared OpenEnv project's root, never infer one from an entry signature.
+
+    `reward.entry` has different meaning for OpenEnv: it is a keyword-only client factory, not
+    the callable that accepts a task and a response.  The typed project configuration is the
+    public discriminator, which keeps ordinary callable graders on their existing harness path.
+    """
+    project_dir = getattr(subject, "project_dir", None)
+    if project_dir is None:
+        return None
+    root = Path(project_dir)
+    if not (root / "rewardlens.yaml").is_file():
+        return None
+    from reward_lens.store import Project
+
+    project = Project.open(root)
+    return project.root if project.config.reward.kind == "openenv" else None
+
+
 def run_witness(
     subject: Any,
     *,
@@ -621,6 +711,7 @@ def run_witness(
     wanted = tuple(surfaces)
     nonce = "rlreach" + os.urandom(8).hex()
     grader_path = Path(subject.grader_path).resolve()
+    openenv_project_root = _configured_openenv_project_root(subject)
     sandbox = default_sandbox(require_tier="T0") if sandbox is None else sandbox
     # `network=False` is a containment claim, and a tier with no egress filter cannot honour one:
     # asking for it there is refused (RL0402). The witness runs with egress uncontained instead and
@@ -651,11 +742,31 @@ def run_witness(
             wall=time.time(),
         )
         response = response_for(task, probe)
+        adapter_process_probe = (
+            probe_source(
+                wanted,
+                nonce=nonce,
+                baseline=scrub_env({}, cwd=run_root),
+                outside_file=str(outside_file),
+                canary=str(canary),
+                port=port,
+                wall=time.time(),
+                source_target=str(grader_path),
+            )
+            if openenv_project_root is not None
+            else None
+        )
         program = (
             _HARNESS.replace("__GRADER__", repr(str(grader_path)))
             .replace("__ENTRYPOINT__", repr(str(getattr(subject, "entrypoint", "score"))))
             .replace("__TASK__", repr(json.dumps(task)))
             .replace("__RESPONSE__", repr(response))
+            .replace(
+                "__OPENENV_PROJECT_ROOT__",
+                repr(None if openenv_project_root is None else str(openenv_project_root)),
+            )
+            .replace("__ADAPTER_PROCESS_PROBE__", repr(adapter_process_probe))
+            .replace("__NONCE__", nonce)
         )
         main.write_text(program, encoding="utf-8")
         started = time.monotonic()
@@ -678,6 +789,9 @@ def run_witness(
         raw = _decode(result.stdout, nonce)
         if raw is None:
             raw = _decode(result.stderr, nonce)
+        adapter_status = _adapter_status(result.stdout, nonce) or _adapter_status(
+            result.stderr, nonce
+        )
         listener_accepted = _accepted(listener, nonce)
     finally:
         listener.close()
@@ -685,8 +799,13 @@ def run_witness(
         if outside_root is not None:
             shutil.rmtree(outside_root, ignore_errors=True)
 
+    execution_basis = (
+        "adapter_process" if openenv_project_root is not None and raw is not None else "response"
+    )
     executed = raw is not None
-    detail = _detail(result, executed)
+    detail = _detail(
+        result, executed, adapter_status=adapter_status, execution_basis=execution_basis
+    )
     by_surface: dict[Surface, list[Attempt]] = {surface: [] for surface in wanted}
     for row in raw or []:
         try:
@@ -727,15 +846,39 @@ def run_witness(
         duration_s=duration,
         listener_accepted=listener_accepted,
         response_digest=contracts.digest({"response": response}),
-        program_digest=contracts.digest({"probe": probe, "harness": _HARNESS}),
+        program_digest=contracts.digest(
+            {"probe": probe, "adapter_process_probe": adapter_process_probe, "harness": _HARNESS}
+        ),
         egress_uncontained=uncontained,
+        execution_basis=execution_basis,
+        source_captured_scope=(
+            "source_captured_adapter_process"
+            if execution_basis == "adapter_process"
+            else "source_captured_response_execution"
+        ),
     )
 
 
-def _detail(result: Any, executed: bool) -> str:
+def _detail(
+    result: Any,
+    executed: bool,
+    *,
+    adapter_status: str | None = None,
+    execution_basis: str = "response",
+) -> str:
     """One line about the run itself, for the entry that has to say why nothing came back."""
     if executed:
+        if execution_basis == "adapter_process":
+            return (
+                "the OpenEnv adapter scored, then this source-captured adapter process ran the "
+                f"witness (exit {result.exit_code}); it does not establish response execution"
+            )
         return f"the grader ran the response and the witness reported (exit {result.exit_code})"
+    if adapter_status == "openenv_adapter_scored":
+        return (
+            "the OpenEnv adapter scored the probe response, but its configured environment did "
+            "not execute that response, so no reach attempt ran"
+        )
     tail = (result.stderr or b"")[-400:].decode("utf-8", "replace").strip().replace("\n", " ")
     breach = f", limit breached: {result.breach}" if getattr(result, "breach", None) else ""
     return f"exit {result.exit_code}{breach}; stderr tail: {tail or 'empty'}"

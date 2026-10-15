@@ -1,0 +1,7 @@
+{
+  "source": "preserved-development-snapshot:caf3c9ffa99fae8acd621fcde91e436589103190",
+  "source_path": "fleet/port/base.json",
+  "source_sha256": "8e3427ebbda499a3c3d37f1c6514a40201db8487d64e12d2ad7f061fed9983c4",
+  "transformation": "Retained only the six defects rows; omitted unrelated groups and controller metadata. Historical dispositions were not rewritten.",
+  "sha256": "6768f999076cbd51fee54e2f85765b0cfb68099dbd55c5e78cdf452e0c715011"
+}

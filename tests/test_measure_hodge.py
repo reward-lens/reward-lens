@@ -118,6 +118,21 @@ def test_a_pure_gradient_flow_is_all_gradient():
     assert np.allclose(recovered - recovered[0], potential - potential[0], atol=1e-8)
 
 
+def test_the_mass_partition_uses_the_measured_intransitive_complement():
+    """Float64 energy dot products cannot move a stored curl measurement into gradient mass.
+
+    The components remain the orthogonal projections; only their reported fractions use the
+    canonical partition identity so that an exact stored intransitive mass and its complement do
+    not differ by unrelated dot-product rounding.
+    """
+    edges = complete(4)
+    flow = np.array([0.2, -0.7, 1.4, -0.3, 0.8, -1.1])
+    split = hodge_split(4, edges, flow)
+
+    assert split.gradient_mass == 1.0 - split.curl_mass - split.harmonic_mass
+    assert split.gradient_mass + split.curl_mass + split.harmonic_mass == 1.0
+
+
 def test_a_pure_three_cycle_is_all_curl():
     """A > B > C > A on three items compared to each other is curl mass one, and no harmonic."""
     edges = [(0, 1), (1, 2), (0, 2)]

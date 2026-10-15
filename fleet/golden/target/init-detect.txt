@@ -1,0 +1,24 @@
+$ reward-lens init ./my-env --detect
+
+  Found      rewards.py  ·  3 callables recognised
+    correctness_reward(prompts, completions, completion_ids, **kwargs) -> list[float]    trl
+    format_reward(prompts, completions, **kwargs) -> list[float]                        trl
+    length_penalty(completion) -> float                                                  plain
+  Tasks      data/train.jsonl  ·  312 rows  ·  fields: prompt, answer, tests
+  Outcome    none declared. A protected check is what turns a score into a claim.
+
+  Wrote ./my-env/rewardlens.yaml
+    reward:
+      kind: composite
+      components:
+        - {entry: "rewards:correctness_reward", shape: trl,   weight: 1.0}
+        - {entry: "rewards:format_reward",      shape: trl,   weight: 1.0}
+        - {entry: "rewards:length_penalty",     shape: plain, weight: 1.0}
+      watch: [none_to_nan, exception_to_zero, bool_as_score]
+    tasks:   {path: data/train.jsonl, prompt: prompt, reference: answer}
+    outcome: null      # declare one with: reward-lens init ./my-env --outcome ./tests
+
+  Weights default to 1.0 until you declare them. The audit reads what your run recorded
+  and reports any disagreement with this file as a finding.
+
+  Next   reward-lens audit ./my-env

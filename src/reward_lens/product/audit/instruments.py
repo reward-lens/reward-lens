@@ -19,7 +19,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
 
 from reward_lens import contracts
 from reward_lens.core.reading import is_refusal
@@ -28,7 +28,19 @@ from reward_lens.verifier import ListCorpus, Rollout, VerifierUnderTest
 
 from . import static_checks
 
-__all__ = ["AuditCorpus", "Corpus", "attack_surface_entry", "coverage_entry", "input_handling_entry", "replay_entry"]
+if TYPE_CHECKING:
+    from reward_lens.product.trace.record import TraceRecord
+
+    from .response_scores import ResponseScore
+
+__all__ = [
+    "AuditCorpus",
+    "Corpus",
+    "attack_surface_entry",
+    "coverage_entry",
+    "input_handling_entry",
+    "replay_entry",
+]
 
 #: What each of D-65's three silent failure modes costs, and which finding code names it: the code,
 #: the sentence for each trainer whose documentation this build has read, keyed on the name the
@@ -108,6 +120,7 @@ def trainer_is_documented(trainer: str | None) -> bool:
     name = trainer.strip().lower()
     return any(name in row[1] for row in TRAINER_BEHAVIOUR.values())
 
+
 #: The exposure a surface kind is catalogued under, for the id a surface prints beside the count.
 #: Only the kinds this static inventory can name are here; a kind with no entry has no id, and the
 #: entry says so by carrying none rather than by inventing one.
@@ -140,6 +153,7 @@ def _exposure_id(crossings: Sequence[Any]) -> str | None:
             return EXPOSURE_IDS["tests"]
     return None
 
+
 _OVERSIZED = 1 << 18
 
 #: Verdicts that say the harness failed before the grader spoke. They carry no observation about
@@ -158,6 +172,8 @@ class AuditCorpus:
     origin: str
     tasks: tuple[dict, ...] = ()
     n_tasks: int = 0
+    trace: TraceRecord | None = None
+    response_scores: tuple["ResponseScore", ...] | None = None
 
     def as_list(self) -> ListCorpus:
         return ListCorpus.of(self.rollouts)
@@ -211,13 +227,23 @@ def normalised_task(record: dict, fallback_id: str) -> dict:
 
 
 def build_corpus(
-    *, tasks_path: Path | None, responses_path: Path | None, cap: int | None = None
+    *,
+    tasks_path: Path | None,
+    responses_path: Path | None,
+    trace: Any = None,
+    cap: int | None = None,
 ) -> Corpus:
     """The response bank as rollouts, joined to their tasks. Empty when either input is absent."""
     if tasks_path is None or responses_path is None:
-        return AuditCorpus(rollouts=(), origin="no task set and no response bank were supplied")
+        return AuditCorpus(
+            rollouts=(), origin="no task set and no response bank were supplied", trace=trace
+        )
     if not tasks_path.is_file() or not responses_path.is_file():
-        return AuditCorpus(rollouts=(), origin=f"{tasks_path.name} or {responses_path.name} is not a file")
+        return AuditCorpus(
+            rollouts=(),
+            origin=f"{tasks_path.name} or {responses_path.name} is not a file",
+            trace=trace,
+        )
     tasks = read_jsonl(tasks_path)
     by_id = {_task_id(task) or f"task-{index}": task for index, task in enumerate(tasks)}
     rollouts: list[Rollout] = []
@@ -237,10 +263,11 @@ def build_corpus(
         origin=f"{len(rollouts)} sampled responses joined to {len(by_id)} tasks",
         tasks=tuple(tasks),
         n_tasks=len(by_id),
+        trace=trace,
     )
 
 
-def probe_corpus(tasks: Sequence[dict]) -> Corpus:
+def probe_corpus(tasks: Sequence[dict], *, trace: Any = None) -> Corpus:
     """The corpus a bare grader gets: the audit's own probes, and it says so."""
     task = normalised_task(tasks[0] if tasks else {}, "probe-task")
     rollouts = tuple(
@@ -252,6 +279,7 @@ def probe_corpus(tasks: Sequence[dict]) -> Corpus:
         origin="the audit's own probe inputs; no response bank was supplied",
         tasks=(task,),
         n_tasks=1,
+        trace=trace,
     )
 
 
@@ -451,8 +479,7 @@ def _synthetic_pair(vut: VerifierUnderTest) -> tuple[str, dict[str, Any]] | None
     names = [
         name
         for name, param in parameters.items()
-        if param.kind
-        in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY)
+        if param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY)
     ]
     signature = f"{vut.entrypoint}({', '.join(names)})"
     kwargs: dict[str, Any] = {}
@@ -886,7 +913,11 @@ def input_handling_entry(
         verdict = str(envelope.verdict)
         adapter_errors.extend(str(err) for err in (envelope.errors or ()))
         seen = {str(getattr(finding, "code", "")) for finding in (envelope.findings or ())}
-        seen |= {code for code in ("RL0210", "RL0211", "RL0212") if code in " ".join(envelope.errors or ())}
+        seen |= {
+            code
+            for code in ("RL0210", "RL0211", "RL0212")
+            if code in " ".join(envelope.errors or ())
+        }
         if verdict == "unscored":
             seen.add("RL0210")
         elif verdict == "grader_error":

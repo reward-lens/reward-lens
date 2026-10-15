@@ -26,14 +26,6 @@ from __future__ import annotations
 import re
 
 import pytest
-
-from reward_lens.core.closure import ClosureError, GapKind
-from reward_lens.core.evidence import Evidence
-from reward_lens.core.quantity import QUANTITIES, load_quantities
-from reward_lens.core.reading import Refusal
-from reward_lens.record.reader import open_run
-from reward_lens.record.schema import Run
-from reward_lens.studies.plan import check_closure, closure_report
 from studies._retype import (
     ScienceRetype,
     frozen_metrics,
@@ -42,6 +34,14 @@ from studies._retype import (
     science_modules,
     specs,
 )
+
+from reward_lens.core.closure import ClosureError, GapKind
+from reward_lens.core.evidence import Evidence
+from reward_lens.core.quantity import QUANTITIES, load_quantities
+from reward_lens.core.reading import Refusal
+from reward_lens.record.reader import open_run
+from reward_lens.record.schema import Run
+from reward_lens.studies.plan import check_closure, closure_report
 
 #: What counts as one of the sixteen sciences, by directory name. `BUILD_NOTES.md` D1 defines the
 #: set: `sNN_name` plus `atlas_meta`. It is written down here rather than inferred from what happens
@@ -329,10 +329,10 @@ def test_s05_reads_a_multi_channel_score_tree() -> None:
     nothing is hidden will not return the truth when something is.
     """
     import numpy as np
+    from studies.s05_capacity.analysis import _leaves_of
 
     from reward_lens.measure.indices.dark_reward import dark_reward
     from reward_lens.record.scores import GraderCallRef, Leaf, WeightedSum
-    from studies.s05_capacity.analysis import _leaves_of
 
     def call(name: str) -> GraderCallRef:
         return GraderCallRef(grader=name, outcome="returned")

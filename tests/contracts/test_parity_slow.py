@@ -28,22 +28,20 @@ import os
 import pytest
 
 if os.environ.get("REWARD_LENS_SLOW") != "1":
-    pytest.skip(
-        "whole-record generation; set REWARD_LENS_SLOW=1", allow_module_level=True
-    )
+    pytest.skip("whole-record generation; set REWARD_LENS_SLOW=1", allow_module_level=True)
 
 from hypothesis import given  # noqa: E402
 from hypothesis_jsonschema import from_schema  # noqa: E402
 
-from structure import (  # noqa: E402
+from reward_lens.contracts import Assay  # noqa: E402
+
+from .structure import (  # noqa: E402
     bound_quantised_numbers,
     pin_patterns,
     relax_conditionals,
     strip_annotations,
 )
-from test_parity import GENERATION, model_accepts  # noqa: E402
-
-from reward_lens.contracts import Assay  # noqa: E402
+from .test_parity import GENERATION, model_accepts  # noqa: E402
 
 
 def for_generation(raw: dict) -> dict:
@@ -61,9 +59,7 @@ def model_generation_schema():
     return for_generation(Assay.model_json_schema(mode="validation"))
 
 
-def test_generated_from_the_hand_schema_gets_the_same_verdict(
-    rs_validator, hand_generation_schema
-):
+def test_generated_from_the_hand_schema_gets_the_same_verdict(rs_validator, hand_generation_schema):
     @GENERATION
     @given(from_schema(hand_generation_schema))
     def check(instance):

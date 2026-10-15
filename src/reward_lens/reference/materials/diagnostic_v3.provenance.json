@@ -1,0 +1,32 @@
+{
+  "schema": "reward-lens-reference-material/1",
+  "identifier": "diagnostic-v3",
+  "grade": "reported",
+  "acquisition": {
+    "source_commit": "607774d19f79140234260da712a18487eca5b45c",
+    "source_path": "src/reward_lens/data/builtin/diagnostic_v3.py",
+    "controller_snapshot": "fleet/SOURCE_SNAPSHOTS/diagnostic-v3/diagnostic_v3.py.txt",
+    "packaged_payload": "reward_lens/reference/materials/diagnostic_v3.py",
+    "payload_sha256": "ae79d18a8bed5025dc1cfc99c64864af1392bac67adea18ffec75963867a3690",
+    "command": "cp fleet/SOURCE_SNAPSHOTS/diagnostic-v3/diagnostic_v3.py.txt src/reward_lens/reference/materials/diagnostic_v3.py"
+  },
+  "licence": {
+    "spdx": "MIT",
+    "controller_snapshot": "fleet/SOURCE_SNAPSHOTS/diagnostic-v3/LICENSE.txt",
+    "packaged_text": "reward_lens/reference/materials/diagnostic_v3_LICENSE.txt",
+    "text_sha256": "5f0ec614381a7841add9b2ba97ea0d7a1f6a05099c2c641bab46531c8cd6155f"
+  },
+  "load_receipt": {
+    "metadata_loader": "reward_lens.reference.load.load",
+    "consumer_builder": "reward_lens.reference.load.load_diagnostic_v3_material",
+    "builder_execution": "The exact packaged builder is executed in an isolated module namespace to construct a deterministic DataView; its registry changes are restored before return."
+  },
+  "reverification_receipt": {
+    "verifier": "reward_lens.reference.load.reverify",
+    "algorithm": "sha256",
+    "expected_payload_sha256": "ae79d18a8bed5025dc1cfc99c64864af1392bac67adea18ffec75963867a3690",
+    "failure": "raise ValueError on mismatch"
+  },
+  "characterisation": null,
+  "certificate_status": "No project characterisation exists, so this adopted material remains reported."
+}

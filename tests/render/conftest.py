@@ -18,9 +18,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = ROOT / "schema" / "assay" / "1.0" / "fixtures" / "reference.json"
 
-JSON_BLOCK = re.compile(
-    r'<script type="application/json" id="assay">(.*?)</script>', re.DOTALL
-)
+JSON_BLOCK = re.compile(r'<script type="application/json" id="assay">(.*?)</script>', re.DOTALL)
 
 CHROME_CANDIDATES = (
     "google-chrome-stable",
@@ -223,9 +221,7 @@ def plan_and_seal(
     from reward_lens.render.report import plan_embedding
 
     normalised = Assay.model_validate(record).to_dict()
-    plan = plan_embedding(
-        normalised, bundle_manifest_digest=bundle_manifest_digest, tables=tables
-    )
+    plan = plan_embedding(normalised, bundle_manifest_digest=bundle_manifest_digest, tables=tables)
     normalised["embedding"] = plan.to_dict()
     return seal(normalised)
 

@@ -21,6 +21,7 @@ rather than on the answer being right.
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -111,9 +112,26 @@ def _decode_turn(row: dict[str, Any]) -> Turn:
     return Turn.from_canonical(json.loads(row["payload"]))
 
 
+def _recorded_applied_weight(row: dict[str, Any]) -> tuple[float | None, str | None]:
+    """Accept one finite scalar only when the serialized trajectory names it as recorded."""
+    if row.get("applied_weight_source") != "recorded":
+        return None, None
+    value = row.get("applied_weight")
+    if isinstance(value, bool):
+        return None, None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None, None
+    if not math.isfinite(number):
+        return None, None
+    return number, "recorded"
+
+
 def _decode_trajectory(row: dict[str, Any], turns: Sequence[Turn], sidecar: Path) -> Trajectory:
     payload = json.loads(row["payload"])
     capture = payload.get("capture")
+    applied_weight, applied_weight_source = _recorded_applied_weight(row)
     return Trajectory(
         id=TrajectoryID(row["trajectory_id"]),
         task_ref=TaskID(row["task_ref"]),
@@ -121,6 +139,8 @@ def _decode_trajectory(row: dict[str, Any], turns: Sequence[Turn], sidecar: Path
         scores=decode_foreign(payload.get("scores"), sidecar),
         advantage=row.get("advantage"),
         advantage_tokens=decode_tensor_ref(payload.get("advantage_tokens")),
+        applied_weight=applied_weight,
+        applied_weight_source=applied_weight_source,
         provenance=tuple(
             SegmentProvenance.from_canonical(p) for p in payload.get("provenance", [])
         ),

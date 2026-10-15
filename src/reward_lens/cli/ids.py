@@ -40,7 +40,9 @@ def validate_identifier(value: str, *, field: str) -> str:
         if unicodedata.category(char) in {"Cc", "Cf", "Cs", "Co", "Cn"}:
             raise _refuse(field, f"it contains the control character U+{ord(char):04X}")
     if _DOUBLE_ENCODED.search(value) or "%25" in value:
-        raise _refuse(field, "it is double-encoded, so what it names depends on how often it is decoded")
+        raise _refuse(
+            field, "it is double-encoded, so what it names depends on how often it is decoded"
+        )
     if _PERCENT.search(value):
         decoded = _PERCENT.sub(lambda m: chr(int(m.group()[1:], 16)), value)
         if decoded != value and _has_traversal(decoded):
@@ -72,7 +74,9 @@ def validate_path_argument(value, *, field: str):
         if unicodedata.category(char) in {"Cc", "Cs", "Cn"}:
             raise _refuse(field, f"it contains the control character U+{ord(char):04X}")
     if "%25" in text:
-        raise _refuse(field, "it is double-encoded, so what it names depends on how often it is decoded")
+        raise _refuse(
+            field, "it is double-encoded, so what it names depends on how often it is decoded"
+        )
     return pathlib.Path(text)
 
 

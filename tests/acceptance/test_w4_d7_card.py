@@ -13,8 +13,8 @@ ships and the one most open RLVR math pipelines still call, directly or through 
 same subject W3.4a, W3.4b and W3.4c point at, reused deliberately so the D-series numbers on this
 grader accumulate against one program rather than against four.
 
-It is fetched over the network and the tests skip with a message when there is none, because a
-skipped real-subject test leaves the claim unproven rather than proven. `tests/test_measure_card.py`
+It uses the byte-checked upstream source fixture. A missing or changed fixture fails rather than
+claiming that the real subject was measured. `tests/test_measure_card.py`
 proves the composition runs against a written-to-disk fixture and needs no network; this file
 proves it measures.
 
@@ -28,8 +28,7 @@ those five are things a reader could go and fix, and the card says which.
 
 from __future__ import annotations
 
-import urllib.error
-import urllib.request
+import hashlib
 from pathlib import Path
 from random import Random
 from typing import Any
@@ -61,10 +60,7 @@ from reward_lens.verifier import (
     is_sensitive,
 )
 
-#: `is_equiv` from `hendrycks/math`. The same URL W3.4a and W3.4c fetch.
-REAL_VERIFIER_URL = (
-    "https://raw.githubusercontent.com/hendrycks/math/main/modeling/math_equivalence.py"
-)
+#: `is_equiv` from the same pinned upstream source W3.4a and W3.4c measure.
 
 #: Answer pairs in the shapes the MATH benchmark actually produces: fraction spellings, LaTeX
 #: wrappers, trailing whitespace, unit text, and a handful the checker gets wrong.
@@ -105,15 +101,13 @@ LESS_ACCESS = {Component.GRADER: Access.RECORD, Component.RECORD: Access.RECORD}
 
 @pytest.fixture(scope="module")
 def real_verifier(tmp_path_factory: pytest.TempPathFactory) -> VerifierUnderTest:
-    try:
-        with urllib.request.urlopen(REAL_VERIFIER_URL, timeout=20) as response:
-            source = response.read().decode("utf-8")
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        pytest.skip(
-            f"no network for the real-verifier card ({type(exc).__name__}). "
-            f"tests/test_measure_card.py proves the composition runs; this file proves it "
-            f"measures, and skipping it leaves that unproven rather than proven."
-        )
+    path = Path(__file__).resolve().parent / "real_verifiers/math_equivalence.py"
+    source_bytes = path.read_bytes()
+    assert (
+        hashlib.sha256(source_bytes).hexdigest()
+        == "c4101b1f51a2bb65665194aecd9f761d668c0c248a0350f196c2950e87488527"
+    ), "upstream MATH fixture drift"
+    source = source_bytes.decode("utf-8")
     path: Path = tmp_path_factory.mktemp("d7_real") / "math_equivalence.py"
     path.write_text(source, encoding="utf-8")
     return VerifierUnderTest(source_path=path, entrypoint="is_equiv")

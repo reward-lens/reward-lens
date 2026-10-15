@@ -129,17 +129,24 @@ def test_the_manifest_counts_are_the_ones_the_bank_produces(demo) -> None:
     """The two counts are written, not computed at print time, so a drifting bank fails here."""
     described = dict(MANIFEST)
     assert described["tasks.jsonl"] == f"{len(demo.tasks)} code tasks"
-    assert described["responses.jsonl"] == f"{len(demo.responses)} sampled responses from a small model"
+    assert (
+        described["responses.jsonl"]
+        == f"{len(demo.responses)} sampled responses from a small model"
+    )
 
 
 def test_example_package_is_under_two_megabytes() -> None:
-    total = sum(p.stat().st_size for p in PACKAGE.rglob("*") if p.is_file() and "__pycache__" not in p.parts)
+    total = sum(
+        p.stat().st_size for p in PACKAGE.rglob("*") if p.is_file() and "__pycache__" not in p.parts
+    )
     assert total < 2 * 1024 * 1024, f"{total} bytes"
 
 
 def test_written_tree_is_under_two_megabytes(demo) -> None:
     total = sum(
-        p.stat().st_size for p in demo.root.rglob("*") if p.is_file() and "__pycache__" not in p.parts
+        p.stat().st_size
+        for p in demo.root.rglob("*")
+        if p.is_file() and "__pycache__" not in p.parts
     )
     assert total < 2 * 1024 * 1024, f"{total} bytes"
 
@@ -190,16 +197,40 @@ def test_the_shipped_bank_is_reproducible(tmp_path: Path) -> None:
     assert not {p.as_posix() for p in generated} & set(COPIED_FILES)
     assert len(generated) == 27, sorted(p.as_posix() for p in generated)
     for relative in sorted(generated):
-        assert (tmp_path / relative).read_bytes() == (PACKAGE / relative).read_bytes(), relative.as_posix()
+        assert (tmp_path / relative).read_bytes() == (PACKAGE / relative).read_bytes(), (
+            relative.as_posix()
+        )
 
 
 def test_the_static_files_are_copied_unchanged(tmp_path: Path) -> None:
-    """The other half, kept apart: these four are copied, and every file is in one half or the other."""
+    """Copied sources stay unchanged; the declared execution tree binds the same controls/tasks."""
     from reward_lens.examples.code_reward._bank import STATIC_FILES
 
-    assert set(STATIC_FILES) == set(COPIED_FILES), "a file changed category, so the split above moved"
+    assert set(STATIC_FILES) == set(COPIED_FILES), (
+        "a file changed category, so the split above moved"
+    )
     written = build(tmp_path)
     for name in COPIED_FILES:
         assert (tmp_path / name).read_bytes() == (PACKAGE / name).read_bytes(), name
+    execution_files = {
+        Path("outcome/independent_evaluator.py"),
+        Path("outcome/execution.json"),
+        *(Path(f"outcome/execution_targets/task-{index:02d}.json") for index in range(1, 41)),
+    }
+    for kind in ("known_good", "known_wrong"):
+        sources = sorted((PACKAGE / "outcome" / kind).glob("*.py"))
+        assert len(sources) == 12
+        for source in sources:
+            relative = Path("outcome/execution_controls") / kind / source.name
+            execution_files.add(relative)
+            assert (tmp_path / relative).read_bytes() == source.read_bytes()
+    assert len(execution_files) == 66
+    task_rows = [json.loads(line) for line in (tmp_path / "tasks.jsonl").read_text().splitlines()]
+    for task in task_rows:
+        target = tmp_path / "outcome" / "execution_targets" / f"{task['task_id']}.json"
+        assert json.loads(target.read_text()) == {**task, "id": task["task_id"]}
     relative = {Path(p).relative_to(tmp_path.resolve()) for p in written}
-    assert relative == _computed_files(PACKAGE) | {Path(name) for name in COPIED_FILES}
+    assert (
+        relative
+        == _computed_files(PACKAGE) | {Path(name) for name in COPIED_FILES} | execution_files
+    )
