@@ -281,14 +281,13 @@ def _score_with_killable_children(
     active: dict[int, tuple[multiprocessing.Process, Any, Any, int | None]] = {}
     next_index = 0
 
-    def reserve_capacity() -> None:
-        while not cancellation.is_set():
-            if _RESPONSE_SCORE_CAPACITY.acquire(timeout=0.005):
-                return
-        raise ResponseScoreCancelled("request cancellation preempted response scorer admission")
-
-    def launch(worker: int) -> None:
-        reserve_capacity()
+    def launch(worker: int) -> bool:
+        if cancellation.is_set():
+            raise ResponseScoreCancelled("request cancellation preempted response scorer admission")
+        # Another audit may own the remaining permits. Keep polling this
+        # request's active workers instead of waiting here while they hold slots.
+        if not _RESPONSE_SCORE_CAPACITY.acquire(blocking=False):
+            return False
         receive = work_send = result_receive = send = None
         child = None
         previous_mask = None
@@ -309,6 +308,7 @@ def _score_with_killable_children(
             active[worker] = (child, work_send, result_receive, None)
             receive.close()
             send.close()
+            return True
         except BaseException:
             active.pop(worker, None)
             try:
@@ -335,11 +335,9 @@ def _score_with_killable_children(
         active[worker] = (child, work_send, result_receive, next_index)
         next_index += 1
 
+    pool_size = min(_MAX_RESPONSE_SCORE_WORKERS, len(rollouts))
     try:
-        for worker in range(min(_MAX_RESPONSE_SCORE_WORKERS, len(rollouts))):
-            launch(worker)
-            assign(worker)
-        while active:
+        while active or next_index < len(rollouts):
             if cancellation.is_set():
                 for child, _work_send, _result_receive, _inflight in active.values():
                     if child.is_alive():
@@ -351,6 +349,17 @@ def _score_with_killable_children(
                     _RESPONSE_SCORE_CAPACITY.release()
                 active.clear()
                 raise ResponseScoreCancelled("request cancellation reaped active response scorers")
+
+            # Admit only workers that can immediately receive a row. A caller
+            # with no permit still reaches the cancellation-responsive wait;
+            # one with active workers always reaches the result poll below.
+            for worker in range(pool_size):
+                if next_index >= len(rollouts):
+                    break
+                if worker not in active:
+                    if not launch(worker):
+                        break
+                    assign(worker)
 
             settled: list[int] = []
             for worker, (child, work_send, result_receive, inflight) in active.items():
@@ -371,16 +380,14 @@ def _score_with_killable_children(
                         results[inflight] = _error_for_lost_child(
                             rollouts[inflight], f"score worker exited with code {child.exitcode}"
                         )
-                    child.join()
-                    work_send.close()
-                    result_receive.close()
                     settled.append(worker)
             for worker in settled:
+                child, work_send, result_receive, _inflight = active[worker]
+                child.join()
+                work_send.close()
+                result_receive.close()
                 del active[worker]
                 _RESPONSE_SCORE_CAPACITY.release()
-                if next_index < len(rollouts):
-                    launch(worker)
-                    assign(worker)
             if not settled:
                 # This is only the parent scheduler's observation interval; it
                 # does not alter any contained grader limit.  A short wait

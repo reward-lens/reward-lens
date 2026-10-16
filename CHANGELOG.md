@@ -27,6 +27,8 @@ until the production release completes.
   mutate the caller's tensor.
 - Fixed Linux audit interruption so active response graders are reaped before
   the command prints the exact resume command. Sealed work remains reusable.
+- Prevented concurrent audits from stalling when each held only part of the
+  shared scoring capacity.
 - Added a declared release validation matrix and a manual publication path that
   checks the exact main commit and consumes its validated immutable artifacts.
 

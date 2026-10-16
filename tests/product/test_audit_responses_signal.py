@@ -10,6 +10,7 @@ import subprocess
 import sys
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, wait
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -156,6 +157,161 @@ def test_killable_response_scores_keep_order_errors_and_real_sandbox_limits(
         ("b-down", "prompt-b", None, "error"),
     ]
     assert "declared scorer failure" in (rows[3].reason or "")
+
+
+def test_concurrent_killable_response_banks_poll_partially_admitted_workers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two audits sharing twelve permits finish after a legitimate six-plus-six admission."""
+    grader = tmp_path / "grader.py"
+    grader.write_text(_GRADER, encoding="utf-8")
+    banks = []
+    for name in ("first", "second"):
+        directory = tmp_path / name
+        directory.mkdir()
+        tasks = _jsonl(
+            directory / "tasks.jsonl",
+            [{"task_id": f"{name}-task", "expected": "yes"}],
+        )
+        responses = _jsonl(
+            directory / "responses.jsonl",
+            [
+                {
+                    "response_id": f"{name}-{index}",
+                    "task_id": f"{name}-task",
+                    "response": "yes" if index % 2 == 0 else "no",
+                }
+                for index in range(13)
+            ],
+        )
+        banks.append(build_corpus(tasks_path=tasks, responses_path=responses))
+
+    class InterleavedCapacity:
+        def __init__(self) -> None:
+            self.semaphore = threading.BoundedSemaphore(response_scores._MAX_RESPONSE_SCORE_WORKERS)
+            self.barrier = threading.Barrier(2)
+            self.lock = threading.Lock()
+            self.acquisitions: dict[int, int] = {}
+
+        def acquire(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
+            acquired = self.semaphore.acquire(*args, **kwargs)
+            if acquired:
+                ident = threading.get_ident()
+                with self.lock:
+                    count = self.acquisitions.get(ident, 0) + 1
+                    self.acquisitions[ident] = count
+                if count == 6:
+                    self.barrier.wait(timeout=15)
+            return acquired
+
+        def release(self) -> None:
+            self.semaphore.release()
+
+    capacity = InterleavedCapacity()
+    monkeypatch.setattr(response_scores, "_RESPONSE_SCORE_CAPACITY", capacity)
+    cancellations = (threading.Event(), threading.Event())
+    sandbox = default_sandbox()
+
+    def score(corpus, cancellation):  # noqa: ANN001, ANN202
+        with response_scores.response_score_cancellation(cancellation):
+            return score_response_bank(
+                grader_path=grader,
+                entrypoint="score",
+                corpus=corpus,
+                sandbox=sandbox,
+                project_dir=tmp_path,
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as callers:
+        futures = [
+            callers.submit(score, corpus, cancellation)
+            for corpus, cancellation in zip(banks, cancellations, strict=True)
+        ]
+        try:
+            _done, pending = wait(futures, timeout=25)
+            assert not pending, "concurrent audits stalled with partially admitted workers"
+            for name, future in zip(("first", "second"), futures, strict=True):
+                rows = future.result()
+                assert [row.response_id for row in rows] == [
+                    f"{name}-{index}" for index in range(13)
+                ]
+                assert [(row.status, row.score) for row in rows] == [
+                    ("measured", 1.0 if index % 2 == 0 else 0.0)
+                    for index in range(13)
+                ]
+        finally:
+            for cancellation in cancellations:
+                cancellation.set()
+
+    assert capacity.barrier.n_waiting == 0
+    assert len(capacity.acquisitions) == 2
+    assert all(count >= 6 for count in capacity.acquisitions.values())
+    for _ in range(response_scores._MAX_RESPONSE_SCORE_WORKERS):
+        assert capacity.semaphore.acquire(blocking=False), "a scorer admission slot leaked"
+    for _ in range(response_scores._MAX_RESPONSE_SCORE_WORKERS):
+        capacity.semaphore.release()
+
+
+@pytest.mark.parametrize("held_permits", [11, 12])
+def test_killable_response_bank_cancels_with_partial_or_zero_admission(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, held_permits: int
+) -> None:
+    grader, tasks, responses = _bank(tmp_path)
+    corpus = build_corpus(tasks_path=tasks, responses_path=responses)
+    admitted = threading.Event()
+
+    class ObservedCapacity:
+        def __init__(self) -> None:
+            self.semaphore = threading.BoundedSemaphore(response_scores._MAX_RESPONSE_SCORE_WORKERS)
+
+        def acquire(self, *args, **kwargs):  # noqa: ANN002, ANN003, ANN204
+            acquired = self.semaphore.acquire(*args, **kwargs)
+            if acquired:
+                admitted.set()
+            return acquired
+
+        def release(self) -> None:
+            self.semaphore.release()
+
+    capacity = ObservedCapacity()
+    monkeypatch.setattr(response_scores, "_RESPONSE_SCORE_CAPACITY", capacity)
+    for _ in range(held_permits):
+        assert capacity.semaphore.acquire(blocking=False)
+    cancellation = threading.Event()
+    sandbox = default_sandbox()
+
+    def score():  # noqa: ANN202
+        with response_scores.response_score_cancellation(cancellation):
+            return score_response_bank(
+                grader_path=grader,
+                entrypoint="score",
+                corpus=corpus,
+                sandbox=sandbox,
+                project_dir=tmp_path,
+            )
+
+    try:
+        with ThreadPoolExecutor(max_workers=1) as callers:
+            future = callers.submit(score)
+            try:
+                if held_permits == 11:
+                    assert admitted.wait(5), "the request never admitted its one available worker"
+                else:
+                    assert not admitted.wait(0.1)
+                    assert not future.done()
+                cancellation.set()
+                with pytest.raises(response_scores.ResponseScoreCancelled):
+                    future.result(timeout=10)
+            finally:
+                cancellation.set()
+    finally:
+        for _ in range(held_permits):
+            capacity.semaphore.release()
+
+    for _ in range(response_scores._MAX_RESPONSE_SCORE_WORKERS):
+        assert capacity.semaphore.acquire(blocking=False), "a cancelled audit leaked a permit"
+    for _ in range(response_scores._MAX_RESPONSE_SCORE_WORKERS):
+        capacity.semaphore.release()
 
 
 @pytest.mark.parametrize("interruption", ["raise", "signal"])
