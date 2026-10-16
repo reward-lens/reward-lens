@@ -11,6 +11,8 @@ import hashlib
 import json
 import os
 import secrets
+import stat
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,7 +40,25 @@ def _now() -> str:
 
 
 def _write(path: Path, payload: Any) -> None:
-    path.write_bytes(rfc8785.dumps(payload))
+    _write_bytes(path, rfc8785.dumps(payload))
+
+
+def _write_bytes(path: Path, payload: bytes) -> None:
+    """Replace a run record only after its complete bytes exist beside it."""
+    try:
+        previous_mode = stat.S_IMODE(path.stat().st_mode)
+    except FileNotFoundError:
+        previous_mode = None
+    descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    os.close(descriptor)
+    temporary = Path(name)
+    try:
+        temporary.write_bytes(payload)
+        if previous_mode is not None:
+            temporary.chmod(previous_mode)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _read(path: Path) -> Any:
@@ -161,7 +181,7 @@ class RunDir:
                     digest=f"partial:{instrument}", expected=existing, found=digest
                 )
             return path
-        path.write_bytes(payload)
+        _write_bytes(path, payload)
         manifest = dict(self.manifest)
         partials = dict(manifest.get("partials", {}))
         partials[instrument] = digest

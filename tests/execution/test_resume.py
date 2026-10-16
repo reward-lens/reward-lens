@@ -298,6 +298,76 @@ def test_cli_sigint_keeps_a_sealed_partial_and_the_printed_resume_completes(
     )
 
 
+def test_cli_interrupt_during_manifest_write_keeps_exact_resume(tmp_path: Path) -> None:
+    """An interrupt during the manifest write leaves a readable run and pasteable resume."""
+    project = _project(tmp_path)
+    state_home = tmp_path / "state"
+    state_home.mkdir()
+    hook = tmp_path / "child_fixture"
+    hook.mkdir()
+    marker = tmp_path / "manifest-write-interrupted"
+    (hook / "sitecustomize.py").write_text(
+        """\
+import os
+import signal
+from pathlib import Path
+
+original = Path.write_bytes
+
+
+def interrupt_manifest_write(path, data):
+    marker = Path(os.environ["REWARD_LENS_MANIFEST_INTERRUPT_MARKER"])
+    if (
+        (path.name == "manifest.json" or path.name.startswith(".manifest.json."))
+        and (path.parent / "partial" / "validity.static.json").is_file()
+        and not marker.exists()
+    ):
+        marker.write_text("interrupted after opening the manifest replacement", encoding="utf-8")
+        original(path, b"")
+        os.kill(os.getpid(), signal.SIGINT)
+    return original(path, data)
+
+
+Path.write_bytes = interrupt_manifest_write
+""",
+        encoding="utf-8",
+    )
+    env = _subprocess_env(state_home, pythonpath=hook)
+    env["REWARD_LENS_MANIFEST_INTERRUPT_MARKER"] = str(marker)
+    stopped = subprocess.run(
+        [str(SCRIPT), "audit", str(project.root), "--name", "manifest-sigint", "--format", "text"],
+        cwd=project.root,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=20,
+    )
+    assert marker.is_file()
+    assert stopped.returncode == 130, stopped.stderr
+    assert "RL0130" in stopped.stderr
+    run_dir = next((state_home / "reward-lens" / "runs").glob("run-*"))
+    assert json.loads((run_dir / "partial" / "validity.static.json").read_text("utf-8"))
+    try:
+        resume_line = _resume_line(run_dir)
+    except json.JSONDecodeError:
+        pytest.fail(f"interrupted manifest is unreadable; stderr:\n{stopped.stderr}")
+    assert stopped.stderr.rstrip().splitlines()[-1] == resume_line
+
+    completed = subprocess.run(
+        [str(SCRIPT), *resume_line.split()[1:], "--format", "text"],
+        cwd=project.root,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=180,
+    )
+    assert completed.returncode in (0, 1, 2), completed.stderr
+    manifest = json.loads((run_dir / "manifest.json").read_text("utf-8"))
+    assert manifest["state"] == "finished"
+    assert Path(manifest["record_path"]).is_file()
+    assert "instrument validity.static replayed" in (run_dir / "log.txt").read_text("utf-8")
+
+
 def test_cli_running_budget_cap_keeps_partials_and_resume_skips_sealed_work(tmp_path: Path) -> None:
     """The cap exit is emitted by the CLI after an audit has already sealed real work.
 

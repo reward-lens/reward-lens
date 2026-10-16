@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import stat
 from pathlib import Path
 
 import pytest
@@ -133,6 +134,77 @@ def test_partial_results_are_written_per_instrument(project_root, state_home):
         run.write_partial("validity", {"entries": ["different"]})
     assert getattr(changed.value, "code", None) == "RL0620"
     assert run.partial() == {"validity": {"entries": ["validity.grader_source"]}}
+
+
+def test_interrupted_manifest_write_preserves_readable_run(project_root, state_home, monkeypatch):
+    """A terminal interrupt while replacing a manifest cannot erase its last valid version."""
+    from reward_lens.store import RunDir
+
+    run = RunDir.create(project=project_root, name="nightly")
+    manifest_path = run.path / "manifest.json"
+    before = manifest_path.read_bytes()
+    original_write_bytes = Path.write_bytes
+
+    def interrupt_during_write(path: Path, data: bytes) -> int:
+        if path == manifest_path or path.name.startswith(".manifest.json."):
+            original_write_bytes(path, b"")
+            raise KeyboardInterrupt()
+        return original_write_bytes(path, data)
+
+    monkeypatch.setattr(Path, "write_bytes", interrupt_during_write)
+    with pytest.raises(KeyboardInterrupt):
+        run.bind_subject("sha256:subject")
+    assert manifest_path.read_bytes() == before
+    assert not list(run.path.glob(".manifest.json.*.tmp"))
+    assert RunDir.find(run.run_id).manifest["state"] == "running"
+
+
+def test_manifest_replacement_keeps_private_mode(project_root, state_home, monkeypatch):
+    from reward_lens.store import RunDir
+
+    run = RunDir.create(project=project_root, name="nightly")
+    manifest_path = run.path / "manifest.json"
+    assert stat.S_IMODE(manifest_path.stat().st_mode) == 0o600
+    manifest_path.chmod(0o600)
+    original_write_bytes = Path.write_bytes
+    observed_temp_modes = []
+
+    def observe_temporary_mode(path: Path, data: bytes) -> int:
+        if path.name.startswith(".manifest.json."):
+            observed_temp_modes.append(stat.S_IMODE(path.stat().st_mode))
+        return original_write_bytes(path, data)
+
+    monkeypatch.setattr(Path, "write_bytes", observe_temporary_mode)
+    run.bind_subject("sha256:subject")
+    assert observed_temp_modes == [0o600]
+    assert stat.S_IMODE(manifest_path.stat().st_mode) == 0o600
+    assert run.manifest["subject_ref"] == "sha256:subject"
+
+
+def test_interrupted_partial_write_can_be_sealed_on_retry(project_root, state_home, monkeypatch):
+    from reward_lens.store import RunDir
+
+    run = RunDir.create(project=project_root, name="nightly")
+    partial_path = run.path / "partial" / "validity.json"
+    original_write_bytes = Path.write_bytes
+
+    def interrupt_during_write(path: Path, data: bytes) -> int:
+        if path == partial_path or path.name.startswith(".validity.json."):
+            original_write_bytes(path, b"")
+            raise KeyboardInterrupt()
+        return original_write_bytes(path, data)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "write_bytes", interrupt_during_write)
+        with pytest.raises(KeyboardInterrupt):
+            run.write_partial("validity", {"entries": ["validity.grader_source"]})
+    assert not partial_path.exists()
+    assert not list(partial_path.parent.glob(".validity.json.*.tmp"))
+    assert run.manifest["partials"] == {}
+
+    run.write_partial("validity", {"entries": ["validity.grader_source"]})
+    assert run.partial() == {"validity": {"entries": ["validity.grader_source"]}}
+    assert run.manifest["partials"]["validity"].startswith("sha256:")
 
 
 def test_resuming_an_unfinished_run_continues_it(project_root, state_home):

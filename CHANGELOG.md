@@ -29,6 +29,8 @@ until the production release completes.
   the command prints the exact resume command. Sealed work remains reusable.
 - Prevented concurrent audits from stalling when each held only part of the
   shared scoring capacity.
+- Fixed interrupted manifest and partial writes that could leave a run
+  unreadable and prevent resuming sealed work.
 - Added a declared release validation matrix and a manual publication path that
   checks the exact main commit and consumes its validated immutable artifacts.
 
