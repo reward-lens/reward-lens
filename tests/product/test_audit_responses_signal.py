@@ -236,8 +236,7 @@ def test_concurrent_killable_response_banks_poll_partially_admitted_workers(
                     f"{name}-{index}" for index in range(13)
                 ]
                 assert [(row.status, row.score) for row in rows] == [
-                    ("measured", 1.0 if index % 2 == 0 else 0.0)
-                    for index in range(13)
+                    ("measured", 1.0 if index % 2 == 0 else 0.0) for index in range(13)
                 ]
         finally:
             for cancellation in cancellations:
