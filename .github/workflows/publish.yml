@@ -6,11 +6,15 @@ on:
   workflow_dispatch:
     inputs:
       release_sha:
-        description: Full, all-green main commit SHA
+        description: Immutable 3.1.0 release commit SHA with frozen CI artifact
         required: true
         type: string
       ci_run_id:
-        description: Successful main push CI run containing release-dist-3.1.0
+        description: Frozen release main CI run containing release-dist-3.1.0
+        required: true
+        type: string
+      publisher_ci_run_id:
+        description: Successful current-main CI run qualifying this publisher workflow
         required: true
         type: string
       publish:
@@ -38,40 +42,52 @@ jobs:
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
       CI_RUN_ID: ${{ inputs.ci_run_id }}
+      PUBLISHER_CI_RUN_ID: ${{ inputs.publisher_ci_run_id }}
       PUBLISH: ${{ inputs.publish }}
       GH_TOKEN: ${{ github.token }}
+      PUBLISHER_IMAGE_TAG: ghcr.io/pypa/gh-action-pypi-publish:dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+      PUBLISHER_IMAGE_DIGEST: ghcr.io/pypa/gh-action-pypi-publish@sha256:a68d05519f6d7e47372aeaddab80b851b69afa89be179ec41775c72c4e3ab2d5
     steps:
-      - name: Check dispatcher and exact all-green main CI identity
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check current main and both exact all-green CI identities
         shell: bash
         run: |
           set -euo pipefail
           [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$CI_RUN_ID" =~ ^[0-9]+$ ]]
-          [[ "$GITHUB_SHA" == "$RELEASE_SHA" ]]
-          workflow_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml" --jq .id)"
-          export WORKFLOW_ID="$workflow_id"
-          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${CI_RUN_ID}" > "$RUNNER_TEMP/ci-run.json"
-          python - <<'PY'
-          import json, os
-          run=json.load(open(os.environ['RUNNER_TEMP']+'/ci-run.json'))
-          assert run['repository']['full_name']==os.environ['GITHUB_REPOSITORY']
-          assert run['head_sha']==os.environ['RELEASE_SHA']
-          assert run['head_branch']=='main' and run['event']=='push'
-          assert run['status']=='completed' and run['conclusion']=='success'
-          assert run['path'].startswith('.github/workflows/ci.yml')
-          assert str(run['workflow_id'])==os.environ['WORKFLOW_ID']
-          PY
+          [[ "$PUBLISHER_CI_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
+          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)" == "$GITHUB_SHA" ]]
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml" > "$RUNNER_TEMP/ci-workflow.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${CI_RUN_ID}" > "$RUNNER_TEMP/release-ci-run.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${CI_RUN_ID}/jobs?per_page=100&filter=latest" > "$RUNNER_TEMP/release-ci-jobs.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PUBLISHER_CI_RUN_ID}" > "$RUNNER_TEMP/publisher-ci-run.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PUBLISHER_CI_RUN_ID}/jobs?per_page=100&filter=latest" > "$RUNNER_TEMP/publisher-ci-jobs.json"
+          python scripts/verify_publish_ci.py \
+            --workflow "$RUNNER_TEMP/ci-workflow.json" \
+            --release-run "$RUNNER_TEMP/release-ci-run.json" \
+            --release-jobs "$RUNNER_TEMP/release-ci-jobs.json" \
+            --publisher-run "$RUNNER_TEMP/publisher-ci-run.json" \
+            --publisher-jobs "$RUNNER_TEMP/publisher-ci-jobs.json" \
+            --release-sha "$RELEASE_SHA" --publisher-sha "$GITHUB_SHA" \
+            --release-ci-run-id "$CI_RUN_ID" --publisher-ci-run-id "$PUBLISHER_CI_RUN_ID"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.release_sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Verify main, optional exact tag, and all version declarations
+      - name: Verify immutable release ancestry, optional exact tag, and all version declarations
         shell: bash
         run: |
           set -euo pipefail
           git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
           [[ "$(git rev-parse HEAD)" == "$RELEASE_SHA" ]]
+          [[ "$(git rev-parse refs/remotes/origin/main)" == "$GITHUB_SHA" ]]
+          git merge-base --is-ancestor "$RELEASE_SHA" "$GITHUB_SHA"
           git merge-base --is-ancestor "$RELEASE_SHA" refs/remotes/origin/main
           if git ls-remote --exit-code --tags origin refs/tags/v3.1.0 >/dev/null; then
             git fetch --no-tags origin refs/tags/v3.1.0:refs/tags/v3.1.0
@@ -111,7 +127,7 @@ jobs:
           matches=[a for a in data['artifacts'] if a['name']=='release-dist-3.1.0' and not a['expired']]
           assert len(matches)==1, f'expected one immutable release-dist artifact, got {len(matches)}'
           assert matches[0]['workflow_run']['id']==int(os.environ['CI_RUN_ID'])
-          run=json.load(open(os.environ['RUNNER_TEMP']+'/ci-run.json'))
+          run=json.load(open(os.environ['RUNNER_TEMP']+'/release-ci-run.json'))
           started=datetime.datetime.fromisoformat(run['run_started_at'].replace('Z','+00:00'))
           created=datetime.datetime.fromisoformat(matches[0]['created_at'].replace('Z','+00:00'))
           assert created>=started, 'artifact predates the successful CI attempt'
@@ -151,6 +167,21 @@ jobs:
           (cd checked-artifact && sha256sum --check SHA256SUMS)
           python -m pip install --disable-pip-version-check twine
           python -m twine check checked-artifact/*.whl checked-artifact/*.tar.gz
+      - name: Check exact pinned publisher image and frozen metadata without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "$PUBLISHER_IMAGE_TAG"
+          docker image inspect --format '{{json .RepoDigests}}' "$PUBLISHER_IMAGE_TAG" > "$RUNNER_TEMP/publisher-image-digests.json"
+          python - <<'PY'
+          import json, os
+          digests=json.load(open(os.environ['RUNNER_TEMP']+'/publisher-image-digests.json'))
+          assert os.environ['PUBLISHER_IMAGE_DIGEST'] in digests, 'publisher commit-tag image digest changed'
+          PY
+          docker run --rm --network none --read-only \
+            --mount "type=bind,src=${PWD}/checked-artifact,dst=/artifacts,readonly" \
+            --entrypoint python "$PUBLISHER_IMAGE_DIGEST" -m twine check \
+            /artifacts/reward_lens-3.1.0-py3-none-any.whl /artifacts/reward_lens-3.1.0.tar.gz
 
   preflight:
     needs: validate
@@ -182,6 +213,8 @@ jobs:
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
       MANIFEST_SHA256: ${{ needs.validate.outputs.manifest_sha256 }}
+      PUBLISHER_IMAGE_TAG: ghcr.io/pypa/gh-action-pypi-publish:dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+      PUBLISHER_IMAGE_DIGEST: ghcr.io/pypa/gh-action-pypi-publish@sha256:a68d05519f6d7e47372aeaddab80b851b69afa89be179ec41775c72c4e3ab2d5
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -218,9 +251,25 @@ jobs:
           mkdir dist
           cp checked-artifact/*.whl checked-artifact/*.tar.gz dist/
           (cd dist && sha256sum --check ../checked-artifact/SHA256SUMS)
+      - name: Recheck the exact publisher image and metadata before Trusted Publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "$PUBLISHER_IMAGE_TAG"
+          docker image inspect --format '{{json .RepoDigests}}' "$PUBLISHER_IMAGE_TAG" > "$RUNNER_TEMP/publisher-image-digests.json"
+          python - <<'PY'
+          import json, os
+          digests=json.load(open(os.environ['RUNNER_TEMP']+'/publisher-image-digests.json'))
+          assert os.environ['PUBLISHER_IMAGE_DIGEST'] in digests, 'publisher commit-tag image digest changed'
+          PY
+          docker run --rm --network none --read-only \
+            --mount "type=bind,src=${PWD}/checked-artifact,dst=/artifacts,readonly" \
+            --entrypoint python "$PUBLISHER_IMAGE_DIGEST" -m twine check \
+            /artifacts/reward_lens-3.1.0-py3-none-any.whl /artifacts/reward_lens-3.1.0.tar.gz
       - name: Publish only those two checked bytes through Trusted Publishing
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # reviewed release/v1 commit
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2, core metadata 2.5
         with:
           packages-dir: dist/
+          verify-metadata: true
           skip-existing: false
           attestations: true
