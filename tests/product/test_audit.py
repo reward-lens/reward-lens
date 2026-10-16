@@ -8,6 +8,7 @@ Each one is still one fixture per static check, built to violate exactly that ch
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import re
 import shutil
@@ -1101,11 +1102,17 @@ def test_no_manifest_key_is_stripped_before_the_manifest_is_digested(tmp_path: P
     assert contracts.canonical_bytes(manifest) == manifest_bytes(manifest)
 
 
-def test_a_bare_grader_audit_writes_its_manifest_beside_its_record(bare: Path) -> None:
+def test_a_bare_grader_audit_writes_its_manifest_beside_its_record(
+    bare: Path, tmp_path: Path
+) -> None:
     """No project, no store, same bundle: the manifest is written on the projectless path too."""
-    record = audit_of(bare)
+    # `bare` is module-scoped and other tests audit it repeatedly. Its dated
+    # records can legitimately span UTC midnight in a long release run.
+    isolated = tmp_path / bare.name
+    shutil.copyfile(bare, isolated)
+    record = audit_of(isolated)
 
-    written = sorted((bare.parent / "assays").glob("*.assay.json"))
+    written = sorted((isolated.parent / "assays").glob("*.assay.json"))
     assert len(written) == 1
     manifest = manifest_beside(written[0])
 
@@ -1116,6 +1123,41 @@ def test_a_bare_grader_audit_writes_its_manifest_beside_its_record(bare: Path) -
     assert manifest["assay"]["id"] == record.assay_id
     page = written[0].with_suffix(".html").read_bytes()
     assert meta_digest(page) == contracts.digest(manifest)
+
+
+def test_projectless_default_names_preserve_both_utc_days(
+    bare: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A date rollover creates a new bundle without replacing the previous day's record."""
+    isolated = tmp_path / bare.name
+    shutil.copyfile(bare, isolated)
+    run_module = importlib.import_module("reward_lens.product.audit.run")
+
+    class ControlledUTC(datetime):
+        day = 15
+
+        @classmethod
+        def now(cls, tz: timezone | None = None) -> datetime:
+            assert tz == timezone.utc
+            return datetime(2026, 10, cls.day, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(run_module, "datetime", ControlledUTC)
+    first = audit_of(isolated)
+    first_path = tmp_path / "assays" / "my_grader-2026-10-15.assay.json"
+    first_bytes = first_path.read_bytes()
+
+    ControlledUTC.day = 16
+    second = audit_of(isolated)
+    second_path = tmp_path / "assays" / "my_grader-2026-10-16.assay.json"
+    assert {path.name for path in (tmp_path / "assays").glob("*.assay.json")} == {
+        first_path.name,
+        second_path.name,
+    }
+    assert first_path.read_bytes() == first_bytes
+    assert first.assay_id != second.assay_id
+    manifest = manifest_beside(second_path)
+    assert manifest["assay"]["id"] == second.assay_id
+    assert manifest["artifacts"][0]["path"] == second_path.name
 
 
 # --- one subject version, one measurement: the pipeline honours the store's rule -------------------
