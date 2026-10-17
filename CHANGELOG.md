@@ -1,10 +1,9 @@
 # Changelog
 
-## [3.1.0] - unreleased
+## [3.1.0] - 2026-10-17
 
-This candidate brings the product implementation, CLI, SDK, report, and local
-workbench into one maintained source tree. The published package remains 3.0.0
-until the production release completes.
+This release brings the product implementation, CLI, SDK, report, and local
+workbench into one maintained source tree.
 
 - Added durable audit/reuse, trace readers, comparison scorecards and joined
   evidence, forecast inputs, and resumable improvement sessions. Missing inputs
@@ -33,6 +32,13 @@ until the production release completes.
   unreadable and prevent resuming sealed work.
 - Added a declared release validation matrix and a manual publication path that
   checks the exact main commit and consumes its validated immutable artifacts.
+- Declared `pydantic-settings` in the base install so the public evidence store
+  and claims command work from a clean wheel install.
+- Corrected Linux process-limit accounting to count the user's threads and
+  refuse an unreadable `/proc` instead of claiming an unmeasured limit.
+- Improved numerical conditioning for bounded Richards fits while retaining
+  the same bounds and likelihood. The truncated-shape regression now recovers
+  its planted parameter.
 
 ## [3.0.0] - 2026-08-06
 

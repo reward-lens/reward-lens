@@ -5,7 +5,10 @@
 <!-- 3.1.0-route -->
 ## 3.1.0: audit a reward system
 
-reward-lens 3.1.0 audits a reward system and writes an assay record and an offline report. This is the active 3.1.0 product route. For an unreleased source checkout, run `pip install .`. The installation section distinguishes source builds from published packages.
+reward-lens 3.1.0 audits a reward system and writes an assay record and an offline report.
+This is the published 3.1.0 product route.
+Install the package from PyPI with the exact version below, or build a
+source checkout with `pip install .`.
 
 ```bash
 reward-lens init --example code-reward ./demo
@@ -18,9 +21,8 @@ The example has deliberate defects: its audit exits 2 with an unresolved decisio
 
 ## Versions and installation
 
-Release availability is recorded on [PyPI](https://pypi.org/project/reward-lens/) and
-[GitHub Releases](https://github.com/reward-lens/reward-lens/releases). Once the
-3.1.0 release is published, install its exact version with:
+Version 3.1.0 is available on [PyPI](https://pypi.org/project/reward-lens/3.1.0/)
+and in the [GitHub release](https://github.com/reward-lens/reward-lens/releases/tag/v3.1.0). Install its exact version with:
 
 ```bash
 python -m pip install reward-lens==3.1.0
