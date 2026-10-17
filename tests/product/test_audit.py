@@ -1226,8 +1226,22 @@ def test_the_reused_run_says_it_reused_and_the_measuring_run_says_nothing(
     assert "reuse" not in json.dumps(second.environment_excluded_from_digest).lower()
 
 
+def _fixed_audit_day(monkeypatch: pytest.MonkeyPatch) -> str:
+    """Pin the name's UTC day while testing store behavior across slow release runs."""
+    run_module = importlib.import_module("reward_lens.product.audit.run")
+
+    class FixedUTC(datetime):
+        @classmethod
+        def now(cls, tz: timezone | None = None) -> datetime:
+            assert tz == timezone.utc
+            return datetime(2026, 10, 16, 12, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(run_module, "datetime", FixedUTC)
+    return "2026-10-16"
+
+
 def test_a_changed_grader_is_a_new_record_under_a_name_that_cannot_collide(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The other half: a changed subject is measured, and the date alone was not a name.
 
@@ -1236,6 +1250,7 @@ def test_a_changed_grader_is_a_new_record_under_a_name_that_cannot_collide(
     is the pipeline's rule: `Project` offers `path_for`, `names` and `record`, and none of them
     proposes a next name.
     """
+    stamp = _fixed_audit_day(monkeypatch)
     root = tmp_path / "moved"
     write_example(root)
     first = api.audit(api.AuditRequest(path=root))
@@ -1253,7 +1268,6 @@ def test_a_changed_grader_is_a_new_record_under_a_name_that_cannot_collide(
     # A-015: the stem is the version the project declares, and the suffix appears only on the
     # record that collided. The first audit of the day is named plainly; the second, of a version
     # the store does not hold under that name, carries the eight hex that tell the two apart.
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     short = second.subject.version.digest.rsplit(":", 1)[-1][:NAME_DIGEST_CHARS]
     assert set(project.names()) == {
         f"code-reward-v1-{stamp}",
@@ -1262,7 +1276,9 @@ def test_a_changed_grader_is_a_new_record_under_a_name_that_cannot_collide(
     assert len({path.name for path in (root / "assays").glob("*.assay.json")}) == 2
 
 
-def test_two_projects_with_the_same_directory_name_do_not_collide(tmp_path: Path) -> None:
+def test_two_projects_with_the_same_directory_name_do_not_collide(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """One name, two subjects, two stores: neither audit can see or answer for the other.
 
     Under A-015 the two derive the same name and keep it, because the name is the declared version
@@ -1270,6 +1286,7 @@ def test_two_projects_with_the_same_directory_name_do_not_collide(tmp_path: Path
     one store. What must hold is that neither store answers for the other, and it does, because
     the reuse lookup is asked of a project and only ever sees that project's own `assays/`.
     """
+    stamp = _fixed_audit_day(monkeypatch)
     roots = []
     for index, tail in enumerate(("\n# left\n", "\n# right\n")):
         root = tmp_path / f"side{index}" / "demo"
@@ -1287,7 +1304,6 @@ def test_two_projects_with_the_same_directory_name_do_not_collide(tmp_path: Path
 
     names = [Project.open(root).names() for root in roots]
     assert [len(group) for group in names] == [1, 1]
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     for root, (name,) in zip(roots, names):
         assert name == f"code-reward-v1-{stamp}"
         assert (root / "assays" / f"{name}.assay.json").is_file()
@@ -1897,6 +1913,7 @@ def test_a_panel_that_lands_between_two_audits_is_measured_and_not_reused(
     shipped soundness batteries, not this newly requested instrument id. So the panel runs, its
     entries are in a new record, and the record that could not answer is left exactly as it was.
     """
+    stamp = _fixed_audit_day(monkeypatch)
     root = tmp_path / "landed"
     write_example(root)
     first = api.audit(api.AuditRequest(path=root))
@@ -1923,7 +1940,6 @@ def test_a_panel_that_lands_between_two_audits_is_measured_and_not_reused(
     assert first_name in project.names() and len(project.names()) == 2
     assert project.path_for(first_name).read_bytes() == first_bytes
     # A-016: same subject version, same day, so the name is told apart by what was measured.
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     (other,) = [name for name in project.names() if name != first_name]
     assert first_name == f"code-reward-v1-{stamp}"
     assert other.startswith(f"{first_name}-") and len(other) == len(first_name) + 9
