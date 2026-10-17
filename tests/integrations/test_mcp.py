@@ -361,12 +361,16 @@ def test_streamable_http_loopback_enforces_native_guards() -> None:
 
 def test_streamable_http_response_bank_cancellation_reaps_current_server_children(
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Cancel an actual HTTP audit POST and retain only this server's L3 census."""
     with socket.socket() as reserved:
         reserved.bind(("127.0.0.1", 0))
         port = reserved.getsockname()[1]
     root = Path(__file__).parents[2]
+    profile_path = tmp_path / "mcp-profile.log"
+    server_stderr_path = tmp_path / "mcp-server.stderr.log"
+    server_stderr = server_stderr_path.open("w", encoding="utf-8")
     process = subprocess.Popen(
         [
             sys.executable,
@@ -380,10 +384,14 @@ def test_streamable_http_response_bank_cancellation_reaps_current_server_childre
             **{key: value for key, value in os.environ.items() if key != "PYTHONPATH"},
             "PYTHONDONTWRITEBYTECODE": "1",
             "XDG_STATE_HOME": str(tmp_path / "state"),
+            "REWARD_LENS_MCP_PROFILE_PATH": str(profile_path),
         },
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=server_stderr,
     )
+    completed: subprocess.CompletedProcess[str] | None = None
+    ready_started = time.monotonic()
+    ready_seconds: float | None = None
     try:
         deadline = time.monotonic() + 10
         while True:
@@ -394,10 +402,12 @@ def test_streamable_http_response_bank_cancellation_reaps_current_server_childre
                 if time.monotonic() >= deadline:
                     raise AssertionError("the Streamable HTTP server did not start")
                 time.sleep(0.05)
+        ready_seconds = time.monotonic() - ready_started
 
         script = f"""\
 import json
 import os
+import sys
 import threading
 import time
 
@@ -429,6 +439,18 @@ meta = {{
     'io.modelcontextprotocol/clientCapabilities': {{}},
 }}
 url = f'http://127.0.0.1:{{port}}/mcp'
+
+try:
+    affinity = len(os.sched_getaffinity(0))
+except (AttributeError, OSError):
+    affinity = 'unavailable'
+try:
+    with open('/sys/fs/cgroup/cpu.max', encoding='utf-8') as quota_file:
+        quota = quota_file.read(80).strip()
+except OSError:
+    quota = 'unavailable'
+print('RL_MCP_DIAG affinity=%s cpu_count=%s cpu_max=%s' %
+      (affinity, os.cpu_count(), quota), file=sys.stderr, flush=True)
 
 def call(method, params, request_id, *, headers=None, timeout=10):
     return httpx.post(
@@ -486,12 +508,17 @@ def group_exists(group):
         return True
     return True
 
-complete = call(
-    'tools/call',
-    {{'name': 'audit', 'arguments': {{'path': grader, 'tasks': tasks, 'responses': responses}}}},
-    'complete-bank',
-    headers={{'Mcp-Name': 'audit'}},
-)
+complete_started = time.monotonic()
+try:
+    complete = call(
+        'tools/call',
+        {{'name': 'audit', 'arguments': {{'path': grader, 'tasks': tasks, 'responses': responses}}}},
+        'complete-bank',
+        headers={{'Mcp-Name': 'audit'}},
+    )
+finally:
+    print('RL_MCP_DIAG complete_bank_elapsed=%.3f' %
+          (time.monotonic() - complete_started), file=sys.stderr, flush=True)
 assert complete.status_code == 200, complete.text
 assert 'result' in complete.json(), complete.text
 assert 'structuredContent' in complete.json()['result'], complete.text
@@ -512,13 +539,17 @@ def start_slow_audit():
 
 pending = threading.Thread(target=start_slow_audit)
 pending.start()
+active_started = time.monotonic()
 deadline = time.monotonic() + 8
 active_groups = set()
 while time.monotonic() < deadline and not active_groups:
     time.sleep(0.05)
     active_groups = contained_groups()
+print('RL_MCP_DIAG active_groups_elapsed=%.3f groups=%d' %
+      (time.monotonic() - active_started, len(active_groups)), file=sys.stderr, flush=True)
 assert 0 < len(active_groups) <= 24, (server, sorted(prior_descendants), sorted(descendants(server)))
 
+cancel_started = time.monotonic()
 cancelled = httpx.post(
     url,
     json={{
@@ -533,10 +564,15 @@ cancelled = httpx.post(
     }},
     timeout=10,
 )
+print('RL_MCP_DIAG cancel_elapsed=%.3f status=%d' %
+      (time.monotonic() - cancel_started, cancelled.status_code), file=sys.stderr, flush=True)
 assert cancelled.status_code in {{200, 202, 204}}, cancelled.text
+reap_started = time.monotonic()
 reap_deadline = time.monotonic() + 4
 while time.monotonic() < reap_deadline and any(group in active_groups for group in contained_groups()):
     time.sleep(0.05)
+print('RL_MCP_DIAG reap_elapsed=%.3f' %
+      (time.monotonic() - reap_started), file=sys.stderr, flush=True)
 assert not any(group in active_groups for group in contained_groups()), (active_groups, contained_groups())
 assert not any(group_exists(group) for group in active_groups), active_groups
 pending.join(timeout=5)
@@ -545,6 +581,7 @@ assert 'response' in answer
 doctor = call(
     'tools/call', {{'name': 'doctor', 'arguments': {{}}}}, 'after-cancel', headers={{'Mcp-Name': 'doctor'}}
 )
+print('RL_MCP_DIAG doctor_status=%d' % doctor.status_code, file=sys.stderr, flush=True)
 assert doctor.status_code == 200, doctor.text
 """
         completed = subprocess.run(
@@ -562,6 +599,71 @@ assert doctor.status_code == 200, doctor.text
     finally:
         process.terminate()
         process.wait(timeout=5)
+        try:
+            server_stderr.close()
+        except OSError:
+            pass
+        try:
+            try:
+                profile_lines = profile_path.read_text(encoding="utf-8").splitlines()
+            except OSError:
+                profile_lines = []
+            marks: dict[str, list[float]] = {}
+            for line in profile_lines[:20]:
+                parts = line.split()
+                if len(parts) == 2:
+                    try:
+                        marks.setdefault(parts[0], []).append(float(parts[1]))
+                    except ValueError:
+                        pass
+            bank_starts = marks.get("response_score_bank_start", [])
+            bank_ends = marks.get("response_score_bank_end", [])
+            bank_elapsed = (
+                f"{bank_ends[0] - bank_starts[0]:.3f}s"
+                if bank_starts and bank_ends
+                else "started-but-unfinished"
+                if bank_starts
+                else "not-started"
+            )
+            ready_text = f"{ready_seconds:.3f}s" if ready_seconds is not None else "unavailable"
+            diagnostic_lines = [
+                f"RL_MCP_DIAG server_ready={ready_text} server_pid={process.pid} "
+                f"child_exit={completed.returncode if completed is not None else 'unavailable'} "
+                f"first_bank={bank_elapsed}"
+            ]
+            if completed is not None:
+                diagnostic_lines.extend(
+                    line[:240]
+                    for line in completed.stderr.splitlines()
+                    if line.startswith("RL_MCP_DIAG ")
+                )
+                if completed.returncode != 0:
+                    diagnostic_lines.extend(
+                        "RL_MCP_DIAG child_stderr_tail: " + line[:240]
+                        for line in completed.stderr.splitlines()[-8:]
+                    )
+            if completed is None or completed.returncode != 0:
+                try:
+                    with server_stderr_path.open("rb") as server_log:
+                        server_log.seek(0, 2)
+                        server_log.seek(max(0, server_log.tell() - 4096))
+                        server_tail = (
+                            server_log.read().decode("utf-8", errors="replace").splitlines()
+                        )
+                    diagnostic_lines.extend(
+                        "RL_MCP_DIAG server_stderr_tail: " + line[:240] for line in server_tail[-8:]
+                    )
+                except OSError:
+                    diagnostic_lines.append("RL_MCP_DIAG server_stderr_tail=unavailable")
+        except Exception as diagnostic_error:
+            diagnostic_lines = [
+                f"RL_MCP_DIAG summary_unavailable={type(diagnostic_error).__name__}"
+            ]
+        try:
+            with capsys.disabled():
+                print("\n".join(diagnostic_lines), flush=True)
+        except Exception:
+            pass
 
 
 def test_missing_tool_input_round_trips_as_input_required(
