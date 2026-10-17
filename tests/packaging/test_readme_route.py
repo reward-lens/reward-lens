@@ -103,7 +103,8 @@ def test_section_says_what_three_one_zero_is(section: list[str]) -> None:
 def test_section_names_the_install(section: list[str]) -> None:
     text = "\n".join(section)
     assert INSTALL in text, f"the 3.1.0 route does not name {INSTALL!r}"
-    assert "unreleased" in text
+    assert "Install the package from PyPI with the exact version below" in text
+    assert "unreleased" not in text
 
 
 @pytest.mark.parametrize("command", COMMANDS)
@@ -138,6 +139,9 @@ def test_install_instructions_match_current_metadata() -> None:
     assert "Python `3.11` or newer" in text
     assert "uv sync --group dev" in text
     assert "reward-lens[dev]" not in text
+    assert "https://pypi.org/project/reward-lens/3.1.0/" in text
+    assert "python -m pip install reward-lens==3.1.0" in text
+    assert "https://github.com/reward-lens/reward-lens/releases/tag/v3.1.0" in text
 
 
 def test_section_points_json_at_the_envelope(section: list[str]) -> None:
@@ -149,7 +153,7 @@ def test_section_points_json_at_the_envelope(section: list[str]) -> None:
 def test_section_distinguishes_the_inherited_3_0_reference(section: list[str]) -> None:
     text = "\n".join(section)
     assert "inherited 3.0 library surface" in text
-    assert "active 3.1.0 product" in text
+    assert "published 3.1.0 product" in text
 
 
 def test_section_carries_no_unearned_numbers(section: list[str]) -> None:

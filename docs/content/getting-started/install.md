@@ -1,8 +1,8 @@
 # Install
 
 Python 3.11 or newer is required. The release checks cover Python 3.11, 3.12,
-and 3.13 on Linux. Check [PyPI](https://pypi.org/project/reward-lens/) for release
-availability. After 3.1.0 is published, install that exact version with:
+and 3.13 on Linux. Version 3.1.0 is available on
+[PyPI](https://pypi.org/project/reward-lens/3.1.0/). Install that exact version with:
 
 ```bash
 python -m pip install reward-lens==3.1.0

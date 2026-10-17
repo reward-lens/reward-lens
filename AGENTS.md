@@ -1,9 +1,10 @@
 # Repository guidance
 
 Use `reward-lens` in prose and commands, `reward_lens` for Python imports, and
-`REWARD_LENS_*` for environment variables. The development target is 3.1.0 until
-the release record confirms publication. Preserve public symbols, serialized
-keys, `rewardlens.yaml`, and existing record identities.
+`REWARD_LENS_*` for environment variables. The published 3.1.0 tag points to
+`2775965d641ca48cf2745bf9c41e6b5659562306`; continue development on the 3.x line and check current tags and
+PyPI metadata before changing version declarations. Preserve public symbols,
+serialized keys, `rewardlens.yaml`, and existing record identities.
 
 This standalone clone is the maintained product development repository. Base new
 branches on current `origin/main`, use focused pull requests, and keep source,

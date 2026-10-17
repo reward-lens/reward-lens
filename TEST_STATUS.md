@@ -80,8 +80,9 @@ audit writes a saved assay and embedded report, keeps honest absences, and exits
 export/import must verify them and reject tampering. This is product
 conformance, not an all-clear reward-system finding.
 
-Exact source, dependency versions, CI runs, artifact hashes, and public
-installation/deployment evidence are recorded with the release. Until those
-checks and production publication complete, 3.1.0 remains an unreleased source
-candidate. Offline checks do not qualify live providers, a GPU intervention,
+Version 3.1.0 was published on 2026-10-17 from main commit
+`2775965d641ca48cf2745bf9c41e6b5659562306`. The [main CI run](https://github.com/reward-lens/reward-lens/actions/runs/38943117681) validates that source and
+its distribution artifacts; the [GitHub release](https://github.com/reward-lens/reward-lens/releases/tag/v3.1.0) records the
+published files and their hashes. A clean PyPI installation was verified after
+publication. Offline checks do not qualify live providers, a GPU intervention,
 forecasting skill, or a new scientific training result.
